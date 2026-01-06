@@ -2,10 +2,37 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 
 export default function Navbar() {
     const [isOpen, setIsOpen] = useState(false);
+    const pathname = usePathname();
+    const menuRef = useRef<HTMLDivElement>(null);
+    const buttonRef = useRef<HTMLButtonElement>(null);
+
+    useEffect(() => {
+        setIsOpen(false);
+    }, [pathname]);
+
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (
+                isOpen &&
+                menuRef.current &&
+                !menuRef.current.contains(event.target as Node) &&
+                buttonRef.current &&
+                !buttonRef.current.contains(event.target as Node)
+            ) {
+                setIsOpen(false);
+            }
+        }
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [isOpen]);
 
     return (
         <nav className="fixed w-full z-50 transition-all duration-300 bg-white/90 backdrop-blur-md border-b border-[#06b6d4]/30 shadow-sm shadow-[#06124f]/5">
@@ -49,6 +76,7 @@ export default function Navbar() {
                     {/* Mobile Menu Button */}
                     <div className="-mr-2 flex md:hidden">
                         <button
+                            ref={buttonRef}
                             onClick={() => setIsOpen(!isOpen)}
                             type="button"
                             className="inline-flex items-center justify-center p-2 rounded-lg text-[#06124f] hover:text-[#06b6d4] hover:bg-gradient-to-r hover:from-[#06b6d4]/10 hover:to-[#06124f]/5 focus:outline-none focus:ring-2 focus:ring-[#06124f]/50 transition-all duration-200 border border-[#06124f]/20"
@@ -98,12 +126,13 @@ export default function Navbar() {
             {isOpen && (
                 <div className="md:hidden bg-gradient-to-b from-white/98 to-white/95 backdrop-blur-xl border-b border-[#06b6d4]/20 shadow-xl shadow-[#06124f]/10" id="mobile-menu">
                     <div className="px-4 pt-3 pb-4 space-y-2 sm:px-6">
-                        <MobileNavLink href="/about">About</MobileNavLink>
-                        <MobileNavLink href="/products">Products</MobileNavLink>
-                        <MobileNavLink href="/services">Services</MobileNavLink>
-                        <MobileNavLink href="/certificates">Certificates</MobileNavLink>
-                        <MobileNavLink href="/warranty">Warranty</MobileNavLink>
-                        <MobileNavLink href="/contact">Contact</MobileNavLink>
+                        <MobileNavLink href="/" onClick={() => setIsOpen(false)}>Home</MobileNavLink>
+                        <MobileNavLink href="/about" onClick={() => setIsOpen(false)}>About</MobileNavLink>
+                        <MobileNavLink href="/products" onClick={() => setIsOpen(false)}>Products</MobileNavLink>
+                        <MobileNavLink href="/services" onClick={() => setIsOpen(false)}>Services</MobileNavLink>
+                        <MobileNavLink href="/certificates" onClick={() => setIsOpen(false)}>Certificates</MobileNavLink>
+                        <MobileNavLink href="/warranty" onClick={() => setIsOpen(false)}>Warranty</MobileNavLink>
+                        <MobileNavLink href="/contact" onClick={() => setIsOpen(false)}>Contact</MobileNavLink>
                     </div>
                 </div>
             )}
@@ -120,9 +149,10 @@ const NavLink = ({ href, children }: { href: string; children: React.ReactNode }
     </Link>
 );
 
-const MobileNavLink = ({ href, children }: { href: string; children: React.ReactNode }) => (
+const MobileNavLink = ({ href, children, onClick }: { href: string; children: React.ReactNode; onClick?: () => void }) => (
     <Link
         href={href}
+        onClick={onClick}
         className="text-[#06124f] hover:text-[#06b6d4] block px-4 py-3 rounded-lg text-base font-medium hover:bg-gradient-to-r hover:from-[#06b6d4]/10 hover:to-[#06124f]/5 transition-all duration-200 border-l-2 border-transparent hover:border-[#06b6d4]"
     >
         {children}
