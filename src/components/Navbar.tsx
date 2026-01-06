@@ -40,7 +40,7 @@ export default function Navbar() {
                             <NavLink href="/about">About</NavLink>
                             <NavLink href="/products">Products</NavLink>
                             <NavLink href="/services">Services</NavLink>
-                            <NavLink href="/certificate">Certificate</NavLink>
+                            <NavLink href="/certificates">Certificates</NavLink>
                             <NavLink href="/warranty">Warranty</NavLink>
                             <NavLink href="/career">Career</NavLink>
                             <NavLink href="/contact">Contact</NavLink>
@@ -99,11 +99,10 @@ export default function Navbar() {
             {isOpen && (
                 <div className="md:hidden bg-gradient-to-b from-white/98 to-white/95 backdrop-blur-xl border-b border-[#06b6d4]/20 shadow-xl shadow-[#06124f]/10" id="mobile-menu">
                     <div className="px-4 pt-3 pb-4 space-y-2 sm:px-6">
-                        <MobileNavLink href="/">Home</MobileNavLink>
                         <MobileNavLink href="/about">About</MobileNavLink>
                         <MobileNavLink href="/products">Products</MobileNavLink>
                         <MobileNavLink href="/services">Services</MobileNavLink>
-                        <MobileNavLink href="/certificate">Certificate</MobileNavLink>
+                        <MobileNavLink href="/certificates">Certificates</MobileNavLink>
                         <MobileNavLink href="/warranty">Warranty</MobileNavLink>
                         <MobileNavLink href="/career">Career</MobileNavLink>
                         <MobileNavLink href="/contact">Contact</MobileNavLink>
