@@ -38,6 +38,7 @@ export default function Navbar() {
                         <div className="ml-10 flex items-baseline space-x-8">
                             <NavLink href="/">Home</NavLink>
                             <NavLink href="/about">About</NavLink>
+                            <NavLink href="/products">Products</NavLink>
                             <NavLink href="/services">Services</NavLink>
                             <NavLink href="/certificate">Certificate</NavLink>
                             <NavLink href="/warranty">Warranty</NavLink>
@@ -100,6 +101,7 @@ export default function Navbar() {
                     <div className="px-4 pt-3 pb-4 space-y-2 sm:px-6">
                         <MobileNavLink href="/">Home</MobileNavLink>
                         <MobileNavLink href="/about">About</MobileNavLink>
+                        <MobileNavLink href="/products">Products</MobileNavLink>
                         <MobileNavLink href="/services">Services</MobileNavLink>
                         <MobileNavLink href="/certificate">Certificate</MobileNavLink>
                         <MobileNavLink href="/warranty">Warranty</MobileNavLink>
