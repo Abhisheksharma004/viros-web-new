@@ -42,7 +42,6 @@ export default function Navbar() {
                             <NavLink href="/services">Services</NavLink>
                             <NavLink href="/certificates">Certificates</NavLink>
                             <NavLink href="/warranty">Warranty</NavLink>
-                            <NavLink href="/career">Career</NavLink>
                             <NavLink href="/contact">Contact</NavLink>
                         </div>
                     </div>
@@ -104,7 +103,6 @@ export default function Navbar() {
                         <MobileNavLink href="/services">Services</MobileNavLink>
                         <MobileNavLink href="/certificates">Certificates</MobileNavLink>
                         <MobileNavLink href="/warranty">Warranty</MobileNavLink>
-                        <MobileNavLink href="/career">Career</MobileNavLink>
                         <MobileNavLink href="/contact">Contact</MobileNavLink>
                     </div>
                 </div>
