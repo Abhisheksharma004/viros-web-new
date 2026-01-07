@@ -4,74 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
-const services = [
-    {
-        id: "hardware",
-        title: "Hardware Solutions",
-        description: "Premium barcode printers, scanners, and mobile computing devices for industrial and retail environments.",
-        icon: (
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-            </svg>
-        ),
-        features: ["Industrial Label Printers", "Handheld Barcode Scanners", "Mobile Computers (PDA)", "RFID Readers"],
-        gradient: "from-[#06b6d4] to-[#06124f]",
-        image: "https://images.unsplash.com/photo-1587293852726-70cdb56c2866?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-    },
-    {
-        id: "software",
-        title: "Software Solutions",
-        description: "Custom software for inventory management, asset tracking, and point-of-sale integration.",
-        icon: (
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-            </svg>
-        ),
-        features: ["Inventory Management System", "Asset Tracking Software", "Warehouse Management (WMS)", "Custom Integration APIs"],
-        gradient: "from-[#06124f] to-[#06b6d4]",
-        image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-    },
-    {
-        id: "consumables",
-        title: "Consumables",
-        description: "High-quality thermal transfer ribbons and labels designed for durability and print clarity.",
-        icon: (
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-            </svg>
-        ),
-        features: ["Thermal Transfer Ribbons", "Direct Thermal Labels", "Polyester & Asset Tags", "Custom Pre-printed Labels"],
-        gradient: "from-[#06b6d4] via-[#06124f] to-[#06b6d4]",
-        image: "https://images.unsplash.com/photo-1626071466170-13f508008801?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-    },
-    {
-        id: "support",
-        title: "Support & Maintenance",
-        description: "Comprehensive after-sales support, annual maintenance contracts (AMC), and on-site repairs.",
-        icon: (
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-        ),
-        features: ["Annual Maintenance Contracts", "On-site Installation", "Printer Repair Services", "Remote Technical Support"],
-        gradient: "from-[#06124f] via-[#06b6d4] to-[#06124f]",
-        image: "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-    },
-    {
-        id: "rental",
-        title: "Laptop & Desktop Rental",
-        description: "Scale your workforce instantly with our flexible high-performance IT equipment rental solutions.",
-        icon: (
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-            </svg>
-        ),
-        features: ["Short & Long-term Rentals", "Workstations & Servers", "MacBooks & Windows Laptops", "24/7 Replacement Support"],
-        gradient: "from-[#06b6d4] to-[#06124f]",
-        image: "https://images.unsplash.com/photo-1497215728101-856f4ea42174?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-    }
-];
+import { services } from "@/data/services";
 
 const processSteps = [
     {
@@ -187,7 +120,7 @@ export default function ServicesPage() {
                                         ))}
                                     </ul>
 
-                                    <Link href="/contact" className="group/btn inline-flex items-center px-8 py-4 bg-[#06124f] text-white font-bold rounded-xl overflow-hidden relative shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
+                                    <Link href={`/services/${service.id}`} className="group/btn inline-flex items-center px-8 py-4 bg-[#06124f] text-white font-bold rounded-xl overflow-hidden relative shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
                                         <span className="absolute inset-0 bg-gradient-to-r from-[#06b6d4] to-[#06124f] opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300" />
                                         <span className="relative z-10 flex items-center">
                                             Explore Solutions
