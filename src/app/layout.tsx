@@ -1,4 +1,6 @@
-import type { Metadata } from "next";
+"use client";
+
+import { usePathname } from "next/navigation";
 import { Geist, Geist_Mono } from "next/font/google";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -14,26 +16,26 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "VIROS Entrepreneurs - Complete Barcode Solutions",
-  description: "Professional barcode label printers, handheld scanners, mobile devices, and custom software solutions for modern business operations.",
-};
-
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const pathname = usePathname();
+
+  // Hide navbar and footer on login page
+  const hideNavAndFooter = pathname === "/login";
+
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white text-black`}
       >
-        <Navbar />
-        <main className="pt-16">
+        {!hideNavAndFooter && <Navbar />}
+        <main className={hideNavAndFooter ? "" : "pt-16"}>
           {children}
         </main>
-        <Footer />
+        {!hideNavAndFooter && <Footer />}
       </body>
     </html>
   );
