@@ -1,16 +1,23 @@
-
 import Image from "next/image";
+import pool from "@/lib/db";
 
-const partners = [
-    { name: "Honeywell", logo: "https://logos-world.net/wp-content/uploads/2021/02/Honeywell-Emblem.png" },
-    { name: "Zebra Technologies", logo: "https://logowik.com/content/uploads/images/zebra-technologies2902.jpg" },
-    { name: "Samsung", logo: "https://logos-world.net/wp-content/uploads/2021/02/Honeywell-Emblem.png" },
-    { name: "Panasonic", logo: "https://logos-world.net/wp-content/uploads/2021/02/Honeywell-Emblem.png" },
-    { name: "LG", logo: "https://logos-world.net/wp-content/uploads/2021/02/Honeywell-Emblem.png" },
-    { name: "Sony", logo: "https://logos-world.net/wp-content/uploads/2021/02/Honeywell-Emblem.png" },
-];
+async function getPartners() {
+    try {
+        const [rows]: any = await pool.query(
+            'SELECT * FROM partners WHERE is_active = TRUE ORDER BY display_order ASC'
+        );
+        return rows;
+    } catch (error) {
+        console.error('Error fetching partners:', error);
+        return [];
+    }
+}
 
-export default function TrustedPartners() {
+export default async function TrustedPartners() {
+    const partners = await getPartners();
+
+    if (partners.length === 0) return null;
+
     return (
         <section className="py-16 bg-white overflow-hidden">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -27,15 +34,15 @@ export default function TrustedPartners() {
                 </div>
 
                 <div className="relative flex overflow-hidden group">
-                    <div className="flex animate-marquee whitespace-nowrap shrink-0" style={{ animationDuration: "40s" }}>
-                        {partners.map((partner, index) => (
+                    <div className="flex animate-marquee whitespace-nowrap shrink-0">
+                        {partners.map((partner: any, index: number) => (
                             <div
-                                key={index}
+                                key={partner.id || index}
                                 className="mx-8 flex items-center justify-center h-24 w-40 shrink-0"
                             >
                                 <div className="relative w-full h-full">
                                     <Image
-                                        src={partner.logo}
+                                        src={partner.logo_url}
                                         alt={partner.name}
                                         fill
                                         className="object-contain"
@@ -44,15 +51,16 @@ export default function TrustedPartners() {
                             </div>
                         ))}
                     </div>
-                    <div className="flex animate-marquee whitespace-nowrap shrink-0" style={{ animationDuration: "40s" }}>
-                        {partners.map((partner, index) => (
+                    {/* Duplicate for infinite scroll */}
+                    <div className="flex animate-marquee whitespace-nowrap shrink-0">
+                        {partners.map((partner: any, index: number) => (
                             <div
-                                key={`clone-${index}`}
+                                key={`clone-${partner.id || index}`}
                                 className="mx-8 flex items-center justify-center h-24 w-40 shrink-0"
                             >
                                 <div className="relative w-full h-full">
                                     <Image
-                                        src={partner.logo}
+                                        src={partner.logo_url}
                                         alt={partner.name}
                                         fill
                                         className="object-contain"

@@ -1,15 +1,17 @@
 import Image from "next/image";
+import pool from "@/lib/db";
 
-const clients = [
-    { name: "Reliance Retail", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Amazon_logo.svg/2560px-Amazon_logo.svg.png" },
-    { name: "Tata Croma", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Amazon_logo.svg/2560px-Amazon_logo.svg.png" },
-    { name: "D-Mart", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Amazon_logo.svg/2560px-Amazon_logo.svg.png" },
-    { name: "Amazon India", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Amazon_logo.svg/2560px-Amazon_logo.svg.png" },
-    { name: "Flipkart", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Amazon_logo.svg/2560px-Amazon_logo.svg.png" },
-    { name: "BigBasket", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Amazon_logo.svg/2560px-Amazon_logo.svg.png" },
-    { name: "Delhivery", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Amazon_logo.svg/2560px-Amazon_logo.svg.png" },
-    { name: "Blue Dart", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Amazon_logo.svg/2560px-Amazon_logo.svg.png" },
-];
+async function getClients() {
+    try {
+        const [rows]: any = await pool.query(
+            'SELECT * FROM clients WHERE is_active = TRUE ORDER BY display_order ASC'
+        );
+        return rows;
+    } catch (error) {
+        console.error('Error fetching clients:', error);
+        return [];
+    }
+}
 
 const stats = [
     { value: "500+", label: "Happy Clients" },
@@ -17,7 +19,11 @@ const stats = [
     { value: "24/7", label: "Support Available" },
 ];
 
-export default function ClientSection() {
+export default async function ClientSection() {
+    const clients = await getClients();
+
+    if (clients.length === 0) return null;
+
     return (
         <section className="py-24 relative overflow-hidden bg-white">
             {/* Background Decorations */}
@@ -39,15 +45,15 @@ export default function ClientSection() {
 
                 {/* Marquee Container */}
                 <div className="relative flex overflow-hidden group mb-20">
-                    <div className="flex animate-marquee whitespace-nowrap hover:pause shrink-0" style={{ animationDuration: "50s" }}>
-                        {clients.map((client, index) => (
+                    <div className="flex animate-marquee whitespace-nowrap shrink-0">
+                        {clients.map((client: any, index: number) => (
                             <div
-                                key={index}
+                                key={client.id || index}
                                 className="mx-8 flex items-center justify-center w-40 h-32 shrink-0 transition-all duration-300"
                             >
                                 <div className="relative w-full h-full p-2">
                                     <Image
-                                        src={client.logo}
+                                        src={client.logo_url}
                                         alt={client.name}
                                         fill
                                         className="object-contain"
@@ -57,15 +63,15 @@ export default function ClientSection() {
                         ))}
                     </div>
                     {/* Duplicate for infinite scroll */}
-                    <div className="flex animate-marquee whitespace-nowrap hover:pause shrink-0" style={{ animationDuration: "50s" }}>
-                        {clients.map((client, index) => (
+                    <div className="flex animate-marquee whitespace-nowrap shrink-0">
+                        {clients.map((client: any, index: number) => (
                             <div
-                                key={`clone-${index}`}
+                                key={`clone-${client.id || index}`}
                                 className="mx-8 flex items-center justify-center w-40 h-32 shrink-0 transition-all duration-300"
                             >
                                 <div className="relative w-full h-full p-2">
                                     <Image
-                                        src={client.logo}
+                                        src={client.logo_url}
                                         alt={client.name}
                                         fill
                                         className="object-contain"
