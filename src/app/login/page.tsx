@@ -3,17 +3,44 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
+    const router = useRouter();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [rememberMe, setRememberMe] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        // Handle login logic here
-        console.log("Login attempt:", { email, password, rememberMe });
+        setIsLoading(true);
+        setError(null);
+
+        try {
+            const response = await fetch("/api/login", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ email, password }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || "Something went wrong");
+            }
+
+            // Success
+            router.push("/dashboard");
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -33,9 +60,15 @@ export default function LoginPage() {
 
                     {/* Title */}
                     <div className="text-center mb-6">
-                        <h1 className="text-2xl font-bold text-gray-900 mb-2">Website Managemet Portal</h1>
+                        <h1 className="text-2xl font-bold text-gray-900 mb-2">Website Management Portal</h1>
                         <p className="text-gray-600 text-sm">Sign in to your account</p>
                     </div>
+
+                    {error && (
+                        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm">
+                            {error}
+                        </div>
+                    )}
 
                     {/* Form */}
                     <form onSubmit={handleSubmit} className="space-y-4">
@@ -119,9 +152,10 @@ export default function LoginPage() {
                         {/* Submit Button */}
                         <button
                             type="submit"
-                            className="group relative w-full px-8 py-3 bg-gradient-to-r from-[#06b6d4] to-[#06124f] text-white font-semibold rounded-lg overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-[#06b6d4]/30 hover:-translate-y-1"
+                            disabled={isLoading}
+                            className="group relative w-full px-8 py-3 bg-gradient-to-r from-[#06b6d4] to-[#06124f] text-white font-semibold rounded-lg overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-[#06b6d4]/30 hover:-translate-y-1 disabled:opacity-70 disabled:cursor-not-allowed"
                         >
-                            <span className="relative z-10">Sign In</span>
+                            <span className="relative z-10">{isLoading ? "Signing In..." : "Sign In"}</span>
                             <div className="absolute inset-0 bg-gradient-to-r from-[#06124f] to-[#06b6d4] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                         </button>
                     </form>

@@ -8,9 +8,15 @@ export default function Header({ onMenuClick }: { onMenuClick: () => void }) {
     const [showProfileMenu, setShowProfileMenu] = useState(false);
     const router = useRouter();
 
-    const handleLogout = () => {
-        // Handle logout logic here
-        router.push("/login");
+    const handleLogout = async () => {
+        try {
+            await fetch("/api/logout", { method: "POST" });
+            router.push("/login");
+        } catch (error) {
+            console.error("Logout failed:", error);
+            // Fallback to client-side redirect
+            router.push("/login");
+        }
     };
 
     return (
