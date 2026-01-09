@@ -75,12 +75,15 @@ export default async function ServiceDetailsPage({ params }: { params: Promise<{
                         </h3>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 items-center">
                             {brands.map((brand: any, idx: number) => (
-                                <div key={idx} className="flex items-center justify-center p-4 grayscale hover:grayscale-0 transition-all duration-300 opacity-60 hover:opacity-100">
-                                    <img
-                                        src={brand.logo}
-                                        alt={brand.name}
-                                        className="max-h-12 w-auto object-contain"
-                                    />
+                                <div key={brand.name || idx} className="flex items-center justify-center p-4 grayscale hover:grayscale-0 transition-all duration-300 opacity-60 hover:opacity-100">
+                                    <div className="relative h-12 w-32">
+                                        <Image
+                                            src={brand.logo}
+                                            alt={brand.name}
+                                            fill
+                                            className="object-contain"
+                                        />
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -95,8 +98,8 @@ export default async function ServiceDetailsPage({ params }: { params: Promise<{
                         {/* Description */}
                         <div>
                             <h2 className="text-3xl font-bold text-[#06124f] mb-6">Overview</h2>
-                            <div className="prose prose-lg text-gray-600 mb-10 leading-relaxed">
-                                <p>{service.long_description}</p>
+                            <div className="prose prose-lg text-gray-600 mb-10 leading-relaxed whitespace-pre-wrap">
+                                {service.long_description}
                             </div>
 
                             {specifications && specifications.length > 0 && (
@@ -107,7 +110,7 @@ export default async function ServiceDetailsPage({ params }: { params: Promise<{
                                     <div className="p-6">
                                         <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-6">
                                             {specifications.map((spec: any, idx: number) => (
-                                                <div key={idx} className="border-b border-gray-50 pb-2 last:border-0">
+                                                <div key={spec.label || idx} className="border-b border-gray-50 pb-2 last:border-0">
                                                     <dt className="text-sm font-medium text-gray-500 uppercase tracking-wide">{spec.label}</dt>
                                                     <dd className="mt-1 text-base font-semibold text-[#06124f]">{spec.value}</dd>
                                                 </div>
@@ -123,7 +126,7 @@ export default async function ServiceDetailsPage({ params }: { params: Promise<{
                             <h2 className="text-3xl font-bold text-[#06124f] mb-8">Key Benefits</h2>
                             <div className="grid grid-cols-1 gap-6">
                                 {benefits.map((benefit: any, idx: number) => (
-                                    <div key={idx} className="flex items-start p-6 bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-300">
+                                    <div key={benefit.title || idx} className="flex items-start p-6 bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-300">
                                         <div className="flex-shrink-0 w-10 h-10 rounded-full bg-[#06b6d4]/10 flex items-center justify-center mt-1">
                                             <svg className="w-5 h-5 text-[#06b6d4]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -154,15 +157,16 @@ export default async function ServiceDetailsPage({ params }: { params: Promise<{
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                             {products.map((product: any, idx: number) => (
-                                <div key={idx} className="group bg-white rounded-2xl overflow-hidden shadow-md border border-gray-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                                <div key={product.name || idx} className="group bg-white rounded-2xl overflow-hidden shadow-md border border-gray-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
                                     <div className="relative h-48 bg-gray-100 overflow-hidden">
-                                        <img
-                                            src={product.image}
+                                        <Image
+                                            src={product.image || product.image_url}
                                             alt={product.name}
-                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                            fill
+                                            className="object-cover group-hover:scale-110 transition-transform duration-500"
                                         />
-                                        <div className="absolute top-3 right-3">
-                                            <span className="px-3 py-1 bg-[#06b6d4] text-white text-xs font-bold rounded-full">
+                                        <div className="absolute top-3 right-3 z-10">
+                                            <span className="px-3 py-1 bg-[#06b6d4] text-white text-xs font-bold rounded-full shadow-sm">
                                                 {product.category}
                                             </span>
                                         </div>
@@ -195,7 +199,7 @@ export default async function ServiceDetailsPage({ params }: { params: Promise<{
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                             {useCases.map((useCase: any, idx: number) => (
-                                <div key={idx} className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300">
+                                <div key={useCase.industry || idx} className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300">
                                     <div className="w-12 h-12 rounded-xl bg-[#06b6d4]/10 flex items-center justify-center mb-6">
                                         <svg className="w-6 h-6 text-[#06b6d4]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
@@ -230,7 +234,7 @@ export default async function ServiceDetailsPage({ params }: { params: Promise<{
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                         {process.map((step: any, idx: number) => (
-                            <div key={idx} className="relative group">
+                            <div key={step.title || idx} className="relative group">
                                 <div className="absolute -inset-0.5 bg-gradient-to-r from-[#06b6d4] to-cyan-300 rounded-2xl blur opacity-25 group-hover:opacity-100 transition duration-500" />
                                 <div className="relative h-full bg-[#0a1a5c] p-8 rounded-2xl border border-white/10">
                                     <span className="text-5xl font-black text-white/5 absolute top-4 right-4">{step.step.toString().padStart(2, '0')}</span>
@@ -254,7 +258,7 @@ export default async function ServiceDetailsPage({ params }: { params: Promise<{
                     <h2 className="text-3xl font-bold text-center text-[#06124f] mb-12">Frequently Asked Questions</h2>
                     <div className="space-y-6">
                         {faqs.map((faq: any, idx: number) => (
-                            <div key={idx} className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300">
+                            <div key={faq.question || idx} className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300">
                                 <h3 className="text-lg font-bold text-[#06124f] mb-3 flex items-start">
                                     <span className="text-[#06b6d4] mr-3 font-serif italic text-xl">Q.</span>
                                     {faq.question}
