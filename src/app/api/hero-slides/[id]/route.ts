@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
-        const { id } = params;
+        const { id } = await params;
         const [rows]: any = await pool.query('SELECT * FROM hero_slides WHERE id = ?', [id]);
 
         if (rows.length === 0) {
@@ -20,9 +20,9 @@ export async function GET(request: Request, { params }: { params: { id: string }
     }
 }
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
-        const { id } = params;
+        const { id } = await params;
         const body = await request.json();
         const { title, subtitle, description, image, cta, cta_secondary, display_order, is_active } = body;
 
@@ -62,9 +62,9 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     }
 }
 
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
-        const { id } = params;
+        const { id } = await params;
         const [result]: any = await pool.query('DELETE FROM hero_slides WHERE id = ?', [id]);
 
         if (result.affectedRows === 0) {
