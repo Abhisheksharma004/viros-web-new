@@ -4,43 +4,32 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
-const featuredProducts = [
-    {
-        id: 1,
-        name: "Zebra ZT411 Industrial Printer",
-        tagline: "Rugged Durability for Demanding Applications",
-        description: "Keep your critical operations running efficiently with Zebra's ZT411. Constructed with an all-metal frame and bi-fold door, it delivers advancements in print speed, registration hanging, and connectivity.",
-        image: "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?auto=format&fit=crop&w=800&q=80",
-        color: "from-[#06b6d4] to-[#06124f]"
-    },
-    {
-        id: 2,
-        name: "Honeywell Dolphin CT40",
-        tagline: "Enterprise Mobile Computing Redefined",
-        description: "Built on Android and the Mobility Edge platform, the sleek and powerful CT40 optimizes data capture and workflows for retail and field service environments.",
-        image: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=800&q=80",
-        color: "from-[#06124f] to-[#06b6d4]"
-    },
-    {
-        id: 3,
-        name: "Datalogic PowerScan 9500",
-        tagline: "Unmatched Scanning Performance",
-        description: "The PowerScan 9500 series represents the new 2D handheld imagers with rugged mechanics for industrial applications, offering intuitive and fast reading.",
-        image: "https://images.unsplash.com/photo-1556742502-ec7c0e9f34b1?auto=format&fit=crop&w=800&q=80",
-        color: "from-[#06b6d4] via-[#06124f] to-[#06b6d4]"
-    }
-];
+interface ProductHeroSliderProps {
+    products?: any[];
+}
 
-export default function ProductHeroSlider() {
+export default function ProductHeroSlider({ products: initialProducts }: ProductHeroSliderProps) {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [direction, setDirection] = useState(0); // -1 for left, 1 for right
 
+    const featuredProducts = (initialProducts && initialProducts.length > 0) ? initialProducts : [
+        {
+            id: 'fallback-1',
+            name: "Zebra ZT411 Industrial Printer",
+            tagline: "Rugged Durability for Demanding Applications",
+            description: "Keep your critical operations running efficiently with Zebra's ZT411. Constructed with an all-metal frame and bi-fold door.",
+            image_url: "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?auto=format&fit=crop&w=800&q=80",
+            theme_color: "from-[#06b6d4] to-[#06124f]"
+        }
+    ];
+
     useEffect(() => {
+        if (featuredProducts.length <= 1) return;
         const timer = setInterval(() => {
             handleNext();
         }, 6000);
         return () => clearInterval(timer);
-    }, [currentIndex]);
+    }, [currentIndex, featuredProducts.length]);
 
     const handleNext = () => {
         setDirection(1);
@@ -52,13 +41,16 @@ export default function ProductHeroSlider() {
         setCurrentIndex((prev) => (prev - 1 + featuredProducts.length) % featuredProducts.length);
     };
 
+    // Safety check for empty products
+    if (featuredProducts.length === 0) return null;
+
     const activeProduct = featuredProducts[currentIndex];
 
     return (
         <div className="relative w-full min-h-[600px] md:h-screen flex items-center overflow-hidden bg-gray-50 pt-20 md:pt-0">
 
             {/* Background Gradient Mesh */}
-            <div className={`absolute inset-0 bg-gradient-to-br ${activeProduct.color} opacity-10 transition-colors duration-1000`} />
+            <div className={`absolute inset-0 bg-gradient-to-br ${activeProduct.theme_color || activeProduct.color} opacity-10 transition-colors duration-1000`} />
 
             {/* Animated Background Shapes */}
             <div className="absolute top-0 right-0 w-2/3 h-full bg-gradient-to-l from-white/40 via-transparent to-transparent blur-3xl" />
@@ -67,7 +59,7 @@ export default function ProductHeroSlider() {
             {/* Mobile Background Image (Absolute) */}
             <div className="absolute inset-0 z-0 md:hidden">
                 <Image
-                    src={activeProduct.image}
+                    src={activeProduct.image_url || activeProduct.image}
                     alt={activeProduct.name}
                     fill
                     className="object-cover opacity-60 blur-[2px] scale-110"
@@ -112,9 +104,9 @@ export default function ProductHeroSlider() {
                 {/* Image Content (Desktop Only) */}
                 <div className="hidden md:flex w-full md:w-1/2 h-full items-center justify-center relative">
                     <div key={`img-${currentIndex}`} className="relative w-full h-full max-h-[600px] animate-fade-in-scale">
-                        <div className={`absolute inset-0 bg-gradient-to-br ${activeProduct.color} opacity-20 rounded-full blur-3xl transform rotate-6 scale-90 translate-y-12`} />
+                        <div className={`absolute inset-0 bg-gradient-to-br ${activeProduct.theme_color || activeProduct.color} opacity-20 rounded-full blur-3xl transform rotate-6 scale-90 translate-y-12`} />
                         <Image
-                            src={activeProduct.image}
+                            src={activeProduct.image_url || activeProduct.image}
                             alt={activeProduct.name}
                             fill
                             className="object-contain drop-shadow-2xl z-20 relative p-8"
@@ -125,24 +117,24 @@ export default function ProductHeroSlider() {
             </div>
 
             {/* Slide Indicators */}
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 hidden md:flex space-x-2 z-30">
-                {featuredProducts.map((_, idx) => (
-                    <button
-                        key={idx}
-                        onClick={() => {
-                            setDirection(idx > currentIndex ? 1 : -1);
-                            setCurrentIndex(idx);
-                        }}
-                        className={`transition-all duration-300 rounded-full ${idx === currentIndex
-                            ? "bg-[#06124f] w-8 h-2 md:w-12 md:h-3"
-                            : "bg-[#06124f]/20 w-2 h-2 md:w-3 md:h-3 hover:bg-[#06b6d4] hover:scale-110"
-                            }`}
-                        aria-label={`Go to slide ${idx + 1}`}
-                    />
-                ))}
-            </div>
-
-
+            {featuredProducts.length > 1 && (
+                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 hidden md:flex space-x-2 z-30">
+                    {featuredProducts.map((_, idx) => (
+                        <button
+                            key={idx}
+                            onClick={() => {
+                                setDirection(idx > currentIndex ? 1 : -1);
+                                setCurrentIndex(idx);
+                            }}
+                            className={`transition-all duration-300 rounded-full ${idx === currentIndex
+                                ? "bg-[#06124f] w-8 h-2 md:w-12 md:h-3"
+                                : "bg-[#06124f]/20 w-2 h-2 md:w-3 md:h-3 hover:bg-[#06b6d4] hover:scale-110"
+                                }`}
+                            aria-label={`Go to slide ${idx + 1}`}
+                        />
+                    ))}
+                </div>
+            )}
         </div>
     );
 }

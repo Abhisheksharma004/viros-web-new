@@ -4,12 +4,39 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 
-import { services } from "@/data/services";
+import { Printer, Code, Tags, Settings, Monitor, CheckCircle2 } from "lucide-react";
+
+const iconMap: Record<string, React.ReactNode> = {
+    Printer: <Printer size={32} />,
+    Code: <Code size={32} />,
+    Tags: <Tags size={32} />,
+    Settings: <Settings size={32} />,
+    Monitor: <Monitor size={32} />,
+};
 
 export default function FeaturedServices() {
     const [isVisible, setIsVisible] = useState(false);
+    const [services, setServices] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        const fetchServices = async () => {
+            try {
+                const response = await fetch('/api/services');
+                const data = await response.json();
+                const parsedData = data.map((s: any) => ({
+                    ...s,
+                    features: typeof s.features === 'string' ? JSON.parse(s.features) : s.features
+                }));
+                setServices(parsedData);
+            } catch (err) {
+                console.error("Failed to fetch services:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchServices();
         const observer = new IntersectionObserver(
             ([entry]) => {
                 if (entry.isIntersecting) {
@@ -43,9 +70,13 @@ export default function FeaturedServices() {
                 </div>
 
                 <div className="space-y-32">
-                    {services.map((service, index) => (
+                    {loading ? (
+                        <div className="flex justify-center items-center py-20">
+                            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#06b6d4]"></div>
+                        </div>
+                    ) : services.map((service, index) => (
                         <div
-                            key={service.id}
+                            key={service.slug}
                             className={`flex flex-col ${index % 2 === 0 ? 'lg:flex-row' : 'lg:flex-row-reverse'} items-center gap-12 lg:gap-24 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-16'}`}
                             style={{ transitionDelay: `${index * 200}ms` }}
                         >
@@ -54,14 +85,14 @@ export default function FeaturedServices() {
                                 <div className="absolute inset-0 bg-black/5 rounded-[2.5rem] transform translate-x-4 translate-y-4 transition-transform duration-500 group-hover:translate-x-6 group-hover:translate-y-6" />
                                 <div className="relative h-[400px] w-full rounded-[2.5rem] overflow-hidden shadow-2xl">
                                     <Image
-                                        src={service.image}
+                                        src={service.image_url}
                                         alt={service.title}
                                         fill
                                         className="object-cover transition-transform duration-700 group-hover:scale-105"
                                     />
                                     {/* Floating Icon Badge */}
                                     <div className="absolute bottom-8 left-8 w-20 h-20 bg-white rounded-2xl shadow-xl flex items-center justify-center text-[#06b6d4] transform transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">
-                                        {service.icon}
+                                        {iconMap[service.icon_name] || <Printer size={32} />}
                                     </div>
                                 </div>
                             </div>
@@ -79,7 +110,7 @@ export default function FeaturedServices() {
                                 </p>
 
                                 <ul className="space-y-4 mb-10">
-                                    {service.features.map((feature, i) => (
+                                    {service.features.map((feature: string, i: number) => (
                                         <li key={i} className="flex items-center group/item cursor-default">
                                             <div className="w-10 h-10 rounded-full bg-[#06b6d4]/10 flex-shrink-0 flex items-center justify-center mr-4 group-hover/item:bg-[#06b6d4] transition-colors duration-300">
                                                 <svg className="w-4 h-4 text-[#06b6d4] group-hover/item:text-white transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -92,7 +123,7 @@ export default function FeaturedServices() {
                                 </ul>
 
                                 <Link
-                                    href={`/services/${service.id}`}
+                                    href={`/services/${service.slug}`}
                                     className="inline-flex items-center px-8 py-4 bg-[#06124f] text-white font-bold rounded-lg shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group/btn"
                                 >
                                     Explore Solutions

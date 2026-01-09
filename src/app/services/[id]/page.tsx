@@ -1,21 +1,41 @@
-import { services } from "@/data/services";
+import pool from "@/lib/db";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Printer, Code, Tags, Settings, Monitor } from "lucide-react";
 
-export function generateStaticParams() {
-    return services.map((service) => ({
-        id: service.id,
-    }));
+const iconMap: Record<string, React.ReactNode> = {
+    Printer: <Printer size={48} />,
+    Code: <Code size={48} />,
+    Tags: <Tags size={48} />,
+    Settings: <Settings size={48} />,
+    Monitor: <Monitor size={48} />,
+};
+
+export async function generateStaticParams() {
+    const [rows]: any = await pool.query('SELECT slug as id FROM services');
+    return rows;
 }
 
 export default async function ServiceDetailsPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
-    const service = services.find((s) => s.id === id);
+
+    const [rows]: any = await pool.query('SELECT * FROM services WHERE slug = ?', [id]);
+    const service = rows[0];
 
     if (!service) {
         notFound();
     }
+
+    // Parse JSON fields
+    const features = typeof service.features === 'string' ? JSON.parse(service.features) : service.features;
+    const benefits = typeof service.benefits === 'string' ? JSON.parse(service.benefits) : service.benefits;
+    const specifications = typeof service.specifications === 'string' ? JSON.parse(service.specifications) : service.specifications;
+    const process = typeof service.process === 'string' ? JSON.parse(service.process) : service.process;
+    const faqs = typeof service.faqs === 'string' ? JSON.parse(service.faqs) : service.faqs;
+    const brands = typeof service.brands === 'string' ? JSON.parse(service.brands) : service.brands;
+    const products = typeof service.products === 'string' ? JSON.parse(service.products) : service.products;
+    const useCases = typeof service.useCases === 'string' ? JSON.parse(service.useCases) : service.useCases;
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -23,7 +43,7 @@ export default async function ServiceDetailsPage({ params }: { params: Promise<{
             <section className="relative h-[60vh] min-h-[500px] flex items-center justify-center overflow-hidden">
                 <div className="absolute inset-0">
                     <Image
-                        src={service.image}
+                        src={service.image_url}
                         alt={service.title}
                         fill
                         className="object-cover"
@@ -35,7 +55,7 @@ export default async function ServiceDetailsPage({ params }: { params: Promise<{
 
                 <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
                     <div className="w-20 h-20 mx-auto bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center mb-8 border border-white/20 text-white">
-                        {service.icon}
+                        {iconMap[service.icon_name] || <Printer size={48} />}
                     </div>
                     <h1 className="text-4xl md:text-6xl font-black mb-6 tracking-tight">
                         {service.title}
@@ -46,15 +66,15 @@ export default async function ServiceDetailsPage({ params }: { params: Promise<{
                 </div>
             </section>
 
-            {/* Trusted Brands Section */}
-            {service.brands && service.brands.length > 0 && (
+            {/* Brands Section */}
+            {brands && brands.length > 0 && (
                 <section className="py-12 bg-white border-b border-gray-100">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <h3 className="text-center text-sm font-bold text-gray-500 uppercase tracking-widest mb-8">
                             Trusted Partner Brands
                         </h3>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 items-center">
-                            {service.brands.map((brand, idx) => (
+                            {brands.map((brand: any, idx: number) => (
                                 <div key={idx} className="flex items-center justify-center p-4 grayscale hover:grayscale-0 transition-all duration-300 opacity-60 hover:opacity-100">
                                     <img
                                         src={brand.logo}
@@ -76,17 +96,17 @@ export default async function ServiceDetailsPage({ params }: { params: Promise<{
                         <div>
                             <h2 className="text-3xl font-bold text-[#06124f] mb-6">Overview</h2>
                             <div className="prose prose-lg text-gray-600 mb-10 leading-relaxed">
-                                <p>{service.longDescription}</p>
+                                <p>{service.long_description}</p>
                             </div>
 
-                            {service.specifications && (
+                            {specifications && specifications.length > 0 && (
                                 <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
                                     <h3 className="bg-gray-50 px-6 py-4 text-lg font-bold text-[#06124f] border-b border-gray-100">
                                         Technical Specifications
                                     </h3>
                                     <div className="p-6">
                                         <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-6">
-                                            {service.specifications.map((spec, idx) => (
+                                            {specifications.map((spec: any, idx: number) => (
                                                 <div key={idx} className="border-b border-gray-50 pb-2 last:border-0">
                                                     <dt className="text-sm font-medium text-gray-500 uppercase tracking-wide">{spec.label}</dt>
                                                     <dd className="mt-1 text-base font-semibold text-[#06124f]">{spec.value}</dd>
@@ -102,7 +122,7 @@ export default async function ServiceDetailsPage({ params }: { params: Promise<{
                         <div>
                             <h2 className="text-3xl font-bold text-[#06124f] mb-8">Key Benefits</h2>
                             <div className="grid grid-cols-1 gap-6">
-                                {service.benefits.map((benefit, idx) => (
+                                {benefits.map((benefit: any, idx: number) => (
                                     <div key={idx} className="flex items-start p-6 bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-300">
                                         <div className="flex-shrink-0 w-10 h-10 rounded-full bg-[#06b6d4]/10 flex items-center justify-center mt-1">
                                             <svg className="w-5 h-5 text-[#06b6d4]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -122,7 +142,7 @@ export default async function ServiceDetailsPage({ params }: { params: Promise<{
             </section>
 
             {/* Product Examples Section */}
-            {service.products && service.products.length > 0 && (
+            {products && products.length > 0 && (
                 <section className="py-20 bg-white">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="text-center mb-16">
@@ -133,7 +153,7 @@ export default async function ServiceDetailsPage({ params }: { params: Promise<{
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                            {service.products.map((product, idx) => (
+                            {products.map((product: any, idx: number) => (
                                 <div key={idx} className="group bg-white rounded-2xl overflow-hidden shadow-md border border-gray-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
                                     <div className="relative h-48 bg-gray-100 overflow-hidden">
                                         <img
@@ -163,7 +183,7 @@ export default async function ServiceDetailsPage({ params }: { params: Promise<{
             )}
 
             {/* Industry Use Cases */}
-            {service.useCases && service.useCases.length > 0 && (
+            {useCases && useCases.length > 0 && (
                 <section className="py-20 bg-gray-50">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="text-center mb-16">
@@ -174,7 +194,7 @@ export default async function ServiceDetailsPage({ params }: { params: Promise<{
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                            {service.useCases.map((useCase, idx) => (
+                            {useCases.map((useCase: any, idx: number) => (
                                 <div key={idx} className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300">
                                     <div className="w-12 h-12 rounded-xl bg-[#06b6d4]/10 flex items-center justify-center mb-6">
                                         <svg className="w-6 h-6 text-[#06b6d4]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -209,7 +229,7 @@ export default async function ServiceDetailsPage({ params }: { params: Promise<{
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                        {service.process.map((step, idx) => (
+                        {process.map((step: any, idx: number) => (
                             <div key={idx} className="relative group">
                                 <div className="absolute -inset-0.5 bg-gradient-to-r from-[#06b6d4] to-cyan-300 rounded-2xl blur opacity-25 group-hover:opacity-100 transition duration-500" />
                                 <div className="relative h-full bg-[#0a1a5c] p-8 rounded-2xl border border-white/10">
@@ -233,7 +253,7 @@ export default async function ServiceDetailsPage({ params }: { params: Promise<{
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
                     <h2 className="text-3xl font-bold text-center text-[#06124f] mb-12">Frequently Asked Questions</h2>
                     <div className="space-y-6">
-                        {service.faqs.map((faq, idx) => (
+                        {faqs.map((faq: any, idx: number) => (
                             <div key={idx} className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300">
                                 <h3 className="text-lg font-bold text-[#06124f] mb-3 flex items-start">
                                     <span className="text-[#06b6d4] mr-3 font-serif italic text-xl">Q.</span>

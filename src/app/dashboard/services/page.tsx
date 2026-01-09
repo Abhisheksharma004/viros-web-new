@@ -1,16 +1,43 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
+import {
+    Printer, Code, Tags, Settings, Monitor, Plus, Trash2,
+    ChevronRight, Save, X, Layout, List, HelpCircle,
+    RefreshCcw, Info, Image as ImageIcon, Palmtree, Briefcase
+} from "lucide-react";
 
 interface Service {
     id: number;
+    slug: string;
     title: string;
     status: "Active" | "Inactive";
     description: string;
+    long_description: string;
+    image_url: string;
+    icon_name: string;
+    gradient: string;
+    features: string[];
+    benefits: { title: string; description: string }[];
+    specifications: { label: string; value: string }[];
+    process: { step: number; title: string; description: string }[];
+    faqs: { question: string; answer: string }[];
+    brands: { name: string; logo: string }[];
+    products: { name: string; description: string; image: string; category: string }[];
+    useCases: { industry: string; scenario: string; solution: string }[];
     created_at: string;
     updated_at: string;
 }
+
+const ICON_OPTIONS = [
+    { name: "Printer", icon: Printer },
+    { name: "Code", icon: Code },
+    { name: "Tags", icon: Tags },
+    { name: "Settings", icon: Settings },
+    { name: "Monitor", icon: Monitor },
+    { name: "RefreshCcw", icon: RefreshCcw },
+    { name: "Palmtree", icon: Palmtree }
+];
 
 export default function ServicesPage() {
     const [services, setServices] = useState<Service[]>([]);
@@ -19,6 +46,7 @@ export default function ServicesPage() {
     const [searchTerm, setSearchTerm] = useState("");
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [selectedServiceId, setSelectedServiceId] = useState<number | null>(null);
+    const [activeTab, setActiveTab] = useState("general");
 
     const fetchServices = async () => {
         setIsLoading(true);
@@ -26,7 +54,19 @@ export default function ServicesPage() {
             const response = await fetch("/api/services");
             if (!response.ok) throw new Error("Failed to fetch services");
             const data = await response.json();
-            setServices(data);
+            // Parse JSON strings from database
+            const parsedData = data.map((s: any) => ({
+                ...s,
+                features: typeof s.features === 'string' ? JSON.parse(s.features) : s.features,
+                benefits: typeof s.benefits === 'string' ? JSON.parse(s.benefits) : s.benefits,
+                specifications: typeof s.specifications === 'string' ? JSON.parse(s.specifications) : s.specifications,
+                process: typeof s.process === 'string' ? JSON.parse(s.process) : s.process,
+                faqs: typeof s.faqs === 'string' ? JSON.parse(s.faqs) : s.faqs,
+                brands: typeof s.brands === 'string' ? JSON.parse(s.brands) : s.brands,
+                products: typeof s.products === 'string' ? JSON.parse(s.products) : s.products,
+                useCases: typeof s.useCases === 'string' ? JSON.parse(s.useCases) : s.useCases
+            }));
+            setServices(parsedData);
         } catch (err: any) {
             setError(err.message);
         } finally {
@@ -44,26 +84,54 @@ export default function ServicesPage() {
 
     const [showFormModal, setShowFormModal] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<Partial<Service>>({
         title: "",
-        status: "Active" as "Active" | "Inactive",
+        slug: "",
+        status: "Active",
         description: "",
+        long_description: "",
+        image_url: "",
+        icon_name: "Printer",
+        gradient: "from-[#06b6d4] to-[#06124f]",
+        features: [],
+        benefits: [],
+        specifications: [],
+        process: [],
+        faqs: [],
+        brands: [],
+        products: [],
+        useCases: []
     });
 
     const openAddModal = () => {
         setIsEditing(false);
-        setFormData({ title: "", status: "Active", description: "" });
+        setFormData({
+            title: "",
+            slug: "",
+            status: "Active",
+            description: "",
+            long_description: "",
+            image_url: "",
+            icon_name: "Printer",
+            gradient: "from-[#06b6d4] to-[#06124f]",
+            features: [],
+            benefits: [],
+            specifications: [],
+            process: [],
+            faqs: [],
+            brands: [],
+            products: [],
+            useCases: []
+        });
+        setActiveTab("general");
         setShowFormModal(true);
     };
 
     const openEditModal = (service: Service) => {
         setIsEditing(true);
         setSelectedServiceId(service.id);
-        setFormData({
-            title: service.title,
-            status: service.status,
-            description: service.description || "",
-        });
+        setFormData(service);
+        setActiveTab("general");
         setShowFormModal(true);
     };
 
@@ -88,11 +156,6 @@ export default function ServicesPage() {
         }
     };
 
-    const handleDelete = (id: number) => {
-        setSelectedServiceId(id);
-        setShowDeleteModal(true);
-    };
-
     const confirmDelete = async () => {
         if (selectedServiceId) {
             try {
@@ -110,6 +173,25 @@ export default function ServicesPage() {
         }
     };
 
+    const addListField = (field: string, defaultValue: any) => {
+        setFormData({
+            ...formData,
+            [field]: [...((formData as any)[field] || []), defaultValue]
+        });
+    };
+
+    const removeListField = (field: string, index: number) => {
+        const newList = [...((formData as any)[field] || [])];
+        newList.splice(index, 1);
+        setFormData({ ...formData, [field]: newList });
+    };
+
+    const updateListField = (field: string, index: number, value: any) => {
+        const newList = [...((formData as any)[field] || [])];
+        newList[index] = value;
+        setFormData({ ...formData, [field]: newList });
+    };
+
     if (isLoading) {
         return (
             <div className="flex items-center justify-center p-12">
@@ -120,229 +202,556 @@ export default function ServicesPage() {
 
     return (
         <div className="space-y-6">
-            {/* Page Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-bold text-gray-900">Services Management</h1>
-                    <p className="text-gray-600 mt-1">Manage all your service offerings</p>
+                    <p className="text-gray-600 mt-1">Manage all your rich service content</p>
                 </div>
                 <button
                     onClick={openAddModal}
-                    className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-[#06b6d4] to-[#06124f] text-white font-semibold rounded-lg hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5"
+                    className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-[#06b6d4] to-[#06124f] text-white font-semibold rounded-lg shadow-lg hover:shadow-cyan-500/25 transition-all duration-300 hover:-translate-y-0.5"
                 >
-                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
+                    <Plus className="w-5 h-5 mr-2" />
                     Add New Service
                 </button>
             </div>
 
-            {error && (
-                <div className="bg-red-50 border border-red-200 text-red-600 p-4 rounded-lg">
-                    {error}
-                </div>
-            )}
+            {error && <div className="bg-red-50 border border-red-200 text-red-600 p-4 rounded-lg">{error}</div>}
 
-            {/* Search and Filters */}
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-                <div className="flex flex-col sm:flex-row gap-4">
-                    <div className="flex-1">
-                        <div className="relative">
-                            <input
-                                type="text"
-                                placeholder="Search services..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#06b6d4] focus:border-transparent outline-none"
-                            />
-                            <svg className="w-5 h-5 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
-                        </div>
-                    </div>
-                    <select className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#06b6d4] focus:border-transparent outline-none">
-                        <option>All Status</option>
-                        <option>Active</option>
-                        <option>Inactive</option>
-                    </select>
+                <div className="relative">
+                    <input
+                        type="text"
+                        placeholder="Search services..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#06b6d4] focus:border-transparent outline-none placeholder:text-gray-500 text-gray-900"
+                    />
+                    <Info className="w-5 h-5 text-gray-600 absolute left-3 top-2.5" />
                 </div>
             </div>
 
-            {/* Services Table */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full">
-                        <thead className="bg-gray-50 border-b border-gray-200">
-                            <tr>
-                                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                    Service Name
-                                </th>
-                                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                    Status
-                                </th>
-                                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                    Created At
-                                </th>
-                                <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                    Actions
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200">
-                            {filteredServices.map((service) => (
-                                <tr key={service.id} className="hover:bg-gray-50 transition-colors">
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center">
-                                            <div className="w-10 h-10 bg-gradient-to-br from-[#06b6d4] to-[#06124f] rounded-lg flex items-center justify-center text-white font-bold mr-3">
-                                                {service.title.charAt(0)}
-                                            </div>
-                                            <div>
-                                                <div className="font-medium text-gray-900">{service.title}</div>
-                                                <div className="text-sm text-gray-500">ID: {service.id}</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${service.status === "Active" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
-                                            }`}>
-                                            {service.status}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 text-sm text-gray-600">
-                                        {new Date(service.created_at).toLocaleDateString()}
-                                    </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <div className="flex items-center justify-end space-x-2">
-                                            <button
-                                                onClick={() => openEditModal(service)}
-                                                className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                                                title="Edit"
-                                            >
-                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                </svg>
-                                            </button>
-                                            <button
-                                                onClick={() => handleDelete(service.id)}
-                                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                title="Delete"
-                                            >
-                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                </svg>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-
-                {filteredServices.length === 0 && (
-                    <div className="text-center py-12">
-                        <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <p className="text-gray-600">No services found</p>
-                    </div>
-                )}
-            </div>
-
-            {/* Delete Confirmation Modal */}
-            {showDeleteModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl p-6 max-w-md w-full">
-                        <div className="text-center">
-                            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                </svg>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredServices.map((service) => (
+                    <div key={service.id} className="group bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300">
+                        <div className={`h-2 bg-gradient-to-r ${service.gradient}`} />
+                        <div className="p-6">
+                            <div className="flex items-start justify-between mb-4">
+                                <div className="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center text-[#06b6d4] group-hover:scale-110 transition-transform">
+                                    {(() => {
+                                        const IconComp = ICON_OPTIONS.find(i => i.name === service.icon_name)?.icon || Printer;
+                                        return <IconComp size={24} />;
+                                    })()}
+                                </div>
+                                <span className={`px-3 py-1 rounded-full text-xs font-bold ${service.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                                    {service.status}
+                                </span>
                             </div>
-                            <h3 className="text-xl font-bold text-gray-900 mb-2">Delete Service?</h3>
-                            <p className="text-gray-600 mb-6">
-                                Are you sure you want to delete this service? This action cannot be undone.
-                            </p>
-                            <div className="flex space-x-3">
-                                <button
-                                    onClick={() => setShowDeleteModal(false)}
-                                    className="flex-1 px-4 py-2 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={confirmDelete}
-                                    className="flex-1 px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors"
-                                >
-                                    Delete
-                                </button>
+                            <h3 className="text-xl font-bold text-gray-900 mb-2">{service.title}</h3>
+                            <p className="text-sm text-gray-500 line-clamp-2 mb-6">{service.description}</p>
+
+                            <div className="flex items-center justify-between pt-4 border-t border-gray-50">
+                                <span className="text-xs text-gray-400">Slug: {service.slug}</span>
+                                <div className="flex space-x-1">
+                                    <button onClick={() => openEditModal(service)} className="p-2 text-[#06b6d4] hover:bg-cyan-50 rounded-lg transition-colors">
+                                        <ChevronRight size={18} />
+                                    </button>
+                                    <button onClick={() => { setSelectedServiceId(service.id); setShowDeleteModal(true); }} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                                        <Trash2 size={18} />
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
-            {/* Add/Edit Form Modal */}
+                ))}
+            </div>
+
             {showFormModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl p-6 sm:p-8 max-w-lg w-full">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-2xl font-bold text-gray-900">
-                                {isEditing ? "Edit Service" : "Add New Service"}
-                            </h2>
-                            <button onClick={() => setShowFormModal(false)} className="text-gray-400 hover:text-gray-600">
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden">
+                        <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                            <div>
+                                <h2 className="text-2xl font-black text-[#06124f]">
+                                    {isEditing ? "Edit Service" : "Add New Service"}
+                                </h2>
+                                <p className="text-sm text-gray-700 font-medium">Configure your rich service content</p>
+                            </div>
+                            <button onClick={() => setShowFormModal(false)} className="p-2 hover:bg-gray-200 rounded-full transition-colors">
+                                <X size={20} />
                             </button>
                         </div>
-                        <form onSubmit={handleFormSubmit} className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Service Title</label>
-                                <input
-                                    type="text"
-                                    required
-                                    value={formData.title}
-                                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#06b6d4] focus:border-transparent outline-none"
-                                    placeholder="e.g. Hardware Solutions"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                                <select
-                                    value={formData.status}
-                                    onChange={(e) => setFormData({ ...formData, status: e.target.value as "Active" | "Inactive" })}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#06b6d4] focus:border-transparent outline-none"
-                                >
-                                    <option value="Active">Active</option>
-                                    <option value="Inactive">Inactive</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                                <textarea
-                                    value={formData.description}
-                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#06b6d4] focus:border-transparent outline-none h-32"
-                                    placeholder="Describe the service..."
-                                />
-                            </div>
-                            <div className="flex space-x-3 pt-4">
+
+                        <div className="flex border-b border-gray-100 bg-white">
+                            {[
+                                { id: 'general', label: 'General Info', icon: Layout },
+                                { id: 'visuals', label: 'Visuals', icon: ImageIcon },
+                                { id: 'content', label: 'Content & Specs', icon: List },
+                                { id: 'solutions', label: 'Solutions & Partners', icon: Briefcase },
+                                { id: 'advanced', label: 'Advanced (FAQs)', icon: HelpCircle }
+                            ].map((tab) => (
                                 <button
-                                    type="button"
-                                    onClick={() => setShowFormModal(false)}
-                                    className="flex-1 px-4 py-2 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors"
+                                    key={tab.id}
+                                    onClick={() => setActiveTab(tab.id)}
+                                    className={`flex items-center px-6 py-4 text-sm font-bold transition-all border-b-2 ${activeTab === tab.id
+                                        ? 'border-[#06b6d4] text-[#06b6d4] bg-cyan-50/30'
+                                        : 'border-transparent text-gray-600 hover:text-gray-900'}`}
                                 >
-                                    Cancel
+                                    <tab.icon size={16} className="mr-2" />
+                                    {tab.label}
                                 </button>
-                                <button
-                                    type="submit"
-                                    className="flex-1 px-4 py-2 bg-gradient-to-r from-[#06b6d4] to-[#06124f] text-white font-semibold rounded-lg hover:shadow-lg transition-all"
-                                >
-                                    {isEditing ? "Update Service" : "Create Service"}
+                            ))}
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto p-8 bg-white">
+                            <form id="serviceForm" onSubmit={handleFormSubmit} className="space-y-6">
+                                {activeTab === 'general' && (
+                                    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-xs font-black text-gray-700 uppercase tracking-wider mb-2">Service Title</label>
+                                                <input
+                                                    type="text"
+                                                    required
+                                                    value={formData.title || ""}
+                                                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#06b6d4] outline-none transition-all text-gray-900"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-black text-gray-700 uppercase tracking-wider mb-2">URL Slug</label>
+                                                <input
+                                                    type="text"
+                                                    required
+                                                    value={formData.slug || ""}
+                                                    onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#06b6d4] outline-none text-gray-900"
+                                                    placeholder="e.g. hardware-solutions"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-black text-gray-700 uppercase tracking-wider mb-2">Status</label>
+                                            <select
+                                                value={formData.status || "Active"}
+                                                onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+                                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#06b6d4] outline-none text-gray-900"
+                                            >
+                                                <option value="Active">Active</option>
+                                                <option value="Inactive">Inactive</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-black text-gray-700 uppercase tracking-wider mb-2">Short Description</label>
+                                            <textarea
+                                                value={formData.description || ""}
+                                                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#06b6d4] outline-none h-24 text-gray-900"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-black text-gray-700 uppercase tracking-wider mb-2">Detailed Long Description</label>
+                                            <textarea
+                                                value={formData.long_description || ""}
+                                                onChange={(e) => setFormData({ ...formData, long_description: e.target.value })}
+                                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#06b6d4] outline-none h-32 text-gray-900"
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+
+                                {activeTab === 'visuals' && (
+                                    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2">
+                                        <div>
+                                            <label className="block text-xs font-black text-gray-700 uppercase tracking-wider mb-2">Image URL</label>
+                                            <input
+                                                type="text"
+                                                value={formData.image_url || ""}
+                                                onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#06b6d4] outline-none mb-2 text-gray-900"
+                                            />
+                                            {formData.image_url && (
+                                                <div className="relative h-48 w-full rounded-2xl overflow-hidden border border-gray-100 shadow-inner mt-4 bg-gray-50">
+                                                    <img src={formData.image_url} alt="Preview" className="w-full h-full object-cover" />
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div>
+                                                <label className="block text-xs font-black text-gray-700 uppercase tracking-wider mb-4">Select Icon</label>
+                                                <div className="grid grid-cols-4 gap-2">
+                                                    {ICON_OPTIONS.map((opt) => (
+                                                        <button
+                                                            key={opt.name}
+                                                            type="button"
+                                                            onClick={() => setFormData({ ...formData, icon_name: opt.name })}
+                                                            className={`p-4 rounded-xl flex items-center justify-center transition-all ${formData.icon_name === opt.name
+                                                                ? 'bg-[#06b6d4] text-white shadow-lg shadow-cyan-500/20 scale-110'
+                                                                : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
+                                                        >
+                                                            <opt.icon size={20} />
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-black text-gray-700 uppercase tracking-wider mb-2">Gradient Style</label>
+                                                <input
+                                                    type="text"
+                                                    value={formData.gradient || ""}
+                                                    onChange={(e) => setFormData({ ...formData, gradient: e.target.value })}
+                                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#06b6d4] outline-none text-gray-900"
+                                                    placeholder="from-[#color] to-[#color]"
+                                                />
+                                                <div className={`h-16 w-full rounded-xl mt-4 bg-gradient-to-r ${formData.gradient} shadow-md`} />
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {activeTab === 'content' && (
+                                    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2">
+                                        <div>
+                                            <div className="flex justify-between items-center mb-4">
+                                                <label className="text-xs font-black text-gray-700 uppercase tracking-wider">Features</label>
+                                                <button type="button" onClick={() => addListField('features', '')} className="text-xs font-bold text-[#06b6d4] hover:underline flex items-center">
+                                                    <Plus size={14} className="mr-1" /> Add Feature
+                                                </button>
+                                            </div>
+                                            <div className="space-y-2">
+                                                {formData.features?.map((f, i) => (
+                                                    <div key={i} className="flex gap-2">
+                                                        <input
+                                                            value={f || ""}
+                                                            onChange={(e) => updateListField('features', i, e.target.value)}
+                                                            className="flex-1 px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#06b6d4] outline-none text-gray-900"
+                                                            placeholder="Feature description..."
+                                                        />
+                                                        <button type="button" onClick={() => removeListField('features', i)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg">
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <div className="flex justify-between items-center mb-4">
+                                                <label className="text-xs font-black text-gray-700 uppercase tracking-wider">Benefits</label>
+                                                <button type="button" onClick={() => addListField('benefits', { title: '', description: '' })} className="text-xs font-bold text-[#06b6d4] hover:underline flex items-center">
+                                                    <Plus size={14} className="mr-1" /> Add Benefit
+                                                </button>
+                                            </div>
+                                            <div className="space-y-4">
+                                                {formData.benefits?.map((b, i) => (
+                                                    <div key={i} className="p-4 bg-gray-50 rounded-xl border border-gray-100 space-y-2">
+                                                        <div className="flex justify-between">
+                                                            <input
+                                                                placeholder="Benefit Title"
+                                                                value={b.title || ""}
+                                                                onChange={(e) => updateListField('benefits', i, { ...b, title: e.target.value })}
+                                                                className="flex-1 font-bold bg-transparent outline-none border-b border-gray-200 focus:border-[#06b6d4] text-gray-900 placeholder:text-gray-500"
+                                                            />
+                                                            <button type="button" onClick={() => removeListField('benefits', i)} className="text-red-400 hover:text-red-600">
+                                                                <Trash2 size={16} />
+                                                            </button>
+                                                        </div>
+                                                        <textarea
+                                                            placeholder="Short benefit description..."
+                                                            value={b.description || ""}
+                                                            onChange={(e) => updateListField('benefits', i, { ...b, description: e.target.value })}
+                                                            className="w-full text-sm bg-transparent outline-none border-b border-gray-200 focus:border-[#06b6d4] text-gray-900 placeholder:text-gray-500 resize-none"
+                                                        />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <div className="flex justify-between items-center mb-4">
+                                                <label className="text-xs font-black text-gray-700 uppercase tracking-wider">Technical Specifications</label>
+                                                <button type="button" onClick={() => addListField('specifications', { label: '', value: '' })} className="text-xs font-bold text-[#06b6d4] hover:underline flex items-center">
+                                                    <Plus size={14} className="mr-1" /> Add Spec
+                                                </button>
+                                            </div>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                {formData.specifications?.map((s, i) => (
+                                                    <div key={i} className="flex gap-2 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                                        <div className="flex-1 space-y-2">
+                                                            <input
+                                                                placeholder="Label (e.g. Memory)"
+                                                                value={s.label || ""}
+                                                                onChange={(e) => updateListField('specifications', i, { ...s, label: e.target.value })}
+                                                                className="w-full text-xs font-bold bg-transparent outline-none border-b border-gray-200 text-gray-900"
+                                                            />
+                                                            <input
+                                                                placeholder="Value (e.g. 8GB)"
+                                                                value={s.value || ""}
+                                                                onChange={(e) => updateListField('specifications', i, { ...s, value: e.target.value })}
+                                                                className="w-full text-sm bg-transparent outline-none text-[#06b6d4] font-medium"
+                                                            />
+                                                        </div>
+                                                        <button type="button" onClick={() => removeListField('specifications', i)} className="text-red-400 hover:text-red-600 self-center">
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {activeTab === 'solutions' && (
+                                    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-2">
+                                        {/* Brands Section */}
+                                        <div className="space-y-4">
+                                            <div className="flex justify-between items-center">
+                                                <h4 className="text-sm font-black text-[#06124f] uppercase tracking-wider">Partner Brands</h4>
+                                                <button type="button" onClick={() => addListField('brands', { name: '', logo: '' })} className="text-xs font-bold text-[#06b6d4] hover:underline flex items-center">
+                                                    <Plus size={14} className="mr-1" /> Add Brand
+                                                </button>
+                                            </div>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                {formData.brands?.map((brand, i) => (
+                                                    <div key={i} className="p-4 bg-gray-50 rounded-xl border border-gray-100 flex gap-4">
+                                                        <div className="w-16 h-16 bg-white rounded-lg flex items-center justify-center p-2 border border-gray-100 overflow-hidden">
+                                                            {brand.logo ? <img src={brand.logo} alt="Logo" className="max-h-full max-w-full object-contain" /> : <ImageIcon className="text-gray-300" />}
+                                                        </div>
+                                                        <div className="flex-1 space-y-2">
+                                                            <input
+                                                                placeholder="Brand Name"
+                                                                value={brand.name || ""}
+                                                                onChange={(e) => updateListField('brands', i, { ...brand, name: e.target.value })}
+                                                                className="w-full text-sm font-bold bg-transparent outline-none border-b border-gray-200 text-gray-900"
+                                                            />
+                                                            <input
+                                                                placeholder="Logo URL"
+                                                                value={brand.logo || ""}
+                                                                onChange={(e) => updateListField('brands', i, { ...brand, logo: e.target.value })}
+                                                                className="w-full text-xs bg-transparent outline-none text-gray-500"
+                                                            />
+                                                        </div>
+                                                        <button type="button" onClick={() => removeListField('brands', i)} className="text-red-400 hover:text-red-600 self-center">
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {/* Products Section */}
+                                        <div className="space-y-4 pt-6 border-t border-gray-100">
+                                            <div className="flex justify-between items-center">
+                                                <h4 className="text-sm font-black text-[#06124f] uppercase tracking-wider">Featured Products</h4>
+                                                <button type="button" onClick={() => addListField('products', { name: '', description: '', image: '', category: '' })} className="text-xs font-bold text-[#06b6d4] hover:underline flex items-center">
+                                                    <Plus size={14} className="mr-1" /> Add Product
+                                                </button>
+                                            </div>
+                                            <div className="grid grid-cols-1 gap-6">
+                                                {formData.products?.map((product, i) => (
+                                                    <div key={i} className="p-6 bg-gray-50 rounded-2xl border border-gray-100 flex flex-col md:flex-row gap-6">
+                                                        <div className="w-full md:w-32 h-32 bg-white rounded-xl flex items-center justify-center p-2 border border-gray-100 overflow-hidden shrink-0">
+                                                            {product.image ? <img src={product.image} alt="Product" className="max-h-full max-w-full object-contain" /> : <ImageIcon className="text-gray-300" />}
+                                                        </div>
+                                                        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                            <div className="space-y-3">
+                                                                <input
+                                                                    placeholder="Product Name"
+                                                                    value={product.name || ""}
+                                                                    onChange={(e) => updateListField('products', i, { ...product, name: e.target.value })}
+                                                                    className="w-full font-bold bg-transparent outline-none border-b border-gray-200 text-gray-900"
+                                                                />
+                                                                <input
+                                                                    placeholder="Category (e.g. Printers)"
+                                                                    value={product.category || ""}
+                                                                    onChange={(e) => updateListField('products', i, { ...product, category: e.target.value })}
+                                                                    className="w-full text-sm bg-transparent outline-none border-b border-gray-200 text-[#06b6d4] font-medium"
+                                                                />
+                                                                <input
+                                                                    placeholder="Image URL"
+                                                                    value={product.image || ""}
+                                                                    onChange={(e) => updateListField('products', i, { ...product, image: e.target.value })}
+                                                                    className="w-full text-xs bg-transparent outline-none text-gray-500"
+                                                                />
+                                                            </div>
+                                                            <textarea
+                                                                placeholder="Product Description"
+                                                                value={product.description || ""}
+                                                                onChange={(e) => updateListField('products', i, { ...product, description: e.target.value })}
+                                                                className="w-full h-full text-sm bg-transparent outline-none border border-gray-200 rounded-lg p-3 text-gray-600 resize-none"
+                                                            />
+                                                        </div>
+                                                        <button type="button" onClick={() => removeListField('products', i)} className="text-red-400 hover:text-red-600 self-center">
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {/* Use Cases Section */}
+                                        <div className="space-y-4 pt-6 border-t border-gray-100">
+                                            <div className="flex justify-between items-center">
+                                                <h4 className="text-sm font-black text-[#06124f] uppercase tracking-wider">Industry Use Cases</h4>
+                                                <button type="button" onClick={() => addListField('useCases', { industry: '', scenario: '', solution: '' })} className="text-xs font-bold text-[#06b6d4] hover:underline flex items-center">
+                                                    <Plus size={14} className="mr-1" /> Add Use Case
+                                                </button>
+                                            </div>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                {formData.useCases?.map((uc, i) => (
+                                                    <div key={i} className="p-6 bg-gray-50 rounded-2xl border border-gray-100 space-y-4">
+                                                        <div className="flex justify-between items-start">
+                                                            <input
+                                                                placeholder="Industry (e.g. Retail)"
+                                                                value={uc.industry || ""}
+                                                                onChange={(e) => updateListField('useCases', i, { ...uc, industry: e.target.value })}
+                                                                className="flex-1 font-bold bg-transparent outline-none border-b border-gray-200 text-[#06124f]"
+                                                            />
+                                                            <button type="button" onClick={() => removeListField('useCases', i)} className="text-red-400 hover:text-red-600 ml-2">
+                                                                <Trash2 size={16} />
+                                                            </button>
+                                                        </div>
+                                                        <div className="space-y-2">
+                                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Challenge</label>
+                                                            <textarea
+                                                                placeholder="The scenario or problem..."
+                                                                value={uc.scenario || ""}
+                                                                onChange={(e) => updateListField('useCases', i, { ...uc, scenario: e.target.value })}
+                                                                className="w-full text-sm bg-transparent outline-none border-b border-gray-200 text-gray-600 resize-none"
+                                                                rows={2}
+                                                            />
+                                                        </div>
+                                                        <div className="space-y-2">
+                                                            <label className="text-[10px] font-black text-[#06b6d4] uppercase tracking-widest">Our Solution</label>
+                                                            <textarea
+                                                                placeholder="How we solved it..."
+                                                                value={uc.solution || ""}
+                                                                onChange={(e) => updateListField('useCases', i, { ...uc, solution: e.target.value })}
+                                                                className="w-full text-sm bg-transparent outline-none border-b border-gray-200 text-gray-600 resize-none"
+                                                                rows={2}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {activeTab === 'advanced' && (
+                                    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2">
+                                        <div>
+                                            <div className="flex justify-between items-center mb-4">
+                                                <label className="text-xs font-black text-gray-700 uppercase tracking-wider">Delivery Process</label>
+                                                <button type="button" onClick={() => addListField('process', { step: (formData.process?.length || 0) + 1, title: '', description: '' })} className="text-xs font-bold text-[#06b6d4] hover:underline flex items-center">
+                                                    <Plus size={14} className="mr-1" /> Add Step
+                                                </button>
+                                            </div>
+                                            <div className="space-y-3">
+                                                {formData.process?.map((p, i) => (
+                                                    <div key={i} className="flex gap-4 p-4 bg-gray-50 rounded-xl">
+                                                        <div className="w-10 h-10 bg-[#06124f] text-white rounded-lg flex items-center justify-center font-black flex-shrink-0">
+                                                            {p.step}
+                                                        </div>
+                                                        <div className="flex-1 space-y-2">
+                                                            <input
+                                                                placeholder="Step Title"
+                                                                value={p.title || ""}
+                                                                onChange={(e) => updateListField('process', i, { ...p, title: e.target.value })}
+                                                                className="w-full font-bold bg-transparent outline-none border-b border-transparent focus:border-cyan-200 text-gray-900 placeholder:text-gray-500"
+                                                            />
+                                                            <input
+                                                                placeholder="Description"
+                                                                value={p.description || ""}
+                                                                onChange={(e) => updateListField('process', i, { ...p, description: e.target.value })}
+                                                                className="w-full text-sm bg-transparent outline-none border-b border-transparent focus:border-cyan-200 text-gray-900 placeholder:text-gray-500"
+                                                            />
+                                                        </div>
+                                                        <button type="button" onClick={() => removeListField('process', i)} className="text-red-400 hover:text-red-600 self-center">
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <div className="flex justify-between items-center mb-4">
+                                                <label className="text-xs font-black text-gray-700 uppercase tracking-wider">FAQs</label>
+                                                <button type="button" onClick={() => addListField('faqs', { question: '', answer: '' })} className="text-xs font-bold text-[#06b6d4] hover:underline flex items-center">
+                                                    <Plus size={14} className="mr-1" /> Add FAQ
+                                                </button>
+                                            </div>
+                                            <div className="space-y-4">
+                                                {formData.faqs?.map((f, i) => (
+                                                    <div key={i} className="p-4 bg-gray-50 rounded-xl border border-gray-100 space-y-2">
+                                                        <div className="flex justify-between">
+                                                            <input
+                                                                placeholder="Question"
+                                                                value={f.question || ""}
+                                                                onChange={(e) => updateListField('faqs', i, { ...f, question: e.target.value })}
+                                                                className="flex-1 font-bold bg-transparent outline-none border-b border-gray-200 focus:border-[#06b6d4] text-gray-900 placeholder:text-gray-500"
+                                                            />
+                                                            <button type="button" onClick={() => removeListField('faqs', i)} className="text-red-400 hover:text-red-600">
+                                                                <Trash2 size={16} />
+                                                            </button>
+                                                        </div>
+                                                        <textarea
+                                                            placeholder="Answer..."
+                                                            value={f.answer || ""}
+                                                            onChange={(e) => updateListField('faqs', i, { ...f, answer: e.target.value })}
+                                                            className="w-full text-sm bg-transparent outline-none border-b border-gray-200 focus:border-[#06b6d4] text-gray-900 placeholder:text-gray-500 min-h-[60px]"
+                                                        />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </form>
+                        </div>
+
+                        <div className="p-6 border-t border-gray-100 bg-gray-50/50 flex space-x-3 justify-end">
+                            <button
+                                type="button"
+                                onClick={() => setShowFormModal(false)}
+                                className="px-6 py-3 border-2 border-gray-200 text-gray-600 font-bold rounded-xl hover:bg-white transition-all"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                form="serviceForm"
+                                type="submit"
+                                className="px-8 py-3 bg-gradient-to-r from-[#06b6d4] to-[#06124f] text-white font-bold rounded-xl shadow-lg shadow-cyan-500/20 hover:scale-105 active:scale-95 transition-all flex items-center"
+                            >
+                                <Save size={18} className="mr-2" />
+                                {isEditing ? "Update Service" : "Create Service"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showDeleteModal && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+                    <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl">
+                        <div className="text-center">
+                            <div className="w-20 h-20 bg-red-100 rounded-2xl flex items-center justify-center mx-auto mb-6 transform rotate-3">
+                                <Trash2 size={40} className="text-red-600" />
+                            </div>
+                            <h3 className="text-2xl font-black text-[#06124f] mb-2">Delete Service?</h3>
+                            <p className="text-gray-500 mb-8 leading-relaxed">
+                                You are about to remove this service from your public site. This action is irreversible.
+                            </p>
+                            <div className="flex space-x-3">
+                                <button onClick={() => setShowDeleteModal(false)} className="flex-1 px-4 py-3 border-2 border-gray-100 text-gray-400 font-bold rounded-xl hover:bg-gray-50">
+                                    No, Keep it
+                                </button>
+                                <button onClick={confirmDelete} className="flex-1 px-4 py-3 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 shadow-lg shadow-red-200">
+                                    Yes, Delete
                                 </button>
                             </div>
-                        </form>
+                        </div>
                     </div>
                 </div>
             )}

@@ -29,18 +29,54 @@ export async function PUT(
 ) {
     try {
         const { id } = await params;
-        const { title, status, description } = await request.json();
+        const body = await request.json();
+        const { title, slug, status, description, long_description, image_url, icon_name, gradient, features, benefits, specifications, process, faqs, brands, products, useCases } = body;
 
-        if (!title) {
+        if (!title || !slug) {
             return NextResponse.json(
-                { message: 'Title is required' },
+                { message: 'Title and Slug are required' },
                 { status: 400 }
             );
         }
 
         const [result]: any = await pool.query(
-            'UPDATE services SET title = ?, status = ?, description = ? WHERE id = ?',
-            [title, status, description, id]
+            `UPDATE services SET 
+                title = ?, 
+                slug = ?,
+                status = ?, 
+                description = ?,
+                long_description = ?,
+                image_url = ?,
+                icon_name = ?,
+                gradient = ?,
+                features = ?,
+                benefits = ?,
+                specifications = ?,
+                process = ?,
+                faqs = ?,
+                brands = ?,
+                products = ?,
+                useCases = ?
+            WHERE id = ?`,
+            [
+                title,
+                slug,
+                status,
+                description,
+                long_description,
+                image_url,
+                icon_name,
+                gradient,
+                JSON.stringify(features),
+                JSON.stringify(benefits),
+                JSON.stringify(specifications),
+                JSON.stringify(process),
+                JSON.stringify(faqs),
+                JSON.stringify(brands || []),
+                JSON.stringify(products || []),
+                JSON.stringify(useCases || []),
+                id
+            ]
         );
 
         if (result.affectedRows === 0) {

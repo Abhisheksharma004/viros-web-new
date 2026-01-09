@@ -3,10 +3,21 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import {
+    Printer, Code, Tags, Settings, Monitor, RefreshCcw, Palmtree
+} from "lucide-react";
 
-import { services } from "@/data/services";
+const ICON_MAP: Record<string, React.ReactElement> = {
+    "Printer": <Printer size={24} />,
+    "Code": <Code size={24} />,
+    "Tags": <Tags size={24} />,
+    "Settings": <Settings size={24} />,
+    "Monitor": <Monitor size={24} />,
+    "RefreshCcw": <RefreshCcw size={24} />,
+    "Palmtree": <Palmtree size={24} />
+};
 
-const processSteps = [
+const defaultProcessSteps = [
     {
         step: "01",
         title: "Consultation",
@@ -30,11 +41,41 @@ const processSteps = [
 ];
 
 export default function ServicesPage() {
+    const [services, setServices] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [isVisible, setIsVisible] = useState(false);
 
     useEffect(() => {
         setIsVisible(true);
+        const fetchServices = async () => {
+            try {
+                const res = await fetch('/api/services');
+                const data = await res.json();
+                const activeServices = data.filter((s: any) => s.status === 'Active').map((s: any) => ({
+                    ...s,
+                    features: typeof s.features === 'string' ? JSON.parse(s.features) : s.features,
+                    benefits: typeof s.benefits === 'string' ? JSON.parse(s.benefits) : s.benefits,
+                    specifications: typeof s.specifications === 'string' ? JSON.parse(s.specifications) : s.specifications,
+                    process: typeof s.process === 'string' ? JSON.parse(s.process) : s.process,
+                    faqs: typeof s.faqs === 'string' ? JSON.parse(s.faqs) : s.faqs
+                }));
+                setServices(activeServices);
+            } catch (err) {
+                console.error("Failed to fetch services", err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchServices();
     }, []);
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#06b6d4]"></div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -71,24 +112,23 @@ export default function ServicesPage() {
                         {services.map((service, index) => (
                             <div
                                 key={service.id}
-                                className={`group relative flex flex-col ${index % 2 === 0 ? 'lg:flex-row' : 'lg:flex-row-reverse'} items-center gap-8 lg:gap-16 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-                                    }`}
+                                className={`group relative flex flex-col ${index % 2 === 0 ? 'lg:flex-row' : 'lg:flex-row-reverse'} items-center gap-8 lg:gap-16 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
                                 style={{ transitionDelay: `${index * 150}ms` }}
                             >
                                 {/* Image Section with Enhanced Design */}
                                 <div className="relative w-full lg:w-1/2 h-[400px] lg:h-[500px] rounded-[2.5rem] overflow-hidden shadow-2xl transform transition-all duration-700 group-hover:-translate-y-2 group-hover:shadow-[0_20px_50px_rgba(6,182,212,0.3)]">
                                     <Image
-                                        src={service.image}
+                                        src={service.image_url || "https://images.unsplash.com/photo-1587293852726-70cdb56c2866?auto=format&fit=crop&w=800&q=80"}
                                         alt={service.title}
                                         fill
                                         className="object-cover transition-transform duration-700 group-hover:scale-110"
                                     />
-                                    <div className={`absolute inset-0 bg-gradient-to-br ${service.gradient} opacity-30 mix-blend-multiply transition-opacity duration-500 group-hover:opacity-40`} />
+                                    <div className={`absolute inset-0 bg-gradient-to-br ${service.gradient || 'from-[#06b6d4] to-[#06124f]'} opacity-30 mix-blend-multiply transition-opacity duration-500 group-hover:opacity-40`} />
 
                                     {/* Floating Badge */}
                                     <div className={`absolute bottom-8 ${index % 2 === 0 ? 'left-8' : 'right-8'} p-4 bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg transform transition-transform duration-500 group-hover:scale-105`}>
                                         <div className="w-12 h-12 flex items-center justify-center text-[#06b6d4]">
-                                            {service.icon}
+                                            {ICON_MAP[service.icon_name] || <Printer size={24} />}
                                         </div>
                                     </div>
                                 </div>
@@ -108,7 +148,7 @@ export default function ServicesPage() {
                                     </p>
 
                                     <ul className="grid grid-cols-1 gap-4 mb-10">
-                                        {service.features.map((feature, i) => (
+                                        {service.features.map((feature: string, i: number) => (
                                             <li key={i} className="flex items-center text-gray-700 font-medium group/item p-3 rounded-xl hover:bg-white hover:shadow-sm transition-all duration-300">
                                                 <div className="w-8 h-8 rounded-full bg-[#06b6d4]/10 flex items-center justify-center mr-4 group-hover/item:bg-[#06b6d4] transition-colors duration-300">
                                                     <svg className="w-4 h-4 text-[#06b6d4] group-hover/item:text-white transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -120,7 +160,7 @@ export default function ServicesPage() {
                                         ))}
                                     </ul>
 
-                                    <Link href={`/services/${service.id}`} className="group/btn inline-flex items-center px-8 py-4 bg-[#06124f] text-white font-bold rounded-xl overflow-hidden relative shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
+                                    <Link href={`/services/${service.slug}`} className="group/btn inline-flex items-center px-8 py-4 bg-[#06124f] text-white font-bold rounded-xl overflow-hidden relative shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
                                         <span className="absolute inset-0 bg-gradient-to-r from-[#06b6d4] to-[#06124f] opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300" />
                                         <span className="relative z-10 flex items-center">
                                             Explore Solutions
@@ -157,7 +197,7 @@ export default function ServicesPage() {
                         <div className="hidden md:block absolute top-1/2 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-[#06b6d4]/30 to-transparent transform -translate-y-1/2" />
 
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-                            {processSteps.map((step, index) => (
+                            {defaultProcessSteps.map((step, index) => (
                                 <div key={index} className="relative group">
                                     <div className="relative z-10 bg-[#06124f] p-4 rounded-3xl border border-[#06b6d4]/10 hover:border-[#06b6d4]/40 transition-colors duration-300 h-full">
                                         <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#06b6d4] to-[#06124f] p-[1px] mb-6 mx-auto transform group-hover:scale-110 transition-transform duration-300">
