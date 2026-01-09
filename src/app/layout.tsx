@@ -23,8 +23,8 @@ export default function RootLayout({
 }>) {
   const pathname = usePathname();
 
-  // Hide navbar and footer on login page
-  const hideNavAndFooter = pathname === "/login";
+  // Hide navbar and footer on login and dashboard pages
+  const hideNavAndFooter = pathname === "/login" || pathname?.startsWith("/dashboard");
 
   return (
     <html lang="en">
