@@ -1,0 +1,82 @@
+import { NextResponse } from 'next/server';
+import pool from '@/lib/db';
+
+export async function GET(request: Request, { params }: { params: { id: string } }) {
+    try {
+        const { id } = params;
+        const [rows]: any = await pool.query('SELECT * FROM hero_slides WHERE id = ?', [id]);
+
+        if (rows.length === 0) {
+            return NextResponse.json({ message: 'Slide not found' }, { status: 404 });
+        }
+
+        return NextResponse.json(rows[0]);
+    } catch (error: any) {
+        console.error('Error fetching hero slide:', error);
+        return NextResponse.json(
+            { message: 'Internal server error', error: error.message },
+            { status: 500 }
+        );
+    }
+}
+
+export async function PUT(request: Request, { params }: { params: { id: string } }) {
+    try {
+        const { id } = params;
+        const body = await request.json();
+        const { title, subtitle, description, image, cta, cta_secondary, display_order, is_active } = body;
+
+        // Perform partial update based on provided fields
+        const updates: string[] = [];
+        const values: any[] = [];
+
+        if (title !== undefined) { updates.push('title = ?'); values.push(title); }
+        if (subtitle !== undefined) { updates.push('subtitle = ?'); values.push(subtitle); }
+        if (description !== undefined) { updates.push('description = ?'); values.push(description); }
+        if (image !== undefined) { updates.push('image = ?'); values.push(image); }
+        if (cta !== undefined) { updates.push('cta = ?'); values.push(cta); }
+        if (cta_secondary !== undefined) { updates.push('cta_secondary = ?'); values.push(cta_secondary); }
+        if (display_order !== undefined) { updates.push('display_order = ?'); values.push(display_order); }
+        if (is_active !== undefined) { updates.push('is_active = ?'); values.push(is_active); }
+
+        if (updates.length === 0) {
+            return NextResponse.json({ message: 'No fields to update' }, { status: 400 });
+        }
+
+        values.push(id);
+        const query = `UPDATE hero_slides SET ${updates.join(', ')} WHERE id = ?`;
+
+        const [result]: any = await pool.query(query, values);
+
+        if (result.affectedRows === 0) {
+            return NextResponse.json({ message: 'Slide not found' }, { status: 404 });
+        }
+
+        return NextResponse.json({ message: 'Slide updated successfully' });
+    } catch (error: any) {
+        console.error('Error updating hero slide:', error);
+        return NextResponse.json(
+            { message: 'Internal server error', error: error.message },
+            { status: 500 }
+        );
+    }
+}
+
+export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+    try {
+        const { id } = params;
+        const [result]: any = await pool.query('DELETE FROM hero_slides WHERE id = ?', [id]);
+
+        if (result.affectedRows === 0) {
+            return NextResponse.json({ message: 'Slide not found' }, { status: 404 });
+        }
+
+        return NextResponse.json({ message: 'Slide deleted successfully' });
+    } catch (error: any) {
+        console.error('Error deleting hero slide:', error);
+        return NextResponse.json(
+            { message: 'Internal server error', error: error.message },
+            { status: 500 }
+        );
+    }
+}

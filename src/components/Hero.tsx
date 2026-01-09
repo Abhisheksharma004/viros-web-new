@@ -3,56 +3,63 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 
-const slides = [
-  {
-    id: 1,
-    title: "Complete Barcode Solutions",
-    subtitle: "Modern Business Operations",
-    description: "From barcode label printers and handheld scanners to Android mobile devices and custom software solutions - we provide everything you need for efficient business operations.",
-    image: "https://images.unsplash.com/photo-1586953208448-b95a79798f07?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80",
-    cta: "Browse Products",
-    ctaSecondary: "Get Quote"
-  },
-  {
-    id: 2,
-    title: "Professional Label Printers",
-    subtitle: "Thermal & Direct Thermal",
-    description: "Professional-grade thermal and direct thermal barcode label printers for industrial, desktop, and mobile applications with superior print quality.",
-    image: "https://images.unsplash.com/photo-1612198188060-c7c2a3b66eae?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80",
-    cta: "View Printers",
-    ctaSecondary: "Learn More"
-  },
-  {
-    id: 3,
-    title: "Advanced Scanner Technology",
-    subtitle: "1D & 2D Barcode Reading",
-    description: "High-performance handheld and mobile barcode scanners with advanced reading capabilities for 1D and 2D barcodes with wireless connectivity.",
-    image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80",
-    cta: "View Scanners",
-    ctaSecondary: "Contact Us"
-  }
-];
+interface HeroSlide {
+  id: number;
+  title: string;
+  subtitle: string;
+  description: string;
+  image: string;
+  cta: string;
+  cta_secondary: string;
+  display_order: number;
+  is_active: boolean;
+}
 
 export default function Hero() {
+  const [slides, setSlides] = useState<HeroSlide[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    const fetchSlides = async () => {
+      try {
+        const response = await fetch('/api/hero-slides');
+        if (response.ok) {
+          const data = await response.json();
+          // Filter active slides and sort by display_order
+          const activeSlides = data
+            .filter((s: HeroSlide) => s.is_active)
+            .sort((a: HeroSlide, b: HeroSlide) => a.display_order - b.display_order);
+          setSlides(activeSlides);
+        }
+      } catch (error) {
+        console.error('Error fetching hero slides:', error);
+      }
+    };
+    fetchSlides();
+  }, []);
 
   // Minimum swipe distance (in px)
   const minSwipeDistance = 50;
 
   // Auto-play functionality
   useEffect(() => {
-    if (!isAutoPlaying) return;
-    
+    if (!isAutoPlaying || slides.length === 0) return;
+
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [isAutoPlaying]);
+  }, [isAutoPlaying, slides.length]);
 
   // Loading state management
   useEffect(() => {
@@ -113,7 +120,7 @@ export default function Hero() {
 
   const onTouchEnd = () => {
     if (!touchStart || !touchEnd) return;
-    
+
     const distance = touchStart - touchEnd;
     const isLeftSwipe = distance > minSwipeDistance;
     const isRightSwipe = distance < -minSwipeDistance;
@@ -125,8 +132,12 @@ export default function Hero() {
     }
   };
 
+  if (!mounted) return <div className="min-h-screen bg-[#06124f]" />;
+
+  if (slides.length === 0 && !isLoading) return null;
+
   return (
-    <section 
+    <section
       className="relative min-h-screen overflow-hidden bg-gradient-to-br from-gray-50 to-white"
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
@@ -137,11 +148,10 @@ export default function Hero() {
         {slides.map((slide, index) => (
           <div
             key={slide.id}
-            className={`absolute inset-0 transition-all duration-1000 ease-in-out ${
-              index === currentSlide 
-                ? 'opacity-100 scale-100' 
-                : 'opacity-0 scale-105'
-            }`}
+            className={`absolute inset-0 transition-all duration-1000 ease-in-out ${index === currentSlide
+              ? 'opacity-100 scale-100'
+              : 'opacity-0 scale-105'
+              }`}
           >
             {/* Background Image with Mobile-Optimized Overlay */}
             <div className="relative h-full w-full">
@@ -149,9 +159,8 @@ export default function Hero() {
                 src={slide.image}
                 alt={slide.title}
                 fill
-                className={`object-cover object-center transition-opacity duration-500 ${
-                  isLoading ? 'opacity-0' : 'opacity-100'
-                }`}
+                className={`object-cover object-center transition-opacity duration-500 ${isLoading ? 'opacity-0' : 'opacity-100'
+                  }`}
                 priority={index === 0}
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 100vw"
                 quality={index === 0 ? 90 : 75}
@@ -176,11 +185,10 @@ export default function Hero() {
             {slides.map((slide, index) => (
               <div
                 key={slide.id}
-                className={`transition-all duration-700 ease-out ${
-                  index === currentSlide
-                    ? 'opacity-100 translate-y-0'
-                    : 'opacity-0 translate-y-8 pointer-events-none absolute inset-0'
-                }`}
+                className={`transition-all duration-700 ease-out ${index === currentSlide
+                  ? 'opacity-100 translate-y-0'
+                  : 'opacity-0 translate-y-8 pointer-events-none absolute inset-0'
+                  }`}
               >
                 {/* Subtitle Badge - Mobile Responsive */}
                 <div className="mb-4 sm:mb-6 md:mb-8 flex justify-center">
@@ -211,9 +219,9 @@ export default function Hero() {
                     <span className="relative z-10 text-sm sm:text-base">{slide.cta}</span>
                     <div className="absolute inset-0 bg-gradient-to-r from-[#06124f] to-[#06b6d4] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   </button>
-                  
+
                   <button className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 border-2 border-white/50 text-white font-semibold rounded-lg sm:rounded-xl backdrop-blur-sm hover:bg-white/10 hover:border-white/70 transition-all duration-300 min-w-0 sm:min-w-[160px] touch-manipulation">
-                    <span className="text-sm sm:text-base">{slide.ctaSecondary}</span>
+                    <span className="text-sm sm:text-base">{slide.cta_secondary}</span>
                   </button>
                 </div>
               </div>
@@ -228,11 +236,10 @@ export default function Hero() {
           <button
             key={index}
             onClick={() => goToSlide(index)}
-            className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full transition-all duration-300 touch-manipulation ${
-              index === currentSlide
-                ? 'bg-[#06b6d4] scale-125 shadow-lg shadow-[#06b6d4]/50'
-                : 'bg-white/40 hover:bg-white/60'
-            }`}
+            className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full transition-all duration-300 touch-manipulation ${index === currentSlide
+              ? 'bg-[#06b6d4] scale-125 shadow-lg shadow-[#06b6d4]/50'
+              : 'bg-white/40 hover:bg-white/60'
+              }`}
             aria-label={`Go to slide ${index + 1}`}
           />
         ))}
@@ -240,10 +247,10 @@ export default function Hero() {
 
       {/* Progress Bar - Mobile Optimized */}
       <div className="absolute bottom-0 left-0 w-full h-1 bg-white/20 z-20">
-        <div 
+        <div
           className="h-full bg-gradient-to-r from-[#06b6d4] to-[#06124f] transition-all duration-300 ease-linear"
-          style={{ 
-            width: `${((currentSlide + 1) / slides.length) * 100}%` 
+          style={{
+            width: `${slides.length > 0 ? ((currentSlide + 1) / slides.length) * 100 : 0}%`
           }}
         />
       </div>

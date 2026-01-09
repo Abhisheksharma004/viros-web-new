@@ -27,12 +27,12 @@ export default function RootLayout({
   const hideNavAndFooter = pathname === "/login" || pathname?.startsWith("/dashboard");
 
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white text-black`}
       >
         {!hideNavAndFooter && <Navbar />}
-        <main className={hideNavAndFooter ? "" : "pt-16"}>
+        <main className={hideNavAndFooter ? "" : "pt-20"}>
           {children}
         </main>
         {!hideNavAndFooter && <Footer />}
