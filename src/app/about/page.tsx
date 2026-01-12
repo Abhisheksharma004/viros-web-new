@@ -228,12 +228,12 @@ export default function AboutPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
+    <div className="min-h-screen bg-linear-to-br from-gray-50 to-white">
       {/* Hero Section - Fully Mobile Responsive */}
       <section className="relative py-8 sm:py-12 md:py-16 lg:py-20 overflow-hidden pt-16 sm:pt-20 md:pt-24">
         {/* Enhanced Background Pattern */}
         <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-gradient-to-r from-[#06124f]/10 via-transparent to-[#06b6d4]/10" />
+          <div className="absolute inset-0 bg-linear-to-r from-[#06124f]/10 via-transparent to-[#06b6d4]/10" />
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(6,18,79,0.1),transparent_50%)]" />
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(6,182,212,0.1),transparent_50%)]" />
         </div>
@@ -242,7 +242,7 @@ export default function AboutPage() {
           <div className={`text-center transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
             {/* Enhanced Subtitle Badge - Mobile Responsive */}
             <div className="mb-6 sm:mb-8 md:mb-10 flex justify-center">
-              <span className="inline-flex items-center px-4 py-2 sm:px-6 sm:py-3 md:px-8 md:py-4 bg-gradient-to-r from-[#06b6d4]/20 to-[#06124f]/20 backdrop-blur-xl text-[#06124f] text-xs sm:text-sm md:text-sm font-bold rounded-full border border-[#06b6d4]/30 shadow-2xl shadow-[#06b6d4]/10">
+              <span className="inline-flex items-center px-4 py-2 sm:px-6 sm:py-3 md:px-8 md:py-4 bg-linear-to-r from-[#06b6d4]/20 to-[#06124f]/20 backdrop-blur-xl text-[#06124f] text-xs sm:text-sm md:text-sm font-bold rounded-full border border-[#06b6d4]/30 shadow-2xl shadow-[#06b6d4]/10">
                 <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -253,11 +253,11 @@ export default function AboutPage() {
             {/* Enhanced Main Title - Mobile Responsive Typography */}
             <div className="mb-6 sm:mb-8 md:mb-10">
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl xl:text-8xl font-black leading-tight tracking-tight">
-                <span className="bg-gradient-to-r from-[#06124f] via-[#06124f] to-[#06b6d4] bg-clip-text text-transparent drop-shadow-2xl">
+                <span className="bg-linear-to-r from-[#06124f] via-[#06124f] to-[#06b6d4] bg-clip-text text-transparent drop-shadow-2xl">
                   Complete Barcode
                 </span>
                 <br />
-                <span className="bg-gradient-to-r from-[#06b6d4] to-[#06124f] bg-clip-text text-transparent drop-shadow-2xl">
+                <span className="bg-linear-to-r from-[#06b6d4] to-[#06124f] bg-clip-text text-transparent drop-shadow-2xl">
                   Solutions Provider
                 </span>
               </h1>
@@ -276,17 +276,17 @@ export default function AboutPage() {
 
             {/* Call to Action Buttons - Mobile Optimized */}
             <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center px-4 sm:px-0">
-              <button className="group relative w-full sm:w-auto px-6 sm:px-8 md:px-10 py-4 sm:py-5 bg-gradient-to-r from-[#06124f] to-[#06b6d4] text-white font-bold rounded-xl sm:rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-[#06b6d4]/30 hover:-translate-y-1 min-w-0 sm:min-w-[200px] touch-manipulation">
+              <button className="group relative w-full sm:w-auto px-6 sm:px-8 md:px-10 py-4 sm:py-5 bg-linear-to-r from-[#06124f] to-[#06b6d4] text-white font-bold rounded-xl sm:rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-[#06b6d4]/30 hover:-translate-y-1 min-w-0 sm:min-w-50 touch-manipulation">
                 <span className="relative z-10 flex items-center justify-center text-sm sm:text-base">
                   <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                   </svg>
                   Start Your Journey
                 </span>
-                <div className="absolute inset-0 bg-gradient-to-r from-[#06b6d4] to-[#06124f] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="absolute inset-0 bg-linear-to-r from-[#06b6d4] to-[#06124f] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               </button>
 
-              <button className="w-full sm:w-auto px-6 sm:px-8 md:px-10 py-4 sm:py-5 border-2 border-[#06124f]/30 text-[#06124f] font-bold rounded-xl sm:rounded-2xl backdrop-blur-sm hover:bg-[#06124f]/5 hover:border-[#06124f]/50 transition-all duration-300 min-w-0 sm:min-w-[200px] flex items-center justify-center touch-manipulation">
+              <button className="w-full sm:w-auto px-6 sm:px-8 md:px-10 py-4 sm:py-5 border-2 border-[#06124f]/30 text-[#06124f] font-bold rounded-xl sm:rounded-2xl backdrop-blur-sm hover:bg-[#06124f]/5 hover:border-[#06124f]/50 transition-all duration-300 min-w-0 sm:min-w-50 flex items-center justify-center touch-manipulation">
                 <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                 </svg>
@@ -298,7 +298,7 @@ export default function AboutPage() {
       </section>
 
       {/* Enhanced Stats Section - Mobile Responsive */}
-      <section className="py-12 sm:py-16 md:py-20 bg-gradient-to-r from-white/80 to-gray-50/80 backdrop-blur-xl">
+      <section className="py-12 sm:py-16 md:py-20 bg-linear-to-r from-white/80 to-gray-50/80 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 md:gap-8">
             {stats.map((stat, index) => (
@@ -313,7 +313,7 @@ export default function AboutPage() {
                     {stat.icon}
                   </div>
                 </div>
-                <div className="text-2xl sm:text-3xl md:text-4xl font-black bg-gradient-to-r from-[#06124f] to-[#06b6d4] bg-clip-text text-transparent mb-2 sm:mb-3">
+                <div className="text-2xl sm:text-3xl md:text-4xl font-black bg-linear-to-r from-[#06124f] to-[#06b6d4] bg-clip-text text-transparent mb-2 sm:mb-3">
                   {stat.number}
                 </div>
                 <div className="text-gray-700 font-semibold text-sm sm:text-base md:text-lg">{stat.label}</div>
@@ -347,7 +347,7 @@ export default function AboutPage() {
             {features.map((feature, index) => (
               <div
                 key={index}
-                className={`group p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-white to-gray-50/50 border border-gray-200/50 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+                className={`group p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl bg-linear-to-br from-white to-gray-50/50 border border-gray-200/50 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
                   }`}
                 style={{ transitionDelay: `${index * 100}ms` }}
               >
@@ -369,7 +369,7 @@ export default function AboutPage() {
       </section>
 
       {/* Enhanced Mission & Vision Section - Mobile Responsive */}
-      <section className="py-12 sm:py-16 md:py-20 lg:py-24 bg-gradient-to-br from-[#06124f]/5 to-[#06b6d4]/5">
+      <section className="py-12 sm:py-16 md:py-20 lg:py-24 bg-linear-to-br from-[#06124f]/5 to-[#06b6d4]/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
           <div className="grid lg:grid-cols-2 gap-12 sm:gap-16 md:gap-20 items-center">
             {/* Mission */}
@@ -390,15 +390,15 @@ export default function AboutPage() {
               </p>
               <div className="space-y-4 sm:space-y-6">
                 <div className="flex items-center space-x-3 sm:space-x-4">
-                  <div className="w-2 h-2 sm:w-3 sm:h-3 bg-gradient-to-r from-[#06b6d4] to-[#06124f] rounded-full flex-shrink-0"></div>
+                  <div className="w-2 h-2 sm:w-3 sm:h-3 bg-linear-to-r from-[#06b6d4] to-[#06124f] rounded-full shrink-0"></div>
                   <span className="text-gray-700 font-semibold text-sm sm:text-base">Professional-Grade Barcode Equipment</span>
                 </div>
                 <div className="flex items-center space-x-3 sm:space-x-4">
-                  <div className="w-2 h-2 sm:w-3 sm:h-3 bg-gradient-to-r from-[#06b6d4] to-[#06124f] rounded-full flex-shrink-0"></div>
+                  <div className="w-2 h-2 sm:w-3 sm:h-3 bg-linear-to-r from-[#06b6d4] to-[#06124f] rounded-full shrink-0"></div>
                   <span className="text-gray-700 font-semibold text-sm sm:text-base">Custom Software & IT Solutions</span>
                 </div>
                 <div className="flex items-center space-x-3 sm:space-x-4">
-                  <div className="w-2 h-2 sm:w-3 sm:h-3 bg-gradient-to-r from-[#06b6d4] to-[#06124f] rounded-full flex-shrink-0"></div>
+                  <div className="w-2 h-2 sm:w-3 sm:h-3 bg-linear-to-r from-[#06b6d4] to-[#06124f] rounded-full shrink-0"></div>
                   <span className="text-gray-700 font-semibold text-sm sm:text-base">Multi-Industry Application Support</span>
                 </div>
               </div>
@@ -407,7 +407,7 @@ export default function AboutPage() {
             {/* Vision */}
             <div className={`transition-all duration-1000 ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'}`}>
               <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-[#06b6d4]/20 to-[#06124f]/20 rounded-2xl sm:rounded-3xl backdrop-blur-xl"></div>
+                <div className="absolute inset-0 bg-linear-to-br from-[#06b6d4]/20 to-[#06124f]/20 rounded-2xl sm:rounded-3xl backdrop-blur-xl"></div>
                 <div className="relative p-6 sm:p-8 md:p-10 lg:p-12">
                   <div className="mb-6 sm:mb-8">
                     <span className="inline-flex items-center px-4 py-2 sm:px-6 sm:py-3 bg-[#06b6d4]/20 text-[#06b6d4] text-xs sm:text-sm font-bold rounded-full">
@@ -459,7 +459,7 @@ export default function AboutPage() {
 
           <div className="relative">
             {/* Vertical Line */}
-            <div className="absolute left-1/2 transform -translate-x-1/2 top-0 bottom-0 w-0.5 bg-gradient-to-b from-[#06b6d4]/0 via-[#06b6d4]/30 to-[#06b6d4]/0 hidden md:block" />
+            <div className="absolute left-1/2 transform -translate-x-1/2 top-0 bottom-0 w-0.5 bg-linear-to-b from-[#06b6d4]/0 via-[#06b6d4]/30 to-[#06b6d4]/0 hidden md:block" />
 
             <div className="space-y-12 sm:space-y-16 md:space-y-24">
               {[
@@ -529,7 +529,7 @@ export default function AboutPage() {
                     >
                       <div className="flex items-center justify-between mb-4">
                         <span className="text-2xl sm:text-3xl font-black text-[#06b6d4]">{milestone.year}</span>
-                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-[#06124f]/5 to-[#06b6d4]/5 rounded-xl flex items-center justify-center text-[#06124f] group-hover:scale-110 transition-transform duration-300">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-linear-to-br from-[#06124f]/5 to-[#06b6d4]/5 rounded-xl flex items-center justify-center text-[#06124f] group-hover:scale-110 transition-transform duration-300">
                           {milestone.icon}
                         </div>
                       </div>
@@ -551,14 +551,14 @@ export default function AboutPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
           <div className="text-center mb-12 sm:mb-16 md:mb-20">
             <div className="mb-6 sm:mb-8">
-              <span className="inline-flex items-center px-4 py-2 sm:px-6 sm:py-3 md:px-8 md:py-4 bg-gradient-to-r from-[#06b6d4]/20 to-[#06124f]/20 backdrop-blur-xl text-[#06124f] text-xs sm:text-sm font-bold rounded-full border border-[#06b6d4]/30 shadow-2xl shadow-[#06b6d4]/10">
+              <span className="inline-flex items-center px-4 py-2 sm:px-6 sm:py-3 md:px-8 md:py-4 bg-linear-to-r from-[#06b6d4]/20 to-[#06124f]/20 backdrop-blur-xl text-[#06124f] text-xs sm:text-sm font-bold rounded-full border border-[#06b6d4]/30 shadow-2xl shadow-[#06b6d4]/10">
                 <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                 </svg>
                 Our Core Values
               </span>
             </div>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black bg-gradient-to-r from-[#06124f] to-[#06b6d4] bg-clip-text text-transparent mb-4 sm:mb-6 md:mb-8">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black bg-linear-to-r from-[#06124f] to-[#06b6d4] bg-clip-text text-transparent mb-4 sm:mb-6 md:mb-8">
               What Drives Us Forward
             </h2>
             <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed px-4 sm:px-0">
@@ -580,7 +580,7 @@ export default function AboutPage() {
                       {value.icon}
                     </div>
                   </div>
-                  <h3 className={`text-xl sm:text-2xl font-black mb-4 sm:mb-6 bg-gradient-to-r ${value.gradient} bg-clip-text text-transparent`}>
+                  <h3 className={`text-xl sm:text-2xl font-black mb-4 sm:mb-6 bg-linear-to-r ${value.gradient} bg-clip-text text-transparent`}>
                     {value.title}
                   </h3>
                   <p className="text-gray-600 leading-relaxed text-sm sm:text-base md:text-lg">
@@ -594,7 +594,7 @@ export default function AboutPage() {
       </section>
 
       {/* Enhanced Team Section - Mobile Responsive */}
-      <section className="py-12 sm:py-16 md:py-20 lg:py-24 bg-gradient-to-br from-gray-50/50 to-white">
+      <section className="py-12 sm:py-16 md:py-20 lg:py-24 bg-linear-to-br from-gray-50/50 to-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
           <div className="text-center mb-12 sm:mb-16 md:mb-20">
             <div className="mb-6 sm:mb-8">
@@ -616,8 +616,8 @@ export default function AboutPage() {
           {/* Marquee Container */}
           <div className="relative overflow-hidden">
             {/* Gradient Overlays for Fade Effect */}
-            <div className="absolute left-0 top-0 bottom-0 w-20 sm:w-32 bg-gradient-to-r from-gray-50 to-transparent z-10 pointer-events-none" />
-            <div className="absolute right-0 top-0 bottom-0 w-20 sm:w-32 bg-gradient-to-l from-gray-50 to-transparent z-10 pointer-events-none" />
+            <div className="absolute left-0 top-0 bottom-0 w-20 sm:w-32 bg-linear-to-r from-gray-50 to-transparent z-10 pointer-events-none" />
+            <div className="absolute right-0 top-0 bottom-0 w-20 sm:w-32 bg-linear-to-l from-gray-50 to-transparent z-10 pointer-events-none" />
 
             {/* Marquee Animation Container */}
             <div className="animate-marquee flex">
@@ -625,19 +625,19 @@ export default function AboutPage() {
               {team.map((member, index) => (
                 <div
                   key={`first-${index}`}
-                  className={`flex-shrink-0 w-80 sm:w-96 mx-4 sm:mx-6 transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+                  className={`shrink-0 w-80 sm:w-96 mx-4 sm:mx-6 transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
                     }`}
                   style={{ transitionDelay: `${index * 100}ms` }}
                 >
                   {/* Enhanced Card Container */}
                   <div className="group relative bg-white rounded-3xl p-6 sm:p-8 shadow-xl hover:shadow-2xl transition-all duration-500 border border-gray-100/50 backdrop-blur-sm group-hover:-translate-y-2 h-full">
                     {/* Decorative Background Pattern */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-[#06b6d4]/5 via-transparent to-[#06124f]/5 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    <div className="absolute inset-0 bg-linear-to-br from-[#06b6d4]/5 via-transparent to-[#06124f]/5 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
                     {/* Profile Image with Enhanced Design */}
                     <div className="relative mb-6 mx-auto w-32 h-32 sm:w-36 sm:h-36">
                       {/* Animated Background Ring */}
-                      <div className="absolute inset-0 bg-gradient-to-br from-[#06b6d4] via-[#06b6d4] to-[#06124f] rounded-full p-1 group-hover:scale-105 transition-all duration-500 shadow-lg group-hover:shadow-xl group-hover:shadow-[#06b6d4]/25">
+                      <div className="absolute inset-0 bg-linear-to-br from-[#06b6d4] via-[#06b6d4] to-[#06124f] rounded-full p-1 group-hover:scale-105 transition-all duration-500 shadow-lg group-hover:shadow-xl group-hover:shadow-[#06b6d4]/25">
                         <div className="w-full h-full rounded-full overflow-hidden bg-white p-1">
                           <div className="w-full h-full rounded-full overflow-hidden relative">
                             <Image
@@ -647,13 +647,13 @@ export default function AboutPage() {
                               className="object-cover group-hover:scale-110 transition-transform duration-700"
                             />
                             {/* Overlay on hover */}
-                            <div className="absolute inset-0 bg-gradient-to-t from-[#06124f]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                            <div className="absolute inset-0 bg-linear-to-t from-[#06124f]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                           </div>
                         </div>
                       </div>
 
                       {/* Floating Badge */}
-                      <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-gradient-to-br from-[#06b6d4] to-[#06124f] rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                      <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-linear-to-br from-[#06b6d4] to-[#06124f] rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
                         <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
@@ -669,7 +669,7 @@ export default function AboutPage() {
 
                       {/* Role Badge */}
                       <div className="mb-4">
-                        <span className="inline-flex items-center px-3 py-1 sm:px-4 sm:py-2 bg-gradient-to-r from-[#06b6d4]/10 to-[#06124f]/10 text-[#06124f] text-sm font-bold rounded-full border border-[#06b6d4]/20 group-hover:border-[#06b6d4]/40 transition-all duration-300">
+                        <span className="inline-flex items-center px-3 py-1 sm:px-4 sm:py-2 bg-linear-to-r from-[#06b6d4]/10 to-[#06124f]/10 text-[#06124f] text-sm font-bold rounded-full border border-[#06b6d4]/20 group-hover:border-[#06b6d4]/40 transition-all duration-300">
                           {member.role}
                         </span>
                       </div>
@@ -683,7 +683,7 @@ export default function AboutPage() {
                       <div className="flex justify-center space-x-3">
                         <a
                           href={member.linkedin}
-                          className="group/social relative p-3 rounded-2xl bg-gradient-to-br from-[#06124f]/10 to-[#06124f]/5 text-[#06124f] hover:bg-gradient-to-br hover:from-[#06124f] hover:to-[#06124f]/90 hover:text-white transition-all duration-300 touch-manipulation shadow-md hover:shadow-lg transform hover:-translate-y-1"
+                          className="group/social relative p-3 rounded-2xl bg-linear-to-br from-[#06124f]/10 to-[#06124f]/5 text-[#06124f] hover:bg-linear-to-br hover:from-[#06124f] hover:to-[#06124f]/90 hover:text-white transition-all duration-300 touch-manipulation shadow-md hover:shadow-lg transform hover:-translate-y-1"
                           aria-label={`${member.name} LinkedIn Profile`}
                         >
                           <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -693,7 +693,7 @@ export default function AboutPage() {
 
                         <a
                           href={member.instagram}
-                          className="group/social relative p-3 rounded-2xl bg-gradient-to-br from-[#06b6d4]/10 to-[#06b6d4]/5 text-[#06b6d4] hover:bg-gradient-to-br hover:from-[#06b6d4] hover:to-[#06b6d4]/90 hover:text-white transition-all duration-300 touch-manipulation shadow-md hover:shadow-lg transform hover:-translate-y-1"
+                          className="group/social relative p-3 rounded-2xl bg-linear-to-br from-[#06b6d4]/10 to-[#06b6d4]/5 text-[#06b6d4] hover:bg-linear-to-br hover:from-[#06b6d4] hover:to-[#06b6d4]/90 hover:text-white transition-all duration-300 touch-manipulation shadow-md hover:shadow-lg transform hover:-translate-y-1"
                           aria-label={`${member.name} Twitter Profile`}
                         >
                           <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -702,7 +702,7 @@ export default function AboutPage() {
                         </a>
 
                         {/* Contact Button */}
-                        <button className="group/social relative p-3 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-50 text-gray-600 hover:bg-gradient-to-br hover:from-[#06124f]/10 hover:to-[#06b6d4]/10 hover:text-[#06124f] transition-all duration-300 touch-manipulation shadow-md hover:shadow-lg transform hover:-translate-y-1">
+                        <button className="group/social relative p-3 rounded-2xl bg-linear-to-br from-gray-100 to-gray-50 text-gray-600 hover:bg-linear-to-br hover:from-[#06124f]/10 hover:to-[#06b6d4]/10 hover:text-[#06124f] transition-all duration-300 touch-manipulation shadow-md hover:shadow-lg transform hover:-translate-y-1">
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                           </svg>
@@ -711,8 +711,8 @@ export default function AboutPage() {
                     </div>
 
                     {/* Decorative Corner Elements */}
-                    <div className="absolute top-4 right-4 w-2 h-2 bg-gradient-to-br from-[#06b6d4] to-[#06124f] rounded-full opacity-20 group-hover:opacity-60 transition-opacity duration-300" />
-                    <div className="absolute bottom-4 left-4 w-1 h-1 bg-gradient-to-br from-[#06124f] to-[#06b6d4] rounded-full opacity-20 group-hover:opacity-60 transition-opacity duration-300" />
+                    <div className="absolute top-4 right-4 w-2 h-2 bg-linear-to-br from-[#06b6d4] to-[#06124f] rounded-full opacity-20 group-hover:opacity-60 transition-opacity duration-300" />
+                    <div className="absolute bottom-4 left-4 w-1 h-1 bg-linear-to-br from-[#06124f] to-[#06b6d4] rounded-full opacity-20 group-hover:opacity-60 transition-opacity duration-300" />
                   </div>
                 </div>
               ))}
@@ -721,17 +721,17 @@ export default function AboutPage() {
               {team.map((member, index) => (
                 <div
                   key={`second-${index}`}
-                  className="flex-shrink-0 w-80 sm:w-96 mx-4 sm:mx-6"
+                  className="shrink-0 w-80 sm:w-96 mx-4 sm:mx-6"
                 >
                   {/* Enhanced Card Container */}
                   <div className="group relative bg-white rounded-3xl p-6 sm:p-8 shadow-xl hover:shadow-2xl transition-all duration-500 border border-gray-100/50 backdrop-blur-sm group-hover:-translate-y-2 h-full">
                     {/* Decorative Background Pattern */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-[#06b6d4]/5 via-transparent to-[#06124f]/5 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    <div className="absolute inset-0 bg-linear-to-br from-[#06b6d4]/5 via-transparent to-[#06124f]/5 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
                     {/* Profile Image with Enhanced Design */}
                     <div className="relative mb-6 mx-auto w-32 h-32 sm:w-36 sm:h-36">
                       {/* Animated Background Ring */}
-                      <div className="absolute inset-0 bg-gradient-to-br from-[#06b6d4] via-[#06b6d4] to-[#06124f] rounded-full p-1 group-hover:scale-105 transition-all duration-500 shadow-lg group-hover:shadow-xl group-hover:shadow-[#06b6d4]/25">
+                      <div className="absolute inset-0 bg-linear-to-br from-[#06b6d4] via-[#06b6d4] to-[#06124f] rounded-full p-1 group-hover:scale-105 transition-all duration-500 shadow-lg group-hover:shadow-xl group-hover:shadow-[#06b6d4]/25">
                         <div className="w-full h-full rounded-full overflow-hidden bg-white p-1">
                           <div className="w-full h-full rounded-full overflow-hidden relative">
                             <Image
@@ -741,13 +741,13 @@ export default function AboutPage() {
                               className="object-cover group-hover:scale-110 transition-transform duration-700"
                             />
                             {/* Overlay on hover */}
-                            <div className="absolute inset-0 bg-gradient-to-t from-[#06124f]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                            <div className="absolute inset-0 bg-linear-to-t from-[#06124f]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                           </div>
                         </div>
                       </div>
 
                       {/* Floating Badge */}
-                      <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-gradient-to-br from-[#06b6d4] to-[#06124f] rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                      <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-linear-to-br from-[#06b6d4] to-[#06124f] rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
                         <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
@@ -763,7 +763,7 @@ export default function AboutPage() {
 
                       {/* Role Badge */}
                       <div className="mb-4">
-                        <span className="inline-flex items-center px-3 py-1 sm:px-4 sm:py-2 bg-gradient-to-r from-[#06b6d4]/10 to-[#06124f]/10 text-[#06124f] text-sm font-bold rounded-full border border-[#06b6d4]/20 group-hover:border-[#06b6d4]/40 transition-all duration-300">
+                        <span className="inline-flex items-center px-3 py-1 sm:px-4 sm:py-2 bg-linear-to-r from-[#06b6d4]/10 to-[#06124f]/10 text-[#06124f] text-sm font-bold rounded-full border border-[#06b6d4]/20 group-hover:border-[#06b6d4]/40 transition-all duration-300">
                           {member.role}
                         </span>
                       </div>
@@ -777,7 +777,7 @@ export default function AboutPage() {
                       <div className="flex justify-center space-x-3">
                         <a
                           href={member.linkedin}
-                          className="group/social relative p-3 rounded-2xl bg-gradient-to-br from-[#06124f]/10 to-[#06124f]/5 text-[#06124f] hover:bg-gradient-to-br hover:from-[#06124f] hover:to-[#06124f]/90 hover:text-white transition-all duration-300 touch-manipulation shadow-md hover:shadow-lg transform hover:-translate-y-1"
+                          className="group/social relative p-3 rounded-2xl bg-linear-to-br from-[#06124f]/10 to-[#06124f]/5 text-[#06124f] hover:bg-linear-to-br hover:from-[#06124f] hover:to-[#06124f]/90 hover:text-white transition-all duration-300 touch-manipulation shadow-md hover:shadow-lg transform hover:-translate-y-1"
                           aria-label={`${member.name} LinkedIn Profile`}
                         >
                           <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -787,7 +787,7 @@ export default function AboutPage() {
 
                         <a
                           href={member.instagram}
-                          className="group/social relative p-3 rounded-2xl bg-gradient-to-br from-[#06b6d4]/10 to-[#06b6d4]/5 text-[#06b6d4] hover:bg-gradient-to-br hover:from-[#06b6d4] hover:to-[#06b6d4]/90 hover:text-white transition-all duration-300 touch-manipulation shadow-md hover:shadow-lg transform hover:-translate-y-1"
+                          className="group/social relative p-3 rounded-2xl bg-linear-to-br from-[#06b6d4]/10 to-[#06b6d4]/5 text-[#06b6d4] hover:bg-linear-to-br hover:from-[#06b6d4] hover:to-[#06b6d4]/90 hover:text-white transition-all duration-300 touch-manipulation shadow-md hover:shadow-lg transform hover:-translate-y-1"
                           aria-label={`${member.name} Twitter Profile`}
                         >
                           <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -796,7 +796,7 @@ export default function AboutPage() {
                         </a>
 
                         {/* Contact Button */}
-                        <button className="group/social relative p-3 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-50 text-gray-600 hover:bg-gradient-to-br hover:from-[#06124f]/10 hover:to-[#06b6d4]/10 hover:text-[#06124f] transition-all duration-300 touch-manipulation shadow-md hover:shadow-lg transform hover:-translate-y-1">
+                        <button className="group/social relative p-3 rounded-2xl bg-linear-to-br from-gray-100 to-gray-50 text-gray-600 hover:bg-linear-to-br hover:from-[#06124f]/10 hover:to-[#06b6d4]/10 hover:text-[#06124f] transition-all duration-300 touch-manipulation shadow-md hover:shadow-lg transform hover:-translate-y-1">
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2v10a2 2 0 002 2z" />
                           </svg>
@@ -805,8 +805,8 @@ export default function AboutPage() {
                     </div>
 
                     {/* Decorative Corner Elements */}
-                    <div className="absolute top-4 right-4 w-2 h-2 bg-gradient-to-br from-[#06b6d4] to-[#06124f] rounded-full opacity-20 group-hover:opacity-60 transition-opacity duration-300" />
-                    <div className="absolute bottom-4 left-4 w-1 h-1 bg-gradient-to-br from-[#06124f] to-[#06b6d4] rounded-full opacity-20 group-hover:opacity-60 transition-opacity duration-300" />
+                    <div className="absolute top-4 right-4 w-2 h-2 bg-linear-to-br from-[#06b6d4] to-[#06124f] rounded-full opacity-20 group-hover:opacity-60 transition-opacity duration-300" />
+                    <div className="absolute bottom-4 left-4 w-1 h-1 bg-linear-to-br from-[#06124f] to-[#06b6d4] rounded-full opacity-20 group-hover:opacity-60 transition-opacity duration-300" />
                   </div>
                 </div>
               ))}
@@ -816,7 +816,7 @@ export default function AboutPage() {
       </section>
 
       {/* Enhanced CTA Section - Mobile Responsive */}
-      <section className="py-12 sm:py-16 md:py-20 lg:py-24 bg-gradient-to-r from-[#06124f] via-[#06124f] to-[#06b6d4] relative overflow-hidden">
+      <section className="py-12 sm:py-16 md:py-20 lg:py-24 bg-linear-to-r from-[#06124f] via-[#06124f] to-[#06b6d4] relative overflow-hidden">
         <div className="absolute inset-0 opacity-20">
           <div className="w-full h-full" style={{
             backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
@@ -837,7 +837,7 @@ export default function AboutPage() {
               Get premium barcode labels, thermal ribbons, and professional printer services to streamline your business operations with VIROS Entrepreneurs.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center px-4 sm:px-0">
-              <button className="group relative w-full sm:w-auto px-8 sm:px-10 md:px-12 py-4 sm:py-5 md:py-6 bg-white text-[#06124f] font-black rounded-xl sm:rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 min-w-0 sm:min-w-[220px] text-base sm:text-lg touch-manipulation">
+              <button className="group relative w-full sm:w-auto px-8 sm:px-10 md:px-12 py-4 sm:py-5 md:py-6 bg-white text-[#06124f] font-black rounded-xl sm:rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 min-w-0 sm:min-w-55 text-base sm:text-lg touch-manipulation">
                 <span className="relative z-10 flex items-center justify-center">
                   <svg className="w-5 h-5 sm:w-6 sm:h-6 mr-2 sm:mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
@@ -845,7 +845,7 @@ export default function AboutPage() {
                   Get Quote for Labels
                 </span>
               </button>
-              <button className="w-full sm:w-auto px-8 sm:px-10 md:px-12 py-4 sm:py-5 md:py-6 border-2 border-white/40 text-white font-black rounded-xl sm:rounded-2xl backdrop-blur-sm hover:bg-white/10 hover:border-white/60 transition-all duration-300 min-w-0 sm:min-w-[220px] text-base sm:text-lg flex items-center justify-center touch-manipulation">
+              <button className="w-full sm:w-auto px-8 sm:px-10 md:px-12 py-4 sm:py-5 md:py-6 border-2 border-white/40 text-white font-black rounded-xl sm:rounded-2xl backdrop-blur-sm hover:bg-white/10 hover:border-white/60 transition-all duration-300 min-w-0 sm:min-w-55 text-base sm:text-lg flex items-center justify-center touch-manipulation">
                 <svg className="w-5 h-5 sm:w-6 sm:h-6 mr-2 sm:mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                 </svg>

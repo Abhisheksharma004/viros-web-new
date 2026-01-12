@@ -111,7 +111,7 @@ export default function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose:
                 {/* Logo */}
                 <div className="flex items-center justify-between p-6 border-b border-white/10">
                     <Link href="/dashboard" className="flex items-center space-x-2">
-                        <div className="w-10 h-10 bg-gradient-to-br from-[#06b6d4] to-white rounded-lg flex items-center justify-center">
+                        <div className="w-10 h-10 bg-gradient-to from-[#06b6d4] to-white rounded-lg flex items-center justify-center">
                             <span className="text-[#06124f] font-black text-xl">V</span>
                         </div>
                         <span className="font-bold text-lg">VIROS Admin</span>

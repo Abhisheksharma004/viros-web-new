@@ -90,7 +90,7 @@ export default function DashboardPage() {
                                 <p className="text-3xl font-bold text-gray-900 mb-2">{stat.value}</p>
                                 <p className="text-xs text-gray-500">{stat.change}</p>
                             </div>
-                            <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center text-white shadow-lg`}>
+                            <div className={`w-14 h-14 rounded-xl bg-linear-to-br ${stat.color} flex items-center justify-center text-white shadow-lg`}>
                                 {stat.icon}
                             </div>
                         </div>
