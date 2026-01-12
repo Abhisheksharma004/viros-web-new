@@ -155,14 +155,14 @@ export default function AboutManagementPage() {
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-6">
                     <div className="flex items-center space-x-2 mb-4">
                         <Rocket className="w-5 h-5 text-[#06b6d4]" />
-                        <h2 className="text-xl font-bold">Hero & Brand Story</h2>
+                        <h2 className="text-xl font-bold text-gray-900">Hero & Brand Story</h2>
                     </div>
                     <div className="space-y-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Page Title</label>
                             <input
                                 type="text"
-                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#06b6d4] outline-none"
+                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#06b6d4] outline-none text-gray-900"
                                 value={aboutData.title}
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAboutData({ ...aboutData, title: e.target.value })}
                             />
@@ -171,7 +171,7 @@ export default function AboutManagementPage() {
                             <label className="block text-sm font-medium text-gray-700 mb-1">Subtitle</label>
                             <input
                                 type="text"
-                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#06b6d4] outline-none"
+                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#06b6d4] outline-none text-gray-900"
                                 value={aboutData.subtitle}
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAboutData({ ...aboutData, subtitle: e.target.value })}
                             />
@@ -179,7 +179,7 @@ export default function AboutManagementPage() {
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                             <textarea
-                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#06b6d4] outline-none min-h-[120px]"
+                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#06b6d4] outline-none min-h-[120px] text-gray-900"
                                 value={aboutData.description}
                                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setAboutData({ ...aboutData, description: e.target.value })}
                             />
@@ -190,7 +190,7 @@ export default function AboutManagementPage() {
                                 <LinkIcon className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
                                 <input
                                     type="text"
-                                    className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#06b6d4] outline-none"
+                                    className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#06b6d4] outline-none text-gray-900"
                                     placeholder="https://youtube.com/..."
                                     value={aboutData.video_url}
                                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAboutData({ ...aboutData, video_url: e.target.value })}
@@ -204,13 +204,13 @@ export default function AboutManagementPage() {
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-6">
                     <div className="flex items-center space-x-2 mb-4">
                         <Target className="w-5 h-5 text-[#06b6d4]" />
-                        <h2 className="text-xl font-bold">Mission & Vision</h2>
+                        <h2 className="text-xl font-bold text-gray-900">Mission & Vision</h2>
                     </div>
                     <div className="space-y-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Our Mission</label>
                             <textarea
-                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#06b6d4] outline-none min-h-[100px]"
+                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#06b6d4] outline-none min-h-[100px] text-gray-900"
                                 value={aboutData.mission}
                                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setAboutData({ ...aboutData, mission: e.target.value })}
                             />
@@ -218,7 +218,7 @@ export default function AboutManagementPage() {
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Our Vision</label>
                             <textarea
-                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#06b6d4] outline-none min-h-[100px]"
+                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#06b6d4] outline-none min-h-[100px] text-gray-900"
                                 value={aboutData.vision}
                                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setAboutData({ ...aboutData, vision: e.target.value })}
                             />
@@ -232,7 +232,7 @@ export default function AboutManagementPage() {
                 <div className="flex justify-between items-center mb-6">
                     <div className="flex items-center space-x-2">
                         <Star className="w-5 h-5 text-[#06b6d4]" />
-                        <h2 className="text-xl font-bold">Key Statistics</h2>
+                        <h2 className="text-xl font-bold text-gray-900">Key Statistics</h2>
                     </div>
                     <button
                         onClick={() => setShowModal({ type: 'stat' })}
@@ -261,7 +261,7 @@ export default function AboutManagementPage() {
             {/* Core Values Section */}
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                 <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-xl font-bold flex items-center gap-2"><Star className="text-[#06b6d4]" /> Core Values</h2>
+                    <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2"><Star className="text-[#06b6d4]" /> Core Values</h2>
                     <button onClick={() => setShowModal({ type: 'value' })} className="px-4 py-2 bg-[#06b6d4] text-white rounded-lg hover:bg-[#06124f] transition-colors flex items-center gap-2">
                         <Plus size={18} /> Add Value
                     </button>
@@ -276,7 +276,7 @@ export default function AboutManagementPage() {
                                     <button onClick={() => handleDelete('value', v.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg"><Trash2 size={16} /></button>
                                 </div>
                             </div>
-                            <h3 className="font-bold text-lg mb-2">{v.title}</h3>
+                            <h3 className="font-bold text-lg mb-2 text-gray-900">{v.title}</h3>
                             <p className="text-gray-600 text-sm">{v.description}</p>
                             {v.gradient && <div className="mt-3 text-xs text-gray-400">Gradient: {v.gradient}</div>}
                         </div>
@@ -289,7 +289,7 @@ export default function AboutManagementPage() {
                 <div className="flex justify-between items-center mb-6">
                     <div className="flex items-center space-x-2">
                         <Users className="w-5 h-5 text-[#06b6d4]" />
-                        <h2 className="text-xl font-bold">Leadership Team</h2>
+                        <h2 className="text-xl font-bold text-gray-900">Leadership Team</h2>
                     </div>
                     <button
                         onClick={() => setShowModal({ type: 'team' })}
@@ -334,7 +334,7 @@ export default function AboutManagementPage() {
             {/* Product Categories / Features */}
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                 <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-xl font-bold flex items-center gap-2"><Rocket className="text-[#06b6d4]" /> Product Categories</h2>
+                    <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2"><Rocket className="text-[#06b6d4]" /> Product Categories</h2>
                     <button onClick={() => setShowModal({ type: 'feature' })} className="px-4 py-2 bg-[#06b6d4] text-white rounded-lg hover:bg-[#06124f] transition-colors flex items-center gap-2">
                         <Plus size={18} /> Add Category
                     </button>
@@ -349,7 +349,7 @@ export default function AboutManagementPage() {
                                     <button onClick={() => handleDelete('feature', f.id)} className="p-1 text-red-600"><Trash2 size={14} /></button>
                                 </div>
                             </div>
-                            <h3 className="font-bold text-sm mb-1">{f.title}</h3>
+                            <h3 className="font-bold text-sm mb-1 text-gray-900">{f.title}</h3>
                             <p className="text-xs text-gray-600 line-clamp-2">{f.description}</p>
                         </div>
                     ))}
@@ -359,7 +359,7 @@ export default function AboutManagementPage() {
             {/* Milestones Section */}
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                 <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-xl font-bold flex items-center gap-2"><History className="text-[#06b6d4]" /> Our Journey</h2>
+                    <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2"><History className="text-[#06b6d4]" /> Our Journey</h2>
                     <button onClick={() => setShowModal({ type: 'milestone' })} className="px-4 py-2 bg-[#06b6d4] text-white rounded-lg hover:bg-[#06124f] transition-colors flex items-center gap-2">
                         <Plus size={18} /> Add Milestone
                     </button>
@@ -369,7 +369,7 @@ export default function AboutManagementPage() {
                         <div key={m.id} className="flex gap-4 p-4 border-l-4 border-[#06b6d4] bg-gray-50/50 group rounded-r-xl">
                             <div className="text-xl font-black text-[#06b6d4] w-20">{m.year}</div>
                             <div className="flex-1">
-                                <h3 className="font-bold mb-1">{m.title}</h3>
+                                <h3 className="font-bold mb-1 text-gray-900">{m.title}</h3>
                                 <p className="text-sm text-gray-600">{m.description}</p>
                             </div>
                             <div className="flex gap-2 opacity-0 group-hover:opacity-100">
@@ -393,7 +393,7 @@ export default function AboutManagementPage() {
                             <label className="block text-sm font-medium opacity-80 mb-1">CTA Main Title</label>
                             <input
                                 type="text"
-                                className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg outline-none focus:bg-white/20 transition-all text-white"
+                                className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg outline-none focus:bg-white/20 transition-all text-white placeholder:text-white/60"
                                 value={aboutData.cta_title}
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAboutData({ ...aboutData, cta_title: e.target.value })}
                             />
@@ -401,7 +401,7 @@ export default function AboutManagementPage() {
                         <div>
                             <label className="block text-sm font-medium opacity-80 mb-1">CTA Subtitle Content</label>
                             <textarea
-                                className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg outline-none focus:bg-white/20 transition-all text-white min-h-[100px]"
+                                className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg outline-none focus:bg-white/20 transition-all text-white min-h-[100px] placeholder:text-white/60"
                                 value={aboutData.cta_subtitle}
                                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setAboutData({ ...aboutData, cta_subtitle: e.target.value })}
                             />
@@ -412,7 +412,7 @@ export default function AboutManagementPage() {
                             <label className="block text-sm font-medium opacity-80 mb-1">Primary Button Text</label>
                             <input
                                 type="text"
-                                className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg outline-none focus:bg-white/20 transition-all text-white"
+                                className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg outline-none focus:bg-white/20 transition-all text-white placeholder:text-white/60"
                                 value={aboutData.cta_primary_text}
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAboutData({ ...aboutData, cta_primary_text: e.target.value })}
                             />
@@ -421,7 +421,7 @@ export default function AboutManagementPage() {
                             <label className="block text-sm font-medium opacity-80 mb-1">Secondary Button Text</label>
                             <input
                                 type="text"
-                                className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg outline-none focus:bg-white/20 transition-all text-white"
+                                className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg outline-none focus:bg-white/20 transition-all text-white placeholder:text-white/60"
                                 value={aboutData.cta_secondary_text}
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAboutData({ ...aboutData, cta_secondary_text: e.target.value })}
                             />
@@ -507,41 +507,41 @@ function ModalForm({ type, data, onCancel, onSuccess }: any) {
         <form onSubmit={handleSubmit} className="space-y-4">
             {type === 'stat' && (
                 <>
-                    <input className="w-full p-2 border rounded-lg" placeholder="Label (e.g., Happy Clients)" value={formData.label || ""} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, label: e.target.value })} required />
-                    <input className="w-full p-2 border rounded-lg" placeholder="Value (e.g., 500+)" value={formData.value || ""} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, value: e.target.value })} required />
-                    <input className="w-full p-2 border rounded-lg" placeholder="Icon (SVG string)" value={formData.icon || ""} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, icon: e.target.value })} />
+                    <input className="w-full p-2 border rounded-lg text-gray-900" placeholder="Label (e.g., Happy Clients)" value={formData.label || ""} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, label: e.target.value })} required />
+                    <input className="w-full p-2 border rounded-lg text-gray-900" placeholder="Value (e.g., 500+)" value={formData.value || ""} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, value: e.target.value })} required />
+                    <input className="w-full p-2 border rounded-lg text-gray-900" placeholder="Icon (SVG string)" value={formData.icon || ""} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, icon: e.target.value })} />
                 </>
             )}
             {type === 'value' && (
                 <>
-                    <input className="w-full p-2 border rounded-lg" placeholder="Title" value={formData.title || ""} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, title: e.target.value })} required />
-                    <textarea className="w-full p-2 border rounded-lg" placeholder="Description" value={formData.description || ""} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, description: e.target.value })} required />
-                    <input className="w-full p-2 border rounded-lg" placeholder="Icon (SVG string or emoji)" value={formData.icon || ""} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, icon: e.target.value })} />
-                    <input className="w-full p-2 border rounded-lg" placeholder="Gradient (e.g., from-blue-500 to-cyan-500)" value={formData.gradient || ""} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, gradient: e.target.value })} />
+                    <input className="w-full p-2 border rounded-lg text-gray-900" placeholder="Title" value={formData.title || ""} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, title: e.target.value })} required />
+                    <textarea className="w-full p-2 border rounded-lg text-gray-900" placeholder="Description" value={formData.description || ""} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, description: e.target.value })} required />
+                    <input className="w-full p-2 border rounded-lg text-gray-900" placeholder="Icon (SVG string or emoji)" value={formData.icon || ""} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, icon: e.target.value })} />
+                    <input className="w-full p-2 border rounded-lg text-gray-900" placeholder="Gradient (e.g., from-blue-500 to-cyan-500)" value={formData.gradient || ""} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, gradient: e.target.value })} />
                 </>
             )}
             {type === 'milestone' && (
                 <>
-                    <input className="w-full p-2 border rounded-lg" placeholder="Year" value={formData.year || ""} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, year: e.target.value })} required />
-                    <input className="w-full p-2 border rounded-lg" placeholder="Title" value={formData.title || ""} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, title: e.target.value })} required />
-                    <textarea className="w-full p-2 border rounded-lg" placeholder="Description" value={formData.description || ""} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, description: e.target.value })} required />
+                    <input className="w-full p-2 border rounded-lg text-gray-900" placeholder="Year" value={formData.year || ""} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, year: e.target.value })} required />
+                    <input className="w-full p-2 border rounded-lg text-gray-900" placeholder="Title" value={formData.title || ""} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, title: e.target.value })} required />
+                    <textarea className="w-full p-2 border rounded-lg text-gray-900" placeholder="Description" value={formData.description || ""} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, description: e.target.value })} required />
                 </>
             )}
             {type === 'team' && (
                 <>
-                    <input className="w-full p-2 border rounded-lg" placeholder="Name" value={formData.name || ""} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, name: e.target.value })} required />
-                    <input className="w-full p-2 border rounded-lg" placeholder="Role" value={formData.role || ""} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, role: e.target.value })} required />
-                    <input className="w-full p-2 border rounded-lg" placeholder="Image URL" value={formData.image || ""} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, image: e.target.value })} />
-                    <textarea className="w-full p-2 border rounded-lg" placeholder="Bio" value={formData.bio || ""} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, bio: e.target.value })} />
-                    <input className="w-full p-2 border rounded-lg" placeholder="LinkedIn URL" value={formData.linkedin || ""} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, linkedin: e.target.value })} />
-                    <input className="w-full p-2 border rounded-lg" placeholder="Instagram/Twitter URL" value={formData.instagram || ""} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, instagram: e.target.value })} />
+                    <input className="w-full p-2 border rounded-lg text-gray-900" placeholder="Name" value={formData.name || ""} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, name: e.target.value })} required />
+                    <input className="w-full p-2 border rounded-lg text-gray-900" placeholder="Role" value={formData.role || ""} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, role: e.target.value })} required />
+                    <input className="w-full p-2 border rounded-lg text-gray-900" placeholder="Image URL" value={formData.image || ""} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, image: e.target.value })} />
+                    <textarea className="w-full p-2 border rounded-lg text-gray-900" placeholder="Bio" value={formData.bio || ""} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, bio: e.target.value })} />
+                    <input className="w-full p-2 border rounded-lg text-gray-900" placeholder="LinkedIn URL" value={formData.linkedin || ""} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, linkedin: e.target.value })} />
+                    <input className="w-full p-2 border rounded-lg text-gray-900" placeholder="Instagram/Twitter URL" value={formData.instagram || ""} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, instagram: e.target.value })} />
                 </>
             )}
             {type === 'feature' && (
                 <>
-                    <input className="w-full p-2 border rounded-lg" placeholder="Title" value={formData.title || ""} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, title: e.target.value })} required />
-                    <textarea className="w-full p-2 border rounded-lg" placeholder="Description" value={formData.description || ""} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, description: e.target.value })} required />
-                    <input className="w-full p-2 border rounded-lg" placeholder="Icon (SVG string)" value={formData.icon || ""} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, icon: e.target.value })} />
+                    <input className="w-full p-2 border rounded-lg text-gray-900" placeholder="Title" value={formData.title || ""} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, title: e.target.value })} required />
+                    <textarea className="w-full p-2 border rounded-lg text-gray-900" placeholder="Description" value={formData.description || ""} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, description: e.target.value })} required />
+                    <input className="w-full p-2 border rounded-lg text-gray-900" placeholder="Icon (SVG string)" value={formData.icon || ""} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, icon: e.target.value })} />
                 </>
             )}
             <div className="flex justify-end gap-3 pt-4">

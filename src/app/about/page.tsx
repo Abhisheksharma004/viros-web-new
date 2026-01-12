@@ -3,229 +3,100 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 
-const stats = [
-  {
-    number: "500+",
-    label: "Happy Clients",
-    icon: (
-      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-      </svg>
-    )
-  },
-  {
-    number: "1000+",
-    label: "Projects Delivered",
-    icon: (
-      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-      </svg>
-    )
-  },
-  {
-    number: "50+",
-    label: "Cities Served",
-    icon: (
-      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-      </svg>
-    )
-  },
-  {
-    number: "99.9%",
-    label: "Uptime Guarantee",
-    icon: (
-      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-      </svg>
-    )
-  }
-];
-
-const team = [
-  {
-    name: "Alex Johnson",
-    role: "CEO & Founder",
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-    bio: "Visionary leader with 15+ years in barcode technology and business automation solutions",
-    linkedin: "#",
-    instagram: "#"
-  },
-  {
-    name: "Sarah Chen",
-    role: "CTO",
-    image: "https://images.unsplash.com/photo-1494790108755-2616b612b786?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-    bio: "Technology expert specializing in thermal printing and mobile scanning innovations",
-    linkedin: "#",
-    instagram: "#"
-  },
-  {
-    name: "Michael Rodriguez",
-    role: "Head of Strategy",
-    image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-    bio: "Strategic consultant with expertise in barcode implementation across multiple industries",
-    linkedin: "#",
-    instagram: "#"
-  },
-  {
-    name: "Priya Sharma",
-    role: "VP of Sales",
-    image: "https://images.unsplash.com/photo-1580489944761-15a19d654956?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-    bio: "Sales leader driving growth in label printer and scanner solutions across India",
-    linkedin: "#",
-    instagram: "#"
-  },
-  {
-    name: "David Kim",
-    role: "Head of Engineering",
-    image: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-    bio: "Engineering expert in barcode software development and system integration",
-    linkedin: "#",
-    instagram: "#"
-  },
-  {
-    name: "Lisa Thompson",
-    role: "Customer Success Director",
-    image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-    bio: "Customer advocate ensuring successful barcode solution implementations and support",
-    linkedin: "#",
-    instagram: "#"
-  },
-  {
-    name: "Rajesh Patel",
-    role: "Operations Manager",
-    image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-    bio: "Operations specialist managing supply chain and logistics for barcode equipment",
-    linkedin: "#",
-    instagram: "#"
-  },
-  {
-    name: "Emma Wilson",
-    role: "Marketing Director",
-    image: "https://images.unsplash.com/photo-1551836022-deb4988cc6c0?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-    bio: "Marketing strategist promoting barcode solutions and building brand awareness",
-    linkedin: "#",
-    instagram: "#"
-  },
-  {
-    name: "Carlos Martinez",
-    role: "Technical Support Lead",
-    image: "https://images.unsplash.com/photo-1507591064344-4c6ce005b128?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-    bio: "Technical expert providing comprehensive support for printer and scanner installations",
-    linkedin: "#",
-    instagram: "#"
-  }
-];
-
-const values = [
-  {
-    title: "Quality Excellence",
-    description: "We provide professional-grade barcode equipment and solutions with superior performance and reliability for all business applications.",
-    icon: (
-      <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-      </svg>
-    ),
-    gradient: "from-[#06b6d4] to-[#06124f]"
-  },
-  {
-    title: "Technical Expertise",
-    description: "Our team brings deep technical knowledge in barcode technology, thermal printing, and mobile scanning solutions.",
-    icon: (
-      <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-      </svg>
-    ),
-    gradient: "from-[#06124f] to-[#06b6d4]"
-  },
-  {
-    title: "Customer Success",
-    description: "We build lasting partnerships with our clients, ensuring their barcode and IT solutions deliver maximum operational efficiency.",
-    icon: (
-      <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-      </svg>
-    ),
-    gradient: "from-[#06b6d4] via-[#06124f] to-[#06b6d4]"
-  },
-  {
-    title: "Innovation Focus",
-    description: "We stay at the forefront of barcode technology, offering the latest solutions in thermal printing and mobile scanning.",
-    icon: (
-      <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-      </svg>
-    ),
-    gradient: "from-[#06124f] via-[#06b6d4] to-[#06124f]"
-  }
-];
-
-const features = [
-  {
-    title: "Label Printers",
-    description: "Professional-grade thermal and direct thermal barcode label printers for industrial, desktop, and mobile applications.",
-    icon: (
-      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-      </svg>
-    )
-  },
-  {
-    title: "Handheld Scanners",
-    description: "High-performance handheld barcode scanners with advanced reading capabilities for 1D and 2D barcodes with wireless connectivity.",
-    icon: (
-      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-      </svg>
-    )
-  },
-  {
-    title: "Mobile TABs & Devices",
-    description: "Rugged Android mobile computers and tablets with integrated barcode scanning for field operations and inventory management.",
-    icon: (
-      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-      </svg>
-    )
-  },
-  {
-    title: "Labels & Ribbons",
-    description: "Complete range of high-quality barcode labels and thermal transfer ribbons with superior adhesion and print clarity.",
-    icon: (
-      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-      </svg>
-    )
-  },
-  {
-    title: "IT Solutions",
-    description: "Comprehensive IT infrastructure solutions including networking, servers, workstations, and system integration services.",
-    icon: (
-      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
-      </svg>
-    )
-  },
-  {
-    title: "Software Solutions",
-    description: "Custom barcode generation, inventory management, and label design software tailored to your business needs.",
-    icon: (
-      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-      </svg>
-    )
-  }
-];
-
 export default function AboutPage() {
   const [isVisible, setIsVisible] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // State for all dynamic content
+  const [content, setContent] = useState<any>(null);
+  const [stats, setStats] = useState<any[]>([]);
+  const [features, setFeatures] = useState<any[]>([]);
+  const [values, setValues] = useState<any[]>([]);
+  const [milestones, setMilestones] = useState<any[]>([]);
+  const [team, setTeam] = useState<any[]>([]);
 
   useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [contentRes, statsRes, featuresRes, valuesRes, milestonesRes, teamRes] = await Promise.all([
+          fetch('/api/about/content'),
+          fetch('/api/about/stats'),
+          fetch('/api/about/features'),
+          fetch('/api/about/values'),
+          fetch('/api/about/milestones'),
+          fetch('/api/team-members')
+        ]);
+
+        const contentData = await contentRes.json();
+        const statsData = await statsRes.json();
+        const featuresData = await featuresRes.json();
+        const valuesData = await valuesRes.json();
+        const milestonesData = await milestonesRes.json();
+        const teamData = await teamRes.json();
+
+        setContent(contentData);
+        setStats(Array.isArray(statsData) ? statsData : []);
+        setFeatures(Array.isArray(featuresData) ? featuresData : []);
+        setValues(Array.isArray(valuesData) ? valuesData : []);
+        setMilestones(Array.isArray(milestonesData) ? milestonesData : []);
+        setTeam(Array.isArray(teamData) ? teamData : []);
+      } catch (error) {
+        console.error('Error fetching about page data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
     setIsVisible(true);
   }, []);
+
+  // Fallback data for stats if database is empty
+  const displayStats = stats.length > 0 ? stats : [
+    { label: "Happy Clients", value: "500+", icon: null },
+    { label: "Projects Delivered", value: "1000+", icon: null },
+    { label: "Cities Served", value: "50+", icon: null },
+    { label: "Uptime Guarantee", value: "99.9%", icon: null }
+  ];
+
+  // Fallback data for features if database is empty
+  const displayFeatures = features.length > 0 ? features : [
+    { title: "Label Printers", description: "Professional-grade thermal and direct thermal barcode label printers.", icon: null },
+    { title: "Handheld Scanners", description: "High-performance handheld barcode scanners with advanced reading capabilities.", icon: null },
+    { title: "Mobile TABs & Devices", description: "Rugged Android mobile computers and tablets with integrated barcode scanning.", icon: null },
+    { title: "Labels & Ribbons", description: "Complete range of high-quality barcode labels and thermal transfer ribbons.", icon: null },
+    { title: "IT Solutions", description: "Comprehensive IT infrastructure solutions including networking and servers.", icon: null },
+    { title: "Software Solutions", description: "Custom barcode generation and inventory management software.", icon: null }
+  ];
+
+  // Fallback data for values if database is empty
+  const displayValues = values.length > 0 ? values : [
+    { title: "Quality Excellence", description: "We provide professional-grade barcode equipment and solutions.", icon: null, gradient: "from-[#06b6d4] to-[#06124f]" },
+    { title: "Technical Expertise", description: "Our team brings deep technical knowledge in barcode technology.", icon: null, gradient: "from-[#06124f] to-[#06b6d4]" },
+    { title: "Customer Success", description: "We build lasting partnerships with our clients.", icon: null, gradient: "from-[#06b6d4] via-[#06124f] to-[#06b6d4]" },
+    { title: "Innovation Focus", description: "We stay at the forefront of barcode technology.", icon: null, gradient: "from-[#06124f] via-[#06b6d4] to-[#06124f]" }
+  ];
+
+  // Fallback data for milestones if database is empty
+  const displayMilestones = milestones.length > 0 ? milestones : [
+    { year: "2018", title: "Inception", description: "VIROS Entrepreneurs was founded with a vision to simplify barcode solutions." },
+    { year: "2019", title: "Strategic Partnerships", description: "Secured key partnerships with major printer manufacturers." },
+    { year: "2021", title: "National Expansion", description: "Expanded operations to serve clients across 20+ states in India." },
+    { year: "2023", title: "Innovation & Software", description: "Launched our custom software development wing." },
+    { year: "2024", title: "Market Leadership", description: "Recognized as a top barcode solutions provider with over 500+ satisfied clients." }
+  ];
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-[#06b6d4] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
 
   return (
     <div className="min-h-screen bg-linear-to-br from-gray-50 to-white">
@@ -246,7 +117,7 @@ export default function AboutPage() {
                 <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                About VIROS Entrepreneurs
+                {content?.subtitle || "About VIROS Entrepreneurs"}
               </span>
             </div>
 
@@ -254,11 +125,7 @@ export default function AboutPage() {
             <div className="mb-6 sm:mb-8 md:mb-10">
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl xl:text-8xl font-black leading-tight tracking-tight">
                 <span className="bg-linear-to-r from-[#06124f] via-[#06124f] to-[#06b6d4] bg-clip-text text-transparent drop-shadow-2xl">
-                  Complete Barcode
-                </span>
-                <br />
-                <span className="bg-linear-to-r from-[#06b6d4] to-[#06124f] bg-clip-text text-transparent drop-shadow-2xl">
-                  Solutions Provider
+                  {content?.title || "Complete Barcode Solutions Provider"}
                 </span>
               </h1>
             </div>
@@ -266,11 +133,7 @@ export default function AboutPage() {
             {/* Enhanced Description - Mobile Responsive */}
             <div className="mb-8 sm:mb-12 md:mb-16">
               <p className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl text-gray-600 leading-relaxed max-w-5xl mx-auto font-light px-2 sm:px-0">
-                VIROS Entrepreneurs specializes in providing comprehensive barcode solutions including
-                <span className="text-[#06124f] font-semibold"> label printers</span>,
-                <span className="text-[#06b6d4] font-semibold"> handheld scanners</span>,
-                <span className="text-[#06124f] font-semibold"> mobile devices</span>, and
-                <span className="text-[#06b6d4] font-semibold"> custom software solutions</span> for modern business operations.
+                {content?.description || "VIROS Entrepreneurs specializes in providing comprehensive barcode solutions including label printers, handheld scanners, mobile devices, and custom software solutions for modern business operations."}
               </p>
             </div>
 
@@ -301,7 +164,7 @@ export default function AboutPage() {
       <section className="py-12 sm:py-16 md:py-20 bg-linear-to-r from-white/80 to-gray-50/80 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 md:gap-8">
-            {stats.map((stat, index) => (
+            {displayStats.map((stat, index) => (
               <div
                 key={index}
                 className={`group text-center p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl bg-white/90 backdrop-blur-xl border border-[#06b6d4]/20 shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
@@ -309,12 +172,12 @@ export default function AboutPage() {
                 style={{ transitionDelay: `${index * 100}ms` }}
               >
                 <div className="text-[#06b6d4] mb-3 sm:mb-4 md:mb-6 flex justify-center group-hover:scale-110 transition-transform duration-300">
-                  <div className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8">
-                    {stat.icon}
-                  </div>
+                  <svg className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
                 </div>
                 <div className="text-2xl sm:text-3xl md:text-4xl font-black bg-linear-to-r from-[#06124f] to-[#06b6d4] bg-clip-text text-transparent mb-2 sm:mb-3">
-                  {stat.number}
+                  {stat.value}
                 </div>
                 <div className="text-gray-700 font-semibold text-sm sm:text-base md:text-lg">{stat.label}</div>
               </div>
@@ -344,7 +207,7 @@ export default function AboutPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 md:gap-8">
-            {features.map((feature, index) => (
+            {displayFeatures.map((feature, index) => (
               <div
                 key={index}
                 className={`group p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl bg-linear-to-br from-white to-gray-50/50 border border-gray-200/50 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
@@ -386,7 +249,7 @@ export default function AboutPage() {
                 Leading Barcode Technology Provider
               </h2>
               <p className="text-base sm:text-lg md:text-xl text-gray-700 leading-relaxed mb-6 sm:mb-8 md:mb-10">
-                We specialize in providing comprehensive barcode solutions that streamline business operations across industries. From thermal label printers to mobile scanning devices, we deliver professional-grade equipment and software solutions.
+                {content?.mission || "We specialize in providing comprehensive barcode solutions that streamline business operations across industries. From thermal label printers to mobile scanning devices, we deliver professional-grade equipment and software solutions."}
               </p>
               <div className="space-y-4 sm:space-y-6">
                 <div className="flex items-center space-x-3 sm:space-x-4">
@@ -422,7 +285,7 @@ export default function AboutPage() {
                     Serving Businesses Nationwide
                   </h2>
                   <p className="text-base sm:text-lg md:text-xl text-gray-700 leading-relaxed">
-                    To be India&apos;s most trusted barcode solutions provider, delivering innovative technology and exceptional service that enables businesses to achieve operational excellence and competitive advantage.
+                    {content?.vision || "To be India's most trusted barcode solutions provider, delivering innovative technology and exceptional service that enables businesses to achieve operational excellence and competitive advantage."}
                   </p>
                 </div>
               </div>
@@ -462,58 +325,7 @@ export default function AboutPage() {
             <div className="absolute left-1/2 transform -translate-x-1/2 top-0 bottom-0 w-0.5 bg-linear-to-b from-[#06b6d4]/0 via-[#06b6d4]/30 to-[#06b6d4]/0 hidden md:block" />
 
             <div className="space-y-12 sm:space-y-16 md:space-y-24">
-              {[
-                {
-                  year: "2018",
-                  title: "Inception",
-                  description: "VIROS Entrepreneurs was founded with a vision to simplify barcode solutions for small businesses.",
-                  icon: (
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                    </svg>
-                  )
-                },
-                {
-                  year: "2019",
-                  title: "Strategic Partnerships",
-                  description: "Secured key partnerships with major printer manufacturers, expanding our product portfolio.",
-                  icon: (
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                  )
-                },
-                {
-                  year: "2021",
-                  title: "National Expansion",
-                  description: "Expanded operations to serve clients across 20+ states in India, launching our mobile solutions division.",
-                  icon: (
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  )
-                },
-                {
-                  year: "2023",
-                  title: "Innovation & Software",
-                  description: "Launched our custom software development wing to provide end-to-end integrated barcode systems.",
-                  icon: (
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                    </svg>
-                  )
-                },
-                {
-                  year: "2024",
-                  title: "Market Leadership",
-                  description: "Recognized as a top barcode solutions provider with over 500+ satisfied enterprise clients.",
-                  icon: (
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                    </svg>
-                  )
-                }
-              ].map((milestone, index) => (
+              {displayMilestones.map((milestone, index) => (
                 <div key={index} className={`relative flex items-center ${index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'} flex-col`}>
                   {/* Timeline Dot */}
                   <div className="absolute left-1/2 transform -translate-x-1/2 w-4 h-4 bg-[#06b6d4] rounded-full ring-4 ring-white shadow-lg hidden md:block">
@@ -530,7 +342,9 @@ export default function AboutPage() {
                       <div className="flex items-center justify-between mb-4">
                         <span className="text-2xl sm:text-3xl font-black text-[#06b6d4]">{milestone.year}</span>
                         <div className="w-10 h-10 sm:w-12 sm:h-12 bg-linear-to-br from-[#06124f]/5 to-[#06b6d4]/5 rounded-xl flex items-center justify-center text-[#06124f] group-hover:scale-110 transition-transform duration-300">
-                          {milestone.icon}
+                          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                          </svg>
                         </div>
                       </div>
                       <h3 className="text-xl font-bold text-[#06124f] mb-3">{milestone.title}</h3>
@@ -567,7 +381,7 @@ export default function AboutPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 md:gap-8">
-            {values.map((value, index) => (
+            {displayValues.map((value, index) => (
               <div
                 key={index}
                 className={`group p-6 sm:p-8 md:p-10 rounded-2xl sm:rounded-3xl bg-white/90 backdrop-blur-xl border border-[#06b6d4]/20 shadow-xl hover:shadow-2xl transition-all duration-700 hover:-translate-y-3 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
