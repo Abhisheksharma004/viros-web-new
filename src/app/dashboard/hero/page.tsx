@@ -195,7 +195,7 @@ export default function HeroPage() {
                 </div>
                 <button
                     onClick={handleAddNew}
-                    className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-[#06b6d4] to-[#06124f] text-white font-semibold rounded-lg hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5"
+                    className="inline-flex items-center px-6 py-3 bg-linear-to-r from-[#06b6d4] to-[#06124f] text-white font-semibold rounded-lg hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5"
                 >
                     <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -269,7 +269,7 @@ export default function HeroPage() {
                         <p className="text-gray-600 mb-4">Create your first hero slide to get started</p>
                         <button
                             onClick={handleAddNew}
-                            className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-[#06b6d4] to-[#06124f] text-white font-semibold rounded-lg"
+                            className="inline-flex items-center px-6 py-3 bg-linear-to-r from-[#06b6d4] to-[#06124f] text-white font-semibold rounded-lg"
                         >
                             Add Your First Slide
                         </button>
@@ -307,7 +307,7 @@ export default function HeroPage() {
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-start justify-between mb-3">
                                         <div className="flex items-center space-x-3">
-                                            <div className="w-10 h-10 bg-gradient-to-br from-[#06b6d4] to-[#06124f] rounded-lg flex items-center justify-center text-white font-bold text-sm shrink-0">
+                                            <div className="w-10 h-10 bg-linear-to-br from-[#06b6d4] to-[#06124f] rounded-lg flex items-center justify-center text-white font-bold text-sm shrink-0">
                                                 {slide.display_order}
                                             </div>
                                             <div>
@@ -515,7 +515,7 @@ export default function HeroPage() {
                             </button>
                             <button
                                 onClick={handleSave}
-                                className="px-6 py-2 bg-gradient-to-r from-[#06b6d4] to-[#06124f] text-white font-semibold rounded-lg hover:shadow-lg transition-all"
+                                className="px-6 py-2 bg-linear-to-r from-[#06b6d4] to-[#06124f] text-white font-semibold rounded-lg hover:shadow-lg transition-all"
                             >
                                 {editingSlide ? 'Update Slide' : 'Create Slide'}
                             </button>

@@ -140,7 +140,7 @@ export default function DashboardPage() {
             </div>
 
             {/* System Status */}
-            <div className="bg-gradient-to-r from-[#06b6d4] to-[#06124f] rounded-2xl p-6 text-white shadow-lg">
+            <div className="bg-linear-to-r from-[#06b6d4] to-[#06124f] rounded-2xl p-6 text-white shadow-lg">
                 <div className="flex items-center justify-between">
                     <div>
                         <h3 className="text-lg font-bold mb-1">System Status</h3>
