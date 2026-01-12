@@ -3,10 +3,10 @@ import pool from '@/lib/db';
 
 export async function PUT(
     request: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const id = params.id;
+        const { id } = await params;
         const body = await request.json();
         const { name, role, image, bio, linkedin, instagram, display_order } = body;
 
@@ -21,9 +21,15 @@ export async function PUT(
         if (instagram !== undefined) { updates.push('instagram = ?'); values.push(instagram); }
         if (display_order !== undefined) { updates.push('display_order = ?'); values.push(display_order); }
 
-        if (updates.length > 0) {
-            values.push(id);
-            await pool.query(`UPDATE team_members SET ${updates.join(', ')} WHERE id = ?`, values);
+        if (updates.length === 0) {
+            return NextResponse.json({ message: 'No fields to update' }, { status: 400 });
+        }
+
+        values.push(id);
+        const [result]: any = await pool.query(`UPDATE team_members SET ${updates.join(', ')} WHERE id = ?`, values);
+
+        if (result.affectedRows === 0) {
+            return NextResponse.json({ message: 'Team member not found' }, { status: 404 });
         }
 
         return NextResponse.json({ message: 'Team member updated successfully' });
@@ -38,11 +44,16 @@ export async function PUT(
 
 export async function DELETE(
     request: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const id = params.id;
-        await pool.query('DELETE FROM team_members WHERE id = ?', [id]);
+        const { id } = await params;
+        const [result]: any = await pool.query('DELETE FROM team_members WHERE id = ?', [id]);
+
+        if (result.affectedRows === 0) {
+            return NextResponse.json({ message: 'Team member not found' }, { status: 404 });
+        }
+
         return NextResponse.json({ message: 'Team member deleted successfully' });
     } catch (error: any) {
         console.error('Error deleting team member:', error);
