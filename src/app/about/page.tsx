@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function AboutPage() {
   const [isVisible, setIsVisible] = useState(false);
@@ -665,6 +666,14 @@ export default function AboutPage() {
                 </svg>
                 View Products
               </button>
+              <Link href="/certificates" className="w-full sm:w-auto">
+                <button className="w-full px-8 sm:px-10 md:px-12 py-4 sm:py-5 md:py-6 border-2 border-white/40 text-white font-black rounded-xl sm:rounded-2xl backdrop-blur-sm hover:bg-white/10 hover:border-white/60 transition-all duration-300 text-base sm:text-lg flex items-center justify-center touch-manipulation">
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6 mr-2 sm:mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                  </svg>
+                  View Certificates
+                </button>
+              </Link>
             </div>
           </div>
         </div>

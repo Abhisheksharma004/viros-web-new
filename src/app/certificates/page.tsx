@@ -4,57 +4,80 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
-
-// Mock Certificates Data
-const certificates = [
-    {
-        id: 1,
-        title: "ISO 9001:2015 Certification",
-        issuer: "International Organization for Standardization",
-        year: "2023",
-        image: "https://images.unsplash.com/photo-1606326608606-aa0b62935f2b?auto=format&fit=crop&w=800&q=80",
-        description: "Certified for Quality Management Systems in hardware distribution and service."
-    },
-    {
-        id: 2,
-        title: "Zebra Premier Business Partner",
-        issuer: "Zebra Technologies",
-        year: "2022",
-        image: "https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=800&q=80",
-        description: "Recognized as a top-tier partner for delivering excellence in Zebra solutions."
-    },
-    {
-        id: 3,
-        title: "Honeywell Platinum Partner",
-        issuer: "Honeywell",
-        year: "2023",
-        image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=800&q=80",
-        description: "Awarded for outstanding performance in industrial automation and safety solutions."
-    },
-    {
-        id: 4,
-        title: "Excellence in Customer Service",
-        issuer: "Industry Awards 2023",
-        year: "2023",
-        image: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=800&q=80",
-        description: "Voted best-in-class for client support and technical assistance."
-    },
-    {
-        id: 5,
-        title: "Sustainability Leadership Award",
-        issuer: "Green Tech Initiative",
-        year: "2022",
-        image: "https://images.unsplash.com/photo-1542601906990-b4d3fb7d5763?auto=format&fit=crop&w=800&q=80",
-        description: "Honored for commitment to eco-friendly practices in hardware lifecycle management."
-    }
-];
-
 export default function CertificatesPage() {
     const [isVisible, setIsVisible] = useState(false);
+    const [certificates, setCertificates] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [selectedImage, setSelectedImage] = useState<string | null>(null);
+    const [selectedCert, setSelectedCert] = useState<any>(null);
 
     useEffect(() => {
         setIsVisible(true);
+
+        // Fetch certificates from API
+        const fetchCertificates = async () => {
+            try {
+                const response = await fetch('/api/certificates?active=true');
+                const data = await response.json();
+                setCertificates(data);
+            } catch (error) {
+                console.error('Error fetching certificates:', error);
+                // Use fallback data if fetch fails
+                setCertificates(fallbackCertificates);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchCertificates();
     }, []);
+
+    // Fallback certificates data
+    const fallbackCertificates = [
+        {
+            id: 1,
+            title: "ISO 9001:2015 Certification",
+            issuer: "International Organization for Standardization",
+            year: "2023",
+            image_url: "https://images.unsplash.com/photo-1606326608606-aa0b62935f2b?auto=format&fit=crop&w=800&q=80",
+            description: "Certified for Quality Management Systems in hardware distribution and service."
+        },
+        {
+            id: 2,
+            title: "Zebra Premier Business Partner",
+            issuer: "Zebra Technologies",
+            year: "2022",
+            image_url: "https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=800&q=80",
+            description: "Recognized as a top-tier partner for delivering excellence in Zebra solutions."
+        },
+        {
+            id: 3,
+            title: "Honeywell Platinum Partner",
+            issuer: "Honeywell",
+            year: "2023",
+            image_url: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=800&q=80",
+            description: "Awarded for outstanding performance in industrial automation and safety solutions."
+        },
+        {
+            id: 4,
+            title: "Excellence in Customer Service",
+            issuer: "Industry Awards 2023",
+            year: "2023",
+            image_url: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=800&q=80",
+            description: "Voted best-in-class for client support and technical assistance."
+        },
+        {
+            id: 5,
+            title: "Sustainability Leadership Award",
+            issuer: "Green Tech Initiative",
+            year: "2022",
+            image_url: "https://images.unsplash.com/photo-1542601906990-b4d3fb7d5763?auto=format&fit=crop&w=800&q=80",
+            description: "Honored for commitment to eco-friendly practices in hardware lifecycle management."
+        }
+    ];
+
+    // Use fetched data or fallback
+    const displayCertificates = certificates.length > 0 ? certificates : fallbackCertificates;
 
     return (
         <div className="min-h-screen bg-gray-50 font-sans">
@@ -109,7 +132,7 @@ export default function CertificatesPage() {
             <section className="py-20 relative z-20">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {certificates.map((cert, index) => (
+                        {displayCertificates.map((cert, index) => (
                             <div
                                 key={cert.id}
                                 className={`group relative bg-white rounded-[2rem] overflow-hidden shadow-lg transition-all duration-700 hover:-translate-y-2 hover:shadow-2xl hover:shadow-[#06b6d4]/20 flex flex-col ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`}
@@ -122,10 +145,16 @@ export default function CertificatesPage() {
                                 <div className="absolute inset-[1px] bg-white rounded-[2rem] z-0" />
 
                                 {/* Image Area */}
-                                <div className="relative h-64 overflow-hidden z-10 m-[1px] rounded-t-[2rem]">
+                                <div
+                                    className="relative h-64 overflow-hidden z-10 m-[1px] rounded-t-[2rem] cursor-pointer"
+                                    onClick={() => {
+                                        setSelectedImage(cert.image_url || cert.image || "");
+                                        setSelectedCert(cert);
+                                    }}
+                                >
                                     <div className="absolute inset-0 bg-gradient-to-t from-[#06124f] via-transparent to-transparent z-10 opacity-80" />
                                     <Image
-                                        src={cert.image}
+                                        src={cert.image_url || cert.image || "https://images.unsplash.com/photo-1606326608606-aa0b62935f2b?auto=format&fit=crop&w=800&q=80"}
                                         alt={cert.title}
                                         fill
                                         className="object-cover transition-transform duration-700 group-hover:scale-110"
@@ -180,6 +209,58 @@ export default function CertificatesPage() {
                     </Link>
                 </div>
             </section>
+
+            {/* Image Modal */}
+            {selectedImage && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-sm p-4"
+                    onClick={() => {
+                        setSelectedImage(null);
+                        setSelectedCert(null);
+                    }}
+                >
+                    <button
+                        className="absolute top-4 right-4 z-50 w-12 h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white hover:bg-white/20 transition-all duration-300 flex items-center justify-center"
+                        onClick={() => {
+                            setSelectedImage(null);
+                            setSelectedCert(null);
+                        }}
+                    >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+
+                    <div
+                        className="relative max-w-6xl w-full max-h-[90vh] flex items-center justify-center"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <img
+                            src={selectedImage}
+                            alt={selectedCert?.title || "Certificate"}
+                            className="max-w-full max-h-[90vh] object-contain rounded-2xl shadow-2xl"
+                        />
+
+                        {/* Certificate Info Overlay */}
+                        {selectedCert && (
+                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/70 to-transparent p-8 rounded-b-2xl">
+                                <div className="text-[#06b6d4] text-sm font-bold uppercase tracking-wider mb-2">
+                                    {selectedCert.issuer}
+                                </div>
+                                <h3 className="text-2xl md:text-3xl font-black text-white mb-2">
+                                    {selectedCert.title}
+                                </h3>
+                                <p className="text-white/80 text-sm md:text-base">
+                                    {selectedCert.description}
+                                </p>
+                                <div className="mt-4 inline-block px-4 py-2 bg-white/10 backdrop-blur-md rounded-full border border-white/20 text-white text-sm font-bold">
+                                    Year: {selectedCert.year}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
