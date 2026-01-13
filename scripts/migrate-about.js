@@ -33,7 +33,7 @@ async function migrate() {
                 cta_primary_text VARCHAR(100),
                 cta_secondary_text VARCHAR(100),
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-            )
+            ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4
         `);
 
         await connection.query(`
@@ -45,7 +45,7 @@ async function migrate() {
                 display_order INT DEFAULT 0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-            )
+            ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4
         `);
 
         await connection.query(`
@@ -58,7 +58,7 @@ async function migrate() {
                 display_order INT DEFAULT 0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-            )
+            ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4
         `);
 
         await connection.query(`
@@ -70,7 +70,7 @@ async function migrate() {
                 display_order INT DEFAULT 0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-            )
+            ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4
         `);
 
         await connection.query(`
@@ -85,7 +85,7 @@ async function migrate() {
                 display_order INT DEFAULT 0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-            )
+            ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4
         `);
 
         await connection.query(`
@@ -97,7 +97,7 @@ async function migrate() {
                 display_order INT DEFAULT 0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-            )
+            ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4
         `);
 
         console.log('Tables created successfully.');

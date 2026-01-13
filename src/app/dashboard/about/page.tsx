@@ -179,7 +179,7 @@ export default function AboutManagementPage() {
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                             <textarea
-                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#06b6d4] outline-none min-h-[120px] text-gray-900"
+                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#06b6d4] outline-none min-h-30 text-gray-900"
                                 value={aboutData.description}
                                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setAboutData({ ...aboutData, description: e.target.value })}
                             />
@@ -210,7 +210,7 @@ export default function AboutManagementPage() {
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Our Mission</label>
                             <textarea
-                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#06b6d4] outline-none min-h-[100px] text-gray-900"
+                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#06b6d4] outline-none min-h-25 text-gray-900"
                                 value={aboutData.mission}
                                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setAboutData({ ...aboutData, mission: e.target.value })}
                             />
@@ -218,7 +218,7 @@ export default function AboutManagementPage() {
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Our Vision</label>
                             <textarea
-                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#06b6d4] outline-none min-h-[100px] text-gray-900"
+                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#06b6d4] outline-none min-h-25 text-gray-900"
                                 value={aboutData.vision}
                                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setAboutData({ ...aboutData, vision: e.target.value })}
                             />
@@ -401,7 +401,7 @@ export default function AboutManagementPage() {
                         <div>
                             <label className="block text-sm font-medium opacity-80 mb-1">CTA Subtitle Content</label>
                             <textarea
-                                className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg outline-none focus:bg-white/20 transition-all text-white min-h-[100px] placeholder:text-white/60"
+                                className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg outline-none focus:bg-white/20 transition-all text-white min-h-25 placeholder:text-white/60"
                                 value={aboutData.cta_subtitle}
                                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setAboutData({ ...aboutData, cta_subtitle: e.target.value })}
                             />

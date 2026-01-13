@@ -27,20 +27,20 @@ export default async function ServiceDetailsPage({ params }: { params: Promise<{
         notFound();
     }
 
-    // Parse JSON fields
-    const features = typeof service.features === 'string' ? JSON.parse(service.features) : service.features;
-    const benefits = typeof service.benefits === 'string' ? JSON.parse(service.benefits) : service.benefits;
-    const specifications = typeof service.specifications === 'string' ? JSON.parse(service.specifications) : service.specifications;
-    const process = typeof service.process === 'string' ? JSON.parse(service.process) : service.process;
-    const faqs = typeof service.faqs === 'string' ? JSON.parse(service.faqs) : service.faqs;
-    const brands = typeof service.brands === 'string' ? JSON.parse(service.brands) : service.brands;
-    const products = typeof service.products === 'string' ? JSON.parse(service.products) : service.products;
-    const useCases = typeof service.useCases === 'string' ? JSON.parse(service.useCases) : service.useCases;
+    // Parse JSON fields with safe fallbacks
+    const features = typeof service.features === 'string' ? JSON.parse(service.features) : (service.features || []);
+    const benefits = typeof service.benefits === 'string' ? JSON.parse(service.benefits) : (service.benefits || []);
+    const specifications = typeof service.specifications === 'string' ? JSON.parse(service.specifications) : (service.specifications || []);
+    const process = typeof service.process === 'string' ? JSON.parse(service.process) : (service.process || []);
+    const faqs = typeof service.faqs === 'string' ? JSON.parse(service.faqs) : (service.faqs || []);
+    const brands = typeof service.brands === 'string' ? JSON.parse(service.brands) : (service.brands || []);
+    const products = typeof service.products === 'string' ? JSON.parse(service.products) : (service.products || []);
+    const useCases = typeof service.useCases === 'string' ? JSON.parse(service.useCases) : (service.useCases || []);
 
     return (
         <div className="min-h-screen bg-gray-50">
             {/* Hero Section */}
-            <section className="relative h-[60vh] min-h-[500px] flex items-center justify-center overflow-hidden">
+            <section className="relative h-[60vh] min-h-125 flex items-center justify-center overflow-hidden">
                 <div className="absolute inset-0">
                     <Image
                         src={service.image_url}
@@ -49,7 +49,7 @@ export default async function ServiceDetailsPage({ params }: { params: Promise<{
                         className="object-cover"
                         priority
                     />
-                    <div className={`absolute inset-0 bg-gradient-to-r ${service.gradient || 'from-[#06124f]/90 to-[#06b6d4]/80'} mix-blend-multiply`} />
+                    <div className={`absolute inset-0 bg-linear-to-r ${service.gradient || 'from-[#06124f]/90 to-[#06b6d4]/80'} mix-blend-multiply`} suppressHydrationWarning />
                     <div className="absolute inset-0 bg-black/40" />
                 </div>
 
@@ -67,14 +67,14 @@ export default async function ServiceDetailsPage({ params }: { params: Promise<{
             </section>
 
             {/* Brands Section */}
-            {brands && brands.length > 0 && (
+            {Array.isArray(brands) && brands.length > 0 && (
                 <section className="py-12 bg-white border-b border-gray-100">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <h3 className="text-center text-sm font-bold text-gray-500 uppercase tracking-widest mb-8">
                             Trusted Partner Brands
                         </h3>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 items-center">
-                            {brands.map((brand: any, idx: number) => (
+                            {Array.isArray(brands) && brands.map((brand: any, idx: number) => (
                                 <div key={brand.name || idx} className="flex items-center justify-center p-4 grayscale hover:grayscale-0 transition-all duration-300 opacity-60 hover:opacity-100">
                                     <div className="relative h-12 w-32">
                                         <Image
@@ -102,14 +102,14 @@ export default async function ServiceDetailsPage({ params }: { params: Promise<{
                                 {service.long_description}
                             </div>
 
-                            {specifications && specifications.length > 0 && (
+                            {Array.isArray(specifications) && specifications.length > 0 && (
                                 <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
                                     <h3 className="bg-gray-50 px-6 py-4 text-lg font-bold text-[#06124f] border-b border-gray-100">
                                         Technical Specifications
                                     </h3>
                                     <div className="p-6">
                                         <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-6">
-                                            {specifications.map((spec: any, idx: number) => (
+                                            {Array.isArray(specifications) && specifications.map((spec: any, idx: number) => (
                                                 <div key={spec.label || idx} className="border-b border-gray-50 pb-2 last:border-0">
                                                     <dt className="text-sm font-medium text-gray-500 uppercase tracking-wide">{spec.label}</dt>
                                                     <dd className="mt-1 text-base font-semibold text-[#06124f]">{spec.value}</dd>
@@ -125,9 +125,9 @@ export default async function ServiceDetailsPage({ params }: { params: Promise<{
                         <div>
                             <h2 className="text-3xl font-bold text-[#06124f] mb-8">Key Benefits</h2>
                             <div className="grid grid-cols-1 gap-6">
-                                {benefits.map((benefit: any, idx: number) => (
+                                {Array.isArray(benefits) && benefits.map((benefit: any, idx: number) => (
                                     <div key={benefit.title || idx} className="flex items-start p-6 bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-300">
-                                        <div className="flex-shrink-0 w-10 h-10 rounded-full bg-[#06b6d4]/10 flex items-center justify-center mt-1">
+                                        <div className="shrink-0 w-10 h-10 rounded-full bg-[#06b6d4]/10 flex items-center justify-center mt-1">
                                             <svg className="w-5 h-5 text-[#06b6d4]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                             </svg>
@@ -145,7 +145,7 @@ export default async function ServiceDetailsPage({ params }: { params: Promise<{
             </section>
 
             {/* Product Examples Section */}
-            {products && products.length > 0 && (
+            {Array.isArray(products) && products.length > 0 && (
                 <section className="py-20 bg-white">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="text-center mb-16">
@@ -156,7 +156,7 @@ export default async function ServiceDetailsPage({ params }: { params: Promise<{
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                            {products.map((product: any, idx: number) => (
+                            {Array.isArray(products) && products.map((product: any, idx: number) => (
                                 <div key={product.name || idx} className="group bg-white rounded-2xl overflow-hidden shadow-md border border-gray-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
                                     <div className="relative h-48 bg-gray-100 overflow-hidden">
                                         <Image
@@ -187,7 +187,7 @@ export default async function ServiceDetailsPage({ params }: { params: Promise<{
             )}
 
             {/* Industry Use Cases */}
-            {useCases && useCases.length > 0 && (
+            {Array.isArray(useCases) && useCases.length > 0 && (
                 <section className="py-20 bg-gray-50">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="text-center mb-16">
@@ -198,7 +198,7 @@ export default async function ServiceDetailsPage({ params }: { params: Promise<{
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                            {useCases.map((useCase: any, idx: number) => (
+                            {Array.isArray(useCases) && useCases.map((useCase: any, idx: number) => (
                                 <div key={useCase.industry || idx} className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300">
                                     <div className="w-12 h-12 rounded-xl bg-[#06b6d4]/10 flex items-center justify-center mb-6">
                                         <svg className="w-6 h-6 text-[#06b6d4]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -233,12 +233,12 @@ export default async function ServiceDetailsPage({ params }: { params: Promise<{
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                        {process.map((step: any, idx: number) => (
+                        {Array.isArray(process) && process.map((step: any, idx: number) => (
                             <div key={step.title || idx} className="relative group">
-                                <div className="absolute -inset-0.5 bg-gradient-to-r from-[#06b6d4] to-cyan-300 rounded-2xl blur opacity-25 group-hover:opacity-100 transition duration-500" />
+                                <div className="absolute -inset-0.5 bg-linear-to-r from-[#06b6d4] to-cyan-300 rounded-2xl blur opacity-25 group-hover:opacity-100 transition duration-500" />
                                 <div className="relative h-full bg-[#0a1a5c] p-8 rounded-2xl border border-white/10">
                                     <span className="text-5xl font-black text-white/5 absolute top-4 right-4">{step.step.toString().padStart(2, '0')}</span>
-                                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#06b6d4] to-blue-500 flex items-center justify-center mb-6 text-white font-bold text-xl shadow-lg">
+                                    <div className="w-12 h-12 rounded-xl bg-linear-to-br from-[#06b6d4] to-blue-500 flex items-center justify-center mb-6 text-white font-bold text-xl shadow-lg">
                                         {step.step}
                                     </div>
                                     <h3 className="text-xl font-bold mb-3 text-white group-hover:text-[#06b6d4] transition-colors">{step.title}</h3>
@@ -257,7 +257,7 @@ export default async function ServiceDetailsPage({ params }: { params: Promise<{
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
                     <h2 className="text-3xl font-bold text-center text-[#06124f] mb-12">Frequently Asked Questions</h2>
                     <div className="space-y-6">
-                        {faqs.map((faq: any, idx: number) => (
+                        {Array.isArray(faqs) && faqs.map((faq: any, idx: number) => (
                             <div key={faq.question || idx} className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300">
                                 <h3 className="text-lg font-bold text-[#06124f] mb-3 flex items-start">
                                     <span className="text-[#06b6d4] mr-3 font-serif italic text-xl">Q.</span>
@@ -275,7 +275,7 @@ export default async function ServiceDetailsPage({ params }: { params: Promise<{
             {/* CTA Section */}
             <section className="py-20">
                 <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="bg-gradient-to-r from-[#06b6d4] to-[#06124f] rounded-[2.5rem] p-12 md:p-16 text-center text-white shadow-2xl relative overflow-hidden">
+                    <div className="bg-linear-to-r from-[#06b6d4] to-[#06124f] rounded-[2.5rem] p-12 md:p-16 text-center text-white shadow-2xl relative overflow-hidden">
                         <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10" />
 
                         <div className="relative z-10">
