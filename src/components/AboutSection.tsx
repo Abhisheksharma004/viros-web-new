@@ -13,8 +13,25 @@ const stats = [
 
 export default function AboutSection() {
     const [isVisible, setIsVisible] = useState(false);
+    const [content, setContent] = useState<any>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
+        // Fetch dynamic content from API
+        const fetchContent = async () => {
+            try {
+                const response = await fetch('/api/about/content');
+                const data = await response.json();
+                setContent(data);
+            } catch (error) {
+                console.error('Error fetching homepage about content:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchContent();
+
         const observer = new IntersectionObserver(
             ([entry]) => {
                 if (entry.isIntersecting) {
@@ -32,6 +49,14 @@ export default function AboutSection() {
         };
     }, []);
 
+    // Fallback values if content is not loaded or empty
+    const badge = content?.homepage_badge || "WHO WE ARE";
+    const title = content?.homepage_title || "Complete Barcode Solutions Provider";
+    const description = content?.homepage_description || "VIROS Entrepreneurs specializes in providing comprehensive barcode solutions including label printers, handheld scanners, mobile devices, and custom software solutions. We enable businesses to achieve operational excellence through innovative technology.";
+    const imageUrl = content?.homepage_image_url || "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80";
+    const cardTitle = content?.homepage_card_title || "Trusted Partner";
+    const cardSubtitle = content?.homepage_card_subtitle || "Helping businesses scale since 2018";
+
     return (
         <section id="homepage-about" className="py-24 relative overflow-hidden bg-[#06124f] text-white">
             {/* Background Pattern */}
@@ -45,14 +70,16 @@ export default function AboutSection() {
                     {/* Text Content */}
                     <div className={`w-full lg:w-1/2 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-12'}`}>
                         <span className="inline-block px-4 py-2 rounded-full bg-[#06b6d4]/10 text-[#06b6d4] text-sm font-bold mb-6 border border-[#06b6d4]/20">
-                            WHO WE ARE
+                            {badge}
                         </span>
                         <h2 className="text-4xl md:text-5xl font-black mb-8 leading-tight">
-                            Complete Barcode <br />
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#06b6d4] to-white">Solutions Provider</span>
+                            {title.split(' ').slice(0, 2).join(' ')} <br />
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#06b6d4] to-white">
+                                {title.split(' ').slice(2).join(' ')}
+                            </span>
                         </h2>
                         <p className="text-gray-300 text-lg mb-8 leading-relaxed font-light">
-                            VIROS Entrepreneurs specializes in providing comprehensive barcode solutions including label printers, handheld scanners, mobile devices, and custom software solutions. We enable businesses to achieve operational excellence through innovative technology.
+                            {description}
                         </p>
 
                         <div className="grid grid-cols-2 gap-8 mb-10">
@@ -80,7 +107,7 @@ export default function AboutSection() {
                         <div className="relative h-[600px] w-full bg-gradient-to-br from-[#06b6d4]/20 to-[#06124f]/20 rounded-[2.5rem] p-4">
                             <div className="relative h-full w-full overflow-hidden rounded-[2rem] shadow-2xl">
                                 <Image
-                                    src="https://images.unsplash.com/photo-1556761175-5973dc0f32e7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+                                    src={imageUrl}
                                     alt="Warehouse Operations"
                                     fill
                                     className="object-cover"
@@ -96,8 +123,8 @@ export default function AboutSection() {
                                             </svg>
                                         </div>
                                         <div>
-                                            <h4 className="text-[#06124f] font-bold text-lg">Trusted Partner</h4>
-                                            <p className="text-sm text-gray-500">Helping businesses scale since 2018</p>
+                                            <h4 className="text-[#06124f] font-bold text-lg">{cardTitle}</h4>
+                                            <p className="text-sm text-gray-500">{cardSubtitle}</p>
                                         </div>
                                     </div>
                                 </div>

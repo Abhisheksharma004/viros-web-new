@@ -18,7 +18,13 @@ export default function AboutManagementPage() {
         cta_title: "",
         cta_subtitle: "",
         cta_primary_text: "",
-        cta_secondary_text: ""
+        cta_secondary_text: "",
+        homepage_badge: "",
+        homepage_title: "",
+        homepage_description: "",
+        homepage_image_url: "",
+        homepage_card_title: "",
+        homepage_card_subtitle: ""
     });
 
     const [stats, setStats] = useState<any[]>([]);
@@ -149,6 +155,102 @@ export default function AboutManagementPage() {
                     Error: {error}
                 </div>
             )}
+
+            {/* Homepage About Section */}
+            <div className="bg-gradient-to-br from-[#06124f] to-[#06124f]/90 p-8 rounded-2xl shadow-xl text-white border border-[#06b6d4]/20">
+                <div className="flex items-center space-x-3 mb-6">
+                    <svg className="w-6 h-6 text-[#06b6d4]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+                    <h2 className="text-2xl font-bold">Homepage About Section</h2>
+                    <span className="text-xs bg-[#06b6d4]/20 px-3 py-1 rounded-full border border-[#06b6d4]/30">Displayed on Homepage</span>
+                </div>
+                <p className="text-white/70 mb-6 text-sm">Manage the "About" section that appears on your homepage</p>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Left Column */}
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium opacity-90 mb-2">Badge Text</label>
+                            <input
+                                type="text"
+                                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg outline-none focus:bg-white/20 focus:border-[#06b6d4] transition-all text-white placeholder:text-white/50"
+                                placeholder="e.g., WHO WE ARE"
+                                value={aboutData.homepage_badge}
+                                onChange={(e) => setAboutData({ ...aboutData, homepage_badge: e.target.value })}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium opacity-90 mb-2">Section Title</label>
+                            <input
+                                type="text"
+                                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg outline-none focus:bg-white/20 focus:border-[#06b6d4] transition-all text-white placeholder:text-white/50"
+                                placeholder="e.g., Complete Barcode Solutions Provider"
+                                value={aboutData.homepage_title}
+                                onChange={(e) => setAboutData({ ...aboutData, homepage_title: e.target.value })}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium opacity-90 mb-2">Description</label>
+                            <textarea
+                                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg outline-none focus:bg-white/20 focus:border-[#06b6d4] transition-all text-white placeholder:text-white/50 min-h-32"
+                                placeholder="Brief description of your company..."
+                                value={aboutData.homepage_description}
+                                onChange={(e) => setAboutData({ ...aboutData, homepage_description: e.target.value })}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Right Column */}
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium opacity-90 mb-2">Image URL</label>
+                            <div className="relative">
+                                <LinkIcon className="absolute left-3 top-3.5 w-4 h-4 text-white/50" />
+                                <input
+                                    type="text"
+                                    className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-lg outline-none focus:bg-white/20 focus:border-[#06b6d4] transition-all text-white placeholder:text-white/50"
+                                    placeholder="https://example.com/image.jpg"
+                                    value={aboutData.homepage_image_url}
+                                    onChange={(e) => setAboutData({ ...aboutData, homepage_image_url: e.target.value })}
+                                />
+                            </div>
+                            {aboutData.homepage_image_url && (
+                                <div className="mt-2 rounded-lg overflow-hidden border border-white/20">
+                                    <img
+                                        src={aboutData.homepage_image_url}
+                                        alt="Preview"
+                                        className="w-full h-32 object-cover"
+                                        onError={(e) => {
+                                            (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%23ddd" width="100" height="100"/%3E%3Ctext fill="%23999" x="50%25" y="50%25" text-anchor="middle" dy=".3em"%3EInvalid URL%3C/text%3E%3C/svg%3E';
+                                        }}
+                                    />
+                                </div>
+                            )}
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium opacity-90 mb-2">Floating Card Title</label>
+                            <input
+                                type="text"
+                                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg outline-none focus:bg-white/20 focus:border-[#06b6d4] transition-all text-white placeholder:text-white/50"
+                                placeholder="e.g., Trusted Partner"
+                                value={aboutData.homepage_card_title}
+                                onChange={(e) => setAboutData({ ...aboutData, homepage_card_title: e.target.value })}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium opacity-90 mb-2">Floating Card Subtitle</label>
+                            <input
+                                type="text"
+                                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg outline-none focus:bg-white/20 focus:border-[#06b6d4] transition-all text-white placeholder:text-white/50"
+                                placeholder="e.g., Helping businesses scale since 2018"
+                                value={aboutData.homepage_card_subtitle}
+                                onChange={(e) => setAboutData({ ...aboutData, homepage_card_subtitle: e.target.value })}
+                            />
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Hero & Main Info */}
