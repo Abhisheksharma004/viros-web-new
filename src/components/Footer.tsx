@@ -191,9 +191,9 @@ export default function Footer() {
                             <p>&copy; {currentYear} {footerContent.copyright_text}</p>
                             <p className="text-xs text-gray-500 mt-1">{footerContent.developer_text}</p>
                             <div className="mt-2 space-x-4">
-                                <a href="#" className="hover:text-[#06b6d4] transition-colors">Privacy Policy</a>
+                                <Link href="/privacy-policy" className="hover:text-[#06b6d4] transition-colors">Privacy Policy</Link>
                                 <span className="text-gray-700">|</span>
-                                <a href="#" className="hover:text-[#06b6d4] transition-colors">Terms of Service</a>
+                                <Link href="/terms-of-service" className="hover:text-[#06b6d4] transition-colors">Terms of Service</Link>
                             </div>
                         </div>
 
