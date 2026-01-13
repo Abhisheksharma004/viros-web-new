@@ -4,25 +4,26 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 
-const stats = [
-    { label: "Happy Clients", value: "500+" },
-    { label: "Projects Delivered", value: "1000+" },
-    { label: "Cities Served", value: "50+" },
-    { label: "Uptime Guarantee", value: "99.9%" },
-];
-
 export default function AboutSection() {
     const [isVisible, setIsVisible] = useState(false);
     const [content, setContent] = useState<any>(null);
+    const [stats, setStats] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         // Fetch dynamic content from API
         const fetchContent = async () => {
             try {
-                const response = await fetch('/api/about/content');
-                const data = await response.json();
-                setContent(data);
+                const [contentRes, statsRes] = await Promise.all([
+                    fetch('/api/about/content'),
+                    fetch('/api/about/stats')
+                ]);
+
+                const contentData = await contentRes.json();
+                const statsData = await statsRes.json();
+
+                setContent(contentData);
+                setStats(Array.isArray(statsData) ? statsData : []);
             } catch (error) {
                 console.error('Error fetching homepage about content:', error);
             } finally {
@@ -57,6 +58,14 @@ export default function AboutSection() {
     const cardTitle = content?.homepage_card_title || "Trusted Partner";
     const cardSubtitle = content?.homepage_card_subtitle || "Helping businesses scale since 2018";
 
+    // Fallback stats if database is empty
+    const displayStats = stats.length > 0 ? stats : [
+        { label: "Happy Clients", value: "500+" },
+        { label: "Projects Delivered", value: "1000+" },
+        { label: "Cities Served", value: "50+" },
+        { label: "Uptime Guarantee", value: "99.9%" }
+    ];
+
     return (
         <section id="homepage-about" className="py-24 relative overflow-hidden bg-[#06124f] text-white">
             {/* Background Pattern */}
@@ -83,7 +92,7 @@ export default function AboutSection() {
                         </p>
 
                         <div className="grid grid-cols-2 gap-8 mb-10">
-                            {stats.map((stat, index) => (
+                            {displayStats.map((stat, index) => (
                                 <div key={index}>
                                     <div className="text-3xl font-black text-[#06b6d4] mb-1">{stat.value}</div>
                                     <div className="text-sm text-gray-400 font-medium">{stat.label}</div>
