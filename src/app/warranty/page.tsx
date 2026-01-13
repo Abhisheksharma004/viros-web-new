@@ -14,27 +14,30 @@ export default function WarrantyPage() {
         setIsVisible(true);
     }, []);
 
-    const mockData: Record<string, { status: string; product: string; expiry: string; type: string }> = {
-        "SN-VIROS-001": { status: "active", product: "VIROS Handheld Scanner X1", expiry: "Dec 31, 2026", type: "Standard Warranty" },
-        "SN-VIROS-002": { status: "expired", product: "Thermal Printer T-500", expiry: "Jan 15, 2024", type: "Standard Warranty" },
-        "SN-VIROS-003": { status: "active", product: "Industrial Tablet Pro", expiry: "Nov 20, 2027", type: "Extended Coverage" },
-    };
-
-    const handleCheck = (e: React.FormEvent) => {
+    const handleCheck = async (e: React.FormEvent) => {
         e.preventDefault();
         setStatus('loading');
 
-        // Simulate API delay
-        setTimeout(() => {
-            const data = mockData[serial.trim()];
-            if (data) {
+        try {
+            const response = await fetch('/api/warranties/check', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ serial_number: serial.trim() })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
                 setStatus(data.status as 'active' | 'expired');
                 setResultData(data);
             } else {
                 setStatus('invalid');
                 setResultData(null);
             }
-        }, 1500);
+        } catch (error) {
+            console.error('Error checking warranty:', error);
+            setStatus('invalid');
+            setResultData(null);
+        }
     };
 
     return (
