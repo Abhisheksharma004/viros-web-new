@@ -11,9 +11,33 @@ export default function Navbar() {
     const menuRef = useRef<HTMLDivElement>(null);
     const buttonRef = useRef<HTMLButtonElement>(null);
 
+    const [navbarContent, setNavbarContent] = useState({
+        logo_url: '/logo.png',
+        brand_title: 'VIROS',
+        brand_subtitle: 'Entrepreneurs'
+    });
+
     useEffect(() => {
         setIsOpen(false);
     }, [pathname]);
+
+    useEffect(() => {
+        const fetchNavbarContent = async () => {
+            try {
+                const response = await fetch('/api/navbar/content');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data && !data.error) {
+                        setNavbarContent(prev => ({ ...prev, ...data }));
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching navbar content:', error);
+            }
+        };
+
+        fetchNavbarContent();
+    }, []);
 
     useEffect(() => {
         function handleClickOutside(event: MouseEvent | TouchEvent) {
@@ -44,8 +68,8 @@ export default function Navbar() {
                     <div className="flex-shrink-0">
                         <Link href="/" className="flex items-center group">
                             <Image
-                                src="/logo.png"
-                                alt="VIROS"
+                                src={navbarContent.logo_url || '/logo.png'}
+                                alt={navbarContent.brand_title || 'VIROS'}
                                 width={200}
                                 height={70}
                                 className="h-14 w-auto object-contain transition-transform duration-200 group-hover:scale-105"
@@ -53,10 +77,10 @@ export default function Navbar() {
                             />
                             <div className="ml-4 flex flex-col">
                                 <span className="text-2xl font-bold bg-gradient-to-r from-[#06124f] to-[#06b6d4] bg-clip-text text-transparent">
-                                    VIROS
+                                    {navbarContent.brand_title}
                                 </span>
                                 <span className="text-sm text-[#06124f] font-medium tracking-wide">
-                                    Entrepreneurs
+                                    {navbarContent.brand_subtitle}
                                 </span>
                             </div>
                         </Link>

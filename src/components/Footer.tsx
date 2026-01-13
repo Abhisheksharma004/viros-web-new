@@ -4,6 +4,7 @@
 import Link from "next/link";
 import { useState, useEffect } from 'react';
 
+
 export default function Footer() {
     const currentYear = new Date().getFullYear();
     const [contactInfo, setContactInfo] = useState({
@@ -17,24 +18,46 @@ export default function Footer() {
         social_instagram: '#',
         social_youtube: '#'
     });
+    const [footerContent, setFooterContent] = useState({
+        description: 'Empowering businesses with cutting-edge AIDC solutions. From barcode printers to enterprise mobility, we deliver efficiency and reliability.',
+        copyright_text: 'VIROS Entrepreneurs. All rights reserved.',
+        developer_text: 'Developed and maintained by Viros Software Team'
+    });
+    const [navbarContent, setNavbarContent] = useState({
+        brand_title: 'VIROS',
+        brand_subtitle: 'Entrepreneurs'
+    });
 
     useEffect(() => {
-        const fetchContactInfo = async () => {
+        const fetchData = async () => {
             try {
-                const response = await fetch('/api/contact/content');
-                if (response.ok) {
-                    const data = await response.json();
-                    setContactInfo(prev => ({
-                        ...prev,
-                        ...data
-                    }));
+                const [contactRes, footerRes, navbarRes] = await Promise.all([
+                    fetch('/api/contact/content'),
+                    fetch('/api/footer/content'),
+                    fetch('/api/navbar/content')
+                ]);
+
+                if (contactRes.ok) {
+                    const contactData = await contactRes.json();
+                    setContactInfo(prev => ({ ...prev, ...contactData }));
+                }
+
+                if (footerRes.ok) {
+                    const footerData = await footerRes.json();
+                    setFooterContent(prev => ({ ...prev, ...footerData }));
+                }
+
+                if (navbarRes.ok) {
+                    const navbarData = await navbarRes.json();
+                    // Navbar API returns {logo_url, brand_title, brand_subtitle, ...}
+                    setNavbarContent(prev => ({ ...prev, ...navbarData }));
                 }
             } catch (error) {
-                console.error('Error fetching footer contact info:', error);
+                console.error('Error fetching footer data:', error);
             }
         };
 
-        fetchContactInfo();
+        fetchData();
     }, []);
 
     const socialLinks = [
@@ -56,11 +79,11 @@ export default function Footer() {
                     {/* Brand Column */}
                     <div>
                         <Link href="/" className="inline-block mb-6 group">
-                            <span className="text-3xl font-bold text-white group-hover:text-[#06b6d4] transition-colors">VIROS</span>
-                            <span className="block text-sm text-[#06b6d4] font-medium tracking-widest uppercase">Entrepreneurs</span>
+                            <span className="text-3xl font-bold text-white group-hover:text-[#06b6d4] transition-colors">{navbarContent.brand_title}</span>
+                            <span className="block text-sm text-[#06b6d4] font-medium tracking-widest uppercase">{navbarContent.brand_subtitle}</span>
                         </Link>
                         <p className="text-gray-400 mb-8 leading-relaxed">
-                            Empowering businesses with cutting-edge AIDC solutions. From barcode printers to enterprise mobility, we deliver efficiency and reliability.
+                            {footerContent.description}
                         </p>
                         <div className="flex space-x-4">
                             {/* Social Icons */}
@@ -165,8 +188,8 @@ export default function Footer() {
                 <div className="border-t border-white/10 pt-8 mt-8">
                     <div className="flex flex-col md:flex-row justify-between items-center gap-6">
                         <div className="text-gray-500 text-sm text-center md:text-left">
-                            <p>&copy; {currentYear} VIROS Entrepreneurs. All rights reserved.</p>
-                            <p className="text-xs text-gray-500 mt-1">Developed and maintained by Viros Software Team</p>
+                            <p>&copy; {currentYear} {footerContent.copyright_text}</p>
+                            <p className="text-xs text-gray-500 mt-1">{footerContent.developer_text}</p>
                             <div className="mt-2 space-x-4">
                                 <a href="#" className="hover:text-[#06b6d4] transition-colors">Privacy Policy</a>
                                 <span className="text-gray-700">|</span>

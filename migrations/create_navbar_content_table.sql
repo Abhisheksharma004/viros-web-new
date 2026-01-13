@@ -1,0 +1,12 @@
+
+CREATE TABLE IF NOT EXISTS navbar_content (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    logo_url VARCHAR(255) DEFAULT '/logo.png',
+    brand_title VARCHAR(100) DEFAULT 'VIROS',
+    brand_subtitle VARCHAR(100) DEFAULT 'Entrepreneurs',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+INSERT IGNORE INTO navbar_content (id, logo_url, brand_title, brand_subtitle)
+VALUES (1, '/logo.png', 'VIROS', 'Entrepreneurs');
