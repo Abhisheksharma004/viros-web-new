@@ -6,6 +6,7 @@ import { Plus, Pencil, Trash2, X, Star, CheckCircle, Clock, Loader2, User } from
 interface Testimonial {
     id?: number;
     name: string;
+    email?: string;
     role: string;
     company: string;
     content: string;
@@ -21,6 +22,7 @@ export default function TestimonialsPage() {
     const [editingTestimonial, setEditingTestimonial] = useState<Testimonial | null>(null);
     const [formData, setFormData] = useState<Testimonial>({
         name: '',
+        email: '',
         role: '',
         company: '',
         content: '',
@@ -54,6 +56,7 @@ export default function TestimonialsPage() {
             setEditingTestimonial(null);
             setFormData({
                 name: '',
+                email: '',
                 role: '',
                 company: '',
                 content: '',
@@ -162,6 +165,9 @@ export default function TestimonialsPage() {
                                     <div>
                                         <h3 className="font-bold text-lg leading-tight">{testimonial.name}</h3>
                                         <p className="text-sm text-gray-500">{testimonial.role}, {testimonial.company}</p>
+                                        {testimonial.email && (
+                                            <p className="text-xs text-gray-400 mt-0.5">{testimonial.email}</p>
+                                        )}
                                     </div>
                                     <div className="ml-auto flex items-center gap-1">
                                         {testimonial.status === 'Approved' ? (
@@ -244,6 +250,19 @@ export default function TestimonialsPage() {
                                         placeholder="e.g. Rahul Sharma"
                                     />
                                 </div>
+                                <div>
+                                    <label className="block text-xs font-black text-gray-700 uppercase tracking-wider mb-2">Email Address</label>
+                                    <input
+                                        type="email"
+                                        value={formData.email || ""}
+                                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                        className="w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#06b6d4] outline-none"
+                                        placeholder="e.g. rahul@company.com"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-xs font-black text-gray-700 uppercase tracking-wider mb-2">Role/Title</label>
                                     <input

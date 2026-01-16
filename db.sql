@@ -88,6 +88,7 @@ CREATE TABLE IF NOT EXISTS partners (
 CREATE TABLE IF NOT EXISTS testimonials (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
+    email VARCHAR(255),
     role VARCHAR(255),
     company VARCHAR(255),
     content TEXT NOT NULL,

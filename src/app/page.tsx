@@ -5,6 +5,7 @@ import AboutSection from "@/components/AboutSection";
 import ClientSection from "@/components/ClientSection";
 import TestimonialSection from "@/components/TestimonialSection";
 import TrustedPartners from "../components/TrustedPartners";
+import FeedbackButton from "@/components/FeedbackButton";
 
 export default function Home() {
   return (
@@ -16,6 +17,9 @@ export default function Home() {
       <ClientSection />
       <TrustedPartners />
       <TestimonialSection />
+      
+      {/* Feedback Button */}
+      <FeedbackButton />
     </>
   );
 }
