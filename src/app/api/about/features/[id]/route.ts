@@ -3,10 +3,10 @@ import pool from '@/lib/db';
 
 export async function PUT(
     request: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const id = params.id;
+        const { id } = await params;
         const body = await request.json();
         const { title, description, icon, display_order } = body;
 
@@ -35,10 +35,10 @@ export async function PUT(
 
 export async function DELETE(
     request: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const id = params.id;
+        const { id } = await params;
         await pool.query('DELETE FROM about_features WHERE id = ?', [id]);
         return NextResponse.json({ message: 'Feature deleted successfully' });
     } catch (error: any) {

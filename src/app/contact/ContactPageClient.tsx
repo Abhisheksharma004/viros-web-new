@@ -140,8 +140,8 @@ export default function ContactPageClient() {
             <section className="relative w-full pt-32 pb-24 overflow-hidden bg-[#06124f]">
                 {/* Background Effects */}
                 <div className="absolute inset-0 z-0">
-                    <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[#06b6d4]/10 blur-[100px] rounded-full mix-blend-screen animate-pulse" />
-                    <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-[#06b6d4]/5 blur-[80px] rounded-full mix-blend-screen" />
+                    <div className="absolute top-0 right-0 w-150 h-150 bg-[#06b6d4]/10 blur-[100px] rounded-full mix-blend-screen animate-pulse" />
+                    <div className="absolute bottom-0 left-0 w-125 h-125 bg-[#06b6d4]/5 blur-[80px] rounded-full mix-blend-screen" />
                     <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] opacity-[0.03]" />
                 </div>
 
@@ -165,7 +165,7 @@ export default function ContactPageClient() {
             <section className="relative z-20 -mt-16 pb-20">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-                    <div className={`bg-white rounded-[2rem] shadow-2xl overflow-hidden border border-gray-100 transition-all duration-1000 transform ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`}>
+                    <div className={`bg-white rounded-4xl shadow-2xl overflow-hidden border border-gray-100 transition-all duration-1000 transform ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`}>
                         <div className="grid grid-cols-1 lg:grid-cols-5">
 
                             {/* Left Side: Contact Info */}
@@ -179,7 +179,7 @@ export default function ContactPageClient() {
 
                                     <div className="space-y-8">
                                         <div className="flex items-start">
-                                            <div className="w-12 h-12 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center flex-shrink-0 mr-4">
+                                            <div className="w-12 h-12 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center shrink-0 mr-4">
                                                 <svg className="w-6 h-6 text-[#06b6d4]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
                                             </div>
                                             <div>
@@ -354,7 +354,7 @@ export default function ContactPageClient() {
                                         <button 
                                             type="submit" 
                                             disabled={submitting}
-                                            className="w-full py-4 bg-gradient-to-r from-[#06124f] to-[#06b6d4] text-white font-bold text-lg rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 flex items-center justify-center gap-2"
+                                            className="w-full py-4 bg-linear-to-r from-[#06124f] to-[#06b6d4] text-white font-bold text-lg rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-3"
                                         >
                                             {submitting ? (
                                                 <>
@@ -391,8 +391,8 @@ export default function ContactPageClient() {
 
                                     <div className="space-y-3">
                                         <div className="flex flex-col gap-1">
-                                            {dept.email_1 && <a href={`mailto:${dept.email_1}`} className="text-[#06b6d4] hover:text-[#06124f] font-medium text-sm transition-colors break-words">{dept.email_1}</a>}
-                                            {dept.email_2 && <a href={`mailto:${dept.email_2}`} className="text-[#06b6d4] hover:text-[#06124f] font-medium text-sm transition-colors break-words">{dept.email_2}</a>}
+                                            {dept.email_1 && <a href={`mailto:${dept.email_1}`} className="text-[#06b6d4] hover:text-[#06124f] font-medium text-sm transition-colors wrap-break-word">{dept.email_1}</a>}
+                                            {dept.email_2 && <a href={`mailto:${dept.email_2}`} className="text-[#06b6d4] hover:text-[#06124f] font-medium text-sm transition-colors wrap-break-word">{dept.email_2}</a>}
                                         </div>
                                         <div className="flex flex-col gap-2 pt-2">
                                             {dept.phone_1 && (
@@ -416,7 +416,7 @@ export default function ContactPageClient() {
 
                     {/* Customer Care / Escalations Section */}
                     <div className="w-full mb-12 md:mb-20">
-                        <div className="bg-gradient-to-br from-[#06124f] to-[#06b6d4] rounded-3xl p-6 md:p-10 text-white shadow-2xl relative overflow-hidden text-center">
+                        <div className="bg-linear-to-br from-[#06124f] to-[#06b6d4] rounded-3xl p-6 md:p-10 text-white shadow-2xl relative overflow-hidden text-center">
                             {/* Background decoration */}
                             <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 blur-3xl rounded-full transform translate-x-1/2 -translate-y-1/2" />
                             <div className="absolute bottom-0 left-0 w-48 h-48 bg-[#06b6d4] opacity-20 blur-2xl rounded-full transform -translate-x-1/3 translate-y-1/3" />

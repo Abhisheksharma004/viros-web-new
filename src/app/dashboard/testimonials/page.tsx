@@ -133,7 +133,7 @@ export default function TestimonialsPage() {
                 </div>
                 <button
                     onClick={() => handleOpenModal()}
-                    className="group flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#06b6d4] to-[#06124f] text-white font-bold rounded-xl shadow-lg hover:shadow-cyan-200/50 transition-all duration-300 active:scale-95"
+                    className="group flex items-center gap-2 px-6 py-3 bg-linear-to-r from-[#06b6d4] to-[#06124f] text-white font-bold rounded-xl shadow-lg hover:shadow-cyan-200/50 transition-all duration-300 active:scale-95"
                 >
                     <Plus size={20} className="group-hover:rotate-90 transition-transform duration-300" />
                     <span>Add Testimonial</span>
@@ -228,7 +228,7 @@ export default function TestimonialsPage() {
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-[#06124f]/40 backdrop-blur-sm" onClick={handleCloseModal} />
                     <div className="relative bg-white rounded-[2.5rem] w-full max-w-2xl overflow-hidden shadow-2xl animate-fade-in-up">
-                        <div className="px-8 py-6 bg-gradient-to-r from-[#06124f] to-[#06b6d4] text-white flex justify-between items-center">
+                        <div className="px-8 py-6 bg-linear-to-r from-[#06124f] to-[#06b6d4] text-white flex justify-between items-center">
                             <h2 className="text-xl font-black uppercase tracking-tight">
                                 {editingTestimonial ? 'Edit Testimonial' : 'Add Testimonial'}
                             </h2>

@@ -92,12 +92,12 @@ export default function FeedbackPopup({ isOpen, onClose }: FeedbackPopupProps) {
         <>
             {/* Overlay */}
             <div 
-                className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] animate-fadeIn"
+                className="fixed inset-0 bg-black/50 backdrop-blur-sm z-100 animate-fadeIn"
                 onClick={onClose}
             />
 
             {/* Modal */}
-            <div className="fixed inset-0 z-[101] flex items-center justify-center p-4 pointer-events-none">
+            <div className="fixed inset-0 z-101 flex items-center justify-center p-4 pointer-events-none">
                 <div 
                     className="bg-white rounded-2xl shadow-2xl w-full max-w-xl pointer-events-auto animate-slideUp"
                     onClick={(e) => e.stopPropagation()}
@@ -253,7 +253,7 @@ export default function FeedbackPopup({ isOpen, onClose }: FeedbackPopupProps) {
                             <button
                                 type="submit"
                                 disabled={submitting}
-                                className="grow py-3 px-6 bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-medium rounded-lg shadow-md hover:shadow-lg hover:from-indigo-600 hover:to-purple-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                className="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-medium hover:from-indigo-700 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                             >
                                 {submitting ? (
                                     <>
