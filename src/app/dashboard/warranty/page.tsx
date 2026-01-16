@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 
 export default function WarrantyManagementPage() {
     const [warranties, setWarranties] = useState<any[]>([]);
@@ -173,9 +173,21 @@ export default function WarrantyManagementPage() {
         try {
             setIsImporting(true);
             const data = await file.arrayBuffer();
-            const workbook = XLSX.read(data);
-            const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-            const jsonData = XLSX.utils.sheet_to_json(worksheet);
+            const workbook = new ExcelJS.Workbook();
+            await workbook.xlsx.load(data);
+            const worksheet = workbook.worksheets[0];
+            const jsonData: any[] = [];
+            
+            // Convert worksheet to JSON
+            worksheet.eachRow((row, rowNumber) => {
+                if (rowNumber === 1) return; // Skip header row
+                const rowData: any = {};
+                row.eachCell((cell, colNumber) => {
+                    const header = worksheet.getRow(1).getCell(colNumber).value;
+                    rowData[String(header)] = cell.value;
+                });
+                jsonData.push(rowData);
+            });
 
             let successCount = 0;
             let errorCount = 0;
@@ -235,28 +247,53 @@ export default function WarrantyManagementPage() {
         }
     };
 
-    const handleDownloadTemplate = () => {
+    const handleDownloadTemplate = async () => {
         // Create sample data for template
-        const templateData = [
-            {
-                'Serial Number': 'SN-EXAMPLE-001',
-                'Product Name': 'Sample Product',
-                'Warranty Type': 'Standard Warranty',
-                'Expiry Date': '31-12-2026',
-                'Purchase Date': '01-01-2024',
-                'Customer Name': 'John Doe',
-                'Customer Email': 'john@example.com',
-                'Customer Phone': '+1234567890'
-            }
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('Warranties');
+
+        // Define columns
+        worksheet.columns = [
+            { header: 'Serial Number', key: 'serial_number', width: 20 },
+            { header: 'Product Name', key: 'product_name', width: 30 },
+            { header: 'Warranty Type', key: 'warranty_type', width: 20 },
+            { header: 'Expiry Date', key: 'expiry_date', width: 15 },
+            { header: 'Purchase Date', key: 'purchase_date', width: 15 },
+            { header: 'Customer Name', key: 'customer_name', width: 25 },
+            { header: 'Customer Email', key: 'customer_email', width: 30 },
+            { header: 'Customer Phone', key: 'customer_phone', width: 20 }
         ];
 
-        // Create worksheet
-        const worksheet = XLSX.utils.json_to_sheet(templateData);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, 'Warranties');
+        // Add sample data
+        worksheet.addRow({
+            serial_number: 'SN-EXAMPLE-001',
+            product_name: 'Sample Product',
+            warranty_type: 'Standard Warranty',
+            expiry_date: '31-12-2026',
+            purchase_date: '01-01-2024',
+            customer_name: 'John Doe',
+            customer_email: 'john@example.com',
+            customer_phone: '+1234567890'
+        });
+
+        // Style header row
+        worksheet.getRow(1).font = { bold: true };
+        worksheet.getRow(1).fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FF06124f' }
+        };
+        worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
 
         // Download file
-        XLSX.writeFile(workbook, 'warranty_import_template.xlsx');
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'warranty_import_template.xlsx';
+        a.click();
+        window.URL.revokeObjectURL(url);
     };
 
     // Filter warranties
