@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import InquiryPopup from "./InquiryPopup";
 
 interface Product {
     id: number;
@@ -22,6 +23,13 @@ export default function FeaturedProducts() {
     const [isVisible, setIsVisible] = useState(false);
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isPopupOpen, setIsPopupOpen] = useState(false);
+    const [selectedProduct, setSelectedProduct] = useState<{ name: string; category: string; image: string; description: string } | null>(null);
+
+    const handleInquiry = (productName: string, productCategory: string, productImage: string, productDescription: string) => {
+        setSelectedProduct({ name: productName, category: productCategory, image: productImage, description: productDescription });
+        setIsPopupOpen(true);
+    };
 
     useEffect(() => {
         fetchProducts();
@@ -111,10 +119,10 @@ export default function FeaturedProducts() {
                         {products.map((product, index) => (
                             <div
                                 key={product.id}
-                                className={`group relative bg-white rounded-[2rem] overflow-hidden border border-gray-100 shadow-xl transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-[#06b6d4]/20 flex flex-col ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`}
-                                style={{ transitionDelay: `${index * 150 + 300}ms` }}
+                                className={`group relative bg-white rounded-4xl overflow-hidden border border-gray-100 shadow-xl transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-[#06b6d4]/20 flex flex-col ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+                                style={{ transitionDelay: `${index * 100}ms` }}
                             >
-                                <div className="absolute inset-0 border-2 border-transparent group-hover:border-[#06b6d4]/30 rounded-[2rem] transition-colors duration-500 pointer-events-none z-10" />
+                                <div className="absolute inset-0 border-2 border-transparent group-hover:border-[#06b6d4]/30 rounded-4xl transition-colors duration-500 pointer-events-none z-10" />
 
                                 <div className="relative h-72 overflow-hidden p-6 flex items-center justify-center">
                                     <div className="absolute top-4 right-4 z-20">
@@ -139,15 +147,15 @@ export default function FeaturedProducts() {
                                     </div>
                                 </div>
 
-                                <div className="p-8 flex flex-col flex-grow relative bg-white">
+                                <div className="p-8 flex flex-col grow relative bg-white">
                                     <div className="mb-4">
                                         <h3 className="text-2xl font-black text-[#06124f] mb-3 group-hover:text-[#06b6d4] transition-colors duration-300 line-clamp-2 leading-tight">
                                             {product.name}
                                         </h3>
-                                        <div className="w-12 h-1 bg-gradient-to-r from-[#06124f] to-[#06b6d4] rounded-full group-hover:w-20 transition-all duration-500" />
+                                        <div className="w-12 h-1 bg-linear-to-r from-[#06124f] to-[#06b6d4] rounded-full group-hover:w-20 transition-all duration-500" />
                                     </div>
 
-                                    <p className="text-gray-600 mb-6 line-clamp-2 flex-grow font-medium leading-relaxed">
+                                    <p className="text-gray-600 mb-6 line-clamp-2 grow font-medium leading-relaxed">
                                         {product.description}
                                     </p>
 
@@ -159,14 +167,17 @@ export default function FeaturedProducts() {
                                         ))}
                                     </div>
 
-                                    <Link href={product.slug ? `/products/${product.slug}` : '/products'} className="w-full py-4 rounded-xl bg-[#06124f] text-white font-bold text-center text-lg shadow-lg shadow-[#06124f]/20 group-hover:bg-[#06b6d4] group-hover:shadow-[#06b6d4]/30 transition-all duration-300 relative overflow-hidden">
+                                    <button
+                                        onClick={() => handleInquiry(product.name, product.category, product.image_url, product.description)}
+                                        className="w-full py-4 rounded-xl bg-[#06124f] text-white font-bold text-center text-lg shadow-lg shadow-[#06124f]/20 group-hover:bg-[#06b6d4] group-hover:shadow-[#06b6d4]/30 transition-all duration-300 relative overflow-hidden"
+                                    >
                                         <span className="relative z-10 flex items-center justify-center gap-2">
-                                            Get Quote
+                                            Inquiry Product
                                             <svg className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                                             </svg>
                                         </span>
-                                    </Link>
+                                    </button>
                                 </div>
                             </div>
                         ))}
@@ -185,6 +196,18 @@ export default function FeaturedProducts() {
                     </Link>
                 </div>
             </div>
+
+            {/* Inquiry Popup */}
+            {selectedProduct && (
+                <InquiryPopup
+                    isOpen={isPopupOpen}
+                    onClose={() => setIsPopupOpen(false)}
+                    productName={selectedProduct.name}
+                    productCategory={selectedProduct.category}
+                    productImage={selectedProduct.image}
+                    productDescription={selectedProduct.description}
+                />
+            )}
         </section>
     );
 }
