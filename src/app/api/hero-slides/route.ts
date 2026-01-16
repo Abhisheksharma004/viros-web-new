@@ -16,7 +16,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
     try {
-        const { title, subtitle, description, image, cta, cta_secondary, display_order, is_active } = await request.json();
+        const { title, subtitle, description, image, cta, cta_link, cta_secondary, cta_secondary_link, display_order, is_active } = await request.json();
 
         if (!title || !subtitle || !description || !image) {
             return NextResponse.json(
@@ -26,8 +26,19 @@ export async function POST(request: Request) {
         }
 
         const [result]: any = await pool.query(
-            'INSERT INTO hero_slides (title, subtitle, description, image, cta, cta_secondary, display_order, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-            [title, subtitle, description, image, cta, cta_secondary, display_order || 0, is_active ?? true]
+            'INSERT INTO hero_slides (title, subtitle, description, image, cta, cta_link, cta_secondary, cta_secondary_link, display_order, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [
+                title, 
+                subtitle, 
+                description, 
+                image, 
+                cta, 
+                cta_link || '/products',
+                cta_secondary, 
+                cta_secondary_link || '/contact',
+                display_order || 0, 
+                is_active ?? true
+            ]
         );
 
         return NextResponse.json(

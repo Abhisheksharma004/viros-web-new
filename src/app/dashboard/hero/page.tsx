@@ -9,7 +9,9 @@ interface HeroSlide {
     description: string;
     image: string;
     cta: string;
+    cta_link?: string;
     cta_secondary: string;
+    cta_secondary_link?: string;
     display_order: number;
     is_active: boolean | number;
 }
@@ -30,7 +32,9 @@ export default function HeroPage() {
         description: "",
         image: "",
         cta: "Browse Products",
+        cta_link: "/products",
         cta_secondary: "Get Quote",
+        cta_secondary_link: "/contact",
         display_order: 1,
         is_active: true
     });
@@ -61,7 +65,9 @@ export default function HeroPage() {
             description: "",
             image: "",
             cta: "Browse Products",
+            cta_link: "/products",
             cta_secondary: "Get Quote",
+            cta_secondary_link: "/contact",
             display_order: slides.length + 1,
             is_active: true
         });
@@ -360,13 +366,25 @@ export default function HeroPage() {
 
                                     <p className="text-gray-600 text-sm mb-3 line-clamp-2">{slide.description}</p>
 
-                                    <div className="flex flex-wrap gap-2">
-                                        <span className="px-3 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs font-medium rounded-full">
-                                            {slide.cta}
-                                        </span>
-                                        <span className="px-3 py-1 bg-[#06124f]/10 text-[#06124f] text-xs font-medium rounded-full">
-                                            {slide.cta_secondary}
-                                        </span>
+                                    <div className="flex flex-wrap gap-2 mb-3">
+                                        <div className="flex items-center gap-1.5 px-3 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs font-medium rounded-full">
+                                            <span>{slide.cta}</span>
+                                            {slide.cta_link && (
+                                                <>
+                                                    <span className="text-[#06b6d4]/50">→</span>
+                                                    <span className="text-[#06b6d4]/70">{slide.cta_link}</span>
+                                                </>
+                                            )}
+                                        </div>
+                                        <div className="flex items-center gap-1.5 px-3 py-1 bg-[#06124f]/10 text-[#06124f] text-xs font-medium rounded-full">
+                                            <span>{slide.cta_secondary}</span>
+                                            {slide.cta_secondary_link && (
+                                                <>
+                                                    <span className="text-[#06124f]/50">→</span>
+                                                    <span className="text-[#06124f]/70">{slide.cta_secondary_link}</span>
+                                                </>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -467,7 +485,7 @@ export default function HeroPage() {
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                        Primary CTA
+                                        Primary CTA Text
                                     </label>
                                     <input
                                         type="text"
@@ -479,7 +497,7 @@ export default function HeroPage() {
                                 </div>
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                        Secondary CTA
+                                        Secondary CTA Text
                                     </label>
                                     <input
                                         type="text"
@@ -488,6 +506,36 @@ export default function HeroPage() {
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#06b6d4] focus:border-transparent outline-none text-gray-900 font-medium placeholder:text-gray-400"
                                         placeholder="Get Quote"
                                     />
+                                </div>
+                            </div>
+
+                            {/* CTA Links */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                        Primary Button Link
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={formData.cta_link || "/products"}
+                                        onChange={(e) => setFormData({ ...formData, cta_link: e.target.value })}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#06b6d4] focus:border-transparent outline-none text-gray-900 font-medium placeholder:text-gray-400"
+                                        placeholder="/products"
+                                    />
+                                    <p className="text-xs text-gray-500 mt-1">Examples: /products, /services, https://example.com</p>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                        Secondary Button Link
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={formData.cta_secondary_link || "/contact"}
+                                        onChange={(e) => setFormData({ ...formData, cta_secondary_link: e.target.value })}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#06b6d4] focus:border-transparent outline-none text-gray-900 font-medium placeholder:text-gray-400"
+                                        placeholder="/contact"
+                                    />
+                                    <p className="text-xs text-gray-500 mt-1">Examples: /contact, /about, /services</p>
                                 </div>
                             </div>
 

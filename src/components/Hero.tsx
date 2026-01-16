@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 
 interface HeroSlide {
   id: number;
@@ -10,7 +11,9 @@ interface HeroSlide {
   description: string;
   image: string;
   cta: string;
+  cta_link?: string;
   cta_secondary: string;
+  cta_secondary_link?: string;
   display_order: number;
   is_active: boolean;
 }
@@ -215,14 +218,20 @@ export default function Hero() {
 
                 {/* CTA Buttons - Mobile-First Design */}
                 <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center px-4 sm:px-0">
-                  <button className="group relative w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-[#06b6d4] to-[#06124f] text-white font-semibold rounded-lg sm:rounded-xl overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-[#06b6d4]/30 hover:-translate-y-1 min-w-0 sm:min-w-[160px] touch-manipulation">
+                  <Link 
+                    href={slide.cta_link || "/products"}
+                    className="group relative w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-[#06b6d4] to-[#06124f] text-white font-semibold rounded-lg sm:rounded-xl overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-[#06b6d4]/30 hover:-translate-y-1 min-w-0 sm:min-w-[160px] touch-manipulation text-center"
+                  >
                     <span className="relative z-10 text-sm sm:text-base">{slide.cta}</span>
                     <div className="absolute inset-0 bg-gradient-to-r from-[#06124f] to-[#06b6d4] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  </button>
+                  </Link>
 
-                  <button className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 border-2 border-white/50 text-white font-semibold rounded-lg sm:rounded-xl backdrop-blur-sm hover:bg-white/10 hover:border-white/70 transition-all duration-300 min-w-0 sm:min-w-[160px] touch-manipulation">
+                  <Link 
+                    href={slide.cta_secondary_link || "/contact"}
+                    className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 border-2 border-white/50 text-white font-semibold rounded-lg sm:rounded-xl backdrop-blur-sm hover:bg-white/10 hover:border-white/70 transition-all duration-300 min-w-0 sm:min-w-[160px] touch-manipulation text-center"
+                  >
                     <span className="text-sm sm:text-base">{slide.cta_secondary}</span>
-                  </button>
+                  </Link>
                 </div>
               </div>
             ))}
