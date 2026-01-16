@@ -2,12 +2,29 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Toast from "@/components/Toast";
 
 export default function ContactPageClient() {
     const [isVisible, setIsVisible] = useState(false);
     const [content, setContent] = useState<any>(null);
     const [departments, setDepartments] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    
+    // Form state
+    const [formData, setFormData] = useState({
+        name: '',
+        phone: '',
+        email: '',
+        company: '',
+        subject: 'General Inquiry',
+        message: ''
+    });
+    const [submitting, setSubmitting] = useState(false);
+    
+    // Toast state
+    const [showToast, setShowToast] = useState(false);
+    const [toastMessage, setToastMessage] = useState('');
+    const [toastType, setToastType] = useState<'success' | 'error'>('success');
 
     useEffect(() => {
         setIsVisible(true);
@@ -33,6 +50,64 @@ export default function ContactPageClient() {
             console.error('Error fetching contact data:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        
+        // Validation
+        if (!formData.name || !formData.email || !formData.phone || !formData.message) {
+            setToastMessage('Please fill in all required fields');
+            setToastType('error');
+            setShowToast(true);
+            return;
+        }
+
+        setSubmitting(true);
+
+        try {
+            const response = await fetch('/api/contact/submit', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData),
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                setToastMessage('Message sent successfully! We\'ll get back to you soon.');
+                setToastType('success');
+                setShowToast(true);
+                
+                // Reset form
+                setFormData({
+                    name: '',
+                    phone: '',
+                    email: '',
+                    company: '',
+                    subject: 'General Inquiry',
+                    message: ''
+                });
+            } else {
+                setToastMessage(result.error || 'Failed to send message. Please try again.');
+                setToastType('error');
+                setShowToast(true);
+            }
+        } catch (error) {
+            console.error('Error submitting form:', error);
+            setToastMessage('An error occurred. Please try again later.');
+            setToastType('error');
+            setShowToast(true);
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -188,26 +263,72 @@ export default function ContactPageClient() {
                             {/* Right Side: Contact Form */}
                             <div className="lg:col-span-3 p-8 lg:p-12">
                                 <h3 className="text-2xl font-bold text-[#06124f] mb-6">Send us a Message</h3>
-                                <form className="space-y-6">
+                                <form onSubmit={handleSubmit} className="space-y-6">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div className="space-y-2">
-                                            <label className="text-sm font-bold text-gray-700 ml-1">Your Name</label>
-                                            <input type="text" className="w-full px-4 py-3 rounded-xl bg-white border-2 border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-[#06b6d4] focus:ring-4 focus:ring-[#06b6d4]/10 outline-none transition-all shadow-sm" placeholder="John Doe" />
+                                            <label className="text-sm font-bold text-gray-700 ml-1">Your Name <span className="text-red-500">*</span></label>
+                                            <input 
+                                                type="text" 
+                                                name="name"
+                                                value={formData.name}
+                                                onChange={handleInputChange}
+                                                required
+                                                disabled={submitting}
+                                                className="w-full px-4 py-3 rounded-xl bg-white border-2 border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-[#06b6d4] focus:ring-4 focus:ring-[#06b6d4]/10 outline-none transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed" 
+                                                placeholder="John Doe" 
+                                            />
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-sm font-bold text-gray-700 ml-1">Phone Number</label>
-                                            <input type="tel" className="w-full px-4 py-3 rounded-xl bg-white border-2 border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-[#06b6d4] focus:ring-4 focus:ring-[#06b6d4]/10 outline-none transition-all shadow-sm" placeholder="+91 98765 43210" />
+                                            <label className="text-sm font-bold text-gray-700 ml-1">Phone Number <span className="text-red-500">*</span></label>
+                                            <input 
+                                                type="tel" 
+                                                name="phone"
+                                                value={formData.phone}
+                                                onChange={handleInputChange}
+                                                required
+                                                disabled={submitting}
+                                                className="w-full px-4 py-3 rounded-xl bg-white border-2 border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-[#06b6d4] focus:ring-4 focus:ring-[#06b6d4]/10 outline-none transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed" 
+                                                placeholder="+91 98765 43210" 
+                                            />
                                         </div>
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label className="text-sm font-bold text-gray-700 ml-1">Email Address</label>
-                                        <input type="email" className="w-full px-4 py-3 rounded-xl bg-white border-2 border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-[#06b6d4] focus:ring-4 focus:ring-[#06b6d4]/10 outline-none transition-all shadow-sm" placeholder="john@company.com" />
+                                        <label className="text-sm font-bold text-gray-700 ml-1">Email Address <span className="text-red-500">*</span></label>
+                                        <input 
+                                            type="email" 
+                                            name="email"
+                                            value={formData.email}
+                                            onChange={handleInputChange}
+                                            required
+                                            disabled={submitting}
+                                            className="w-full px-4 py-3 rounded-xl bg-white border-2 border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-[#06b6d4] focus:ring-4 focus:ring-[#06b6d4]/10 outline-none transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed" 
+                                            placeholder="john@company.com" 
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-bold text-gray-700 ml-1">Company Name <span className="text-gray-400 font-normal">(Optional)</span></label>
+                                        <input 
+                                            type="text" 
+                                            name="company"
+                                            value={formData.company}
+                                            onChange={handleInputChange}
+                                            disabled={submitting}
+                                            className="w-full px-4 py-3 rounded-xl bg-white border-2 border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-[#06b6d4] focus:ring-4 focus:ring-[#06b6d4]/10 outline-none transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed" 
+                                            placeholder="Your Company" 
+                                        />
                                     </div>
 
                                     <div className="space-y-2">
                                         <label className="text-sm font-bold text-gray-700 ml-1">Subject</label>
-                                        <select className="w-full px-4 py-3 rounded-xl bg-white border-2 border-gray-300 text-gray-900 focus:border-[#06b6d4] focus:ring-4 focus:ring-[#06b6d4]/10 outline-none transition-all shadow-sm">
+                                        <select 
+                                            name="subject"
+                                            value={formData.subject}
+                                            onChange={handleInputChange}
+                                            disabled={submitting}
+                                            className="w-full px-4 py-3 rounded-xl bg-white border-2 border-gray-300 text-gray-900 focus:border-[#06b6d4] focus:ring-4 focus:ring-[#06b6d4]/10 outline-none transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
                                             <option>General Inquiry</option>
                                             <option>Product Support</option>
                                             <option>Request Quote</option>
@@ -216,13 +337,36 @@ export default function ContactPageClient() {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label className="text-sm font-bold text-gray-700 ml-1">Message</label>
-                                        <textarea rows={5} className="w-full px-4 py-3 rounded-xl bg-white border-2 border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-[#06b6d4] focus:ring-4 focus:ring-[#06b6d4]/10 outline-none transition-all resize-none shadow-sm" placeholder="Tell us how we can help..." />
+                                        <label className="text-sm font-bold text-gray-700 ml-1">Message <span className="text-red-500">*</span></label>
+                                        <textarea 
+                                            rows={5} 
+                                            name="message"
+                                            value={formData.message}
+                                            onChange={handleInputChange}
+                                            required
+                                            disabled={submitting}
+                                            className="w-full px-4 py-3 rounded-xl bg-white border-2 border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-[#06b6d4] focus:ring-4 focus:ring-[#06b6d4]/10 outline-none transition-all resize-none shadow-sm disabled:opacity-50 disabled:cursor-not-allowed" 
+                                            placeholder="Tell us how we can help..." 
+                                        />
                                     </div>
 
                                     <div className="pt-4">
-                                        <button type="button" className="w-full py-4 bg-gradient-to-r from-[#06124f] to-[#06b6d4] text-white font-bold text-lg rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-                                            Send Message
+                                        <button 
+                                            type="submit" 
+                                            disabled={submitting}
+                                            className="w-full py-4 bg-gradient-to-r from-[#06124f] to-[#06b6d4] text-white font-bold text-lg rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 flex items-center justify-center gap-2"
+                                        >
+                                            {submitting ? (
+                                                <>
+                                                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                    </svg>
+                                                    Sending...
+                                                </>
+                                            ) : (
+                                                'Send Message'
+                                            )}
                                         </button>
                                     </div>
                                 </form>
@@ -314,6 +458,15 @@ export default function ContactPageClient() {
                     </div>
                 </div>
             </section>
+
+            {/* Toast Notification */}
+            {showToast && (
+                <Toast
+                    message={toastMessage}
+                    type={toastType}
+                    onClose={() => setShowToast(false)}
+                />
+            )}
         </div>
     );
 }
