@@ -10,9 +10,10 @@ interface InquiryPopupProps {
     productCategory: string;
     productImage?: string;
     productDescription?: string;
+    productSpecs?: string[];
 }
 
-export default function InquiryPopup({ isOpen, onClose, productName, productCategory, productImage, productDescription }: InquiryPopupProps) {
+export default function InquiryPopup({ isOpen, onClose, productName, productCategory, productImage, productDescription, productSpecs }: InquiryPopupProps) {
     const [formData, setFormData] = useState({
         name: "",
         email: "",
@@ -49,7 +50,8 @@ export default function InquiryPopup({ isOpen, onClose, productName, productCate
                     product: productName,
                     category: productCategory,
                     productImage: productImage,
-                    productDescription: productDescription
+                    productDescription: productDescription,
+                    productSpecs: productSpecs
                 }),
             });
 

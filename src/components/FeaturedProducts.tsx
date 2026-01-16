@@ -24,10 +24,10 @@ export default function FeaturedProducts() {
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
     const [isPopupOpen, setIsPopupOpen] = useState(false);
-    const [selectedProduct, setSelectedProduct] = useState<{ name: string; category: string; image: string; description: string } | null>(null);
+    const [selectedProduct, setSelectedProduct] = useState<{ name: string; category: string; image: string; description: string; specs: string[] } | null>(null);
 
-    const handleInquiry = (productName: string, productCategory: string, productImage: string, productDescription: string) => {
-        setSelectedProduct({ name: productName, category: productCategory, image: productImage, description: productDescription });
+    const handleInquiry = (productName: string, productCategory: string, productImage: string, productDescription: string, productSpecs: string[]) => {
+        setSelectedProduct({ name: productName, category: productCategory, image: productImage, description: productDescription, specs: productSpecs });
         setIsPopupOpen(true);
     };
 
@@ -168,7 +168,7 @@ export default function FeaturedProducts() {
                                     </div>
 
                                     <button
-                                        onClick={() => handleInquiry(product.name, product.category, product.image_url, product.description)}
+                                        onClick={() => handleInquiry(product.name, product.category, product.image_url, product.description, product.specs || [])}
                                         className="w-full py-4 rounded-xl bg-[#06124f] text-white font-bold text-center text-lg shadow-lg shadow-[#06124f]/20 group-hover:bg-[#06b6d4] group-hover:shadow-[#06b6d4]/30 transition-all duration-300 relative overflow-hidden"
                                     >
                                         <span className="relative z-10 flex items-center justify-center gap-2">
@@ -206,6 +206,7 @@ export default function FeaturedProducts() {
                     productCategory={selectedProduct.category}
                     productImage={selectedProduct.image}
                     productDescription={selectedProduct.description}
+                    productSpecs={selectedProduct.specs}
                 />
             )}
         </section>
