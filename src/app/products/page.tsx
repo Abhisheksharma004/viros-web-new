@@ -86,7 +86,7 @@ export default function ProductsPage() {
                             >
                                 <div className="absolute inset-0 border-2 border-transparent group-hover:border-[#06b6d4]/30 rounded-[2rem] transition-colors duration-500 pointer-events-none z-10" />
 
-                                <div className="relative h-72 overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 p-6 flex items-center justify-center">
+                                <div className="relative h-72 overflow-hidden p-6 flex items-center justify-center">
                                     <div className="absolute top-4 right-4 z-20">
                                         <div className="w-10 h-10 rounded-full bg-white/90 backdrop-blur text-[#06124f] flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
                                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -99,7 +99,7 @@ export default function ProductsPage() {
                                         src={product.image_url || "/placeholder-product.png"}
                                         alt={product.name}
                                         fill
-                                        className="object-contain transition-transform duration-700 group-hover:scale-110 drop-shadow-lg"
+                                        className="object-contain transition-transform duration-700 group-hover:scale-110"
                                     />
 
                                     <div className="absolute top-4 left-4 z-20">

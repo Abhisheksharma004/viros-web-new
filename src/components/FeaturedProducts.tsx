@@ -14,6 +14,8 @@ interface Product {
     price_display?: string;
     is_featured: boolean;
     stock_status: string;
+    specs?: string[];
+    slug?: string;
 }
 
 export default function FeaturedProducts() {
@@ -46,9 +48,14 @@ export default function FeaturedProducts() {
             const response = await fetch('/api/products');
             if (response.ok) {
                 const data = await response.json();
-                // Filter featured products or take first 3
-                const featured = data.filter((p: Product) => p.is_featured).slice(0, 3);
-                setProducts(featured.length > 0 ? featured : data.slice(0, 3));
+                const parsedData = data.map((p: any) => ({
+                    ...p,
+                    specs: typeof p.specs === 'string' ? JSON.parse(p.specs) : p.specs,
+                    is_featured: Boolean(p.is_featured)
+                }));
+                // Filter featured products or take first 9 (3 rows of 3)
+                const featured = parsedData.filter((p: Product) => p.is_featured).slice(0, 9);
+                setProducts(featured.length > 0 ? featured : parsedData.slice(0, 9));
             }
         } catch (error) {
             console.error('Error fetching products:', error);
@@ -79,7 +86,7 @@ export default function FeaturedProducts() {
 
                 {loading ? (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-                        {[1, 2, 3].map((i) => (
+                        {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => (
                             <div key={i} className="bg-white rounded-3xl p-4 shadow-xl animate-pulse">
                                 <div className="h-64 bg-gray-200 rounded-2xl mb-6"></div>
                                 <div className="px-4 pb-4 space-y-3">
@@ -104,37 +111,61 @@ export default function FeaturedProducts() {
                         {products.map((product, index) => (
                             <div
                                 key={product.id}
-                                className={`group relative bg-white rounded-3xl p-4 shadow-xl hover:shadow-2xl hover:shadow-[#06b6d4]/10 transition-all duration-500 hover:-translate-y-2 border border-gray-100 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`}
+                                className={`group relative bg-white rounded-[2rem] overflow-hidden border border-gray-100 shadow-xl transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-[#06b6d4]/20 flex flex-col ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`}
                                 style={{ transitionDelay: `${index * 150 + 300}ms` }}
                             >
-                                <div className="relative h-64 rounded-2xl overflow-hidden bg-gray-50 mb-6 group-hover:bg-[#06124f]/5 transition-colors duration-500">
+                                <div className="absolute inset-0 border-2 border-transparent group-hover:border-[#06b6d4]/30 rounded-[2rem] transition-colors duration-500 pointer-events-none z-10" />
+
+                                <div className="relative h-72 overflow-hidden p-6 flex items-center justify-center">
+                                    <div className="absolute top-4 right-4 z-20">
+                                        <div className="w-10 h-10 rounded-full bg-white/90 backdrop-blur text-[#06124f] flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                            </svg>
+                                        </div>
+                                    </div>
+
                                     <Image
-                                        src={product.image_url || 'https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?auto=format&fit=crop&w=800&q=80'}
+                                        src={product.image_url || '/placeholder-product.png'}
                                         alt={product.name}
                                         fill
-                                        className="object-cover transition-transform duration-700 group-hover:scale-110"
+                                        className="object-contain transition-transform duration-700 group-hover:scale-110"
                                     />
-                                    {product.is_featured && (
-                                        <div className="absolute top-4 right-4">
-                                            <span className="px-3 py-1 bg-[#06b6d4]/90 backdrop-blur rounded-lg text-xs font-bold text-white shadow-sm">
-                                                Featured
-                                            </span>
-                                        </div>
-                                    )}
+
+                                    <div className="absolute top-4 left-4 z-20">
+                                        <span className="px-3 py-1.5 bg-white/90 backdrop-blur-md rounded-lg text-xs font-bold text-[#06124f] shadow-sm tracking-wide border border-gray-100">
+                                            {product.category}
+                                        </span>
+                                    </div>
                                 </div>
 
-                                <div className="px-4 pb-4">
-                                    <span className="text-[#06b6d4] text-sm font-bold mb-2 block">{product.category}</span>
-                                    <h3 className="text-xl font-bold text-[#06124f] mb-3 group-hover:text-[#06b6d4] transition-colors">{product.name}</h3>
-                                    <p className="text-gray-500 text-sm mb-6 leading-relaxed line-clamp-2">
-                                        {product.tagline || product.description}
+                                <div className="p-8 flex flex-col flex-grow relative bg-white">
+                                    <div className="mb-4">
+                                        <h3 className="text-2xl font-black text-[#06124f] mb-3 group-hover:text-[#06b6d4] transition-colors duration-300 line-clamp-2 leading-tight">
+                                            {product.name}
+                                        </h3>
+                                        <div className="w-12 h-1 bg-gradient-to-r from-[#06124f] to-[#06b6d4] rounded-full group-hover:w-20 transition-all duration-500" />
+                                    </div>
+
+                                    <p className="text-gray-600 mb-6 line-clamp-2 flex-grow font-medium leading-relaxed">
+                                        {product.description}
                                     </p>
 
-                                    <Link
-                                        href="/products"
-                                        className="w-full block py-3 rounded-xl border-2 border-[#06124f]/10 text-[#06124f] font-bold text-center hover:bg-[#06124f] hover:text-white hover:border-[#06124f] transition-all duration-300"
-                                    >
-                                        View Details
+                                    <div className="flex flex-wrap gap-2 mb-8">
+                                        {product.specs?.map((spec: string, i: number) => (
+                                            <span key={i} className="px-3 py-1 bg-gray-50 text-gray-600 text-xs font-bold rounded-lg border border-gray-200 group-hover:border-[#06b6d4]/30 group-hover:text-[#06124f] transition-colors duration-300">
+                                                {spec}
+                                            </span>
+                                        ))}
+                                    </div>
+
+                                    <Link href={product.slug ? `/products/${product.slug}` : '/products'} className="w-full py-4 rounded-xl bg-[#06124f] text-white font-bold text-center text-lg shadow-lg shadow-[#06124f]/20 group-hover:bg-[#06b6d4] group-hover:shadow-[#06b6d4]/30 transition-all duration-300 relative overflow-hidden">
+                                        <span className="relative z-10 flex items-center justify-center gap-2">
+                                            Get Quote
+                                            <svg className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                                            </svg>
+                                        </span>
                                     </Link>
                                 </div>
                             </div>
