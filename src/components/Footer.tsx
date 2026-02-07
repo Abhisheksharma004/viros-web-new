@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -112,7 +111,7 @@ export default function Footer() {
                     <div>
                         <h4 className="text-lg font-bold text-white mb-6 border-b border-[#06b6d4]/30 pb-2 inline-block">Quick Links</h4>
                         <ul className="space-y-3">
-                            {["Home", "About Us", "Products", "Services", "Certificates", "Warranty", "Contact"].map((link) => (
+                            {["Home", "About", "Products", "Services", "Certificates", "Warranty", "Contact"].map((link) => (
                                 <li key={link}>
                                     <Link
                                         href={link === "Home" ? "/" : `/${link.toLowerCase().replace(" ", "-")}`}

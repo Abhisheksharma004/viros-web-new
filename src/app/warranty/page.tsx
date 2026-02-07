@@ -79,16 +79,16 @@ export default function WarrantyPage() {
                                 <p className="text-blue-800 font-medium">
                                     Need help finding your Serial Number? Look for the sticker on the back or bottom of your device.
                                 </p>
-                                <div className="mt-2 text-xs text-blue-600/70">
+                                {/* <div className="mt-2 text-xs text-blue-600/70">
                                     Try: <span className="font-mono bg-blue-100 px-1 rounded">SN-VIROS-001</span> (Active) or <span className="font-mono bg-blue-100 px-1 rounded">SN-VIROS-002</span> (Expired)
-                                </div>
+                                </div> */}
                             </div>
 
                             <form onSubmit={handleCheck} className="max-w-xl mx-auto space-y-6">
                                 <div className="space-y-2">
                                     <label className="text-sm font-bold text-gray-700 ml-1">Enter Serial Number</label>
                                     <div className="relative">
-                                        <input
+                                        <input required
                                             type="text"
                                             value={serial}
                                             onChange={(e) => setSerial(e.target.value)}

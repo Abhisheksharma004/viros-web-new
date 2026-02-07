@@ -157,7 +157,7 @@ export default function AboutManagementPage() {
             )}
 
             {/* Homepage About Section */}
-            <div className="bg-gradient-to-br from-[#06124f] to-[#06124f]/90 p-8 rounded-2xl shadow-xl text-white border border-[#06b6d4]/20">
+            <div className="bg-linear-to-br from-[#06124f] to-[#06124f]/90 p-8 rounded-2xl shadow-xl text-white border border-[#06b6d4]/20">
                 <div className="flex items-center space-x-3 mb-6">
                     <svg className="w-6 h-6 text-[#06b6d4]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -349,9 +349,9 @@ export default function AboutManagementPage() {
                         <div key={stat.id} className="p-4 border border-gray-100 rounded-xl bg-gray-50/50 group hover:border-[#06b6d4] transition-all">
                             <div className="flex justify-between items-start mb-2">
                                 <span className="text-2xl font-bold text-[#06124f]">{stat.value}</span>
-                                <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button onClick={() => setShowModal({ type: 'stat', data: stat })} className="p-1 hover:text-blue-600"><Edit2 className="w-4 h-4" /></button>
-                                    <button onClick={() => handleDelete('stat', stat.id)} className="p-1 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+                                <div className="flex space-x-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                                    <button onClick={() => setShowModal({ type: 'stat', data: stat })} className="p-1.5 hover:text-blue-600 hover:bg-blue-50 rounded" aria-label="Edit Stat"><Edit2 className="w-4 h-4" /></button>
+                                    <button onClick={() => handleDelete('stat', stat.id)} className="p-1.5 hover:text-red-600 hover:bg-red-50 rounded" aria-label="Delete Stat"><Trash2 className="w-4 h-4" /></button>
                                 </div>
                             </div>
                             <p className="text-sm font-medium text-gray-600">{stat.label}</p>
@@ -373,9 +373,9 @@ export default function AboutManagementPage() {
                         <div key={v.id} className="p-5 border rounded-xl hover:border-[#06b6d4] group bg-white shadow-xs transition-all">
                             <div className="flex justify-between items-start mb-4">
                                 <div className="text-3xl p-3 bg-gray-50 rounded-lg">{v.icon}</div>
-                                <div className="flex gap-2 opacity-0 group-hover:opacity-100">
-                                    <button onClick={() => setShowModal({ type: 'value', data: v })} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"><Edit2 size={16} /></button>
-                                    <button onClick={() => handleDelete('value', v.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg"><Trash2 size={16} /></button>
+                                <div className="flex gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                                    <button onClick={() => setShowModal({ type: 'value', data: v })} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg" aria-label="Edit Value"><Edit2 size={16} /></button>
+                                    <button onClick={() => handleDelete('value', v.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg" aria-label="Delete Value"><Trash2 size={16} /></button>
                                 </div>
                             </div>
                             <h3 className="font-bold text-lg mb-2 text-gray-900">{v.title}</h3>
@@ -423,9 +423,9 @@ export default function AboutManagementPage() {
                                     {member.linkedin && <LinkIcon className="w-4 h-4 text-blue-600" />}
                                     {member.instagram && <LinkIcon className="w-4 h-4 text-pink-600" />}
                                 </div>
-                                <div className="flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button onClick={() => setShowModal({ type: 'team', data: member })} className="p-1 hover:text-blue-600"><Edit2 className="w-4 h-4" /></button>
-                                    <button onClick={() => handleDelete('team', member.id)} className="p-1 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+                                <div className="flex space-x-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                                    <button onClick={() => setShowModal({ type: 'team', data: member })} className="p-1.5 hover:text-blue-600 hover:bg-blue-50 rounded" aria-label="Edit Team Member"><Edit2 className="w-4 h-4" /></button>
+                                    <button onClick={() => handleDelete('team', member.id)} className="p-1.5 hover:text-red-600 hover:bg-red-50 rounded" aria-label="Delete Team Member"><Trash2 className="w-4 h-4" /></button>
                                 </div>
                             </div>
                         </div>
@@ -446,9 +446,9 @@ export default function AboutManagementPage() {
                         <div key={f.id} className="p-4 border rounded-xl hover:border-[#06b6d4] group transition-all">
                             <div className="flex justify-between items-start mb-3">
                                 <div className="p-2 bg-gray-50 rounded-lg">{f.icon}</div>
-                                <div className="flex gap-1 opacity-0 group-hover:opacity-100">
-                                    <button onClick={() => setShowModal({ type: 'feature', data: f })} className="p-1 text-blue-600"><Edit2 size={14} /></button>
-                                    <button onClick={() => handleDelete('feature', f.id)} className="p-1 text-red-600"><Trash2 size={14} /></button>
+                                <div className="flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                                    <button onClick={() => setShowModal({ type: 'feature', data: f })} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded" aria-label="Edit Feature"><Edit2 size={14} /></button>
+                                    <button onClick={() => handleDelete('feature', f.id)} className="p-1.5 text-red-600 hover:bg-red-50 rounded" aria-label="Delete Feature"><Trash2 size={14} /></button>
                                 </div>
                             </div>
                             <h3 className="font-bold text-sm mb-1 text-gray-900">{f.title}</h3>
@@ -474,9 +474,9 @@ export default function AboutManagementPage() {
                                 <h3 className="font-bold mb-1 text-gray-900">{m.title}</h3>
                                 <p className="text-sm text-gray-600">{m.description}</p>
                             </div>
-                            <div className="flex gap-2 opacity-0 group-hover:opacity-100">
-                                <button onClick={() => setShowModal({ type: 'milestone', data: m })} className="text-blue-600"><Edit2 size={16} /></button>
-                                <button onClick={() => handleDelete('milestone', m.id)} className="text-red-600"><Trash2 size={16} /></button>
+                            <div className="flex gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                                <button onClick={() => setShowModal({ type: 'milestone', data: m })} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded" aria-label="Edit Milestone"><Edit2 size={16} /></button>
+                                <button onClick={() => handleDelete('milestone', m.id)} className="p-1.5 text-red-600 hover:bg-red-50 rounded" aria-label="Delete Milestone"><Trash2 size={16} /></button>
                             </div>
                         </div>
                     ))}

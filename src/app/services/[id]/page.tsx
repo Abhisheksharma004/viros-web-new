@@ -75,7 +75,7 @@ export default async function ServiceDetailsPage({ params }: { params: Promise<{
                         </h3>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 items-center">
                             {Array.isArray(brands) && brands.map((brand: any, idx: number) => (
-                                <div key={brand.name || idx} className="flex items-center justify-center p-4 grayscale hover:grayscale-0 transition-all duration-300 opacity-60 hover:opacity-100">
+                                <div key={brand.name || idx} className="flex items-center justify-center p-4 transition-transform duration-300 hover:scale-110">
                                     <div className="relative h-12 w-32">
                                         <Image
                                             src={brand.logo}

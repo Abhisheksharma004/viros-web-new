@@ -112,7 +112,7 @@ export default function PartnersPage() {
                 </div>
                 <button
                     onClick={() => handleOpenModal()}
-                    className="group flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#06b6d4] to-[#06124f] text-white font-bold rounded-xl shadow-lg hover:shadow-cyan-200/50 transition-all duration-300 active:scale-95"
+                    className="group flex items-center gap-2 px-6 py-3 bg-linear-to-r from-[#06b6d4] to-[#06124f] text-white font-bold rounded-xl shadow-lg hover:shadow-cyan-200/50 transition-all duration-300 active:scale-95"
                 >
                     <Plus size={20} className="group-hover:rotate-90 transition-transform duration-300" />
                     <span>Add Partner</span>
@@ -141,25 +141,27 @@ export default function PartnersPage() {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {partners.map((partner) => (
-                        <div key={partner.id} className="relative group bg-white rounded-2xl p-6 shadow-sm border border-gray-100 items-center flex flex-col hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-                            <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div key={partner.id} className="relative group bg-white rounded-2xl shadow-sm border border-gray-100 items-center flex flex-col hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                            <div className="absolute top-3 right-3 z-10 flex gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                                 <button
                                     onClick={() => handleOpenModal(partner)}
-                                    className="p-2 bg-white text-blue-600 rounded-lg shadow-md border border-gray-50 hover:bg-blue-50 transition-colors"
+                                    className="p-2.5 bg-white/95 backdrop-blur-sm text-blue-600 rounded-lg shadow-lg border border-blue-100 hover:bg-blue-50 transition-colors"
                                     title="Edit Partner"
+                                    aria-label="Edit Partner"
                                 >
-                                    <Pencil size={14} />
+                                    <Pencil size={16} />
                                 </button>
                                 <button
                                     onClick={() => handleDelete(partner.id!)}
-                                    className="p-2 bg-white text-red-600 rounded-lg shadow-md border border-gray-50 hover:bg-red-50 transition-colors"
+                                    className="p-2.5 bg-white/95 backdrop-blur-sm text-red-600 rounded-lg shadow-lg border border-red-100 hover:bg-red-50 transition-colors"
                                     title="Delete Partner"
+                                    aria-label="Delete Partner"
                                 >
-                                    <Trash2 size={14} />
+                                    <Trash2 size={16} />
                                 </button>
                             </div>
 
-                            <div className="relative w-full aspect-square max-w-[120px] mb-4 bg-gray-50 rounded-xl overflow-hidden p-4 flex items-center justify-center">
+                            <div className="relative w-full aspect-square max-w-30 mb-4 mt-6 bg-gray-50 rounded-xl overflow-hidden p-4 flex items-center justify-center">
                                 <Image
                                     src={partner.logo_url}
                                     alt={partner.name}
@@ -200,7 +202,7 @@ export default function PartnersPage() {
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-[#06124f]/40 backdrop-blur-sm" onClick={handleCloseModal} />
                     <div className="relative bg-white rounded-[2.5rem] w-full max-w-lg overflow-hidden shadow-2xl animate-fade-in-up">
-                        <div className="px-8 py-6 bg-gradient-to-r from-[#06124f] to-[#06b6d4] text-white flex justify-between items-center">
+                        <div className="px-8 py-6 bg-linear-to-r from-[#06124f] to-[#06b6d4] text-white flex justify-between items-center">
                             <h2 className="text-xl font-black uppercase tracking-tight">
                                 {editingPartner ? 'Edit Partner' : 'Add New Partner'}
                             </h2>
@@ -264,7 +266,7 @@ export default function PartnersPage() {
                                     </div>
                                     <div>
                                         <label className="block text-xs font-black text-gray-700 uppercase tracking-wider mb-2 leading-none">Status</label>
-                                        <div className="flex items-center h-[52px]">
+                                        <div className="flex items-center h-13">
                                             <button
                                                 type="button"
                                                 onClick={() => setFormData({ ...formData, is_active: !formData.is_active })}
