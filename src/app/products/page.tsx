@@ -85,70 +85,94 @@ export default function ProductsPage() {
                     </div>
 
                     {/* Product Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         {filteredProducts.map((product, index) => (
                             <div
                                 key={product.id}
-                                className={`group relative bg-white rounded-4xl overflow-hidden border border-gray-100 shadow-xl transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-[#06b6d4]/20 flex flex-col ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+                                className={`group relative bg-white rounded-2xl overflow-hidden shadow-lg transition-all duration-500 hover:shadow-2xl hover:shadow-[#06b6d4]/10 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
                                 style={{ transitionDelay: `${index * 100}ms` }}
                             >
-                                <div className="absolute inset-0 border-2 border-transparent group-hover:border-[#06b6d4]/30 rounded-4xl transition-colors duration-500 pointer-events-none z-10" />
+                                <div className="flex flex-col md:flex-row">
+                                    {/* Image Section */}
+                                    <div className="relative md:w-2/5 h-64 md:h-auto flex items-center justify-center p-6 overflow-hidden">
+                                        {/* Product Image */}
+                                        <div className="relative w-full h-full">
+                                            <Image
+                                                src={product.image_url || "/placeholder-product.png"}
+                                                alt={product.name}
+                                                fill
+                                                className="object-contain transition-transform duration-500 group-hover:scale-110"
+                                            />
+                                        </div>
 
-                                <div className="relative h-72 overflow-hidden p-6 flex items-center justify-center">
-                                    <div className="absolute top-4 right-4 z-20">
-                                        <div className="w-10 h-10 rounded-full bg-white/90 backdrop-blur text-[#06124f] flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
-                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                                            </svg>
+                                        {/* Category Badge */}
+                                        <div className="absolute top-4 left-4">
+                                            <span className="px-3 py-1.5 bg-white/95 backdrop-blur-sm rounded-full text-xs font-bold text-[#06124f] shadow-md">
+                                                {product.category}
+                                            </span>
                                         </div>
                                     </div>
 
-                                    <Image
-                                        src={product.image_url || "/placeholder-product.png"}
-                                        alt={product.name}
-                                        fill
-                                        className="object-contain transition-transform duration-700 group-hover:scale-110"
-                                    />
+                                    {/* Content Section */}
+                                    <div className="md:w-3/5 p-6 flex flex-col justify-between">
+                                        <div>
+                                            {/* Product Name */}
+                                            <h3 className="text-xl md:text-2xl font-bold text-[#06124f] mb-2 line-clamp-2 group-hover:text-[#06b6d4] transition-colors duration-300">
+                                                {product.name}
+                                            </h3>
 
-                                    <div className="absolute top-4 left-4 z-20">
-                                        <span className="px-3 py-1.5 bg-white/90 backdrop-blur-md rounded-lg text-xs font-bold text-[#06124f] shadow-sm tracking-wide border border-gray-100">
-                                            {product.category}
-                                        </span>
+                                            {/* Tagline */}
+                                            {product.tagline && (
+                                                <p className="text-sm text-[#06b6d4] font-semibold mb-3">
+                                                    {product.tagline}
+                                                </p>
+                                            )}
+
+                                            {/* Divider */}
+                                            <div className="w-16 h-1 bg-linear-to-r from-[#06124f] to-[#06b6d4] rounded-full mb-4 group-hover:w-24 transition-all duration-500"></div>
+
+                                            {/* Description */}
+                                            <p className="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-3">
+                                                {product.description}
+                                            </p>
+
+                                            {/* Specs */}
+                                            {product.specs && product.specs.length > 0 && (
+                                                <div className="mb-4">
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {product.specs.slice(0, 4).map((spec: string, i: number) => (
+                                                            <div key={i} className="flex items-center gap-1.5 text-xs">
+                                                                <svg className="w-3.5 h-3.5 text-[#06b6d4]" fill="currentColor" viewBox="0 0 20 20">
+                                                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                                                </svg>
+                                                                <span className="text-gray-700 font-medium">{spec}</span>
+                                                            </div>
+                                                        ))}
+                                                        {product.specs.length > 4 && (
+                                                            <span className="text-xs text-gray-500 font-medium">+{product.specs.length - 4} more</span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Action Button */}
+                                        <div className="mt-4">
+                                            <button
+                                                onClick={() => handleInquiry(product.name, product.category, product.image_url, product.description, product.specs || [])}
+                                                className="w-full px-6 py-3 bg-linear-to-r from-[#06124f] to-[#06b6d4] text-white font-bold rounded-xl shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 flex items-center justify-center gap-2"
+                                            >
+                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                                </svg>
+                                                <span className="text-sm">Get Quote</span>
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
 
-                                <div className="p-8 flex flex-col grow relative bg-white">
-                                    <div className="mb-4">
-                                        <h3 className="text-2xl font-black text-[#06124f] mb-3 group-hover:text-[#06b6d4] transition-colors duration-300 line-clamp-2 leading-tight">
-                                            {product.name}
-                                        </h3>
-                                        <div className="w-12 h-1 bg-linear-to-r from-[#06124f] to-[#06b6d4] rounded-full group-hover:w-20 transition-all duration-500" />
-                                    </div>
-
-                                    <p className="text-gray-600 mb-6 line-clamp-2 grow font-medium leading-relaxed">
-                                        {product.description}
-                                    </p>
-
-                                    <div className="flex flex-wrap gap-2 mb-8">
-                                        {product.specs?.map((spec: string, i: number) => (
-                                            <span key={i} className="px-3 py-1 bg-gray-50 text-gray-600 text-xs font-bold rounded-lg border border-gray-200 group-hover:border-[#06b6d4]/30 group-hover:text-[#06124f] transition-colors duration-300">
-                                                {spec}
-                                            </span>
-                                        ))}
-                                    </div>
-
-                                    <button
-                                        onClick={() => handleInquiry(product.name, product.category, product.image_url, product.description, product.specs || [])}
-                                        className="w-full py-4 rounded-xl bg-[#06124f] text-white font-bold text-center text-lg shadow-lg shadow-[#06124f]/20 group-hover:bg-[#06b6d4] group-hover:shadow-[#06b6d4]/30 transition-all duration-300 relative overflow-hidden"
-                                    >
-                                        <span className="relative z-10 flex items-center justify-center gap-2">
-                                            Inquiry Product
-                                            <svg className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                                            </svg>
-                                        </span>
-                                    </button>
-                                </div>
+                                {/* Hover Effect Overlay */}
+                                <div className="absolute inset-0 border-2 border-transparent group-hover:border-[#06b6d4]/30 rounded-2xl transition-all duration-500 pointer-events-none"></div>
                             </div>
                         ))}
                     </div>
