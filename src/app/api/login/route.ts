@@ -5,7 +5,7 @@ import { serialize } from 'cookie';
 
 export async function POST(request: Request) {
     try {
-        const { email, password } = await request.json();
+        const { email, password, rememberMe } = await request.json();
 
         if (!email || !password) {
             return NextResponse.json(
@@ -39,15 +39,18 @@ export async function POST(request: Request) {
             );
         }
 
-        // Create JWT
-        const token = signToken({ id: user.id, email: user.email });
+        // Create JWT with extended expiration if "Remember Me" is checked
+        const tokenExpiry = rememberMe ? '30d' : '1d';
+        const cookieMaxAge = rememberMe ? (60 * 60 * 24 * 30) : (60 * 60 * 24); // 30 days or 1 day
+        
+        const token = signToken({ id: user.id, email: user.email }, tokenExpiry);
 
-        // Set cookie
+        // Set cookie with appropriate expiration
         const cookie = serialize('auth_token', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
-            maxAge: 60 * 60 * 24, // 1 day
+            maxAge: cookieMaxAge,
             path: '/',
         });
 
