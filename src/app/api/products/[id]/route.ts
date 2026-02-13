@@ -30,7 +30,7 @@ export async function PUT(
     try {
         const { id } = await params;
         const body = await request.json();
-        const { name, slug, category, description, tagline, image_url, theme_color, specs, is_featured, price_display, stock_status } = body;
+        const { name, slug, category, description, tagline, image_url, media_type, video_url, theme_color, specs, is_featured, price_display, stock_status } = body;
 
         if (!name || !slug || !category) {
             return NextResponse.json(
@@ -47,6 +47,8 @@ export async function PUT(
                 description = ?,
                 tagline = ?,
                 image_url = ?,
+                media_type = ?,
+                video_url = ?,
                 theme_color = ?,
                 specs = ?,
                 is_featured = ?,
@@ -60,6 +62,8 @@ export async function PUT(
                 description,
                 tagline,
                 image_url,
+                media_type || 'image',
+                video_url || null,
                 theme_color,
                 JSON.stringify(specs),
                 is_featured ? 1 : 0,

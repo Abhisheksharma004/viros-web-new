@@ -6,6 +6,22 @@ import Link from "next/link";
 import ProductHeroSlider from "@/components/ProductHeroSlider";
 import InquiryPopup from "@/components/InquiryPopup";
 
+// Extract YouTube video ID from URL (supports regular videos and Shorts)
+const getYouTubeVideoId = (url: string): string | null => {
+    const patterns = [
+        /(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/,
+        /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/,
+        /youtube\.com\/v\/([a-zA-Z0-9_-]{11})/,
+        /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/
+    ];
+    
+    for (const pattern of patterns) {
+        const match = url.match(pattern);
+        if (match) return match[1];
+    }
+    return null;
+};
+
 export default function ProductsPage() {
     const [products, setProducts] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -95,14 +111,38 @@ export default function ProductsPage() {
                                 <div className="flex flex-col md:flex-row">
                                     {/* Image Section */}
                                     <div className="relative md:w-2/5 h-64 md:h-auto flex items-center justify-center p-6 overflow-hidden">
-                                        {/* Product Image */}
+                                        {/* Product Media (Image or Video) */}
                                         <div className="relative w-full h-full">
-                                            <Image
-                                                src={product.image_url || "/placeholder-product.png"}
-                                                alt={product.name}
-                                                fill
-                                                className="object-contain transition-transform duration-500 group-hover:scale-110"
-                                            />
+                                            {product.media_type === 'video' && product.video_url ? (
+                                                // YouTube Video
+                                                (() => {
+                                                    const videoId = getYouTubeVideoId(product.video_url);
+                                                    return videoId ? (
+                                                        <iframe
+                                                            src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=1&modestbranding=1&rel=0`}
+                                                            className="absolute inset-0 w-full h-full rounded-lg"
+                                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                            allowFullScreen
+                                                        />
+                                                    ) : (
+                                                        // Fallback to image if video ID can't be extracted
+                                                        <Image
+                                                            src={product.image_url || "/placeholder-product.png"}
+                                                            alt={product.name}
+                                                            fill
+                                                            className="object-contain transition-transform duration-500 group-hover:scale-110"
+                                                        />
+                                                    );
+                                                })()
+                                            ) : (
+                                                // Image
+                                                <Image
+                                                    src={product.image_url || "/placeholder-product.png"}
+                                                    alt={product.name}
+                                                    fill
+                                                    className="object-contain transition-transform duration-500 group-hover:scale-110"
+                                                />
+                                            )}
                                         </div>
 
                                         {/* Category Badge */}

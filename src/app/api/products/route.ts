@@ -17,7 +17,7 @@ export async function GET() {
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { name, slug, category, description, tagline, image_url, theme_color, specs, is_featured, price_display, stock_status } = body;
+        const { name, slug, category, description, tagline, image_url, media_type, video_url, theme_color, specs, is_featured, price_display, stock_status } = body;
 
         if (!name || !slug || !category) {
             return NextResponse.json(
@@ -26,10 +26,18 @@ export async function POST(request: Request) {
             );
         }
 
+        // Validate video URL if media type is video
+        if (media_type === 'video' && !video_url) {
+            return NextResponse.json(
+                { message: 'Video URL is required when media type is video' },
+                { status: 400 }
+            );
+        }
+
         const [result]: any = await pool.query(
             `INSERT INTO products 
-            (name, slug, category, description, tagline, image_url, theme_color, specs, is_featured, price_display, stock_status) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            (name, slug, category, description, tagline, image_url, media_type, video_url, theme_color, specs, is_featured, price_display, stock_status) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 name,
                 slug,
@@ -37,6 +45,8 @@ export async function POST(request: Request) {
                 description || '',
                 tagline || '',
                 image_url || '',
+                media_type || 'image',
+                video_url || null,
                 theme_color || 'from-[#06124f] to-[#06b6d4]',
                 JSON.stringify(specs || []),
                 is_featured ? 1 : 0,

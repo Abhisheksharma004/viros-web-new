@@ -24,7 +24,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     try {
         const { id } = await params;
         const body = await request.json();
-        const { title, subtitle, description, image, cta, cta_link, cta_secondary, cta_secondary_link, display_order, is_active } = body;
+        const { title, subtitle, description, image, media_type, video_url, cta, cta_link, cta_secondary, cta_secondary_link, display_order, is_active } = body;
 
         // Perform partial update based on provided fields
         const updates: string[] = [];
@@ -34,6 +34,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         if (subtitle !== undefined) { updates.push('subtitle = ?'); values.push(subtitle); }
         if (description !== undefined) { updates.push('description = ?'); values.push(description); }
         if (image !== undefined) { updates.push('image = ?'); values.push(image); }
+        if (media_type !== undefined) { updates.push('media_type = ?'); values.push(media_type); }
+        if (video_url !== undefined) { updates.push('video_url = ?'); values.push(video_url); }
         if (cta !== undefined) { updates.push('cta = ?'); values.push(cta); }
         if (cta_link !== undefined) { updates.push('cta_link = ?'); values.push(cta_link); }
         if (cta_secondary !== undefined) { updates.push('cta_secondary = ?'); values.push(cta_secondary); }

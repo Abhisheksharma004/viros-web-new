@@ -8,6 +8,22 @@ interface ProductHeroSliderProps {
     products?: any[];
 }
 
+// Extract YouTube video ID from URL (supports regular videos and Shorts)
+const getYouTubeVideoId = (url: string): string | null => {
+    const patterns = [
+        /(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/,
+        /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/,
+        /youtube\.com\/v\/([a-zA-Z0-9_-]{11})/,
+        /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/
+    ];
+    
+    for (const pattern of patterns) {
+        const match = url.match(pattern);
+        if (match) return match[1];
+    }
+    return null;
+};
+
 export default function ProductHeroSlider({ products: initialProducts }: ProductHeroSliderProps) {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [direction, setDirection] = useState(0); // -1 for left, 1 for right
@@ -56,15 +72,52 @@ export default function ProductHeroSlider({ products: initialProducts }: Product
             <div className="absolute top-0 right-0 w-2/3 h-full bg-gradient-to-l from-white/40 via-transparent to-transparent blur-3xl" />
             <div className="absolute bottom-0 left-0 w-1/2 h-1/2 bg-gradient-to-tr from-white/40 via-transparent to-transparent blur-3xl" />
 
-            {/* Mobile Background Image (Absolute) */}
+            {/* Mobile Background Media (Absolute) */}
             <div className="absolute inset-0 z-0 md:hidden">
-                <Image
-                    src={activeProduct.image_url || activeProduct.image}
-                    alt={activeProduct.name}
-                    fill
-                    className="object-cover opacity-60 blur-[2px] scale-110"
-                    priority
-                />
+                {activeProduct.media_type === 'video' && activeProduct.video_url ? (
+                    // YouTube Video Background
+                    (() => {
+                        const videoId = getYouTubeVideoId(activeProduct.video_url);
+                        return videoId ? (
+                            <div className="relative w-full h-full">
+                                <iframe
+                                    src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1`}
+                                    className="absolute inset-0 w-full h-full pointer-events-none"
+                                    allow="autoplay; encrypted-media"
+                                    style={{
+                                        position: 'absolute',
+                                        top: '50%',
+                                        left: '50%',
+                                        transform: 'translate(-50%, -50%)',
+                                        width: '100vw',
+                                        height: '56.25vw',
+                                        minHeight: '100vh',
+                                        minWidth: '177.78vh',
+                                        pointerEvents: 'none',
+                                        filter: 'blur(2px)',
+                                        opacity: 0.6
+                                    }}
+                                />
+                            </div>
+                        ) : (
+                            <Image
+                                src={activeProduct.image_url || activeProduct.image}
+                                alt={activeProduct.name}
+                                fill
+                                className="object-cover opacity-60 blur-[2px] scale-110"
+                                priority
+                            />
+                        );
+                    })()
+                ) : (
+                    <Image
+                        src={activeProduct.image_url || activeProduct.image}
+                        alt={activeProduct.name}
+                        fill
+                        className="object-cover opacity-60 blur-[2px] scale-110"
+                        priority
+                    />
+                )}
                 <div className="absolute inset-0 bg-gradient-to-b from-white/40 via-white/20 to-white/60" />
             </div>
 
@@ -101,17 +154,45 @@ export default function ProductHeroSlider({ products: initialProducts }: Product
                     </div>
                 </div>
 
-                {/* Image Content (Desktop Only) */}
+                {/* Media Content (Desktop Only) */}
                 <div className="hidden md:flex w-full md:w-1/2 h-full items-center justify-center relative">
                     <div key={`img-${currentIndex}`} className="relative w-full h-full max-h-[600px] animate-fade-in-scale">
                         <div className={`absolute inset-0 bg-gradient-to-br ${activeProduct.theme_color || activeProduct.color} opacity-20 rounded-full blur-3xl transform rotate-6 scale-90 translate-y-12`} />
-                        <Image
-                            src={activeProduct.image_url || activeProduct.image}
-                            alt={activeProduct.name}
-                            fill
-                            className="object-contain drop-shadow-2xl z-20 relative p-8"
-                            priority
-                        />
+                        {activeProduct.media_type === 'video' && activeProduct.video_url ? (
+                            // YouTube Video
+                            (() => {
+                                const videoId = getYouTubeVideoId(activeProduct.video_url);
+                                return videoId ? (
+                                    <div className="relative w-full h-full p-8">
+                                        <iframe
+                                            src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1`}
+                                            className="w-full h-full rounded-2xl shadow-2xl z-20 relative"
+                                            allow="autoplay; encrypted-media"
+                                            allowFullScreen
+                                            style={{
+                                                pointerEvents: 'none'
+                                            }}
+                                        />
+                                    </div>
+                                ) : (
+                                    <Image
+                                        src={activeProduct.image_url || activeProduct.image}
+                                        alt={activeProduct.name}
+                                        fill
+                                        className="object-contain drop-shadow-2xl z-20 relative p-8"
+                                        priority
+                                    />
+                                );
+                            })()
+                        ) : (
+                            <Image
+                                src={activeProduct.image_url || activeProduct.image}
+                                alt={activeProduct.name}
+                                fill
+                                className="object-contain drop-shadow-2xl z-20 relative p-8"
+                                priority
+                            />
+                        )}
                     </div>
                 </div>
             </div>

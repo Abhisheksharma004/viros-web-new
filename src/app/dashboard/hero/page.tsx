@@ -8,6 +8,8 @@ interface HeroSlide {
     subtitle: string;
     description: string;
     image: string;
+    media_type: 'image' | 'video';
+    video_url?: string;
     cta: string;
     cta_link?: string;
     cta_secondary: string;
@@ -31,6 +33,8 @@ export default function HeroPage() {
         subtitle: "",
         description: "",
         image: "",
+        media_type: 'image',
+        video_url: "",
         cta: "Browse Products",
         cta_link: "/products",
         cta_secondary: "Get Quote",
@@ -64,6 +68,8 @@ export default function HeroPage() {
             subtitle: "",
             description: "",
             image: "",
+            media_type: 'image',
+            video_url: "",
             cta: "Browse Products",
             cta_link: "/products",
             cta_secondary: "Get Quote",
@@ -454,32 +460,108 @@ export default function HeroPage() {
                                 />
                             </div>
 
-                            {/* Image URL */}
+                            {/* Media Type Selector */}
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                    Image URL <span className="text-red-500">*</span>
+                                <label className="block text-sm font-semibold text-gray-700 mb-3">
+                                    Media Type <span className="text-red-500">*</span>
                                 </label>
-                                <input
-                                    type="url"
-                                    value={formData.image}
-                                    onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#06b6d4] focus:border-transparent outline-none text-gray-900 font-medium placeholder:text-gray-400"
-                                    placeholder="https://images.unsplash.com/..."
-                                />
-                                {formData.image && (
-                                    <div className="mt-3 w-full h-48 bg-gray-100 rounded-lg overflow-hidden">
-                                        <img
-                                            src={formData.image}
-                                            alt="Preview"
-                                            className="w-full h-full object-cover"
-                                            onError={(e) => {
-                                                e.currentTarget.src = '';
-                                                e.currentTarget.style.display = 'none';
-                                            }}
+                                <div className="flex gap-4">
+                                    <label className="flex items-center space-x-2 cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            name="media_type"
+                                            value="image"
+                                            checked={formData.media_type === 'image'}
+                                            onChange={(e) => setFormData({ ...formData, media_type: 'image', video_url: '' })}
+                                            className="w-4 h-4 text-[#06b6d4] border-gray-300 focus:ring-[#06b6d4]"
                                         />
-                                    </div>
-                                )}
+                                        <span className="text-gray-900 font-medium">Image</span>
+                                    </label>
+                                    <label className="flex items-center space-x-2 cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            name="media_type"
+                                            value="video"
+                                            checked={formData.media_type === 'video'}
+                                            onChange={(e) => setFormData({ ...formData, media_type: 'video' })}
+                                            className="w-4 h-4 text-[#06b6d4] border-gray-300 focus:ring-[#06b6d4]"
+                                        />
+                                        <span className="text-gray-900 font-medium">YouTube Video</span>
+                                    </label>
+                                </div>
                             </div>
+
+                            {/* Image URL */}
+                            {formData.media_type === 'image' ? (
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                        Image URL <span className="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="url"
+                                        value={formData.image}
+                                        onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#06b6d4] focus:border-transparent outline-none text-gray-900 font-medium placeholder:text-gray-400"
+                                        placeholder="https://images.unsplash.com/..."
+                                    />
+                                    {formData.image && (
+                                        <div className="mt-3 w-full h-48 bg-gray-100 rounded-lg overflow-hidden">
+                                            <img
+                                                src={formData.image}
+                                                alt="Preview"
+                                                className="w-full h-full object-cover"
+                                                onError={(e) => {
+                                                    e.currentTarget.src = '';
+                                                    e.currentTarget.style.display = 'none';
+                                                }}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                        YouTube Video URL <span className="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="url"
+                                        value={formData.video_url || ''}
+                                        onChange={(e) => setFormData({ ...formData, video_url: e.target.value, image: e.target.value })}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#06b6d4] focus:border-transparent outline-none text-gray-900 font-medium placeholder:text-gray-400"
+                                        placeholder="https://www.youtube.com/watch?v=..."
+                                    />
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        Supported formats: youtube.com/watch?v=..., youtu.be/..., youtube.com/embed/..., youtube.com/shorts/...
+                                    </p>
+                                    {formData.video_url && (() => {
+                                        const getVideoId = (url: string) => {
+                                            const patterns = [
+                                                /(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/,
+                                                /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/,
+                                                /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/
+                                            ];
+                                            for (const pattern of patterns) {
+                                                const match = url.match(pattern);
+                                                if (match) return match[1];
+                                            }
+                                            return null;
+                                        };
+                                        const videoId = getVideoId(formData.video_url);
+                                        return videoId ? (
+                                            <div className="mt-3 w-full aspect-video bg-gray-100 rounded-lg overflow-hidden">
+                                                <iframe
+                                                    src={`https://www.youtube.com/embed/${videoId}`}
+                                                    className="w-full h-full"
+                                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                    allowFullScreen
+                                                />
+                                            </div>
+                                        ) : (
+                                            <p className="mt-2 text-sm text-red-500">Invalid YouTube URL format</p>
+                                        );
+                                    })()}
+                                </div>
+                            )}
 
                             {/* CTA Buttons */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

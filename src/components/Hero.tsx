@@ -10,12 +10,30 @@ interface HeroSlide {
   subtitle: string;
   description: string;
   image: string;
+  media_type: 'image' | 'video';
+  video_url?: string;
   cta: string;
   cta_link?: string;
   cta_secondary: string;
   cta_secondary_link?: string;
   display_order: number;
   is_active: boolean;
+}
+
+// Extract YouTube video ID from URL (supports regular videos and Shorts)
+const getYouTubeVideoId = (url: string): string | null => {
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/,
+    /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/,
+    /youtube\.com\/v\/([a-zA-Z0-9_-]{11})/,
+    /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/
+  ];
+  
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) return match[1];
+  }
+  return null;
 }
 
 export default function Hero() {
@@ -146,7 +164,7 @@ export default function Hero() {
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
     >
-      {/* Background Slider - Mobile Optimized */}
+      {/* Background Slider - Mobile Optimized with Video Support */}
       <div className="absolute inset-0">
         {slides.map((slide, index) => (
           <div
@@ -156,19 +174,62 @@ export default function Hero() {
               : 'opacity-0 scale-105'
               }`}
           >
-            {/* Background Image with Mobile-Optimized Overlay */}
+            {/* Background Media (Image or Video) with Mobile-Optimized Overlay */}
             <div className="relative h-full w-full">
-              <Image
-                src={slide.image}
-                alt={slide.title}
-                fill
-                className={`object-cover object-center transition-opacity duration-500 ${isLoading ? 'opacity-0' : 'opacity-100'
-                  }`}
-                priority={index === 0}
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 100vw"
-                quality={index === 0 ? 90 : 75}
-                onLoad={() => index === 0 && setIsLoading(false)}
-              />
+              {slide.media_type === 'video' && slide.video_url ? (
+                // YouTube Video Background
+                <>
+                  {(() => {
+                    const videoId = getYouTubeVideoId(slide.video_url);
+                    return videoId ? (
+                      <div className={`absolute inset-0 w-full h-full overflow-hidden transition-opacity duration-500 ${isLoading ? 'opacity-0' : 'opacity-100'}`}>
+                        <iframe
+                          src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1&enablejsapi=1`}
+                          className="absolute pointer-events-none"
+                          allow="autoplay; encrypted-media"
+                          allowFullScreen
+                          style={{
+                            position: 'absolute',
+                            top: '50%',
+                            left: '50%',
+                            transform: 'translate(-50%, -50%)',
+                            width: '100vw',
+                            height: '56.25vw', // 16:9 aspect ratio
+                            minHeight: '100vh',
+                            minWidth: '177.78vh', // 16:9 aspect ratio
+                            pointerEvents: 'none'
+                          }}
+                          onLoad={() => index === 0 && setIsLoading(false)}
+                        />
+                      </div>
+                    ) : (
+                      // Fallback to image if video ID can't be extracted
+                      <Image
+                        src={slide.image}
+                        alt={slide.title}
+                        fill
+                        className={`object-cover object-center transition-opacity duration-500 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
+                        priority={index === 0}
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 100vw"
+                        quality={index === 0 ? 90 : 75}
+                        onLoad={() => index === 0 && setIsLoading(false)}
+                      />
+                    );
+                  })()}
+                </>
+              ) : (
+                // Image Background
+                <Image
+                  src={slide.image}
+                  alt={slide.title}
+                  fill
+                  className={`object-cover object-center transition-opacity duration-500 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
+                  priority={index === 0}
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 100vw"
+                  quality={index === 0 ? 90 : 75}
+                  onLoad={() => index === 0 && setIsLoading(false)}
+                />
+              )}
               {/* Loading placeholder */}
               {isLoading && index === currentSlide && (
                 <div className="absolute inset-0 bg-gradient-to-br from-[#06124f] to-[#06b6d4] animate-pulse" />

@@ -15,6 +15,8 @@ interface Product {
     description: string;
     tagline: string;
     image_url: string;
+    media_type?: 'image' | 'video';
+    video_url?: string;
     theme_color: string;
     specs: string[];
     is_featured: boolean;
@@ -26,6 +28,22 @@ interface Product {
 
 const CATEGORY_OPTIONS = ["Printers", "Scanners", "Mobility", "Software", "Consumables"];
 const STOCK_STATUS_OPTIONS = ["In Stock", "Low Stock", "Out of Stock"];
+
+// Extract YouTube video ID from URL (supports regular videos and Shorts)
+const getYouTubeVideoId = (url: string): string | null => {
+    const patterns = [
+        /(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/,
+        /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/,
+        /youtube\.com\/v\/([a-zA-Z0-9_-]{11})/,
+        /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/
+    ];
+    
+    for (const pattern of patterns) {
+        const match = url.match(pattern);
+        if (match) return match[1];
+    }
+    return null;
+};
 
 export default function ProductsPage() {
     const [products, setProducts] = useState<Product[]>([]);
@@ -73,6 +91,8 @@ export default function ProductsPage() {
         description: "",
         tagline: "",
         image_url: "",
+        media_type: 'image',
+        video_url: "",
         theme_color: "from-[#06b6d4] to-[#06124f]",
         specs: [],
         is_featured: false,
@@ -89,6 +109,8 @@ export default function ProductsPage() {
             description: "",
             tagline: "",
             image_url: "",
+            media_type: 'image',
+            video_url: "",
             theme_color: "from-[#06b6d4] to-[#06124f]",
             specs: [],
             is_featured: false,
@@ -208,7 +230,28 @@ export default function ProductsPage() {
                     <div key={product.id} className="group bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-1">
                         <div className="relative h-48 bg-gray-50 overflow-hidden p-6">
                             <div className={`absolute inset-0 bg-gradient-to-br ${product.theme_color} opacity-5 group-hover:opacity-10 transition-opacity`} />
-                            {product.image_url ? (
+                            {product.media_type === 'video' && product.video_url ? (
+                                // YouTube Video
+                                (() => {
+                                    const videoId = getYouTubeVideoId(product.video_url);
+                                    return videoId ? (
+                                        <div className="w-full h-full relative z-10">
+                                            <iframe
+                                                src={`https://www.youtube.com/embed/${videoId}?autoplay=0&mute=1&controls=1&modestbranding=1&rel=0`}
+                                                className="w-full h-full rounded-lg"
+                                                allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                allowFullScreen
+                                            />
+                                        </div>
+                                    ) : product.image_url ? (
+                                        <img src={product.image_url} alt={product.name} className="w-full h-full object-contain relative z-10 drop-shadow-2xl group-hover:scale-110 transition-transform duration-500" />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center text-gray-200">
+                                            <Package size={64} />
+                                        </div>
+                                    );
+                                })()
+                            ) : product.image_url ? (
                                 <img src={product.image_url} alt={product.name} className="w-full h-full object-contain relative z-10 drop-shadow-2xl group-hover:scale-110 transition-transform duration-500" />
                             ) : (
                                 <div className="w-full h-full flex items-center justify-center text-gray-200">
@@ -387,15 +430,61 @@ export default function ProductsPage() {
 
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                             <div className="space-y-6">
+                                                {/* Media Type Selector */}
                                                 <div>
-                                                    <label className="block text-[10px] font-black text-gray-700 uppercase tracking-[0.2em] mb-2">Image URL</label>
-                                                    <input
-                                                        type="text"
-                                                        value={formData.image_url || ""}
-                                                        onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                                                        className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-cyan-500/10 outline-none font-bold text-gray-800"
-                                                    />
+                                                    <label className="block text-[10px] font-black text-gray-700 uppercase tracking-[0.2em] mb-3">Media Type</label>
+                                                    <div className="flex gap-4">
+                                                        <label className="flex items-center space-x-2 cursor-pointer">
+                                                            <input
+                                                                type="radio"
+                                                                name="media_type"
+                                                                value="image"
+                                                                checked={formData.media_type === 'image' || !formData.media_type}
+                                                                onChange={() => setFormData({ ...formData, media_type: 'image', video_url: '' })}
+                                                                className="w- 4 h-4 text-[#06b6d4] border-gray-300 focus:ring-[#06b6d4]"
+                                                            />
+                                                            <span className="text-gray-900 font-bold">Image</span>
+                                                        </label>
+                                                        <label className="flex items-center space-x-2 cursor-pointer">
+                                                            <input
+                                                                type="radio"
+                                                                name="media_type"
+                                                                value="video"
+                                                                checked={formData.media_type === 'video'}
+                                                                onChange={() => setFormData({ ...formData, media_type: 'video' })}
+                                                                className="w-4 h-4 text-[#06b6d4] border-gray-300 focus:ring-[#06b6d4]"
+                                                            />
+                                                            <span className="text-gray-900 font-bold">YouTube Video</span>
+                                                        </label>
+                                                    </div>
                                                 </div>
+
+                                                {/* Image URL or Video URL based on selection */}
+                                                {formData.media_type === 'video' ? (
+                                                    <div>
+                                                        <label className="block text-[10px] font-black text-gray-700 uppercase tracking-[0.2em] mb-2">YouTube Video URL</label>
+                                                        <input
+                                                            type="text"
+                                                            value={formData.video_url || ""}
+                                                            onChange={(e) => setFormData({ ...formData, video_url: e.target.value, image_url: e.target.value })}
+                                                            className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-cyan-500/10 outline-none font-bold text-gray-800"
+                                                            placeholder="https://www.youtube.com/watch?v=..."
+                                                        />
+                                                        <p className="text-xs text-gray-500 mt-1">
+                                                            Supported: youtube.com/watch?v=..., youtu.be/..., youtube.com/embed/..., youtube.com/shorts/...
+                                                        </p>
+                                                    </div>
+                                                ) : (
+                                                    <div>
+                                                        <label className="block text-[10px] font-black text-gray-700 uppercase tracking-[0.2em] mb-2">Image URL</label>
+                                                        <input
+                                                            type="text"
+                                                            value={formData.image_url || ""}
+                                                            onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                                                            className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-cyan-500/10 outline-none font-bold text-gray-800"
+                                                        />
+                                                    </div>
+                                                )}
                                                 <div>
                                                     <label className="block text-[10px] font-black text-gray-700 uppercase tracking-[0.2em] mb-2">Hero Tagline</label>
                                                     <input
@@ -427,12 +516,41 @@ export default function ProductsPage() {
                                                 </div>
                                             </div>
                                             <div className="bg-gray-50 rounded-[2rem] p-6 border border-gray-100 flex flex-col items-center justify-center min-h-[300px]">
-                                                {formData.image_url ? (
+                                                {formData.media_type === 'video' && formData.video_url ? (
+                                                    // YouTube Video Preview
+                                                    (() => {
+                                                        const getVideoId = (url: string) => {
+                                                            const patterns = [
+                                                                /(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/,
+                                                                /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/,
+                                                                /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/
+                                                            ];
+                                                            for (const pattern of patterns) {
+                                                                const match = url.match(pattern);
+                                                                if (match) return match[1];
+                                                            }
+                                                            return null;
+                                                        };
+                                                        const videoId = getVideoId(formData.video_url);
+                                                        return videoId ? (
+                                                            <iframe
+                                                                src={`https://www.youtube.com/embed/${videoId}`}
+                                                                className="w-full aspect-video rounded-xl"
+                                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                                allowFullScreen
+                                                            />
+                                                        ) : (
+                                                            <div className="text-center text-red-400">
+                                                                <p className="font-bold">Invalid YouTube URL</p>
+                                                            </div>
+                                                        );
+                                                    })()
+                                                ) : formData.image_url ? (
                                                     <img src={formData.image_url} alt="Preview" className="max-w-full max-h-[250px] object-contain drop-shadow-2xl" />
                                                 ) : (
                                                     <div className="text-center text-gray-300">
                                                         <ImageIcon size={64} className="mx-auto mb-2 opacity-20" />
-                                                        <p className="font-bold opacity-30">No Image Provided</p>
+                                                        <p className="font-bold opacity-30">No Media Provided</p>
                                                     </div>
                                                 )}
                                             </div>

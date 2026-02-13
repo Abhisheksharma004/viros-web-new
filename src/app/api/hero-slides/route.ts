@@ -16,7 +16,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
     try {
-        const { title, subtitle, description, image, cta, cta_link, cta_secondary, cta_secondary_link, display_order, is_active } = await request.json();
+        const { title, subtitle, description, image, media_type, video_url, cta, cta_link, cta_secondary, cta_secondary_link, display_order, is_active } = await request.json();
 
         if (!title || !subtitle || !description || !image) {
             return NextResponse.json(
@@ -25,13 +25,23 @@ export async function POST(request: Request) {
             );
         }
 
+        // Validate video URL if media type is video
+        if (media_type === 'video' && !video_url) {
+            return NextResponse.json(
+                { message: 'Video URL is required when media type is video' },
+                { status: 400 }
+            );
+        }
+
         const [result]: any = await pool.query(
-            'INSERT INTO hero_slides (title, subtitle, description, image, cta, cta_link, cta_secondary, cta_secondary_link, display_order, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            'INSERT INTO hero_slides (title, subtitle, description, image, media_type, video_url, cta, cta_link, cta_secondary, cta_secondary_link, display_order, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
             [
                 title, 
                 subtitle, 
                 description, 
                 image, 
+                media_type || 'image',
+                video_url || null,
                 cta, 
                 cta_link || '/products',
                 cta_secondary, 
