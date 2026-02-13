@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Plus, Pencil, Trash2, X, Calendar, Gift, Loader2, Bell, User, Mail } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Calendar, Gift, Loader2, Bell, User, Mail, Eye, History, Clock } from 'lucide-react';
 
 interface Birthday {
     id?: number;
@@ -11,6 +11,18 @@ interface Birthday {
     email?: string;
     notes?: string;
     is_active: boolean;
+}
+
+interface EmailHistory {
+    id: number;
+    recipient_email: string;
+    recipient_name: string;
+    sent_at: string;
+    status: 'sent' | 'failed' | 'pending';
+    message_id: string;
+    error_message?: string;
+    celebration_time: string;
+    department: string;
 }
 
 export default function BirthdayRemainderPage() {
@@ -29,6 +41,11 @@ export default function BirthdayRemainderPage() {
     const [isSaving, setIsSaving] = useState(false);
     const [filter, setFilter] = useState<'all' | 'upcoming' | 'today'>('all');
     const [error, setError] = useState<string | null>(null);
+    const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+    const [emailHistory, setEmailHistory] = useState<EmailHistory[]>([]);
+    const [historyLoading, setHistoryLoading] = useState(false);
+    const [selectedBirthdayForHistory, setSelectedBirthdayForHistory] = useState<Birthday | null>(null);
+    const [previewWindow, setPreviewWindow] = useState<Window | null>(null);
 
     useEffect(() => {
         fetchBirthdays();
@@ -173,7 +190,8 @@ export default function BirthdayRemainderPage() {
                     to: birthday.email,
                     name: birthday.name,
                     celebrationTime: '3:00 PM',
-                    department: 'VIROS Team'
+                    department: 'VIROS Team',
+                    birthdayId: birthday.id
                 })
             });
 
@@ -181,6 +199,10 @@ export default function BirthdayRemainderPage() {
 
             if (response.ok) {
                 alert(`✅ Birthday email sent successfully to ${birthday.name}! 🎉`);
+                // Refresh history if modal is open
+                if (isHistoryModalOpen && selectedBirthdayForHistory?.id === birthday.id) {
+                    fetchEmailHistory(birthday.id!);
+                }
             } else {
                 alert(`❌ Failed to send email:\n${data.error || 'Unknown error'}\n\n${data.details || ''}`);
             }
@@ -188,6 +210,70 @@ export default function BirthdayRemainderPage() {
             console.error('Error sending birthday email:', error);
             alert('❌ Failed to send birthday email. Please check your connection.');
         }
+    };
+
+    const handlePreviewEmail = async (birthday: Birthday) => {
+        try {
+            const response = await fetch('/api/preview-birthday-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: birthday.name,
+                    celebrationTime: '3:00 PM',
+                    department: 'VIROS Team'
+                })
+            });
+
+            if (response.ok) {
+                const html = await response.text();
+                const newWindow = window.open('', '_blank', 'width=800,height=600');
+                if (newWindow) {
+                    newWindow.document.write(html);
+                    newWindow.document.close();
+                    setPreviewWindow(newWindow);
+                }
+            } else {
+                alert('Failed to generate preview');
+            }
+        } catch (error) {
+            console.error('Error previewing email:', error);
+            alert('Failed to preview email');
+        }
+    };
+
+    const fetchEmailHistory = async (birthdayId: number) => {
+        setHistoryLoading(true);
+        try {
+            const response = await fetch(`/api/birthday-email-history/${birthdayId}`);
+            if (response.ok) {
+                const data = await response.json();
+                setEmailHistory(Array.isArray(data) ? data : []);
+            } else {
+                const errorData = await response.json();
+                if (errorData.code === 'TABLE_NOT_FOUND') {
+                    alert('⚠️ Email history table not found.\n\nPlease run: node run_birthday_email_history_migration.js');
+                }
+                setEmailHistory([]);
+            }
+        } catch (error) {
+            console.error('Error fetching email history:', error);
+            setEmailHistory([]);
+        } finally {
+            setHistoryLoading(false);
+        }
+    };
+
+    const handleViewHistory = async (birthday: Birthday) => {
+        if (!birthday.id) return;
+        setSelectedBirthdayForHistory(birthday);
+        setIsHistoryModalOpen(true);
+        await fetchEmailHistory(birthday.id);
+    };
+
+    const handleCloseHistory = () => {
+        setIsHistoryModalOpen(false);
+        setSelectedBirthdayForHistory(null);
+        setEmailHistory([]);
     };
 
     // Calculate days until birthday
@@ -527,14 +613,30 @@ CREATE TABLE birthdays (
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                                     <div className="flex gap-2">
                                                         {birthday.email && (
-                                                            <button
-                                                                onClick={() => handleSendBirthdayEmail(birthday)}
-                                                                className="text-green-600 hover:text-green-800"
-                                                                title="Send birthday email"
-                                                            >
-                                                                <Mail className="w-5 h-5" />
-                                                            </button>
+                                                            <>
+                                                                <button
+                                                                    onClick={() => handlePreviewEmail(birthday)}
+                                                                    className="text-purple-600 hover:text-purple-800"
+                                                                    title="Preview email"
+                                                                >
+                                                                    <Eye className="w-5 h-5" />
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => handleSendBirthdayEmail(birthday)}
+                                                                    className="text-green-600 hover:text-green-800"
+                                                                    title="Send birthday email"
+                                                                >
+                                                                    <Mail className="w-5 h-5" />
+                                                                </button>
+                                                            </>
                                                         )}
+                                                        <button
+                                                            onClick={() => handleViewHistory(birthday)}
+                                                            className="text-blue-600 hover:text-blue-800"
+                                                            title="View email history"
+                                                        >
+                                                            <History className="w-5 h-5" />
+                                                        </button>
                                                         <button
                                                             onClick={() => handleOpenModal(birthday)}
                                                             className="text-[#06b6d4] hover:text-[#0891b2]"
@@ -681,6 +783,109 @@ CREATE TABLE birthdays (
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Email History Modal */}
+            {isHistoryModalOpen && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg max-w-4xl w-full p-6 max-h-[90vh] overflow-y-auto">
+                        <div className="flex justify-between items-center mb-6">
+                            <div>
+                                <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                                    <History className="w-6 h-6 text-blue-600" />
+                                    Email History
+                                </h2>
+                                {selectedBirthdayForHistory && (
+                                    <p className="text-gray-600 mt-1">
+                                        {selectedBirthdayForHistory.name} ({selectedBirthdayForHistory.email})
+                                    </p>
+                                )}
+                            </div>
+                            <button
+                                onClick={handleCloseHistory}
+                                className="text-gray-400 hover:text-gray-600"
+                            >
+                                <X className="w-6 h-6" />
+                            </button>
+                        </div>
+
+                        {historyLoading ? (
+                            <div className="flex items-center justify-center py-12">
+                                <Loader2 className="w-8 h-8 animate-spin text-[#06b6d4]" />
+                            </div>
+                        ) : emailHistory.length === 0 ? (
+                            <div className="text-center py-12">
+                                <Mail className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                                <p className="text-gray-500 text-lg">No emails sent yet</p>
+                                <p className="text-gray-400 text-sm mt-2">
+                                    Email history will appear here once you start sending birthday wishes
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                {emailHistory.map((history) => (
+                                    <div
+                                        key={history.id}
+                                        className={`border rounded-lg p-4 ${
+                                            history.status === 'sent'
+                                                ? 'border-green-200 bg-green-50'
+                                                : history.status === 'failed'
+                                                ? 'border-red-200 bg-red-50'
+                                                : 'border-gray-200 bg-gray-50'
+                                        }`}
+                                    >
+                                        <div className="flex justify-between items-start">
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <span
+                                                        className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                                                            history.status === 'sent'
+                                                                ? 'bg-green-100 text-green-800'
+                                                                : history.status === 'failed'
+                                                                ? 'bg-red-100 text-red-800'
+                                                                : 'bg-yellow-100 text-yellow-800'
+                                                        }`}
+                                                    >
+                                                        {history.status.toUpperCase()}
+                                                    </span>
+                                                    <span className="text-sm text-gray-600 flex items-center gap-1">
+                                                        <Clock className="w-4 h-4" />
+                                                        {new Date(history.sent_at).toLocaleString()}
+                                                    </span>
+                                                </div>
+                                                <p className="text-sm text-gray-700">
+                                                    <strong>To:</strong> {history.recipient_email}
+                                                </p>
+                                                <p className="text-sm text-gray-700">
+                                                    <strong>Department:</strong> {history.department}
+                                                </p>
+                                                {history.message_id && (
+                                                    <p className="text-xs text-gray-500 mt-1">
+                                                        Message ID: {history.message_id}
+                                                    </p>
+                                                )}
+                                                {history.error_message && (
+                                                    <div className="mt-2 p-2 bg-red-100 border border-red-200 rounded text-sm text-red-700">
+                                                        <strong>Error:</strong> {history.error_message}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        <div className="mt-6 flex justify-end">
+                            <button
+                                onClick={handleCloseHistory}
+                                className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                            >
+                                Close
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

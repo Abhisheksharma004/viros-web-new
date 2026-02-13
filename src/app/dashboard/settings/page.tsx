@@ -127,7 +127,7 @@ export default function SettingsPage() {
                 <div className="flex justify-end pt-4">
                     <button
                         onClick={handleSave}
-                        className="px-8 py-3 bg-gradient-to-r from-[#06b6d4] to-[#06124f] text-white font-semibold rounded-lg hover:shadow-lg transition-all"
+                        className="px-8 py-3 bg-gradient-to from-[#06b6d4] to-[#06124f] text-white font-semibold rounded-lg hover:shadow-lg transition-all"
                     >
                         Save Changes
                     </button>

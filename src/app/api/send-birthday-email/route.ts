@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
 import fs from 'fs/promises';
 import path from 'path';
+import mysql from 'mysql2/promise';
+import { isValidEmail, sanitizeEmail } from '@/lib/email-utils';
 
 // Email configuration - supports both SMTP_* and EMAIL_* environment variables
 const emailConfig = {
@@ -13,6 +15,58 @@ const emailConfig = {
         pass: process.env.SMTP_PASSWORD || process.env.EMAIL_PASSWORD
     }
 };
+
+// Database configuration
+const dbConfig = {
+    host: process.env.DB_HOST || 'localhost',
+    user: process.env.DB_USER || 'root',
+    password: process.env.DB_PASSWORD || '',
+    database: process.env.DB_NAME || 'viros_web_new',
+    port: parseInt(process.env.DB_PORT || '3306')
+};
+
+/**
+ * Get database connection
+ */
+async function getConnection() {
+    return await mysql.createConnection(dbConfig);
+}
+
+/**
+ * Log email to history
+ */
+async function logEmailHistory(
+    connection: any,
+    birthdayId: number | null,
+    email: string,
+    name: string,
+    status: 'sent' | 'failed',
+    messageId?: string,
+    error?: string,
+    celebrationTime?: string,
+    department?: string
+) {
+    try {
+        await connection.execute(
+            `INSERT INTO birthday_email_history 
+            (birthday_id, recipient_email, recipient_name, status, message_id, error_message, celebration_time, department) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                birthdayId || null,
+                email,
+                name,
+                status,
+                messageId || null,
+                error || null,
+                celebrationTime || '3:00 PM',
+                department || 'VIROS Team'
+            ]
+        );
+    } catch (error) {
+        console.error('Error logging email history:', error);
+        // Don't throw - we don't want to fail the email send if logging fails
+    }
+}
 
 /**
  * Read and customize the HTML email template
@@ -35,14 +89,25 @@ async function getEmailTemplate(data: any) {
 }
 
 export async function POST(request: Request) {
+    let connection;
+    
     try {
         const body = await request.json();
-        const { to, name, celebrationTime, department } = body;
+        const { to, name, celebrationTime, department, birthdayId } = body;
 
         // Validate required fields
         if (!to || !name) {
             return NextResponse.json(
                 { error: 'Recipient email and name are required' },
+                { status: 400 }
+            );
+        }
+
+        // Validate and sanitize email
+        const sanitizedEmail = sanitizeEmail(to);
+        if (!sanitizedEmail) {
+            return NextResponse.json(
+                { error: 'Invalid email address format' },
                 { status: 400 }
             );
         }
@@ -55,14 +120,24 @@ export async function POST(request: Request) {
             );
         }
 
+        // Connect to database for logging
+        try {
+            connection = await getConnection();
+        } catch (dbError) {
+            console.warn('Database connection failed, proceeding without history logging:', dbError);
+        }
+
         // Create transporter
         const transporter = nodemailer.createTransport(emailConfig);
+
+        const celebrationTimeValue = celebrationTime || '3:00 PM';
+        const departmentValue = department || 'VIROS Team';
 
         // Get customized HTML template
         const htmlContent = await getEmailTemplate({
             name,
-            celebrationTime: celebrationTime || '3:00 PM',
-            department: department || 'VIROS Team'
+            celebrationTime: celebrationTimeValue,
+            department: departmentValue
         });
 
         // Plain text fallback
@@ -79,13 +154,13 @@ We hope your birthday is as special as you are! May this year bring you continue
 
 With warmest wishes,
 The VIROS Team
-${department || ''}
+${departmentValue}
         `.trim();
 
         // Email options
         const mailOptions = {
             from: `"${process.env.COMPANY_NAME || 'VIROS'} Team" <${emailConfig.auth.user}>`,
-            to: to,
+            to: sanitizedEmail,
             subject: `🎉 Happy Birthday ${name}! 🎂`,
             text: textContent,
             html: htmlContent
@@ -96,17 +171,53 @@ ${department || ''}
         
         console.log('✅ Birthday email sent successfully!');
         console.log('Message ID:', info.messageId);
-        console.log('Recipient:', to);
+        console.log('Recipient:', sanitizedEmail);
+        
+        // Log to history if database is available
+        if (connection) {
+            await logEmailHistory(
+                connection,
+                birthdayId || null,
+                sanitizedEmail,
+                name,
+                'sent',
+                info.messageId,
+                undefined,
+                celebrationTimeValue,
+                departmentValue
+            );
+        }
         
         return NextResponse.json({
             success: true,
             message: 'Birthday email sent successfully!',
             messageId: info.messageId,
-            recipient: to
+            recipient: sanitizedEmail
         });
 
     } catch (error: any) {
         console.error('❌ Error sending birthday email:', error);
+        
+        // Log failure to history if database is available
+        if (connection) {
+            try {
+                const body = await request.clone().json();
+                await logEmailHistory(
+                    connection,
+                    body.birthdayId || null,
+                    body.to,
+                    body.name,
+                    'failed',
+                    undefined,
+                    error.message,
+                    body.celebrationTime,
+                    body.department
+                );
+            } catch (logError) {
+                console.error('Failed to log error:', logError);
+            }
+        }
+        
         return NextResponse.json(
             { 
                 error: 'Failed to send birthday email',
@@ -114,5 +225,9 @@ ${department || ''}
             },
             { status: 500 }
         );
+    } finally {
+        if (connection) {
+            await connection.end();
+        }
     }
 }

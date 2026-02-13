@@ -6,7 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "setup:birthday": "node setup-birthday-system.js",
+    "migrate:birthday": "node run_birthday_migration_fixed.js",
+    "migrate:birthday-history": "node run_birthday_email_history_migration.js",
+    "cron:birthday": "node birthday-cron.js"
   },
   "dependencies": {
     "@types/nodemailer": "^7.0.5",
