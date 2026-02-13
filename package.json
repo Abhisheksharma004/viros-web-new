@@ -10,7 +10,8 @@
     "setup:birthday": "node setup-birthday-system.js",
     "migrate:birthday": "node run_birthday_migration_fixed.js",
     "migrate:birthday-history": "node run_birthday_email_history_migration.js",
-    "cron:birthday": "node birthday-cron.js"
+    "cron:birthday": "node birthday-cron.js",
+    "test:birthday": "node test-birthday-system.js"
   },
   "dependencies": {
     "@types/nodemailer": "^7.0.5",
@@ -21,6 +22,7 @@
     "lucide-react": "^0.562.0",
     "mysql2": "^3.11.0",
     "next": "^16.1.6",
+    "node-cron": "^4.2.1",
     "nodemailer": "^7.0.12",
     "react": "19.2.3",
     "react-dom": "19.2.3"

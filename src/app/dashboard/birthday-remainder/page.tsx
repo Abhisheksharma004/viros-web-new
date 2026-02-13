@@ -524,26 +524,26 @@ CREATE TABLE birthdays (
                             </button>
                         </div>
                     ) : (
-                        <div className="overflow-x-auto">
-                            <table className="w-full">
+                        <div>
+                            <table className="w-full table-fixed">
                                 <thead className="bg-gray-50 border-b">
                                     <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th className="w-[25%] px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                                             Name
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th className="w-[13%] px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                                             Birthday
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th className="w-[12%] px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                                             Days Until
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th className="w-[22%] px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                                             Contact
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th className="w-[10%] px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                                             Status
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th className="w-[18%] px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                                             Actions
                                         </th>
                                     </tr>
@@ -553,52 +553,52 @@ CREATE TABLE birthdays (
                                         const daysUntil = getDaysUntilBirthday(birthday.date);
                                         return (
                                             <tr key={birthday.id} className="hover:bg-gray-50">
-                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                <td className="px-3 py-3">
                                                     <div className="flex items-center">
-                                                        <div className="flex-shrink-0 h-10 w-10 bg-[#06b6d4] rounded-full flex items-center justify-center">
-                                                            <span className="text-white font-semibold">
+                                                        <div className="shrink-0 h-9 w-9 bg-[#06b6d4] rounded-full flex items-center justify-center">
+                                                            <span className="text-white font-semibold text-sm">
                                                                 {birthday.name.charAt(0).toUpperCase()}
                                                             </span>
                                                         </div>
-                                                        <div className="ml-4">
-                                                            <div className="text-sm font-medium text-gray-900">
+                                                        <div className="ml-3 overflow-hidden">
+                                                            <div className="text-sm font-medium text-gray-900 truncate" title={birthday.name}>
                                                                 {birthday.name}
                                                             </div>
                                                             {birthday.notes && (
-                                                                <div className="text-sm text-gray-500">
+                                                                <div className="text-xs text-gray-500 truncate" title={birthday.notes}>
                                                                     {birthday.notes}
                                                                 </div>
                                                             )}
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                    {formatDate(birthday.date)}
+                                                <td className="px-3 py-3 text-sm text-gray-900">
+                                                    {new Date(birthday.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                                                 </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                <td className="px-3 py-3">
                                                     {daysUntil === 0 ? (
-                                                        <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                                        <span className="px-2 py-1 inline-flex text-xs font-semibold rounded-full bg-green-100 text-green-800">
                                                             Today! 🎉
                                                         </span>
                                                     ) : daysUntil === 1 ? (
-                                                        <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-orange-100 text-orange-800">
+                                                        <span className="px-2 py-1 inline-flex text-xs font-semibold rounded-full bg-orange-100 text-orange-800">
                                                             Tomorrow
                                                         </span>
                                                     ) : daysUntil <= 7 ? (
-                                                        <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                                                            {daysUntil} days
+                                                        <span className="px-2 py-1 inline-flex text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                                            {daysUntil} Days - Soon!
                                                         </span>
                                                     ) : (
-                                                        <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
-                                                            {daysUntil} days
+                                                        <span className="px-2 py-1 inline-flex text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
+                                                            {daysUntil} Days - Soon!
                                                         </span>
                                                     )}
                                                 </td>
-                                                <td className="px-6 py-4 text-sm text-gray-500">
-                                                    {birthday.phone && <div>📞 {birthday.phone}</div>}
-                                                    {birthday.email && <div>✉️ {birthday.email}</div>}
+                                                <td className="px-3 py-3 text-xs text-gray-500">
+                                                    {birthday.phone && <div className="truncate" title={birthday.phone}>📞 {birthday.phone}</div>}
+                                                    {birthday.email && <div className="truncate" title={birthday.email}>✉️ {birthday.email}</div>}
                                                 </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                <td className="px-3 py-3">
                                                     <button
                                                         onClick={() => toggleActive(birthday.id!, birthday.is_active)}
                                                         className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
@@ -610,8 +610,8 @@ CREATE TABLE birthdays (
                                                         {birthday.is_active ? 'Active' : 'Inactive'}
                                                     </button>
                                                 </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                                    <div className="flex gap-2">
+                                                <td className="px-3 py-3 whitespace-nowrap text-sm font-medium">
+                                                    <div className="flex gap-1.5">
                                                         {birthday.email && (
                                                             <>
                                                                 <button
@@ -619,14 +619,14 @@ CREATE TABLE birthdays (
                                                                     className="text-purple-600 hover:text-purple-800"
                                                                     title="Preview email"
                                                                 >
-                                                                    <Eye className="w-5 h-5" />
+                                                                    <Eye className="w-4 h-4" />
                                                                 </button>
                                                                 <button
                                                                     onClick={() => handleSendBirthdayEmail(birthday)}
                                                                     className="text-green-600 hover:text-green-800"
                                                                     title="Send birthday email"
                                                                 >
-                                                                    <Mail className="w-5 h-5" />
+                                                                    <Mail className="w-4 h-4" />
                                                                 </button>
                                                             </>
                                                         )}
@@ -635,21 +635,21 @@ CREATE TABLE birthdays (
                                                             className="text-blue-600 hover:text-blue-800"
                                                             title="View email history"
                                                         >
-                                                            <History className="w-5 h-5" />
+                                                            <History className="w-4 h-4" />
                                                         </button>
                                                         <button
                                                             onClick={() => handleOpenModal(birthday)}
                                                             className="text-[#06b6d4] hover:text-[#0891b2]"
                                                             title="Edit"
                                                         >
-                                                            <Pencil className="w-5 h-5" />
+                                                            <Pencil className="w-4 h-4" />
                                                         </button>
                                                         <button
                                                             onClick={() => handleDelete(birthday.id!)}
                                                             className="text-red-600 hover:text-red-800"
                                                             title="Delete"
                                                         >
-                                                            <Trash2 className="w-5 h-5" />
+                                                            <Trash2 className="w-4 h-4" />
                                                         </button>
                                                     </div>
                                                 </td>

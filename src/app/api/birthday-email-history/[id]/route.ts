@@ -16,12 +16,13 @@ const dbConfig = {
  */
 export async function GET(
     request: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     let connection;
     
     try {
-        const birthdayId = parseInt(params.id);
+        const { id } = await params;
+        const birthdayId = parseInt(id);
         
         if (isNaN(birthdayId)) {
             return NextResponse.json(
