@@ -74,18 +74,18 @@ export default function NavbarManagement() {
                 <form onSubmit={handleSubmit} className="space-y-6">
                     {/* Logo Section */}
                     <div>
-                        <h2 className="text-xl font-bold text-[#06124f] mb-4">Logo Settings</h2>
+                        <h2 className="text-xl font-bold text-[#06124f] mb-4">Logo URL</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">Logo URL / Path</label>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">Image URL</label>
                                 <input
                                     type="text"
                                     value={content.logo_url}
                                     onChange={(e) => setContent({ ...content, logo_url: e.target.value })}
                                     className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#06b6d4] focus:border-transparent outline-none transition-all text-gray-900"
-                                    placeholder="/logo.png"
+                                    placeholder="/logo.png or https://example.com/logo.png"
                                 />
-                                <p className="text-sm text-gray-500 mt-2">Enter the path to your logo image (e.g., /logo.png)</p>
+                                <p className="text-sm text-gray-500 mt-2">Enter the URL or path to your logo image</p>
                             </div>
                             <div className="flex justify-center p-4 bg-gray-50 rounded-lg border border-gray-200">
                                 {content.logo_url ? (
@@ -93,13 +93,13 @@ export default function NavbarManagement() {
                                         {/* eslint-disable-next-line @next/next/no-img-element */}
                                         <img
                                             src={content.logo_url}
-                                            alt="Logo Preview"
+                                            alt="Image Preview"
                                             className="h-16 w-auto object-contain"
                                             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                                         />
                                     </div>
                                 ) : (
-                                    <div className="text-gray-400 text-sm">Logo Preview</div>
+                                    <div className="text-gray-400 text-sm">Image Preview</div>
                                 )}
                             </div>
                         </div>
