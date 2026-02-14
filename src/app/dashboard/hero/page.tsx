@@ -2,6 +2,20 @@
 
 import { useState, useEffect } from "react";
 
+// Helper function to extract YouTube video ID from URL
+const getYouTubeVideoId = (url: string): string | null => {
+    const patterns = [
+        /(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/,
+        /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/,
+        /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/
+    ];
+    for (const pattern of patterns) {
+        const match = url.match(pattern);
+        if (match) return match[1];
+    }
+    return null;
+};
+
 interface HeroSlide {
     id: number;
     title: string;
@@ -298,9 +312,26 @@ export default function HeroPage() {
                                 } ${!slide.is_active ? 'opacity-60' : ''}`}
                         >
                             <div className="flex flex-col lg:flex-row gap-6">
-                                {/* Image Preview */}
+                                {/* Media Preview */}
                                 <div className="w-full lg:w-48 h-32 bg-gray-100 rounded-lg overflow-hidden shrink-0">
-                                    {slide.image ? (
+                                    {slide.media_type === 'video' && slide.video_url ? (
+                                        (() => {
+                                            const videoId = getYouTubeVideoId(slide.video_url);
+                                            return videoId ? (
+                                                <iframe
+                                                    src={`https://www.youtube.com/embed/${videoId}?autoplay=0&mute=1&controls=1`}
+                                                    className="w-full h-full"
+                                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                    allowFullScreen
+                                                    title={slide.title}
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-red-400">
+                                                    <span className="text-xs">Invalid Video</span>
+                                                </div>
+                                            );
+                                        })()
+                                    ) : slide.image ? (
                                         <img
                                             src={slide.image}
                                             alt={slide.title}
