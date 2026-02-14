@@ -26,6 +26,9 @@ export default function Footer() {
         brand_title: 'VIROS',
         brand_subtitle: 'Entrepreneurs'
     });
+    const [newsletterEmail, setNewsletterEmail] = useState('');
+    const [newsletterLoading, setNewsletterLoading] = useState(false);
+    const [newsletterMessage, setNewsletterMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -66,6 +69,39 @@ export default function Footer() {
         { name: "Instagram", icon: "M7.8 2h8.4C19.4 2 22 4.6 22 7.8v8.4a5.8 5.8 0 0 1-5.8 5.8H7.8C4.6 22 2 19.4 2 16.2V7.8A5.8 5.8 0 0 1 7.8 2m-.2 2A3.6 3.6 0 0 0 4 7.6v8.8C4 18.39 5.61 20 7.6 20h8.8a3.6 3.6 0 0 0 3.6-3.6V7.6C20 5.61 18.39 4 16.4 4H7.6m9.65 1.5a1.25 1.25 0 0 1 1.25 1.25A1.25 1.25 0 0 1 17.25 8 1.25 1.25 0 0 1 16 6.75a1.25 1.25 0 0 1 1.25-1.25M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3z", href: contactInfo.social_instagram },
         { name: "YouTube", icon: "M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z", href: contactInfo.social_youtube }
     ].filter(link => link.href && link.href !== '#' && link.href !== '');
+
+    const handleNewsletterSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setNewsletterMessage(null);
+
+        if (!newsletterEmail.trim()) {
+            setNewsletterMessage({ type: 'error', text: 'Please enter your email address' });
+            return;
+        }
+
+        setNewsletterLoading(true);
+
+        try {
+            const response = await fetch('/api/newsletter/subscribe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: newsletterEmail })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                setNewsletterMessage({ type: 'success', text: data.message });
+                setNewsletterEmail(''); // Clear input on success
+            } else {
+                setNewsletterMessage({ type: 'error', text: data.error || 'Failed to subscribe' });
+            }
+        } catch (error) {
+            setNewsletterMessage({ type: 'error', text: 'An error occurred. Please try again.' });
+        } finally {
+            setNewsletterLoading(false);
+        }
+    };
 
     return (
         <footer className="bg-[#06124f] text-white pt-20 pb-10 relative overflow-hidden">
@@ -198,19 +234,30 @@ export default function Footer() {
 
                         {/* Newsletter Input */}
                         <div className="w-full md:w-auto">
-                            <form className="relative max-w-sm mx-auto md:mx-0">
+                            <form onSubmit={handleNewsletterSubmit} className="relative max-w-sm mx-auto md:mx-0">
                                 <input
                                     type="email"
+                                    value={newsletterEmail}
+                                    onChange={(e) => setNewsletterEmail(e.target.value)}
+                                    disabled={newsletterLoading}
                                     placeholder="Subscribe to our newsletter"
-                                    className="w-full bg-white/5 border border-white/10 rounded-full py-2.5 pl-6 pr-32 text-gray-300 placeholder:text-gray-600 focus:outline-none focus:border-[#06b6d4] focus:ring-1 focus:ring-[#06b6d4] transition-all"
+                                    className="w-full bg-white/5 border border-white/10 rounded-full py-2.5 pl-6 pr-32 text-gray-300 placeholder:text-gray-600 focus:outline-none focus:border-[#06b6d4] focus:ring-1 focus:ring-[#06b6d4] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                 />
                                 <button
-                                    type="button"
-                                    className="absolute right-1 top-1 bottom-1 px-6 bg-[#06b6d4] hover:bg-cyan-500 text-white text-sm font-bold rounded-full transition-colors"
+                                    type="submit"
+                                    disabled={newsletterLoading}
+                                    className="absolute right-1 top-1 bottom-1 px-6 bg-[#06b6d4] hover:bg-cyan-500 text-white text-sm font-bold rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    Subscribe
+                                    {newsletterLoading ? 'Sending...' : 'Subscribe'}
                                 </button>
                             </form>
+                            {newsletterMessage && (
+                                <p className={`text-xs mt-2 text-center md:text-left ${
+                                    newsletterMessage.type === 'success' ? 'text-green-400' : 'text-red-400'
+                                }`}>
+                                    {newsletterMessage.text}
+                                </p>
+                            )}
                         </div>
                     </div>
                 </div>
