@@ -46,10 +46,13 @@ export async function POST(request: Request) {
         const token = signToken({ id: user.id, email: user.email }, tokenExpiry);
 
         // Set cookie with appropriate expiration
+        // secure: false for HTTP (VPS), true for HTTPS (production domain)
+        const isSecure = process.env.NEXT_PUBLIC_SITE_URL?.startsWith('https://') || false;
+        
         const cookie = serialize('auth_token', token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
+            secure: isSecure,
+            sameSite: 'lax', // 'lax' works better for HTTP/different domains
             maxAge: cookieMaxAge,
             path: '/',
         });
