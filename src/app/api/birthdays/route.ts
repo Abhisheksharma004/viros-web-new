@@ -19,7 +19,19 @@ export async function GET() {
             }, { status: 503 });
         }
         
-        return NextResponse.json({ error: 'Failed to fetch birthdays' }, { status: 500 });
+        // Handle connection reset errors
+        if (error.code === 'ECONNRESET' || error.code === 'PROTOCOL_CONNECTION_LOST') {
+            return NextResponse.json({ 
+                error: 'Database connection was reset. Please check your MySQL server and try again.',
+                code: 'CONNECTION_ERROR',
+                details: error.message
+            }, { status: 503 });
+        }
+        
+        return NextResponse.json({ 
+            error: 'Failed to fetch birthdays',
+            details: error.message 
+        }, { status: 500 });
     }
 }
 

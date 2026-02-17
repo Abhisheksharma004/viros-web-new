@@ -9,6 +9,17 @@ const pool = mysql.createPool({
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0,
+    connectTimeout: 10000, // 10 seconds
+    enableKeepAlive: true,
+    keepAliveInitialDelay: 10000, // 10 seconds
+});
+
+// Handle pool errors
+pool.on('connection', (connection) => {
+    console.log('New database connection established');
+    connection.on('error', (err) => {
+        console.error('Database connection error:', err);
+    });
 });
 
 export default pool;

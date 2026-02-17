@@ -58,6 +58,8 @@ export default function BirthdayRemainderPage() {
                 const errorData = await res.json();
                 if (errorData.code === 'TABLE_NOT_FOUND') {
                     setError('Database table not found. Please run: node run_birthday_migration.js');
+                } else if (errorData.code === 'CONNECTION_ERROR') {
+                    setError(`Database connection error: ${errorData.details || 'Connection was reset. Please check if your MySQL server is running.'}`);
                 } else {
                     setError('Failed to fetch birthdays. Please check your database connection.');
                 }
@@ -70,7 +72,7 @@ export default function BirthdayRemainderPage() {
             setError(null);
         } catch (error) {
             console.error('Error fetching birthdays:', error);
-            setError('Unable to connect to the server. Please try again.');
+            setError('Unable to connect to the server. Please ensure your MySQL server is running and try again.');
             // Set empty array if API doesn't exist or fails
             setBirthdays([]);
         } finally {
@@ -279,17 +281,22 @@ export default function BirthdayRemainderPage() {
     // Calculate days until birthday
     const getDaysUntilBirthday = (dateString: string) => {
         const today = new Date();
+        // Reset today to midnight for accurate comparison
+        today.setHours(0, 0, 0, 0);
+        
         const birthDate = new Date(dateString);
         
         // Set the year to current/next year
         const currentYear = today.getFullYear();
         const thisYearBirthday = new Date(currentYear, birthDate.getMonth(), birthDate.getDate());
+        thisYearBirthday.setHours(0, 0, 0, 0);
         
         let daysUntil: number;
         if (thisYearBirthday >= today) {
             daysUntil = Math.ceil((thisYearBirthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
         } else {
             const nextYearBirthday = new Date(currentYear + 1, birthDate.getMonth(), birthDate.getDate());
+            nextYearBirthday.setHours(0, 0, 0, 0);
             daysUntil = Math.ceil((nextYearBirthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
         }
         
@@ -316,7 +323,8 @@ export default function BirthdayRemainderPage() {
         return days <= 30 && days > 0;
     }).length;
 
-    const todayCount = (Array.isArray(birthdays) ? birthdays : []).filter(b => getDaysUntilBirthday(b.date) === 0).length;
+    const todayBirthdays = (Array.isArray(birthdays) ? birthdays : []).filter(b => getDaysUntilBirthday(b.date) === 0);
+    const todayCount = todayBirthdays.length;
 
     return (
         <div className="min-h-screen bg-gray-50 p-6">
