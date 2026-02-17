@@ -106,7 +106,7 @@ export default function FeaturedProducts() {
                         Featured Products
                     </h2>
                     <p className={`text-xl text-gray-600 max-w-2xl mx-auto transition-all duration-700 delay-200 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-                        Discover our top-rated barcode solutions designed to elevate your business efficiency.
+                        
                     </p>
                 </div>
 

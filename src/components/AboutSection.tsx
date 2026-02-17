@@ -50,21 +50,13 @@ export default function AboutSection() {
         };
     }, []);
 
-    // Fallback values if content is not loaded or empty
-    const badge = content?.homepage_badge || "WHO WE ARE";
-    const title = content?.homepage_title || "Complete Barcode Solutions Provider";
-    const description = content?.homepage_description || "VIROS Entrepreneurs specializes in providing comprehensive barcode solutions including label printers, handheld scanners, mobile devices, and custom software solutions. We enable businesses to achieve operational excellence through innovative technology.";
-    const imageUrl = content?.homepage_image_url || "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80";
-    const cardTitle = content?.homepage_card_title || "Trusted Partner";
-    const cardSubtitle = content?.homepage_card_subtitle || "Helping businesses scale since 2018";
-
-    // Fallback stats if database is empty
-    const displayStats = stats.length > 0 ? stats : [
-        { label: "Happy Clients", value: "500+" },
-        { label: "Projects Delivered", value: "1000+" },
-        { label: "Cities Served", value: "50+" },
-        { label: "Uptime Guarantee", value: "99.9%" }
-    ];
+    const badge = content?.homepage_badge || "";
+    const title = content?.homepage_title || "";
+    const description = content?.homepage_description || "";
+    const imageUrl = content?.homepage_image_url || "";
+    const cardTitle = content?.homepage_card_title || "";
+    const cardSubtitle = content?.homepage_card_subtitle || "";
+    const displayStats = stats.length > 0 ? stats : [];
 
     return (
         <section id="homepage-about" className="py-24 relative overflow-hidden bg-[#06124f] text-white">
@@ -112,34 +104,38 @@ export default function AboutSection() {
                     </div>
 
                     {/* Image Composition */}
-                    <div className={`w-full lg:w-1/2 relative transition-all duration-1000 delay-300 ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-12'}`}>
-                        <div className="relative h-[600px] w-full bg-gradient-to-br from-[#06b6d4]/20 to-[#06124f]/20 rounded-[2.5rem] p-4">
-                            <div className="relative h-full w-full overflow-hidden rounded-[2rem] shadow-2xl">
-                                <Image
-                                    src={imageUrl}
-                                    alt="Warehouse Operations"
-                                    fill
-                                    className="object-cover"
-                                />
-                                <div className="absolute inset-0 bg-[#06124f]/30 mix-blend-multiply" />
+                    {imageUrl && (
+                        <div className={`w-full lg:w-1/2 relative transition-all duration-1000 delay-300 ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-12'}`}>
+                            <div className="relative h-[600px] w-full bg-gradient-to-br from-[#06b6d4]/20 to-[#06124f]/20 rounded-[2.5rem] p-4">
+                                <div className="relative h-full w-full overflow-hidden rounded-[2rem] shadow-2xl">
+                                    <Image
+                                        src={imageUrl}
+                                        alt="Warehouse Operations"
+                                        fill
+                                        className="object-cover"
+                                    />
+                                    <div className="absolute inset-0 bg-[#06124f]/30 mix-blend-multiply" />
 
-                                {/* Floating Card */}
-                                <div className="absolute bottom-8 left-8 right-8 bg-white/95 backdrop-blur-xl p-6 rounded-2xl shadow-xl">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 bg-[#06b6d4]/10 rounded-full flex items-center justify-center text-[#06b6d4]">
-                                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
+                                    {/* Floating Card */}
+                                    {(cardTitle || cardSubtitle) && (
+                                        <div className="absolute bottom-8 left-8 right-8 bg-white/95 backdrop-blur-xl p-6 rounded-2xl shadow-xl">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-12 h-12 bg-[#06b6d4]/10 rounded-full flex items-center justify-center text-[#06b6d4]">
+                                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                </div>
+                                                <div>
+                                                    <h4 className="text-[#06124f] font-bold text-lg">{cardTitle}</h4>
+                                                    <p className="text-sm text-gray-500">{cardSubtitle}</p>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <h4 className="text-[#06124f] font-bold text-lg">{cardTitle}</h4>
-                                            <p className="text-sm text-gray-500">{cardSubtitle}</p>
-                                        </div>
-                                    </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    )}
                 </div>
             </div>
         </section>

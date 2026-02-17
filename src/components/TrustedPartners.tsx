@@ -29,7 +29,7 @@ export default async function TrustedPartners() {
                         Our Strategic Partners
                     </h2>
                     <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
-                        We collaborate with industry-leading companies to deliver the best solutions for your business.
+                        
                     </p>
                 </div>
 

@@ -39,7 +39,7 @@ export default async function ClientSection() {
                         Valued Clients
                     </h2>
                     <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed font-light">
-                        From retail giants to logistics leaders, we empower businesses across India with our cutting-edge barcode solutions.
+                        
                     </p>
                 </div>
 

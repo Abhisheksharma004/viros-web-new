@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import InquiryPopup from "@/components/InquiryPopup";
 import {
     Printer, Code, Tags, Settings, Monitor, RefreshCcw, Palmtree
 } from "lucide-react";
@@ -44,6 +45,7 @@ export default function ServicesPage() {
     const [services, setServices] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isVisible, setIsVisible] = useState(false);
+    const [isPopupOpen, setIsPopupOpen] = useState(false);
 
     useEffect(() => {
         setIsVisible(true);
@@ -233,16 +235,30 @@ export default function ServicesPage() {
                         Contact us today for a free consultation and discover how our barcode solutions can optimize your operations.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-6 justify-center">
-                        <button className="px-10 py-5 bg-gradient-to-r from-[#06124f] to-[#06b6d4] text-white font-bold text-lg rounded-2xl shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group">
+                        <button 
+                            onClick={() => setIsPopupOpen(true)}
+                            className="px-10 py-5 bg-gradient-to-r from-[#06124f] to-[#06b6d4] text-white font-bold text-lg rounded-2xl shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group"
+                        >
                             <span className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
                             <span className="relative">Get a Custom Quote</span>
                         </button>
-                        <button className="px-10 py-5 border-2 border-[#06124f]/10 text-[#06124f] font-bold text-lg rounded-2xl hover:bg-[#06124f]/5 hover:border-[#06124f]/30 transition-all duration-300">
-                            View Case Studies
-                        </button>
+                        <Link href="/contact">
+                            <button className="px-10 py-5 border-2 border-[#06124f]/10 text-[#06124f] font-bold text-lg rounded-2xl hover:bg-[#06124f]/5 hover:border-[#06124f]/30 transition-all duration-300">
+                                Contact Our Team
+                            </button>
+                        </Link>
                     </div>
                 </div>
             </section>
+
+            {/* Inquiry Popup */}
+            <InquiryPopup
+                isOpen={isPopupOpen}
+                onClose={() => setIsPopupOpen(false)}
+                productName="AIDC & IT Solutions"
+                productCategory="Services"
+                productDescription="Get a customized quote for our complete AIDC, IT Hardware & Software solutions tailored to your business needs."
+            />
         </div>
     );
 }

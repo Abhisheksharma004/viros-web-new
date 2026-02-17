@@ -296,6 +296,11 @@ export default function WarrantyManagementPage() {
         window.URL.revokeObjectURL(url);
     };
 
+    // Calculate warranty stats
+    const totalWarranties = warranties.length;
+    const activeWarranties = warranties.filter(w => w.status === 'active').length;
+    const expiredWarranties = warranties.filter(w => w.status === 'expired').length;
+
     // Filter warranties
     const filteredWarranties = warranties.filter(warranty => {
         const matchesSearch = warranty.serial_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -324,6 +329,57 @@ export default function WarrantyManagementPage() {
             <div className="mb-8">
                 <h1 className="text-3xl font-black text-[#06124f] mb-2">Warranty Management</h1>
                 <p className="text-gray-600">Manage product warranties and customer coverage</p>
+            </div>
+
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                {/* Total Warranties Card */}
+                <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 shadow-lg text-white transform hover:scale-105 transition-transform duration-200">
+                    <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                            <p className="text-sm font-medium text-blue-100 mb-1">Total Warranties</p>
+                            <p className="text-4xl font-bold mb-2">{totalWarranties}</p>
+                            <p className="text-xs text-blue-100">All registered warranties</p>
+                        </div>
+                        <div className="w-14 h-14 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-sm">
+                            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Active Warranties Card */}
+                <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-6 shadow-lg text-white transform hover:scale-105 transition-transform duration-200">
+                    <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                            <p className="text-sm font-medium text-green-100 mb-1">Active Warranties</p>
+                            <p className="text-4xl font-bold mb-2">{activeWarranties}</p>
+                            <p className="text-xs text-green-100">Currently valid coverage</p>
+                        </div>
+                        <div className="w-14 h-14 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-sm">
+                            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Expired Warranties Card */}
+                <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl p-6 shadow-lg text-white transform hover:scale-105 transition-transform duration-200">
+                    <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                            <p className="text-sm font-medium text-orange-100 mb-1">Expired Warranties</p>
+                            <p className="text-4xl font-bold mb-2">{expiredWarranties}</p>
+                            <p className="text-xs text-orange-100">Coverage ended</p>
+                        </div>
+                        <div className="w-14 h-14 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-sm">
+                            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             {/* Controls */}

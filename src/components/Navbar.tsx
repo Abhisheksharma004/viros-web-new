@@ -13,8 +13,8 @@ export default function Navbar() {
 
     const [navbarContent, setNavbarContent] = useState({
         logo_url: '/logo.png',
-        brand_title: 'VIROS',
-        brand_subtitle: 'Entrepreneurs'
+        brand_title: '',
+        brand_subtitle: ''
     });
 
     useEffect(() => {
@@ -69,7 +69,7 @@ export default function Navbar() {
                         <Link href="/" className="flex items-center group">
                             <Image
                                 src={navbarContent.logo_url || '/logo.png'}
-                                alt={navbarContent.brand_title || 'VIROS'}
+                                alt={navbarContent.brand_title || 'Logo'}
                                 width={200}
                                 height={70}
                                 className="h-14 w-auto object-contain transition-transform duration-200 group-hover:scale-105"

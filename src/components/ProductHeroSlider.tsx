@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import InquiryPopup from "@/components/InquiryPopup";
 
 interface ProductHeroSliderProps {
     products?: any[];
@@ -27,17 +28,21 @@ const getYouTubeVideoId = (url: string): string | null => {
 export default function ProductHeroSlider({ products: initialProducts }: ProductHeroSliderProps) {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [direction, setDirection] = useState(0); // -1 for left, 1 for right
+    const [isPopupOpen, setIsPopupOpen] = useState(false);
+    const [selectedProduct, setSelectedProduct] = useState<{ name: string; category: string; image: string; description: string; specs: string[] } | null>(null);
 
-    const featuredProducts = (initialProducts && initialProducts.length > 0) ? initialProducts : [
-        {
-            id: 'fallback-1',
-            name: "Zebra ZT411 Industrial Printer",
-            tagline: "Rugged Durability for Demanding Applications",
-            description: "Keep your critical operations running efficiently with Zebra's ZT411. Constructed with an all-metal frame and bi-fold door.",
-            image_url: "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?auto=format&fit=crop&w=800&q=80",
-            theme_color: "from-[#06b6d4] to-[#06124f]"
-        }
-    ];
+    const featuredProducts = (initialProducts && initialProducts.length > 0) ? initialProducts : [];
+
+    const handleInquiry = (product: any) => {
+        setSelectedProduct({
+            name: product.name,
+            category: product.category,
+            image: product.image_url || product.image,
+            description: product.description,
+            specs: product.specs || []
+        });
+        setIsPopupOpen(true);
+    };
 
     useEffect(() => {
         if (featuredProducts.length <= 1) return;
@@ -148,8 +153,14 @@ export default function ProductHeroSlider({ products: initialProducts }: Product
                         <Link href="/contact" className="px-8 py-4 bg-[#06124f] text-white font-bold rounded-xl shadow-lg hover:shadow-2xl hover:bg-[#06b6d4] transition-all duration-300 transform hover:-translate-y-1 text-center text-base">
                             Request Demo
                         </Link>
-                        <button className="px-8 py-4 border-2 border-[#06124f]/10 bg-white/50 backdrop-blur text-[#06124f] font-bold rounded-xl hover:bg-white transition-colors text-center text-base">
-                            View Specifications
+                        <button 
+                            onClick={() => handleInquiry(activeProduct)}
+                            className="px-8 py-4 border-2 border-[#06124f] bg-white/80 backdrop-blur text-[#06124f] font-bold rounded-xl hover:bg-[#06124f] hover:text-white hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 text-center text-base flex items-center justify-center gap-2"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                            Get Quote
                         </button>
                     </div>
                 </div>
@@ -215,6 +226,19 @@ export default function ProductHeroSlider({ products: initialProducts }: Product
                         />
                     ))}
                 </div>
+            )}
+
+            {/* Inquiry Popup */}
+            {selectedProduct && (
+                <InquiryPopup
+                    isOpen={isPopupOpen}
+                    onClose={() => setIsPopupOpen(false)}
+                    productName={selectedProduct.name}
+                    productCategory={selectedProduct.category}
+                    productImage={selectedProduct.image}
+                    productDescription={selectedProduct.description}
+                    productSpecs={selectedProduct.specs}
+                />
             )}
         </div>
     );

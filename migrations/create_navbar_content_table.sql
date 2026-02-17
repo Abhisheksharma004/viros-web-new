@@ -7,6 +7,3 @@ CREATE TABLE IF NOT EXISTS navbar_content (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
-
-INSERT IGNORE INTO navbar_content (id, logo_url, brand_title, brand_subtitle)
-VALUES (1, '/logo.png', 'VIROS', 'Entrepreneurs');

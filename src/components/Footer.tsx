@@ -7,24 +7,24 @@ import { useState, useEffect } from 'react';
 export default function Footer() {
     const currentYear = new Date().getFullYear();
     const [contactInfo, setContactInfo] = useState({
-        address: '123 Tech Park, IT Zone,\nMumbai, Maharashtra,\nIndia - 400001',
-        general_phone: '+91-987102-9141',
-        general_email_support: 'info@virosentrepreneurs.com',
-        general_email_info: 'sales@virosentrepreneurs.com',
-        social_twitter: '#',
-        social_linkedin: '#',
-        social_facebook: '#',
-        social_instagram: '#',
-        social_youtube: '#'
+        address: '',
+        general_phone: '',
+        general_email_support: '',
+        general_email_info: '',
+        social_twitter: '',
+        social_linkedin: '',
+        social_facebook: '',
+        social_instagram: '',
+        social_youtube: ''
     });
     const [footerContent, setFooterContent] = useState({
-        description: 'Empowering businesses with cutting-edge AIDC solutions. From barcode printers to enterprise mobility, we deliver efficiency and reliability.',
-        copyright_text: 'VIROS Entrepreneurs. All rights reserved.',
-        developer_text: 'Developed and maintained by Viros Software Team'
+        description: '',
+        copyright_text: '',
+        developer_text: ''
     });
     const [navbarContent, setNavbarContent] = useState({
-        brand_title: 'VIROS',
-        brand_subtitle: 'Entrepreneurs'
+        brand_title: '',
+        brand_subtitle: ''
     });
     const [newsletterEmail, setNewsletterEmail] = useState('');
     const [newsletterLoading, setNewsletterLoading] = useState(false);

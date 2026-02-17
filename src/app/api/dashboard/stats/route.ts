@@ -1,21 +1,9 @@
-
 import { NextResponse } from 'next/server';
-import mysql from 'mysql2/promise';
-
-async function getConnection() {
-    return await mysql.createConnection({
-        host: process.env.DB_HOST,
-        user: process.env.DB_USER,
-        password: process.env.DB_PASSWORD,
-        database: process.env.DB_NAME
-    });
-}
+import pool from '@/lib/db';
 
 export async function GET() {
     try {
-        const connection = await getConnection();
-
-        // Perform parallel queries for efficiency
+        // Perform parallel queries for efficiency using connection pool
         const [
             [products],
             [services],
@@ -23,14 +11,12 @@ export async function GET() {
             [clients],
             [partners]
         ] = await Promise.all([
-            connection.execute('SELECT COUNT(*) as count FROM products'),
-            connection.execute('SELECT COUNT(*) as count FROM services'),
-            connection.execute('SELECT COUNT(*) as count FROM testimonials'),
-            connection.execute('SELECT COUNT(*) as count FROM clients'),
-            connection.execute('SELECT COUNT(*) as count FROM partners')
+            pool.execute('SELECT COUNT(*) as count FROM products'),
+            pool.execute('SELECT COUNT(*) as count FROM services'),
+            pool.execute('SELECT COUNT(*) as count FROM testimonials'),
+            pool.execute('SELECT COUNT(*) as count FROM clients'),
+            pool.execute('SELECT COUNT(*) as count FROM partners')
         ]);
-
-        await connection.end();
 
         const stats = {
             products: (products as any[])[0].count,
@@ -42,6 +28,12 @@ export async function GET() {
         return NextResponse.json(stats);
     } catch (error) {
         console.error('Error fetching dashboard stats:', error);
-        return NextResponse.json({ error: 'Failed to fetch stats' }, { status: 500 });
+        return NextResponse.json({ 
+            error: 'Failed to fetch stats',
+            products: 0,
+            services: 0,
+            testimonials: 0,
+            clientsAndPartners: 0
+        }, { status: 500 });
     }
 }

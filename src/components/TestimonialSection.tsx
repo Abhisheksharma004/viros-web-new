@@ -39,7 +39,7 @@ export default async function TestimonialSection() {
 
             <div className="relative flex overflow-hidden group">
                 {/* First Loop */}
-                <div className="flex animate-marquee whitespace-nowrap hover:pause shrink-0" style={{ animationDuration: "60s" }}>
+                <div className="flex animate-marquee whitespace-nowrap hover:pause shrink-0" style={{ animationDuration: "35s" }}>
                     {testimonials.map((testimonial: any, index: number) => (
                         <div
                             key={testimonial.id || index}
@@ -73,7 +73,7 @@ export default async function TestimonialSection() {
                 </div>
 
                 {/* Second Loop (Clone) */}
-                <div className="flex animate-marquee whitespace-nowrap hover:pause shrink-0" style={{ animationDuration: "60s" }}>
+                <div className="flex animate-marquee whitespace-nowrap hover:pause shrink-0" style={{ animationDuration: "35s" }}>
                     {testimonials.map((testimonial: any, index: number) => (
                         <div
                             key={`clone-${testimonial.id || index}`}
