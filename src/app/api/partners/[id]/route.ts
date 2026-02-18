@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import pool from '@/lib/db';
 
 export async function PUT(
@@ -15,6 +16,7 @@ export async function PUT(
             [name, logo_url, category, display_order, is_active, id]
         );
 
+        revalidatePath('/');
         return NextResponse.json({ message: 'Partner updated successfully' });
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
@@ -28,6 +30,7 @@ export async function DELETE(
     try {
         const { id } = await params;
         await pool.query('DELETE FROM partners WHERE id = ?', [id]);
+        revalidatePath('/');
         return NextResponse.json({ message: 'Partner deleted successfully' });
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });

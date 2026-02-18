@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import pool from '@/lib/db';
 
 export async function GET() {
@@ -20,6 +21,7 @@ export async function POST(request: Request) {
             [name, logo_url, display_order || 0, is_active !== undefined ? is_active : true]
         );
 
+        revalidatePath('/');
         return NextResponse.json({ id: result.insertId, message: 'Client created successfully' });
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });

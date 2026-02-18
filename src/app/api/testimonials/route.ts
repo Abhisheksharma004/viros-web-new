@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import pool from '@/lib/db';
 
 export async function GET(request: Request) {
@@ -29,6 +30,7 @@ export async function POST(request: Request) {
             [name, role, company, content, rating || 5, display_order || 0, status || 'Pending']
         );
 
+        revalidatePath('/');
         return NextResponse.json({ id: result.insertId, message: 'Testimonial created successfully' });
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });

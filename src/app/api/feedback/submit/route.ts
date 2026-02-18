@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import nodemailer from 'nodemailer';
 import pool from '@/lib/db';
 
@@ -23,6 +24,7 @@ export async function POST(request: NextRequest) {
                 [name, email, designation || null, company || null, message, rating]
             );
             console.log('✅ Feedback saved to database with ID:', (result as any).insertId);
+            revalidatePath('/');
         } catch (dbError) {
             console.error('❌ Database error:', dbError);
             return NextResponse.json(
