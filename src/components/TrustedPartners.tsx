@@ -8,7 +8,10 @@ async function getPartners() {
         );
         return rows;
     } catch (error) {
-        console.error('Error fetching partners:', error);
+        // Suppress errors during build when database is unavailable
+        if (process.env.NODE_ENV !== 'production' && error && typeof error === 'object' && 'code' in error && error.code !== 'ECONNREFUSED') {
+            console.error('Error fetching partners:', error);
+        }
         return [];
     }
 }

@@ -4,6 +4,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Printer, Code, Tags, Settings, Monitor } from "lucide-react";
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 const iconMap: Record<string, React.ReactNode> = {
     Printer: <Printer size={48} />,
     Code: <Code size={48} />,
@@ -13,8 +17,17 @@ const iconMap: Record<string, React.ReactNode> = {
 };
 
 export async function generateStaticParams() {
-    const [rows]: any = await pool.query('SELECT slug as id FROM services');
-    return rows;
+    try {
+        const [rows]: any = await pool.query('SELECT slug as id FROM services');
+        return rows;
+    } catch (error: any) {
+        // Suppress ECONNREFUSED errors during build when database is unavailable
+        if (error?.code !== 'ECONNREFUSED') {
+            console.error('Error in generateStaticParams:', error);
+        }
+        // Return empty array if database is not available during build
+        return [];
+    }
 }
 
 export default async function ServiceDetailsPage({ params }: { params: Promise<{ id: string }> }) {

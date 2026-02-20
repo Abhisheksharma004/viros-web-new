@@ -7,7 +7,10 @@ async function getTestimonials() {
         );
         return rows;
     } catch (error) {
-        console.error('Error fetching testimonials:', error);
+        // Suppress errors during build when database is unavailable
+        if (process.env.NODE_ENV !== 'production' && error && typeof error === 'object' && 'code' in error && error.code !== 'ECONNREFUSED') {
+            console.error('Error fetching testimonials:', error);
+        }
         return [];
     }
 }

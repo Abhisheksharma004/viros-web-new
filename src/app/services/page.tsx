@@ -51,8 +51,11 @@ export default function ServicesPage() {
         
         const fetchData = async () => {
             try {
+                // Add timestamp to bypass all caching layers
+                const timestamp = new Date().getTime();
+                
                 // Fetch services with no cache
-                const servicesRes = await fetch('/api/services', {
+                const servicesRes = await fetch(`/api/services?_t=${timestamp}`, {
                     cache: 'no-store',
                     headers: {
                         'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -71,7 +74,7 @@ export default function ServicesPage() {
                 setServices(activeServices);
                 
                 // Fetch page content with no cache
-                const contentRes = await fetch('/api/services/content', {
+                const contentRes = await fetch(`/api/services/content?_t=${timestamp}`, {
                     cache: 'no-store',
                     headers: {
                         'Cache-Control': 'no-cache, no-store, must-revalidate',
