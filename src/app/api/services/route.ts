@@ -4,7 +4,13 @@ import pool from '@/lib/db';
 export async function GET() {
     try {
         const [rows]: any = await pool.query('SELECT * FROM services ORDER BY created_at DESC');
-        return NextResponse.json(rows);
+        return NextResponse.json(rows, {
+            headers: {
+                'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+            }
+        });
     } catch (error: any) {
         console.error('Error fetching services:', error);
         return NextResponse.json(

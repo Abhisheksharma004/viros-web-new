@@ -51,8 +51,14 @@ export default function ServicesPage() {
         
         const fetchData = async () => {
             try {
-                // Fetch services
-                const servicesRes = await fetch('/api/services');
+                // Fetch services with no cache
+                const servicesRes = await fetch('/api/services', {
+                    cache: 'no-store',
+                    headers: {
+                        'Cache-Control': 'no-cache, no-store, must-revalidate',
+                        'Pragma': 'no-cache'
+                    }
+                });
                 const servicesData = await servicesRes.json();
                 const activeServices = servicesData.filter((s: any) => s.status === 'Active').map((s: any) => ({
                     ...s,
@@ -64,8 +70,14 @@ export default function ServicesPage() {
                 }));
                 setServices(activeServices);
                 
-                // Fetch page content
-                const contentRes = await fetch('/api/services/content');
+                // Fetch page content with no cache
+                const contentRes = await fetch('/api/services/content', {
+                    cache: 'no-store',
+                    headers: {
+                        'Cache-Control': 'no-cache, no-store, must-revalidate',
+                        'Pragma': 'no-cache'
+                    }
+                });
                 if (contentRes.ok) {
                     const contentData = await contentRes.json();
                     setPageContent(contentData);

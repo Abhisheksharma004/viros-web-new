@@ -16,7 +16,13 @@ export async function GET() {
             content.process_steps = JSON.parse(content.process_steps);
         }
         
-        return NextResponse.json(content);
+        return NextResponse.json(content, {
+            headers: {
+                'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+            }
+        });
     } catch (error: any) {
         console.error('Error fetching services page content:', error);
         return NextResponse.json({ error: 'Failed to fetch content' }, { status: 500 });
