@@ -45,12 +45,18 @@ async function checkBirthdays() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
-            }
+            },
+            timeout: 30000 // 30 second timeout
         };
 
         // Add authorization if secret is configured
         if (config.cronSecret) {
             options.headers['Authorization'] = `Bearer ${config.cronSecret}`;
+        }
+
+        console.log(`🔗 Connecting to: ${url}`);
+        if (config.cronSecret) {
+            console.log('🔐 Using authorization token');
         }
 
         const req = clientLib.request(url, options, (res) => {
@@ -61,17 +67,35 @@ async function checkBirthdays() {
             });
 
             res.on('end', () => {
+                // Log response status and body for debugging
+                console.log(`📡 Response Status: ${res.statusCode}`);
+                
+                if (res.statusCode !== 200) {
+                    console.error(`❌ HTTP Error ${res.statusCode}:`);
+                    console.error(data.substring(0, 500)); // Log first 500 chars
+                    reject(new Error(`HTTP ${res.statusCode}: ${data.substring(0, 100)}`));
+                    return;
+                }
+                
                 try {
                     const result = JSON.parse(data);
                     resolve(result);
                 } catch (error) {
-                    reject(new Error('Failed to parse response'));
+                    console.error('❌ Invalid JSON response:');
+                    console.error(data.substring(0, 500)); // Log first 500 chars
+                    reject(new Error(`Failed to parse response: ${data.substring(0, 100)}`));
                 }
             });
         });
 
         req.on('error', (error) => {
+            console.error('❌ Request error:', error.message);
             reject(error);
+        });
+
+        req.on('timeout', () => {
+            req.destroy();
+            reject(new Error('Request timeout after 30 seconds'));
         });
 
         req.end();
@@ -128,15 +152,15 @@ console.log('\n✨ Birthday checker is now running!');
 console.log('Press Ctrl+C to stop\n');
 
 // Test run on startup (optional - uncomment if you want)
-// setTimeout(async () => {
-//     console.log('🧪 Running test check...\n');
-//     try {
-//         const result = await checkBirthdays();
-//         console.log('Test result:', result);
-//     } catch (error) {
-//         console.error('Test failed:', error.message);
-//     }
-// }, 2000);
+setTimeout(async () => {
+    console.log('🧪 Running test check...\n');
+    try {
+        const result = await checkBirthdays();
+        console.log('Test result:', result);
+    } catch (error) {
+        console.error('Test failed:', error.message);
+    }
+}, 2000);
 
 // Handle graceful shutdown
 process.on('SIGINT', () => {
