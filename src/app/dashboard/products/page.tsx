@@ -203,7 +203,7 @@ export default function ProductsPage() {
                 </div>
                 <button
                     onClick={openAddModal}
-                    className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-[#06124f] to-[#06b6d4] text-white font-semibold rounded-xl shadow-lg hover:shadow-cyan-500/25 transition-all duration-300 hover:-translate-y-0.5"
+                    className="inline-flex items-center px-6 py-3 bg-linear-to-r from-[#06124f] to-[#06b6d4] text-white font-semibold rounded-xl shadow-lg hover:shadow-cyan-500/25 transition-all duration-300 hover:-translate-y-0.5"
                 >
                     <Plus className="w-5 h-5 mr-2" />
                     Add New Product
@@ -227,9 +227,9 @@ export default function ProductsPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredProducts.map((product) => (
-                    <div key={product.id} className="group bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-1">
+                    <div key={product.id} className="group bg-white rounded-4xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-1">
                         <div className="relative h-48 bg-gray-50 overflow-hidden p-6">
-                            <div className={`absolute inset-0 bg-gradient-to-br ${product.theme_color} opacity-5 group-hover:opacity-10 transition-opacity`} />
+                            <div className={`absolute inset-0 bg-linear-to-br ${product.theme_color} opacity-5 group-hover:opacity-10 transition-opacity`} />
                             {product.media_type === 'video' && product.video_url ? (
                                 // YouTube Video
                                 (() => {
@@ -298,7 +298,7 @@ export default function ProductsPage() {
             </div>
 
             {showFormModal && (
-                <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-[100] p-4">
+                <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-100 p-4">
                     <div className="bg-white rounded-[2.5rem] shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-300">
                         <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-[#06124f]">
                             <div>
@@ -400,7 +400,7 @@ export default function ProductsPage() {
                                             <textarea
                                                 value={formData.description || ""}
                                                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                                className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all font-medium text-gray-800 placeholder:text-gray-400 min-h-[120px]"
+                                                className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all font-medium text-gray-800 placeholder:text-gray-400 min-h-30"
                                                 placeholder="Describe the product for the grid view..."
                                             />
                                         </div>
@@ -409,7 +409,7 @@ export default function ProductsPage() {
 
                                 {activeTab === 'visuals' && (
                                     <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
-                                        <div className="flex items-center justify-between p-6 bg-cyan-50 rounded-[2rem] border-2 border-dashed border-cyan-200">
+                                        <div className="flex items-center justify-between p-6 bg-cyan-50 rounded-4xl border-2 border-dashed border-cyan-200">
                                             <div className="flex items-center">
                                                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center mr-4 transition-all ${formData.is_featured ? 'bg-[#06b6d4] text-white' : 'bg-gray-200 text-gray-400'}`}>
                                                     <Star size={24} fill={formData.is_featured ? "white" : "none"} />
@@ -503,7 +503,7 @@ export default function ProductsPage() {
                                                         onChange={(e) => setFormData({ ...formData, theme_color: e.target.value })}
                                                         className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-cyan-500/10 outline-none font-bold text-gray-800 mb-4"
                                                     />
-                                                    <div className={`h-24 w-full rounded-[2rem] shadow-xl relative overflow-hidden bg-gradient-to-br ${formData.theme_color}`}>
+                                                    <div className={`h-24 w-full rounded-4xl shadow-xl relative overflow-hidden bg-linear-to-br ${formData.theme_color}`}>
                                                         {formData.image_url && (
                                                             <div className="absolute inset-0 flex items-center justify-center opacity-40">
                                                                 <img src={formData.image_url} alt="Preview" className="w-1/2 h-1/2 object-contain grayscale brightness-0 invert" />
@@ -515,7 +515,7 @@ export default function ProductsPage() {
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="bg-gray-50 rounded-[2rem] p-6 border border-gray-100 flex flex-col items-center justify-center min-h-[300px]">
+                                            <div className="bg-gray-50 rounded-4xl p-6 border border-gray-100 flex flex-col items-center justify-center min-h-75">
                                                 {formData.media_type === 'video' && formData.video_url ? (
                                                     // YouTube Video Preview
                                                     (() => {
@@ -546,7 +546,7 @@ export default function ProductsPage() {
                                                         );
                                                     })()
                                                 ) : formData.image_url ? (
-                                                    <img src={formData.image_url} alt="Preview" className="max-w-full max-h-[250px] object-contain drop-shadow-2xl" />
+                                                    <img src={formData.image_url} alt="Preview" className="max-w-full max-h-62.5 object-contain drop-shadow-2xl" />
                                                 ) : (
                                                     <div className="text-center text-gray-300">
                                                         <ImageIcon size={64} className="mx-auto mb-2 opacity-20" />
@@ -581,7 +581,7 @@ export default function ProductsPage() {
                                                             className="w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-cyan-200 outline-none font-bold text-sm text-gray-900 placeholder:text-gray-400"
                                                             placeholder="e.g. 600 DPI Resolution"
                                                         />
-                                                        <div className="absolute left-[-10px] top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-cyan-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                        <div className="absolute -left-2.5 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-cyan-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                                                     </div>
                                                     <button type="button" onClick={() => removeSpec(i)} className="p-3 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all">
                                                         <Trash2 size={18} />
@@ -589,7 +589,7 @@ export default function ProductsPage() {
                                                 </div>
                                             ))}
                                             {(formData.specs?.length || 0) === 0 && (
-                                                <div className="col-span-2 py-12 text-center bg-gray-50 rounded-[2rem] border-2 border-dashed border-gray-200">
+                                                <div className="col-span-2 py-12 text-center bg-gray-50 rounded-4xl border-2 border-dashed border-gray-200">
                                                     <Settings size={40} className="mx-auto mb-2 text-gray-300" />
                                                     <p className="text-gray-400 font-bold">No specifications added yet</p>
                                                 </div>
@@ -622,9 +622,9 @@ export default function ProductsPage() {
             )}
 
             {showDeleteModal && (
-                <div className="fixed inset-0 bg-[#06124f]/80 backdrop-blur-xl flex items-center justify-center z-[200] p-4">
+                <div className="fixed inset-0 bg-[#06124f]/80 backdrop-blur-xl flex items-center justify-center z-200 p-4">
                     <div className="bg-white rounded-[3rem] p-12 max-w-md w-full shadow-2xl text-center">
-                        <div className="w-24 h-24 bg-red-100 rounded-[2rem] flex items-center justify-center mx-auto mb-8 transform -rotate-6">
+                        <div className="w-24 h-24 bg-red-100 rounded-4xl flex items-center justify-center mx-auto mb-8 transform -rotate-6">
                             <Trash2 size={48} className="text-red-500" />
                         </div>
                         <h3 className="text-3xl font-black text-[#06124f] mb-4">Are you sure?</h3>
@@ -632,10 +632,10 @@ export default function ProductsPage() {
                             Deleting this product will remove it from the catalog and any active promotions. This action is permanent.
                         </p>
                         <div className="flex gap-4">
-                            <button onClick={() => setShowDeleteModal(false)} className="flex-1 py-5 text-gray-400 font-black uppercase tracking-widest text-xs hover:bg-gray-50 rounded-[2rem] transition-all">
+                            <button onClick={() => setShowDeleteModal(false)} className="flex-1 py-5 text-gray-400 font-black uppercase tracking-widest text-xs hover:bg-gray-50 rounded-4xl transition-all">
                                 No, Cancel
                             </button>
-                            <button onClick={confirmDelete} className="flex-1 py-5 bg-red-500 text-white font-black uppercase tracking-widest text-xs rounded-[2rem] shadow-xl shadow-red-500/20 hover:scale-105 transition-all">
+                            <button onClick={confirmDelete} className="flex-1 py-5 bg-red-500 text-white font-black uppercase tracking-widest text-xs rounded-4xl shadow-xl shadow-red-500/20 hover:scale-105 transition-all">
                                 Yes, Delete
                             </button>
                         </div>
