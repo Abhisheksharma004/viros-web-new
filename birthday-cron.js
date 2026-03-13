@@ -25,7 +25,7 @@ require('dotenv').config({ path: '.env.local' });
 // Configuration
 const config = {
     host: process.env.APP_HOST || 'localhost',
-    port: process.env.APP_PORT || '3000',
+    port: process.env.APP_PORT || '3002', // Updated default port
     protocol: process.env.APP_PROTOCOL || 'http',
     cronSecret: process.env.CRON_SECRET || '',
     // Cron schedule: "0 9 * * *" = Every day at 9:00 AM
