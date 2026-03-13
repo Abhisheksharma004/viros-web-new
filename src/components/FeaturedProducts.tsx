@@ -59,7 +59,7 @@ export default function FeaturedProducts() {
     }, []);
 
     // Shuffle array randomly using Fisher-Yates algorithm
-    const shuffleArray = <T,>(array: T[]): T[] => {
+    const shuffleArray = (array: Product[]): Product[] => {
         const shuffled = [...array];
         for (let i = shuffled.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
@@ -73,7 +73,7 @@ export default function FeaturedProducts() {
             const response = await fetch('/api/products');
             if (response.ok) {
                 const data = await response.json();
-                const parsedData = data.map((p: any) => ({
+                const parsedData: Product[] = data.map((p: any) => ({
                     ...p,
                     specs: typeof p.specs === 'string' ? JSON.parse(p.specs) : p.specs,
                     is_featured: Boolean(p.is_featured)
