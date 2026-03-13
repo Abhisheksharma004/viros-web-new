@@ -58,6 +58,16 @@ export default function FeaturedProducts() {
         };
     }, []);
 
+    // Shuffle array randomly using Fisher-Yates algorithm
+    const shuffleArray = <T,>(array: T[]): T[] => {
+        const shuffled = [...array];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        return shuffled;
+    };
+
     const fetchProducts = async () => {
         try {
             const response = await fetch('/api/products');
@@ -68,9 +78,10 @@ export default function FeaturedProducts() {
                     specs: typeof p.specs === 'string' ? JSON.parse(p.specs) : p.specs,
                     is_featured: Boolean(p.is_featured)
                 }));
-                // Filter featured products or take first 9 (3 rows of 3)
-                const featured = parsedData.filter((p: Product) => p.is_featured).slice(0, 9);
-                setProducts(featured.length > 0 ? featured : parsedData.slice(0, 9));
+                // Randomly shuffle and select exactly 8 products
+                const shuffled = shuffleArray(parsedData);
+                const selectedProducts = shuffled.slice(0, 8);
+                setProducts(selectedProducts);
             }
         } catch (error) {
             console.error('Error fetching products:', error);
@@ -89,19 +100,19 @@ export default function FeaturedProducts() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                 <div className="text-center mb-16">
                     <span className={`inline-block px-4 py-2 rounded-full bg-[#06b6d4]/10 text-[#06b6d4] text-sm font-bold mb-6 transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-                        PREMIUM SELECTION
+                        FEATURED SELECTION
                     </span>
                     <h2 className={`text-4xl md:text-5xl font-black text-[#06124f] mb-6 transition-all duration-700 delay-100 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
                         Featured Products
                     </h2>
                     <p className={`text-xl text-gray-600 max-w-2xl mx-auto transition-all duration-700 delay-200 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-                        
+                        Discover our premium barcode solutions • Refresh to see more products
                     </p>
                 </div>
 
                 {loading ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-16">
-                        {[1, 2, 3, 4, 5, 6].map((i) => (
+                        {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
                             <div key={i} className="bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-100 animate-pulse">
                                 <div className="h-60 bg-gray-100"></div>
                                 <div className="p-5 space-y-3">
