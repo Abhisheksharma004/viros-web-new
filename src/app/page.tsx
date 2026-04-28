@@ -6,6 +6,7 @@ import ClientSection from "@/components/ClientSection";
 import TestimonialSection from "@/components/TestimonialSection";
 import TrustedPartners from "../components/TrustedPartners";
 import FeedbackButton from "@/components/FeedbackButton";
+import WhatsNewPanel from "@/components/WhatsNewPanel";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -26,6 +27,10 @@ export default function Home() {
       
       {/* Feedback Button */}
       <FeedbackButton />
+
+
+      {/* What's New Side Panel */}
+      <WhatsNewPanel />
     </>
   );
 }
