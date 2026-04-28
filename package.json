@@ -18,13 +18,13 @@
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "cookie": "^1.1.1",
-    "exceljs": "^4.1.1",
+    "exceljs": "^4.4.0",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.562.0",
     "mysql2": "^3.11.0",
-    "next": "^16.1.6",
+    "next": "^16.2.4",
     "node-cron": "^4.2.1",
-    "nodemailer": "^7.0.12",
+    "nodemailer": "^8.0.7",
     "react": "19.2.3",
     "react-dom": "19.2.3"
   },
@@ -40,12 +40,11 @@
     "babel-plugin-react-compiler": "1.0.0",
     "dotenv": "^17.2.3",
     "eslint": "^10.0.0",
-    "eslint-config-next": "^0.2.4",
+    "eslint-config-next": "^16.2.4",
     "tailwindcss": "^4",
     "typescript": "^5"
   },
   "overrides": {
-    "ajv": "^8.18.0",
     "minimatch": "^10.0.1",
     "glob": "^11.0.0"
   }
