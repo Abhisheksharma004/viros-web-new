@@ -13,20 +13,31 @@ export default function LayoutWrapper({
   const pathname = usePathname();
 
   // Hide navbar and footer on login and dashboard pages
-  const hideNavAndFooter = pathname === "/login" || pathname?.startsWith("/dashboard");
+  const hideNavAndFooter =
+    pathname === "/login" ||
+    pathname?.startsWith("/dashboard") ||
+    pathname?.startsWith("/admin-dashboard") ||
+    pathname?.startsWith("/employee-dashboard");
+
+  // Hide navbar and footer only on mobile for admin-login
+  const mobileHideNavAndFooter = pathname === "/admin-login";
 
   return (
     <>
       {!hideNavAndFooter && (
-        <>
+        <div className={mobileHideNavAndFooter ? "hidden lg:block" : ""}>
           <StructuredData />
           <Navbar />
-        </>
+        </div>
       )}
-      <main className={hideNavAndFooter ? "" : "pt-20"}>
+      <main className={hideNavAndFooter ? "" : mobileHideNavAndFooter ? "lg:pt-20" : "pt-20"}>
         {children}
       </main>
-      {!hideNavAndFooter && <Footer />}
+      {!hideNavAndFooter && (
+        <div className={mobileHideNavAndFooter ? "hidden lg:block" : ""}>
+          <Footer />
+        </div>
+      )}
     </>
   );
 }

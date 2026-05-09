@@ -96,6 +96,13 @@ export default function Navbar() {
                             <NavLink href="/certificates">Certificates</NavLink>
                             <NavLink href="/warranty">Warranty</NavLink>
                             <NavLink href="/contact">Contact</NavLink>
+                            <Link
+                                href="/admin-login"
+                                className="ml-2 px-4 py-2 rounded-lg text-sm font-semibold text-white transition-all duration-200 hover:opacity-90 active:scale-95"
+                                style={{ background: "linear-gradient(135deg, #06124f, #0a2a5e)", boxShadow: "0 2px 8px rgba(10,42,94,0.3)" }}
+                            >
+                                Login
+                            </Link>
                         </div>
                     </div>
 
@@ -159,6 +166,16 @@ export default function Navbar() {
                         <MobileNavLink href="/certificates" onClick={() => setIsOpen(false)}>Certificates</MobileNavLink>
                         <MobileNavLink href="/warranty" onClick={() => setIsOpen(false)}>Warranty</MobileNavLink>
                         <MobileNavLink href="/contact" onClick={() => setIsOpen(false)}>Contact</MobileNavLink>
+                        <div className="px-2 pt-1 pb-3">
+                            <Link
+                                href="/admin-login"
+                                onClick={() => setIsOpen(false)}
+                                className="flex items-center justify-center w-full px-4 py-2.5 rounded-lg text-sm font-semibold text-white transition-all duration-200 hover:opacity-90"
+                                style={{ background: "linear-gradient(135deg, #06124f, #0a2a5e)" }}
+                            >
+                                Login
+                            </Link>
+                        </div>
                     </div>
                 </div>
             )}
