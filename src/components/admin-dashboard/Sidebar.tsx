@@ -7,7 +7,7 @@ import { useState } from "react";
 
 const menuItems = [
     {
-        title: "Overview",
+        title: "Dashboard",
         icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -70,24 +70,6 @@ const menuItems = [
                 href: "/admin-dashboard/employees",
             },
             {
-                title: "Add Employee",
-                icon: (
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                    </svg>
-                ),
-                href: "/admin-dashboard/employees/add",
-            },
-            {
-                title: "Departments",
-                icon: (
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                    </svg>
-                ),
-                href: "/admin-dashboard/employees/departments",
-            },
-            {
                 title: "Attendance",
                 icon: (
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -104,6 +86,35 @@ const menuItems = [
                     </svg>
                 ),
                 href: "/admin-dashboard/employees/birthdays",
+            },
+        ],
+    },
+    {
+        title: "Department",
+        icon: (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
+        ),
+        subItems: [
+            {
+                title: "Department",
+                icon: (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                ),
+                href: "/admin-dashboard/department",
+            },
+            {
+                title: "Rols",
+                icon: (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33h.09A1.65 1.65 0 0010 3.09V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51h.09a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v.09a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
+                    </svg>
+                ),
+                href: "/admin-dashboard/users/roles",
             },
         ],
     },
@@ -209,137 +220,123 @@ export default function AdminSidebar({
         );
     };
 
-    const SidebarContent = () => (
-        <div className="flex flex-col h-full">
-            {/* Logo */}
-            <div className="flex items-center gap-3 px-6 py-5 border-b border-white/10">
-                <div className="bg-white rounded-xl p-1.5 shadow">
-                    <Image src="/logo.png" alt="Viros" width={32} height={32} className="object-contain" />
-                </div>
-                <div>
-                    <p className="text-white font-black text-base tracking-wide">VIROS</p>
-                    <p className="text-white/40 text-[10px] tracking-widest uppercase">Admin Panel</p>
-                </div>
-            </div>
-
-            {/* Menu */}
-            <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
-                {menuItems.map((item) => {
-                    const isActive = item.href
-                        ? pathname === item.href
-                        : item.subItems?.some((s) => pathname?.startsWith(s.href));
-
-                    if (!item.subItems) {
-                        return (
-                            <Link
-                                key={item.title}
-                                href={item.href!}
-                                onClick={onClose}
-                                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 ${
-                                    isActive
-                                        ? "bg-white/15 text-white"
-                                        : "text-white/60 hover:text-white hover:bg-white/10"
-                                }`}
-                            >
-                                {item.icon}
-                                {item.title}
-                                {item.title === "Website Dashboard" && (
-                                    <svg className="w-3 h-3 ml-auto opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                    </svg>
-                                )}
-                            </Link>
-                        );
-                    }
-
-                    const isOpen = openSections.includes(item.title);
-
-                    return (
-                        <div key={item.title}>
-                            <button
-                                onClick={() => toggleSection(item.title)}
-                                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 ${
-                                    isActive
-                                        ? "bg-white/15 text-white"
-                                        : "text-white/60 hover:text-white hover:bg-white/10"
-                                }`}
-                            >
-                                {item.icon}
-                                <span className="flex-1 text-left">{item.title}</span>
-                                <svg
-                                    className={`w-4 h-4 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                </svg>
-                            </button>
-
-                            {isOpen && (
-                                <div className="mt-1 ml-4 pl-3 border-l border-white/10 space-y-0.5">
-                                    {item.subItems.map((sub) => {
-                                        const subActive = pathname === sub.href || pathname?.startsWith(sub.href + "/");
-                                        return (
-                                            <Link
-                                                key={sub.href}
-                                                href={sub.href}
-                                                onClick={onClose}
-                                                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all duration-150 ${
-                                                    subActive
-                                                        ? "bg-[#00bcd4]/20 text-[#00e5ff] font-semibold"
-                                                        : "text-white/50 hover:text-white hover:bg-white/10"
-                                                }`}
-                                            >
-                                                {sub.icon}
-                                                {sub.title}
-                                            </Link>
-                                        );
-                                    })}
-                                </div>
-                            )}
-                        </div>
-                    );
-                })}
-            </nav>
-
-            {/* Bottom user info */}
-            <div className="px-4 py-4 border-t border-white/10">
-                <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-[#00bcd4] flex items-center justify-center text-white text-sm font-bold shrink-0">
-                        A
-                    </div>
-                    <div className="flex-1 min-w-0">
-                        <p className="text-white text-sm font-semibold truncate">Administrator</p>
-                        <p className="text-white/40 text-xs truncate">Super Admin</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-
     return (
         <>
-            {/* Desktop Sidebar */}
-            <aside
-                className="hidden lg:flex w-64 flex-col shrink-0 h-screen sticky top-0"
-                style={{ background: "linear-gradient(180deg, #06124f 0%, #0a2a5e 100%)" }}
-            >
-                <SidebarContent />
-            </aside>
-
             {/* Mobile Overlay */}
             {isOpen && (
-                <div className="fixed inset-0 z-40 lg:hidden">
-                    <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-                    <aside
-                        className="absolute left-0 top-0 h-full w-64 flex flex-col"
-                        style={{ background: "linear-gradient(180deg, #06124f 0%, #0a2a5e 100%)" }}
-                    >
-                        <SidebarContent />
-                    </aside>
+                <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={onClose}>
                 </div>
             )}
+
+            <aside
+                className={`
+                    fixed top-0 left-0 z-50 h-screen w-64 bg-[#06124f] text-white
+                    transform transition-transform duration-300 ease-in-out
+                    lg:translate-x-0 lg:static lg:z-auto
+                    ${isOpen ? "translate-x-0" : "-translate-x-full"}
+                `}
+            >
+                <div className="flex items-center justify-between p-6 border-b border-white/10">
+                    <Link href="/admin-dashboard" className="flex items-center space-x-3">
+                        <Image
+                            src="/logo.png"
+                            alt="VIROS Logo"
+                            width={40}
+                            height={40}
+                            className="object-contain bg-white p-1 rounded-md"
+                        />
+                        <span className="font-bold text-lg">Viros Admin</span>
+                    </Link>
+                    <button onClick={onClose} className="lg:hidden text-white/60 hover:text-white">
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <nav className="p-4 space-y-1 overflow-y-auto h-[calc(100vh-80px)]">
+                    {menuItems.map((item) => {
+                        const isItemActive = item.href
+                            ? pathname === item.href
+                            : item.subItems?.some((s) => pathname?.startsWith(s.href));
+
+                        if (!item.subItems) {
+                            return (
+                                <Link
+                                    key={item.title}
+                                    href={item.href!}
+                                    onClick={onClose}
+                                    className={`
+                                        flex items-center space-x-3 px-4 py-3 rounded-lg
+                                        transition-all duration-200
+                                        ${isItemActive
+                                            ? "bg-[#06b6d4] text-white shadow-lg"
+                                            : "text-white/70 hover:bg-white/10 hover:text-white"}
+                                    `}
+                                >
+                                    {item.icon}
+                                    <span className="font-medium">{item.title}</span>
+                                </Link>
+                            );
+                        }
+
+                        const sectionOpen = openSections.includes(item.title);
+
+                        return (
+                            <div key={item.title}>
+                                <button
+                                    onClick={() => toggleSection(item.title)}
+                                    className={`
+                                        w-full flex items-center justify-between px-4 py-3 rounded-lg
+                                        transition-all duration-200
+                                        ${isItemActive
+                                            ? "bg-[#06b6d4] text-white shadow-lg"
+                                            : "text-white/70 hover:bg-white/10 hover:text-white"}
+                                    `}
+                                >
+                                    <div className="flex items-center space-x-3">
+                                        {item.icon}
+                                        <span className="font-medium">{item.title}</span>
+                                    </div>
+                                    <svg
+                                        className={`w-4 h-4 transition-transform duration-200 ${sectionOpen ? "rotate-180" : ""}`}
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+
+                                {sectionOpen && (
+                                    <div className="ml-4 mt-1 space-y-1">
+                                        {item.subItems.map((sub) => {
+                                            const subActive = pathname === sub.href || pathname?.startsWith(sub.href + "/");
+                                            return (
+                                                <Link
+                                                    key={sub.href}
+                                                    href={sub.href}
+                                                    onClick={onClose}
+                                                    className={`
+                                                        flex items-center space-x-3 px-4 py-2 rounded-lg
+                                                        transition-all duration-200
+                                                        ${subActive
+                                                            ? "bg-[#06b6d4] text-white shadow-lg"
+                                                            : "text-white/60 hover:bg-white/10 hover:text-white"}
+                                                    `}
+                                                >
+                                                    {sub.icon}
+                                                    <span className="text-sm">{sub.title}</span>
+                                                </Link>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+                </nav>
+            </aside>
         </>
     );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -13,6 +13,50 @@ export default function LoginPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        let active = true;
+
+        const redirectIfAuthenticated = async () => {
+            try {
+                const response = await fetch("/api/auth/me", {
+                    method: "GET",
+                    cache: "no-store",
+                });
+
+                if (!active || !response.ok) {
+                    return;
+                }
+
+                router.replace("/dashboard");
+                router.refresh();
+            } catch {
+                // User is not authenticated or network failed; keep login page.
+            }
+        };
+
+        const handlePageShow = (event: PageTransitionEvent) => {
+            if (event.persisted) {
+                redirectIfAuthenticated();
+            }
+        };
+
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === "visible") {
+                redirectIfAuthenticated();
+            }
+        };
+
+        redirectIfAuthenticated();
+        window.addEventListener("pageshow", handlePageShow);
+        document.addEventListener("visibilitychange", handleVisibilityChange);
+
+        return () => {
+            active = false;
+            window.removeEventListener("pageshow", handlePageShow);
+            document.removeEventListener("visibilitychange", handleVisibilityChange);
+        };
+    }, [router]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

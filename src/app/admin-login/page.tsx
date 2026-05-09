@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 const ACCENT = "#0a2a5e";
 const GRADIENT = "linear-gradient(135deg, #06124f, #0a2a5e)";
@@ -16,11 +17,92 @@ const FEATURES = [
 ];
 
 export default function AdminLoginPage() {
+    const router = useRouter();
     const [showPassword, setShowPassword] = useState(false);
     const [formValues, setFormValues] = useState({ email: "", password: "" });
+    const [rememberMe, setRememberMe] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        let active = true;
+
+        const redirectIfAuthenticated = async () => {
+            try {
+                const response = await fetch("/api/auth/me", {
+                    method: "GET",
+                    cache: "no-store",
+                });
+
+                if (!active || !response.ok) {
+                    return;
+                }
+
+                router.replace("/admin-dashboard");
+                router.refresh();
+            } catch {
+                // User is not authenticated or network failed; keep login page.
+            }
+        };
+
+        const handlePageShow = (event: PageTransitionEvent) => {
+            if (event.persisted) {
+                redirectIfAuthenticated();
+            }
+        };
+
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === "visible") {
+                redirectIfAuthenticated();
+            }
+        };
+
+        redirectIfAuthenticated();
+        window.addEventListener("pageshow", handlePageShow);
+        document.addEventListener("visibilitychange", handleVisibilityChange);
+
+        return () => {
+            active = false;
+            window.removeEventListener("pageshow", handlePageShow);
+            document.removeEventListener("visibilitychange", handleVisibilityChange);
+        };
+    }, [router]);
 
     const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormValues((prev) => ({ ...prev, [e.target.id]: e.target.value }));
+    };
+
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        setError(null);
+        setIsLoading(true);
+
+        try {
+            const response = await fetch("/api/login", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    email: formValues.email.trim(),
+                    password: formValues.password,
+                    rememberMe,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || "Invalid credentials");
+            }
+
+            router.push("/admin-dashboard");
+        } catch (err) {
+            const message = err instanceof Error ? err.message : "Login failed";
+            setError(message);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -150,7 +232,12 @@ export default function AdminLoginPage() {
                     </div>
 
                     {/* Form */}
-                    <form className="flex flex-col gap-4">
+                    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                        {error && (
+                            <div className="p-3 rounded-xl text-sm font-medium bg-red-50 text-red-700 border border-red-200">
+                                {error}
+                            </div>
+                        )}
 
                         {/* Email */}
                         <div>
@@ -209,7 +296,13 @@ export default function AdminLoginPage() {
                         {/* Remember + Forgot */}
                         <div className="flex items-center justify-between py-1">
                             <label className="flex items-center gap-2.5 cursor-pointer select-none">
-                                <input type="checkbox" className="w-4 h-4 rounded" style={{ accentColor: ACCENT }} />
+                                <input
+                                    type="checkbox"
+                                    className="w-4 h-4 rounded"
+                                    style={{ accentColor: ACCENT }}
+                                    checked={rememberMe}
+                                    onChange={(e) => setRememberMe(e.target.checked)}
+                                />
                                 <span className="text-sm text-gray-600">Remember me</span>
                             </label>
                             <Link href="/forgot-password" className="text-sm font-bold transition-colors" style={{ color: ACCENT }}>
@@ -220,10 +313,11 @@ export default function AdminLoginPage() {
                         {/* Submit */}
                         <button
                             type="submit"
+                            disabled={isLoading}
                             className="w-full font-bold text-sm text-white tracking-wide rounded-2xl transition-all duration-200 active:scale-[0.97] hover:opacity-90"
                             style={{ height: "54px", background: GRADIENT, boxShadow: `0 6px 20px ${SHADOW}` }}
                         >
-                            Sign In
+                            {isLoading ? "Signing In..." : "Sign In"}
                         </button>
 
                     </form>

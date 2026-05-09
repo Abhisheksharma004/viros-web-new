@@ -10,12 +10,16 @@ export default function Header({ onMenuClick }: { onMenuClick: () => void }) {
 
     const handleLogout = async () => {
         try {
-            await fetch("/api/logout", { method: "POST" });
-            router.push("/login");
+            const response = await fetch("/api/logout", { method: "POST" });
+            if (!response.ok) {
+                throw new Error("Logout failed");
+            }
         } catch (error) {
             console.error("Logout failed:", error);
-            // Fallback to client-side redirect
-            router.push("/login");
+        } finally {
+            setShowProfileMenu(false);
+            router.replace("/login");
+            router.refresh();
         }
     };
 
