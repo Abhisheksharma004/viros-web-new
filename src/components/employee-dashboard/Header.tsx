@@ -68,12 +68,12 @@ export default function EmployeeHeader({ onMenuClick }: { onMenuClick: () => voi
                                 <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-100 z-20 overflow-hidden">
                                     <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
                                         <p className="text-sm font-bold text-gray-900">Notifications</p>
-                                        <span className="text-xs text-emerald-700 font-semibold cursor-pointer hover:underline">Mark all read</span>
+                                        <span className="text-xs text-[#0a2a5e] font-semibold cursor-pointer hover:underline">Mark all read</span>
                                     </div>
                                     <div className="divide-y divide-gray-50">
                                         {notifications.map((n, i) => (
-                                            <div key={i} className={`px-4 py-3 flex items-start gap-3 ${n.unread ? "bg-emerald-50/50" : ""}`}>
-                                                <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${n.unread ? "bg-emerald-600" : "bg-gray-300"}`} />
+                                            <div key={i} className={`px-4 py-3 flex items-start gap-3 ${n.unread ? "bg-blue-50/50" : ""}`}>
+                                                <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${n.unread ? "bg-[#0a2a5e]" : "bg-gray-300"}`} />
                                                 <div className="flex-1 min-w-0">
                                                     <p className="text-sm text-gray-800">{n.text}</p>
                                                     <p className="text-xs text-gray-400 mt-0.5">{n.time}</p>
@@ -94,7 +94,7 @@ export default function EmployeeHeader({ onMenuClick }: { onMenuClick: () => voi
                         >
                             <div
                                 className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold"
-                                style={{ background: "linear-gradient(135deg, #0d4f3c, #0a7c5c)" }}
+                                style={{ background: "linear-gradient(135deg, #06124f, #0a2a5e)" }}
                             >
                                 E
                             </div>
@@ -131,16 +131,6 @@ export default function EmployeeHeader({ onMenuClick }: { onMenuClick: () => voi
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                         </svg>
                                         Attendance
-                                    </Link>
-                                    <Link
-                                        href="/admin-dashboard"
-                                        onClick={() => setShowProfileMenu(false)}
-                                        className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
-                                    >
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                        </svg>
-                                        Admin Panel
                                     </Link>
                                     <div className="border-t border-gray-100 mt-1 pt-1">
                                         <button

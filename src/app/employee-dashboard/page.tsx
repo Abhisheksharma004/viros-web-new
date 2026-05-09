@@ -137,7 +137,7 @@ export default function EmployeeDashboardPage() {
                 <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                     <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
                         <h2 className="text-base font-bold text-gray-900">My Tasks</h2>
-                        <Link href="/employee-dashboard/tasks" className="text-xs font-semibold text-emerald-700 hover:underline">
+                        <Link href="/employee-dashboard/tasks" className="text-xs font-semibold text-[#0a2a5e] hover:underline">
                             View all →
                         </Link>
                     </div>
@@ -167,7 +167,7 @@ export default function EmployeeDashboardPage() {
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                     <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
                         <h2 className="text-base font-bold text-gray-900">This Month</h2>
-                        <Link href="/employee-dashboard/attendance" className="text-xs font-semibold text-emerald-700 hover:underline">
+                        <Link href="/employee-dashboard/attendance" className="text-xs font-semibold text-[#0a2a5e] hover:underline">
                             View →
                         </Link>
                     </div>
@@ -209,10 +209,10 @@ export default function EmployeeDashboardPage() {
                             <Link
                                 key={action.title}
                                 href={action.href}
-                                className="flex flex-col items-center justify-center p-3 border-2 border-gray-100 rounded-xl hover:border-emerald-300 hover:bg-emerald-50/50 transition-all duration-200 group text-center gap-1.5"
+                                className="flex flex-col items-center justify-center p-3 border-2 border-gray-100 rounded-xl hover:border-[#0a2a5e]/30 hover:bg-[#0a2a5e]/5 transition-all duration-200 group text-center gap-1.5"
                             >
                                 <span className="text-2xl">{action.icon}</span>
-                                <span className="text-xs font-semibold text-gray-600 group-hover:text-emerald-700 leading-tight">{action.title}</span>
+                                <span className="text-xs font-semibold text-gray-600 group-hover:text-[#0a2a5e] leading-tight">{action.title}</span>
                             </Link>
                         ))}
                     </div>
@@ -222,7 +222,7 @@ export default function EmployeeDashboardPage() {
                 <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                     <div className="flex items-center justify-between mb-4">
                         <h2 className="text-base font-bold text-gray-900">Announcements</h2>
-                        <Link href="/employee-dashboard/announcements" className="text-xs font-semibold text-emerald-700 hover:underline">
+                        <Link href="/employee-dashboard/announcements" className="text-xs font-semibold text-[#0a2a5e] hover:underline">
                             All →
                         </Link>
                     </div>
@@ -269,7 +269,7 @@ export default function EmployeeDashboardPage() {
             {/* Status Banner */}
             <div
                 className="rounded-2xl p-5 text-white shadow"
-                style={{ background: "linear-gradient(135deg, #0d4f3c 0%, #0a7c5c 60%, #0d9b6e 100%)" }}
+                style={{ background: "linear-gradient(135deg, #06124f 0%, #0a2a5e 60%, #0d3a7a 100%)" }}
             >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>

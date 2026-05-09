@@ -201,17 +201,12 @@ export default function AdminSidebar({
     onClose: () => void;
 }) {
     const pathname = usePathname();
-    const [openSection, setOpenSection] = useState<string | null>(() => {
-        const active = menuItems.find(
-            (item) =>
-                item.subItems &&
-                item.subItems.some((sub) => pathname?.startsWith(sub.href))
-        );
-        return active ? active.title : "Employees";
-    });
+    const [openSections, setOpenSections] = useState<string[]>([]);
 
     const toggleSection = (title: string) => {
-        setOpenSection((prev) => (prev === title ? null : title));
+        setOpenSections((prev) =>
+            prev.includes(title) ? prev.filter((t) => t !== title) : [...prev, title]
+        );
     };
 
     const SidebarContent = () => (
@@ -257,7 +252,7 @@ export default function AdminSidebar({
                         );
                     }
 
-                    const isOpen = openSection === item.title;
+                    const isOpen = openSections.includes(item.title);
 
                     return (
                         <div key={item.title}>

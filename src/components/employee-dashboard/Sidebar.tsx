@@ -145,16 +145,6 @@ const menuItems = [
         ),
         href: "/employee-dashboard/announcements",
     },
-    {
-        title: "Admin Panel",
-        icon: (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-            </svg>
-        ),
-        href: "/admin-dashboard",
-        external: true,
-    },
 ];
 
 export default function EmployeeSidebar({
@@ -165,7 +155,7 @@ export default function EmployeeSidebar({
     onClose: () => void;
 }) {
     const pathname = usePathname();
-    const [openSections, setOpenSections] = useState<string[]>(["My Profile"]);
+    const [openSections, setOpenSections] = useState<string[]>([]);
 
     const toggleSection = (title: string) => {
         setOpenSections((prev) =>
@@ -178,15 +168,15 @@ export default function EmployeeSidebar({
         subItems?.some((s) => pathname === s.href);
 
     const SidebarContent = () => (
-        <div className="flex flex-col h-full" style={{ background: "linear-gradient(180deg, #0d4f3c 0%, #0a7c5c 50%, #0d9b6e 100%)" }}>
+        <div className="flex flex-col h-full" style={{ background: "linear-gradient(180deg, #06124f 0%, #0a2a5e 100%)" }}>
             {/* Logo */}
-            <div className="flex items-center gap-3 px-5 py-5 border-b border-white/10">
-                <div className="relative w-9 h-9 shrink-0">
-                    <Image src="/logo.png" alt="VIROS" fill className="object-contain" />
+            <div className="flex items-center gap-3 px-6 py-5 border-b border-white/10">
+                <div className="bg-white rounded-xl p-1.5 shadow">
+                    <Image src="/logo.png" alt="Viros" width={32} height={32} className="object-contain" />
                 </div>
                 <div>
-                    <p className="text-white font-black text-base tracking-wide leading-none">VIROS</p>
-                    <p className="text-white/50 text-[10px] font-medium tracking-wider uppercase mt-0.5">Employee Portal</p>
+                    <p className="text-white font-black text-base tracking-wide">VIROS</p>
+                    <p className="text-white/40 text-[10px] tracking-widest uppercase">Employee Portal</p>
                 </div>
             </div>
 
@@ -248,10 +238,10 @@ export default function EmployeeSidebar({
                                             key={sub.title}
                                             href={sub.href}
                                             onClick={onClose}
-                                            className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all duration-200 ${
+                                            className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all duration-150 ${
                                                 isActive(sub.href)
-                                                    ? "bg-white/15 text-[#6ee7b7] font-semibold"
-                                                    : "text-white/60 hover:text-white hover:bg-white/10 font-medium"
+                                                    ? "bg-[#00bcd4]/20 text-[#00e5ff] font-semibold"
+                                                    : "text-white/50 hover:text-white hover:bg-white/10"
                                             }`}
                                         >
                                             {sub.icon}
@@ -265,12 +255,10 @@ export default function EmployeeSidebar({
                 })}
             </nav>
 
-            {/* User strip */}
+            {/* Bottom user info */}
             <div className="px-4 py-4 border-t border-white/10">
                 <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0"
-                        style={{ background: "rgba(110,231,183,0.25)", border: "1.5px solid rgba(110,231,183,0.5)" }}
-                    >
+                    <div className="w-8 h-8 rounded-full bg-[#00bcd4] flex items-center justify-center text-white text-sm font-bold shrink-0">
                         E
                     </div>
                     <div className="min-w-0">
