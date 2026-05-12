@@ -1,6 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+
+type DepartmentApiRow = {
+    id: number;
+    name: string;
+};
+
+type RoleApiRow = {
+    id: number;
+    department: string;
+    name: string;
+    status: string;
+};
 
 const employeeStats = [
     { label: "Total Employees", value: "48", tone: "text-[#0a2a5e]" },
@@ -20,20 +32,75 @@ const employees = [
 
 export default function AdminEmployeesPage() {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [departments, setDepartments] = useState<DepartmentApiRow[]>([]);
+    const [roles, setRoles] = useState<RoleApiRow[]>([]);
+    const [isMetaLoading, setIsMetaLoading] = useState(true);
     const [formValues, setFormValues] = useState({
         fullName: "",
         employeeId: "",
-        role: "",
         department: "",
+        role: "",
         email: "",
+        phone: "",
+        dateOfBirth: "",
+        gender: "",
+        address: "",
+        emergencyContactName: "",
+        emergencyContactPhone: "",
+        highestQualification: "",
+        institute: "",
+        graduationYear: "",
+        joiningDate: "",
+        employmentType: "Full-time",
+        workLocation: "Office",
         status: "Active",
+        notes: "",
     });
 
     const handleInputChange = (
-        e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+        e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
     ) => {
-        setFormValues((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+        const { name, value } = e.target;
+        setFormValues((prev) => {
+            const next = { ...prev, [name]: value };
+            if (name === "department") {
+                next.role = "";
+            }
+            return next;
+        });
     };
+
+    useEffect(() => {
+        const loadMeta = async () => {
+            try {
+                const [deptRes, roleRes] = await Promise.all([
+                    fetch("/api/admin/departments", { cache: "no-store" }),
+                    fetch("/api/admin/roles", { cache: "no-store" }),
+                ]);
+
+                if (deptRes.ok) {
+                    const deptRows: DepartmentApiRow[] = await deptRes.json();
+                    setDepartments(deptRows);
+                }
+
+                if (roleRes.ok) {
+                    const roleRows: RoleApiRow[] = await roleRes.json();
+                    setRoles(roleRows.filter((r) => r.status === "Active" || r.status === "Growing" || r.status === "Planned"));
+                }
+            } catch (error) {
+                console.error("Failed to load departments/roles:", error);
+            } finally {
+                setIsMetaLoading(false);
+            }
+        };
+
+        loadMeta();
+    }, []);
+
+    const filteredRoles = useMemo(() => {
+        if (!formValues.department) return roles;
+        return roles.filter((r) => r.department === formValues.department);
+    }, [roles, formValues.department]);
 
     const handleAddEmployee = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -44,7 +111,20 @@ export default function AdminEmployeesPage() {
             role: "",
             department: "",
             email: "",
+            phone: "",
+            dateOfBirth: "",
+            gender: "",
+            address: "",
+            emergencyContactName: "",
+            emergencyContactPhone: "",
+            highestQualification: "",
+            institute: "",
+            graduationYear: "",
+            joiningDate: "",
+            employmentType: "Full-time",
+            workLocation: "Office",
             status: "Active",
+            notes: "",
         });
     };
 
@@ -130,7 +210,7 @@ export default function AdminEmployeesPage() {
                         className="absolute inset-0 bg-black/50"
                         onClick={() => setIsAddModalOpen(false)}
                     />
-                    <div className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
+                    <div className="relative w-full max-w-3xl max-h-[90vh] bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden flex flex-col">
                         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
                             <div>
                                 <h3 className="text-lg font-bold text-gray-900">Add Employee</h3>
@@ -147,7 +227,7 @@ export default function AdminEmployeesPage() {
                             </button>
                         </div>
 
-                        <form onSubmit={handleAddEmployee} className="p-6">
+                        <form onSubmit={handleAddEmployee} className="p-6 overflow-y-auto">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="sm:col-span-2">
                                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">Full Name</label>
@@ -175,26 +255,48 @@ export default function AdminEmployeesPage() {
 
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">Department</label>
-                                    <input
+                                    <select
                                         name="department"
                                         value={formValues.department}
                                         onChange={handleInputChange}
                                         required
-                                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e]"
-                                        placeholder="Sales / HR / IT"
-                                    />
+                                        disabled={isMetaLoading}
+                                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e]"
+                                    >
+                                        <option value="">
+                                            {isMetaLoading ? "Loading departments..." : "Select department"}
+                                        </option>
+                                        {departments.map((d) => (
+                                            <option key={d.id} value={d.name}>
+                                                {d.name}
+                                            </option>
+                                        ))}
+                                    </select>
                                 </div>
 
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">Role</label>
-                                    <input
+                                    <select
                                         name="role"
                                         value={formValues.role}
                                         onChange={handleInputChange}
                                         required
-                                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e]"
-                                        placeholder="Job title"
-                                    />
+                                        disabled={isMetaLoading || !formValues.department}
+                                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e] disabled:opacity-60"
+                                    >
+                                        <option value="">
+                                            {!formValues.department
+                                                ? "Select department first"
+                                                : isMetaLoading
+                                                ? "Loading roles..."
+                                                : "Select role"}
+                                        </option>
+                                        {filteredRoles.map((r) => (
+                                            <option key={r.id} value={r.name}>
+                                                {r.name}
+                                            </option>
+                                        ))}
+                                    </select>
                                 </div>
 
                                 <div>
@@ -210,18 +312,192 @@ export default function AdminEmployeesPage() {
                                     />
                                 </div>
 
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Phone</label>
+                                    <input
+                                        name="phone"
+                                        value={formValues.phone}
+                                        onChange={handleInputChange}
+                                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e]"
+                                        placeholder="+91 98xxxxxx12"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Date of birth</label>
+                                    <input
+                                        name="dateOfBirth"
+                                        type="date"
+                                        value={formValues.dateOfBirth}
+                                        onChange={handleInputChange}
+                                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e]"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Gender</label>
+                                    <select
+                                        name="gender"
+                                        value={formValues.gender}
+                                        onChange={handleInputChange}
+                                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e]"
+                                    >
+                                        <option value="">Select</option>
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
+                                        <option value="Other">Other</option>
+                                        <option value="Prefer not to say">Prefer not to say</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Joining date</label>
+                                    <input
+                                        name="joiningDate"
+                                        type="date"
+                                        value={formValues.joiningDate}
+                                        onChange={handleInputChange}
+                                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e]"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Employment type</label>
+                                    <select
+                                        name="employmentType"
+                                        value={formValues.employmentType}
+                                        onChange={handleInputChange}
+                                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e]"
+                                    >
+                                        <option value="Full-time">Full-time</option>
+                                        <option value="Part-time">Part-time</option>
+                                        <option value="Contract">Contract</option>
+                                        <option value="Intern">Intern</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Work location</label>
+                                    <select
+                                        name="workLocation"
+                                        value={formValues.workLocation}
+                                        onChange={handleInputChange}
+                                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e]"
+                                    >
+                                        <option value="Office">Office</option>
+                                        <option value="Remote">Remote</option>
+                                        <option value="Hybrid">Hybrid</option>
+                                    </select>
+                                </div>
+
+                                <div className="sm:col-span-2">
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                                        Address <span className="font-normal text-gray-400">(optional)</span>
+                                    </label>
+                                    <textarea
+                                        name="address"
+                                        value={formValues.address}
+                                        onChange={handleInputChange}
+                                        rows={2}
+                                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e] resize-none"
+                                        placeholder="Current address"
+                                    />
+                                </div>
+
+                                <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                                            Emergency contact name <span className="font-normal text-gray-400">(optional)</span>
+                                        </label>
+                                        <input
+                                            name="emergencyContactName"
+                                            value={formValues.emergencyContactName}
+                                            onChange={handleInputChange}
+                                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e]"
+                                            placeholder="Contact person"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                                            Emergency contact phone <span className="font-normal text-gray-400">(optional)</span>
+                                        </label>
+                                        <input
+                                            name="emergencyContactPhone"
+                                            value={formValues.emergencyContactPhone}
+                                            onChange={handleInputChange}
+                                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e]"
+                                            placeholder="+91 9xxxxxxxxx"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="sm:col-span-2">
+                                    <div className="flex items-center justify-between">
+                                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Education details</label>
+                                        <span className="text-xs text-gray-400">Optional</span>
+                                    </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-semibold text-gray-500 mb-1.5">Highest qualification</label>
+                                            <input
+                                                name="highestQualification"
+                                                value={formValues.highestQualification}
+                                                onChange={handleInputChange}
+                                                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e]"
+                                                placeholder="B.Tech / MBA / Diploma"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-semibold text-gray-500 mb-1.5">Institute</label>
+                                            <input
+                                                name="institute"
+                                                value={formValues.institute}
+                                                onChange={handleInputChange}
+                                                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e]"
+                                                placeholder="College / University"
+                                            />
+                                        </div>
+                                        <div className="sm:col-span-2">
+                                            <label className="block text-xs font-semibold text-gray-500 mb-1.5">Graduation year</label>
+                                            <input
+                                                name="graduationYear"
+                                                inputMode="numeric"
+                                                value={formValues.graduationYear}
+                                                onChange={handleInputChange}
+                                                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e]"
+                                                placeholder="e.g. 2022"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div className="sm:col-span-2">
                                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">Status</label>
                                     <select
                                         name="status"
                                         value={formValues.status}
                                         onChange={handleInputChange}
-                                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e]"
+                                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e]"
                                     >
                                         <option value="Active">Active</option>
                                         <option value="On Leave">On Leave</option>
                                         <option value="Probation">Probation</option>
+                                        <option value="Inactive">Inactive</option>
                                     </select>
+                                </div>
+
+                                <div className="sm:col-span-2">
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                                        Notes <span className="font-normal text-gray-400">(optional)</span>
+                                    </label>
+                                    <textarea
+                                        name="notes"
+                                        value={formValues.notes}
+                                        onChange={handleInputChange}
+                                        rows={3}
+                                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e] resize-none"
+                                        placeholder="Emergency contact, skills, remarks…"
+                                    />
                                 </div>
                             </div>
 
