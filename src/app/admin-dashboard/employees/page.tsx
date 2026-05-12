@@ -14,87 +14,72 @@ type RoleApiRow = {
     status: string;
 };
 
-const employeeStats = [
-    { label: "Total Employees", value: "48", tone: "text-[#0a2a5e]" },
-    { label: "Active Today", value: "42", tone: "text-green-600" },
-    { label: "On Leave", value: "4", tone: "text-amber-600" },
-    { label: "New This Month", value: "3", tone: "text-[#06b6d4]" },
-];
+type EmployeeApiListRow = {
+    id: number;
+    employee_id: string;
+    full_name: string;
+    designation: string | null;
+    department: string | null;
+    official_email: string | null;
+    employee_status: string;
+    created_at: string;
+};
 
-const employees = [
-    { id: "EMP-1001", name: "Rahul Sharma", role: "Sales Manager", department: "Sales", email: "rahul@viros.com", status: "Active" },
-    { id: "EMP-1002", name: "Priya Patel", role: "HR Executive", department: "HR", email: "priya@viros.com", status: "Active" },
-    { id: "EMP-1003", name: "Amit Kumar", role: "Tech Lead", department: "IT", email: "amit@viros.com", status: "Active" },
-    { id: "EMP-1004", name: "Sneha Joshi", role: "UI/UX Designer", department: "Marketing", email: "sneha@viros.com", status: "On Leave" },
-    { id: "EMP-1005", name: "Vikram Singh", role: "Finance Analyst", department: "Finance", email: "vikram@viros.com", status: "Active" },
-    { id: "EMP-1006", name: "Neha Verma", role: "Operations Executive", department: "Operations", email: "neha@viros.com", status: "Probation" },
-];
+type EmployeeRow = {
+    recordId: number;
+    employeeId: string;
+    name: string;
+    role: string;
+    department: string;
+    email: string;
+    status: string;
+    createdAt: string;
+};
+
+function mapEmployeeApiRow(row: EmployeeApiListRow): EmployeeRow {
+    return {
+        recordId: row.id,
+        employeeId: row.employee_id,
+        name: row.full_name,
+        role: row.designation ?? "",
+        department: row.department ?? "",
+        email: row.official_email ?? "",
+        status: row.employee_status,
+        createdAt: row.created_at,
+    };
+}
 
 const initialFormState = {
     employeeId: "",
-    employeeCode: "",
-    firstName: "",
-    middleName: "",
-    lastName: "",
     fullName: "",
     gender: "",
     dateOfBirth: "",
-    age: "",
     maritalStatus: "",
     bloodGroup: "",
     nationality: "",
     religion: "",
     category: "",
-    profilePhoto: "",
-    signature: "",
-    mobileNumber: "",
-    alternateMobileNumber: "",
-    officialEmail: "",
+
+    personalMobileNumber: "",
+    officialMobileNumber: "",
     personalEmail: "",
-    emergencyContactNumber: "",
-    whatsappNumber: "",
+    officialEmail: "",
     currentAddress: "",
     permanentAddress: "",
-    city: "",
-    state: "",
-    country: "",
-    pinCode: "",
-    fatherName: "",
-    fatherMobileNumber: "",
-    fatherOccupation: "",
-    motherName: "",
-    motherMobileNumber: "",
-    motherOccupation: "",
-    spouseName: "",
-    spouseMobileNumber: "",
-    spouseOccupation: "",
-    guardianName: "",
+
+    parentName: "",
+    parentMobileNumber: "",
+    parentOccupation: "",
     guardianRelation: "",
-    guardianMobileNumber: "",
-    numberOfFamilyMembers: "",
-    emergencyFamilyContact: "",
-    nomineeName: "",
-    nomineeRelation: "",
-    nomineeMobileNumber: "",
-    tenthSchoolName: "",
-    tenthBoard: "",
-    tenthPassingYear: "",
-    tenthPercentage: "",
-    twelfthSchoolName: "",
-    twelfthBoard: "",
-    twelfthPassingYear: "",
-    twelfthPercentage: "",
-    graduationCollegeName: "",
-    degreeName: "",
-    universityName: "",
-    graduationPassingYear: "",
-    graduationPercentage: "",
-    postGraduationDetails: "",
-    certifications: "",
-    technicalSkills: "",
-    languagesKnown: "",
+
+    higherEducationQualification: "",
+    higherEducationCourseName: "",
+    higherEducationInstitution: "",
+    higherEducationPassingYear: "",
+    higherEducationCgpaOrPercentage: "",
+    higherEducationSpecialization: "",
+
     department: "",
-    designation: "",
     role: "",
     employeeType: "",
     employmentCategory: "",
@@ -103,52 +88,218 @@ const initialFormState = {
     workLocation: "",
     branchName: "",
     reportingManager: "",
-    shiftTiming: "",
-    officeExtensionNumber: "",
-    employeeStatus: "",
-    salaryPackage: "",
-    ctc: "",
-    basicSalary: "",
-    pfApplicable: "",
-    esicApplicable: "",
-    overtimeEligibility: "",
+    employeeStatus: "Active",
+
     previousCompanyName: "",
     previousDesignation: "",
     previousSalary: "",
-    previousWorkExperience: "",
+    workExperienceYears: "",
     previousJoiningDate: "",
     previousRelievingDate: "",
     reasonForLeaving: "",
     referencePersonName: "",
     referenceContactNumber: "",
+
     aadhaarNumber: "",
     panNumber: "",
     passportNumber: "",
     voterIdNumber: "",
     drivingLicenseNumber: "",
     uanNumber: "",
+    esicNumber: "",
     pfNumber: "",
+
     bankName: "",
     bankBranchName: "",
     accountHolderName: "",
     accountNumber: "",
     ifscCode: "",
     upiId: "",
-    status: "Active",
 };
+
+type FormField = {
+    name: keyof typeof initialFormState;
+    label: string;
+    type: "text" | "email" | "tel" | "date" | "textarea" | "select" | "department" | "role";
+    options?: string[];
+    required?: boolean;
+    hint?: string;
+};
+
+type FormSection = {
+    title: string;
+    subtitle: string;
+    icon: string;
+    fields: FormField[];
+};
+
+const formSections: FormSection[] = [
+    {
+        title: "Employee Basic Details",
+        subtitle: "Employee personal and identity overview.",
+        icon: "👤",
+        fields: [
+            { name: "employeeId", label: "Employee ID", type: "text", required: true },
+            { name: "fullName", label: "Full Name", type: "text", required: true },
+            { name: "gender", label: "Gender", type: "select", options: ["Male", "Female", "Other"] },
+            { name: "dateOfBirth", label: "Date of Birth", type: "date" },
+            { name: "maritalStatus", label: "Marital Status", type: "select", options: ["Single", "Married", "Divorced", "Widowed"] },
+            { name: "bloodGroup", label: "Blood Group", type: "select", options: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"] },
+            { name: "nationality", label: "Nationality", type: "text" },
+            { name: "religion", label: "Religion", type: "text" },
+            { name: "category", label: "Category/Caste", type: "text" },
+        ],
+    },
+    {
+        title: "Contact Details",
+        subtitle: "Personal and official contact numbers, email and address.",
+        icon: "☎️",
+        fields: [
+            { name: "personalMobileNumber", label: "Personal Mobile Number", type: "tel", required: true },
+            { name: "officialMobileNumber", label: "Official Mobile Number", type: "tel", required: true },
+            { name: "personalEmail", label: "Personal Email Address", type: "email", required: true },
+            { name: "officialEmail", label: "Official Email Address", type: "email", required: true },
+            { name: "currentAddress", label: "Current Address", type: "textarea" },
+            { name: "permanentAddress", label: "Permanent Address", type: "textarea" },
+        ],
+    },
+    {
+        title: "Parent / Family Details",
+        subtitle: "Family contact and guardian information.",
+        icon: "👪",
+        fields: [
+            { name: "parentName", label: "Parent Name", type: "text" },
+            { name: "parentMobileNumber", label: "Parent Mobile Number", type: "tel" },
+            { name: "parentOccupation", label: "Parent Occupation", type: "text" },
+            { name: "guardianRelation", label: "Guardian Relation", type: "text" },
+        ],
+    },
+    {
+        title: "Higher Education Details",
+        subtitle: "Highest post-secondary qualification, institution and results.",
+        icon: "🎓",
+        fields: [
+            {
+                name: "higherEducationQualification",
+                label: "Highest qualification",
+                type: "select",
+                options: [
+                    "Schooling",
+                    "Intermediate",
+                    "Diploma",
+                    "Graduate",
+                    "Post Graduate",
+                    "Doctorate",
+                    "Professional",
+                    "Other",
+                ],
+            },
+            { name: "higherEducationCourseName", label: "Degree / course name", type: "text" },
+            { name: "higherEducationInstitution", label: "College / university", type: "text" },
+            { name: "higherEducationPassingYear", label: "Year of passing", type: "text" },
+            { name: "higherEducationCgpaOrPercentage", label: "Percentage / CGPA", type: "text" },
+            { name: "higherEducationSpecialization", label: "Specialization / branch", type: "text" },
+        ],
+    },
+    {
+        title: "Job / Company Details",
+        subtitle: "Department, role and employment details.",
+        icon: "🏢",
+        fields: [
+            { name: "department", label: "Department", type: "department", required: true },
+            { name: "role", label: "Designation/Role", type: "role", required: true },
+            { name: "employeeType", label: "Employee Type", type: "select", options: ["Full-time", "Part-time", "Contract", "Intern", "Freelancer"] },
+            { name: "employmentCategory", label: "Employment Category", type: "select", options: ["Permanent", "Temporary", "Probation", "Consultant"] },
+            { name: "joiningDate", label: "Joining Date", type: "date" },
+            { name: "probationPeriod", label: "Probation Period", type: "text" },
+            { name: "workLocation", label: "Work Location", type: "text" },
+            { name: "branchName", label: "Branch Name", type: "text" },
+            { name: "reportingManager", label: "Reporting Manager", type: "text" },
+            { name: "employeeStatus", label: "Employee Status", type: "select", options: ["Active", "On Leave", "Probation", "Inactive", "Resigned"] },
+        ],
+    },
+    {
+        title: "Previous Employment Details",
+        subtitle: "Previous company and reference details.",
+        icon: "💼",
+        fields: [
+            { name: "previousCompanyName", label: "Previous Company Name", type: "text" },
+            { name: "previousDesignation", label: "Previous Designation", type: "text" },
+            { name: "previousSalary", label: "Previous Salary", type: "text" },
+            { name: "workExperienceYears", label: "Work Experience (Years)", type: "text" },
+            { name: "previousJoiningDate", label: "Joining Date", type: "date" },
+            { name: "previousRelievingDate", label: "Relieving Date", type: "date" },
+            { name: "reasonForLeaving", label: "Reason for Leaving", type: "textarea" },
+            { name: "referencePersonName", label: "Reference Person Name", type: "text" },
+            { name: "referenceContactNumber", label: "Reference Contact Number", type: "tel" },
+        ],
+    },
+    {
+        title: "Identity & Government Details",
+        subtitle: "Government IDs and employee statutory numbers.",
+        icon: "🪪",
+        fields: [
+            { name: "aadhaarNumber", label: "Aadhaar Number", type: "text" },
+            { name: "panNumber", label: "PAN Number", type: "text" },
+            { name: "passportNumber", label: "Passport Number", type: "text" },
+            { name: "voterIdNumber", label: "Voter ID Number", type: "text" },
+            { name: "drivingLicenseNumber", label: "Driving License Number", type: "text" },
+            { name: "uanNumber", label: "UAN Number", type: "text" },
+            { name: "esicNumber", label: "ESIC Number", type: "text" },
+            { name: "pfNumber", label: "PF Number", type: "text" },
+        ],
+    },
+    {
+        title: "Bank Details",
+        subtitle: "Salary payment bank account information.",
+        icon: "🏦",
+        fields: [
+            { name: "bankName", label: "Bank Name", type: "text" },
+            { name: "bankBranchName", label: "Branch Name", type: "text" },
+            { name: "accountHolderName", label: "Account Holder Name", type: "text" },
+            { name: "accountNumber", label: "Account Number", type: "text" },
+            { name: "ifscCode", label: "IFSC Code", type: "text" },
+            { name: "upiId", label: "UPI ID", type: "text" },
+        ],
+    },
+];
 
 export default function AdminEmployeesPage() {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-    const [employeesData, setEmployeesData] = useState(employees);
-    const [formValues, setFormValues] = useState<typeof initialFormState>(initialFormState);
+    const [editingRecordId, setEditingRecordId] = useState<number | null>(null);
+    const [actionBusyId, setActionBusyId] = useState<number | null>(null);
+    const [employeesData, setEmployeesData] = useState<EmployeeRow[]>([]);
+    const [formValues, setFormValues] = useState(initialFormState);
     const [departments, setDepartments] = useState<DepartmentApiRow[]>([]);
     const [roles, setRoles] = useState<RoleApiRow[]>([]);
     const [isMetaLoading, setIsMetaLoading] = useState(true);
+    const [isEmployeesLoading, setIsEmployeesLoading] = useState(true);
+    const [employeesLoadError, setEmployeesLoadError] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const filteredRoles = useMemo(
         () => roles.filter((role) => role.department === formValues.department),
         [roles, formValues.department],
     );
+
+    const employeeStats = useMemo(() => {
+        const total = employeesData.length;
+        const active = employeesData.filter((e) => e.status === "Active").length;
+        const onLeave = employeesData.filter((e) => e.status === "On Leave").length;
+        const startOfMonth = new Date();
+        startOfMonth.setDate(1);
+        startOfMonth.setHours(0, 0, 0, 0);
+        const newThisMonth = employeesData.filter((e) => {
+            const d = new Date(e.createdAt);
+            return !Number.isNaN(d.getTime()) && d >= startOfMonth;
+        }).length;
+        return [
+            { label: "Total Employees", value: String(total), tone: "text-[#0a2a5e]" },
+            { label: "Active", value: String(active), tone: "text-green-600" },
+            { label: "On Leave", value: String(onLeave), tone: "text-amber-600" },
+            { label: "New This Month", value: String(newThisMonth), tone: "text-[#06b6d4]" },
+        ];
+    }, [employeesData]);
 
     useEffect(() => {
         let active = true;
@@ -156,6 +307,7 @@ export default function AdminEmployeesPage() {
         const loadMeta = async () => {
             try {
                 setIsMetaLoading(true);
+
                 const [departmentsResp, rolesResp] = await Promise.all([
                     fetch("/api/admin/departments"),
                     fetch("/api/admin/roles"),
@@ -165,8 +317,9 @@ export default function AdminEmployeesPage() {
                 const rolesData = await rolesResp.json();
 
                 if (!active) return;
-                setDepartments(departmentsData ?? []);
-                setRoles(rolesData ?? []);
+
+                setDepartments(Array.isArray(departmentsData) ? departmentsData : []);
+                setRoles(Array.isArray(rolesData) ? rolesData : []);
             } catch (error) {
                 console.error("Failed to load metadata", error);
             } finally {
@@ -183,44 +336,260 @@ export default function AdminEmployeesPage() {
         };
     }, []);
 
+    useEffect(() => {
+        let active = true;
+
+        const loadEmployees = async () => {
+            try {
+                setEmployeesLoadError("");
+                setIsEmployeesLoading(true);
+                const response = await fetch("/api/admin/employees", { cache: "no-store" });
+                if (!response.ok) {
+                    throw new Error("Failed to fetch employees");
+                }
+                const rows: EmployeeApiListRow[] = await response.json();
+                if (!active) return;
+                const mapped = Array.isArray(rows) ? rows.map(mapEmployeeApiRow) : [];
+                setEmployeesData(mapped);
+            } catch (error) {
+                console.error("Failed to load employees", error);
+                if (active) {
+                    setEmployeesLoadError("Unable to load employees from the database.");
+                    setEmployeesData([]);
+                }
+            } finally {
+                if (active) {
+                    setIsEmployeesLoading(false);
+                }
+            }
+        };
+
+        loadEmployees();
+
+        return () => {
+            active = false;
+        };
+    }, []);
+
     const handleInputChange = (
         event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
     ) => {
-        const target = event.target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
-
-        if (target instanceof HTMLInputElement && target.type === "file") {
-            setFormValues((current) => ({
-                ...current,
-                [target.name]: target.files?.[0]?.name ?? "",
-            }));
-            return;
-        }
+        const { name, value } = event.target;
 
         setFormValues((current) => ({
             ...current,
-            [target.name]: target.value,
+            [name]: value,
         }));
     };
 
-    const handleAddEmployee = async (event: React.FormEvent<HTMLFormElement>) => {
+    const resetForm = () => {
+        setFormValues(initialFormState);
+    };
+
+    const openAddModal = () => {
+        setEditingRecordId(null);
+        resetForm();
+        setIsAddModalOpen(true);
+    };
+
+    const openEditEmployee = async (employee: EmployeeRow) => {
+        try {
+            setActionBusyId(employee.recordId);
+            const response = await fetch(`/api/admin/employees/${employee.recordId}`, { cache: "no-store" });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                throw new Error(typeof data.message === "string" ? data.message : "Failed to load");
+            }
+            setFormValues({ ...initialFormState, ...(data as Record<string, string>) });
+            setEditingRecordId(employee.recordId);
+            setIsAddModalOpen(true);
+        } catch (error) {
+            console.error("Error loading employee", error);
+            alert("Could not load this employee for editing.");
+        } finally {
+            setActionBusyId(null);
+        }
+    };
+
+    const handleDeleteEmployee = async (employee: EmployeeRow) => {
+        const ok = window.confirm(
+            `Remove ${employee.name} (${employee.employeeId}) from the directory? This cannot be undone.`,
+        );
+        if (!ok) return;
+
+        try {
+            setActionBusyId(employee.recordId);
+            const response = await fetch(`/api/admin/employees/${employee.recordId}`, { method: "DELETE" });
+            if (!response.ok) {
+                const data = await response.json().catch(() => ({}));
+                throw new Error(typeof data.message === "string" ? data.message : "Delete failed");
+            }
+            setEmployeesData((current) => current.filter((e) => e.recordId !== employee.recordId));
+        } catch (error) {
+            console.error("Error deleting employee", error);
+            alert("Unable to delete this employee. Please try again.");
+        } finally {
+            setActionBusyId(null);
+        }
+    };
+
+    const handleSaveEmployee = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
-        const fullName = [formValues.firstName, formValues.middleName, formValues.lastName]
-            .filter(Boolean)
-            .join(" ");
+        try {
+            setIsSubmitting(true);
+            const isEdit = editingRecordId !== null;
+            const response = await fetch(
+                isEdit ? `/api/admin/employees/${editingRecordId}` : "/api/admin/employees",
+                {
+                    method: isEdit ? "PUT" : "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(formValues),
+                },
+            );
 
-        const newEmployee = {
-            id: formValues.employeeId || `EMP-${Math.floor(1000 + Math.random() * 9000)}`,
-            name: fullName || "New Employee",
-            role: formValues.role || "Unknown",
-            department: formValues.department || "Unknown",
-            email: formValues.officialEmail || formValues.personalEmail || "no-reply@viros.com",
-            status: formValues.employeeStatus || "Active",
-        };
+            const data = await response.json().catch(() => ({}));
 
-        setEmployeesData((current) => [newEmployee, ...current]);
-        setFormValues(initialFormState);
+            if (response.status === 409) {
+                alert(typeof data.message === "string" ? data.message : "This Employee ID is already in use.");
+                return;
+            }
+
+            if (!response.ok) {
+                throw new Error(typeof data.message === "string" ? data.message : "Failed to save employee");
+            }
+
+            const saved = data as EmployeeApiListRow;
+            if (saved?.id) {
+                if (isEdit) {
+                    setEmployeesData((current) =>
+                        current.map((e) => (e.recordId === editingRecordId ? mapEmployeeApiRow(saved) : e)),
+                    );
+                } else {
+                    setEmployeesData((current) => [mapEmployeeApiRow(saved), ...current]);
+                }
+            } else {
+                const refresh = await fetch("/api/admin/employees", { cache: "no-store" });
+                if (refresh.ok) {
+                    const rows: EmployeeApiListRow[] = await refresh.json();
+                    setEmployeesData(Array.isArray(rows) ? rows.map(mapEmployeeApiRow) : []);
+                }
+            }
+
+            closeModal();
+        } catch (error) {
+            console.error("Error saving employee", error);
+            alert("Unable to save employee right now. Please try again.");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const closeModal = () => {
+        setEditingRecordId(null);
         setIsAddModalOpen(false);
+        resetForm();
+    };
+
+    const inputClassName =
+        "w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e] disabled:cursor-not-allowed disabled:bg-gray-50 placeholder:text-gray-400";
+    const selectClassName = `${inputClassName} bg-white`;
+
+    const renderField = (field: FormField) => {
+        const value = formValues[field.name];
+        const isSideBySideAddress =
+            field.type === "textarea" &&
+            (field.name === "currentAddress" || field.name === "permanentAddress");
+        const textareaColSpan = field.type === "textarea" && !isSideBySideAddress ? "sm:col-span-2" : "";
+
+        return (
+            <div
+                key={field.name}
+                className={textareaColSpan}
+            >
+                <label className="mb-1.5 block text-sm font-semibold text-gray-700">
+                    {field.label}
+                    {field.required && <span className="ml-1 text-red-500">*</span>}
+                </label>
+
+                {field.type === "textarea" ? (
+                    <textarea
+                        name={field.name}
+                        placeholder={field.label}
+                        value={value}
+                        onChange={handleInputChange}
+                        rows={4}
+                        required={field.required}
+                        className={`${inputClassName} resize-none`}
+                    />
+                ) : field.type === "select" ? (
+                    <select
+                        name={field.name}
+                        value={value}
+                        onChange={handleInputChange}
+                        className={selectClassName}
+                    >
+                        <option value="">{field.label}</option>
+                        {field.options?.map((option) => (
+                            <option key={option} value={option}>
+                                {option}
+                            </option>
+                        ))}
+                    </select>
+                ) : field.type === "department" ? (
+                    <select
+                        name={field.name}
+                        value={value}
+                        onChange={handleInputChange}
+                        disabled={isMetaLoading}
+                        required={field.required}
+                        className={selectClassName}
+                    >
+                        <option value="">{isMetaLoading ? "Loading..." : field.label}</option>
+                        {departments.map((department) => (
+                            <option key={department.id} value={department.name}>
+                                {department.name}
+                            </option>
+                        ))}
+                    </select>
+                ) : field.type === "role" ? (
+                    <select
+                        name={field.name}
+                        value={value}
+                        onChange={handleInputChange}
+                        disabled={isMetaLoading || !formValues.department}
+                        required={field.required}
+                        className={selectClassName}
+                    >
+                        <option value="">
+                            {!formValues.department
+                                ? "Select Department First"
+                                : isMetaLoading
+                                  ? "Loading..."
+                                  : field.label}
+                        </option>
+                        {filteredRoles.map((role) => (
+                            <option key={role.id} value={role.name}>
+                                {role.name}
+                            </option>
+                        ))}
+                    </select>
+                ) : (
+                    <input
+                        type={field.type}
+                        name={field.name}
+                        placeholder={field.label}
+                        value={value}
+                        onChange={handleInputChange}
+                        required={field.required}
+                        disabled={field.name === "employeeId" && editingRecordId !== null}
+                        className={inputClassName}
+                    />
+                )}
+
+                {field.hint && <p className="mt-1.5 text-xs text-gray-500">{field.hint}</p>}
+            </div>
+        );
     };
 
     return (
@@ -231,11 +600,14 @@ export default function AdminEmployeesPage() {
                     <p className="mt-1 text-sm text-gray-500">
                         Manage employees and add new hires from the HRMS registration modal.
                     </p>
+                    {employeesLoadError && <p className="mt-2 text-xs text-amber-600">{employeesLoadError}</p>}
                 </div>
+
                 <button
                     type="button"
-                    onClick={() => setIsAddModalOpen(true)}
-                    className="inline-flex items-center justify-center rounded-xl bg-[#0a2a5e] px-5 py-3 text-sm font-semibold text-white shadow-sm hover:opacity-90 transition"
+                    onClick={openAddModal}
+                    disabled={isEmployeesLoading}
+                    className="inline-flex items-center justify-center rounded-xl bg-[#0a2a5e] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                     Add Employee
                 </button>
@@ -251,197 +623,187 @@ export default function AdminEmployeesPage() {
             </div>
 
             <div className="overflow-hidden rounded-3xl border border-[#e9eef7] bg-white">
-                <div className="flex flex-col gap-4 border-b border-[#e9eef7] p-6 md:flex-row md:items-center md:justify-between">
-                    <div>
-                        <p className="text-sm font-semibold text-gray-900">Employee roster</p>
-                        <p className="mt-1 text-sm text-gray-500">All employees currently registered.</p>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={() => setIsAddModalOpen(true)}
-                        className="inline-flex items-center justify-center rounded-xl bg-[#0a2a5e] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-90 transition"
-                    >
-                        New employee
-                    </button>
+                <div className="border-b border-[#e9eef7] p-6">
+                    <p className="text-sm font-semibold text-gray-900">Employee roster</p>
+                    <p className="mt-1 text-sm text-gray-500">
+                        {isEmployeesLoading ? "Loading…" : `Showing ${employeesData.length} employee(s).`}
+                    </p>
                 </div>
 
                 <div className="overflow-x-auto p-6">
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
                                     Employee
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
                                     Role
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
                                     Department
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
                                     Email
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
                                     Status
+                                </th>
+                                <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                    Actions
                                 </th>
                             </tr>
                         </thead>
+
                         <tbody className="divide-y divide-gray-100">
-                            {employeesData.map((employee) => (
-                                <tr key={employee.id} className="hover:bg-gray-50 transition-colors">
-                                    <td className="px-6 py-4">
-                                        <div>
-                                            <p className="text-sm font-semibold text-gray-900">{employee.name}</p>
-                                            <p className="text-xs text-gray-400">{employee.id}</p>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 text-sm text-gray-700">{employee.role}</td>
-                                    <td className="px-6 py-4 text-sm text-gray-700">{employee.department}</td>
-                                    <td className="px-6 py-4 text-sm text-gray-700">{employee.email}</td>
-                                    <td className="px-6 py-4">
-                                        <span
-                                            className={`inline-flex px-2.5 py-1 rounded-full text-xs font-semibold ${
-                                                employee.status === "Active"
-                                                    ? "bg-green-50 text-green-700"
-                                                    : employee.status === "On Leave"
-                                                    ? "bg-amber-50 text-amber-700"
-                                                    : "bg-blue-50 text-blue-700"
-                                            }`}
-                                        >
-                                            {employee.status}
-                                        </span>
+                            {isEmployeesLoading && (
+                                <tr>
+                                    <td className="px-6 py-8 text-sm text-gray-500" colSpan={6}>
+                                        Loading employees…
                                     </td>
                                 </tr>
-                            ))}
+                            )}
+                            {!isEmployeesLoading && employeesData.length === 0 && (
+                                <tr>
+                                    <td className="px-6 py-8 text-sm text-gray-500" colSpan={6}>
+                                        No employees yet. Add one with the button above.
+                                    </td>
+                                </tr>
+                            )}
+                            {!isEmployeesLoading &&
+                                employeesData.map((employee) => (
+                                    <tr key={employee.recordId} className="transition-colors hover:bg-gray-50">
+                                        <td className="px-6 py-4">
+                                            <div>
+                                                <p className="text-sm font-semibold text-gray-900">{employee.name}</p>
+                                                <p className="text-xs text-gray-400">{employee.employeeId}</p>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-sm text-gray-700">{employee.role}</td>
+                                        <td className="px-6 py-4 text-sm text-gray-700">{employee.department}</td>
+                                        <td className="px-6 py-4 text-sm text-gray-700">{employee.email}</td>
+                                        <td className="px-6 py-4">
+                                            <span
+                                                className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
+                                                    employee.status === "Active"
+                                                        ? "bg-green-50 text-green-700"
+                                                        : employee.status === "On Leave"
+                                                          ? "bg-amber-50 text-amber-700"
+                                                          : employee.status === "Inactive" || employee.status === "Resigned"
+                                                            ? "bg-gray-100 text-gray-700"
+                                                            : "bg-blue-50 text-blue-700"
+                                                }`}
+                                            >
+                                                {employee.status}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <div className="inline-flex flex-wrap items-center justify-end gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => openEditEmployee(employee)}
+                                                    disabled={actionBusyId !== null || isSubmitting}
+                                                    className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                                >
+                                                    {actionBusyId === employee.recordId ? "Loading…" : "Edit"}
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleDeleteEmployee(employee)}
+                                                    disabled={actionBusyId !== null || isSubmitting}
+                                                    className="rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 shadow-sm transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+                                                >
+                                                    Delete
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
                         </tbody>
                     </table>
                 </div>
             </div>
 
             {isAddModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+                <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6">
                     <div
-                        className="absolute inset-0 bg-black/50"
-                        onClick={() => setIsAddModalOpen(false)}
+                        className="absolute inset-0 bg-black/50 backdrop-blur-[2px]"
+                        aria-hidden
+                        onClick={() => {
+                            if (!isSubmitting) closeModal();
+                        }}
                     />
-                    <div className="relative w-full max-w-4xl max-h-[90vh] bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden flex flex-col">
-                        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                            <div>
-                                <h3 className="text-lg font-bold text-gray-900">Add Employee</h3>
-                                <p className="text-xs text-gray-500 mt-0.5">Create a new employee profile with HRMS details.</p>
+                    <div
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="add-employee-title"
+                        className="relative flex max-h-[min(94vh,920px)] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-2xl"
+                    >
+                        <div className="flex shrink-0 items-start justify-between gap-4 border-b border-gray-100 bg-gradient-to-r from-[#06124f] to-[#0a2a5e] px-6 py-4">
+                            <div className="min-w-0">
+                                <h3 id="add-employee-title" className="text-lg font-bold text-white">
+                                    {editingRecordId !== null ? "Edit employee" : "Add Employee"}
+                                </h3>
+                                <p className="mt-0.5 text-xs text-cyan-100/90">
+                                    {editingRecordId !== null
+                                        ? "Update profile details and save changes."
+                                        : "Register a complete employee profile with HRMS details."}
+                                </p>
                             </div>
                             <button
                                 type="button"
-                                onClick={() => setIsAddModalOpen(false)}
-                                className="text-gray-400 hover:text-gray-600"
+                                onClick={() => {
+                                    if (!isSubmitting) closeModal();
+                                }}
+                                disabled={isSubmitting}
+                                className="shrink-0 rounded-lg p-1.5 text-white/70 transition-colors hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                                aria-label="Close"
                             >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                 </svg>
                             </button>
                         </div>
 
-                        <form onSubmit={handleAddEmployee} className="p-6 overflow-y-auto flex-1">
-                            <div className="space-y-6">
-                                {/* Personal Information */}
-                                <div>
-                                    <h4 className="text-sm font-bold text-gray-900 mb-4">Personal Information</h4>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        <input type="text" name="employeeCode" placeholder="Employee Code" value={formValues.employeeCode} onChange={handleInputChange} className="px-3 py-2 border border-gray-300 rounded-lg text-sm" />
-                                        <input type="text" name="employeeId" placeholder="Employee ID" value={formValues.employeeId} onChange={handleInputChange} className="px-3 py-2 border border-gray-300 rounded-lg text-sm" />
-                                        <input type="text" name="firstName" placeholder="First Name" value={formValues.firstName} onChange={handleInputChange} className="px-3 py-2 border border-gray-300 rounded-lg text-sm" />
-                                        <input type="text" name="middleName" placeholder="Middle Name" value={formValues.middleName} onChange={handleInputChange} className="px-3 py-2 border border-gray-300 rounded-lg text-sm" />
-                                        <input type="text" name="lastName" placeholder="Last Name" value={formValues.lastName} onChange={handleInputChange} className="px-3 py-2 border border-gray-300 rounded-lg text-sm" />
-                                        <select name="gender" value={formValues.gender} onChange={handleInputChange} className="px-3 py-2 border border-gray-300 rounded-lg text-sm">
-                                            <option value="">Gender</option>
-                                            <option value="Male">Male</option>
-                                            <option value="Female">Female</option>
-                                            <option value="Other">Other</option>
-                                        </select>
-                                        <input type="date" name="dateOfBirth" value={formValues.dateOfBirth} onChange={handleInputChange} className="px-3 py-2 border border-gray-300 rounded-lg text-sm" />
-                                        <input type="text" name="bloodGroup" placeholder="Blood Group" value={formValues.bloodGroup} onChange={handleInputChange} className="px-3 py-2 border border-gray-300 rounded-lg text-sm" />
-                                        <input type="text" name="nationality" placeholder="Nationality" value={formValues.nationality} onChange={handleInputChange} className="px-3 py-2 border border-gray-300 rounded-lg text-sm" />
-                                    </div>
-                                </div>
-
-                                {/* Contact Information */}
-                                <div>
-                                    <h4 className="text-sm font-bold text-gray-900 mb-4">Contact Information</h4>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <input type="email" name="officialEmail" placeholder="Official Email" value={formValues.officialEmail} onChange={handleInputChange} className="px-3 py-2 border border-gray-300 rounded-lg text-sm" />
-                                        <input type="email" name="personalEmail" placeholder="Personal Email" value={formValues.personalEmail} onChange={handleInputChange} className="px-3 py-2 border border-gray-300 rounded-lg text-sm" />
-                                        <input type="tel" name="mobileNumber" placeholder="Mobile Number" value={formValues.mobileNumber} onChange={handleInputChange} className="px-3 py-2 border border-gray-300 rounded-lg text-sm" />
-                                        <input type="tel" name="alternateMobileNumber" placeholder="Alternate Mobile" value={formValues.alternateMobileNumber} onChange={handleInputChange} className="px-3 py-2 border border-gray-300 rounded-lg text-sm" />
-                                        <textarea name="currentAddress" placeholder="Current Address" value={formValues.currentAddress} onChange={handleInputChange} rows={2} className="px-3 py-2 border border-gray-300 rounded-lg text-sm col-span-2" />
-                                        <textarea name="permanentAddress" placeholder="Permanent Address" value={formValues.permanentAddress} onChange={handleInputChange} rows={2} className="px-3 py-2 border border-gray-300 rounded-lg text-sm col-span-2" />
-                                    </div>
-                                </div>
-
-                                {/* Education */}
-                                <div>
-                                    <h4 className="text-sm font-bold text-gray-900 mb-4">Education</h4>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        <input type="text" name="tenthSchoolName" placeholder="10th School" value={formValues.tenthSchoolName} onChange={handleInputChange} className="px-3 py-2 border border-gray-300 rounded-lg text-sm" />
-                                        <input type="text" name="graduationCollegeName" placeholder="College Name" value={formValues.graduationCollegeName} onChange={handleInputChange} className="px-3 py-2 border border-gray-300 rounded-lg text-sm" />
-                                        <input type="text" name="degreeName" placeholder="Degree" value={formValues.degreeName} onChange={handleInputChange} className="px-3 py-2 border border-gray-300 rounded-lg text-sm" />
-                                    </div>
-                                </div>
-
-                                {/* Employment Details */}
-                                <div>
-                                    <h4 className="text-sm font-bold text-gray-900 mb-4">Employment Details</h4>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <select name="department" value={formValues.department} onChange={handleInputChange} disabled={isMetaLoading} className="px-3 py-2 border border-gray-300 rounded-lg text-sm">
-                                            <option value="">{isMetaLoading ? "Loading..." : "Department"}</option>
-                                            {departments.map((d) => (
-                                                <option key={d.id} value={d.name}>{d.name}</option>
-                                            ))}
-                                        </select>
-                                        <select name="role" value={formValues.role} onChange={handleInputChange} disabled={isMetaLoading || !formValues.department} className="px-3 py-2 border border-gray-300 rounded-lg text-sm">
-                                            <option value="">{!formValues.department ? "Select Department First" : isMetaLoading ? "Loading..." : "Role"}</option>
-                                            {filteredRoles.map((r) => (
-                                                <option key={r.id} value={r.name}>{r.name}</option>
-                                            ))}
-                                        </select>
-                                        <input type="date" name="joiningDate" value={formValues.joiningDate} onChange={handleInputChange} className="px-3 py-2 border border-gray-300 rounded-lg text-sm" />
-                                        <select name="employeeType" value={formValues.employeeType} onChange={handleInputChange} className="px-3 py-2 border border-gray-300 rounded-lg text-sm">
-                                            <option value="">Employment Type</option>
-                                            <option value="Full-time">Full-time</option>
-                                            <option value="Part-time">Part-time</option>
-                                            <option value="Contract">Contract</option>
-                                        </select>
-                                        <input type="text" name="ctc" placeholder="CTC" value={formValues.ctc} onChange={handleInputChange} className="px-3 py-2 border border-gray-300 rounded-lg text-sm" />
-                                        <input type="text" name="basicSalary" placeholder="Basic Salary" value={formValues.basicSalary} onChange={handleInputChange} className="px-3 py-2 border border-gray-300 rounded-lg text-sm" />
-                                    </div>
-                                </div>
-
-                                {/* Banking & Documents */}
-                                <div>
-                                    <h4 className="text-sm font-bold text-gray-900 mb-4">Banking & Documents</h4>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <input type="text" name="bankName" placeholder="Bank Name" value={formValues.bankName} onChange={handleInputChange} className="px-3 py-2 border border-gray-300 rounded-lg text-sm" />
-                                        <input type="text" name="accountNumber" placeholder="Account Number" value={formValues.accountNumber} onChange={handleInputChange} className="px-3 py-2 border border-gray-300 rounded-lg text-sm" />
-                                        <input type="text" name="ifscCode" placeholder="IFSC Code" value={formValues.ifscCode} onChange={handleInputChange} className="px-3 py-2 border border-gray-300 rounded-lg text-sm" />
-                                        <input type="text" name="panNumber" placeholder="PAN Number" value={formValues.panNumber} onChange={handleInputChange} className="px-3 py-2 border border-gray-300 rounded-lg text-sm" />
-                                        <input type="text" name="aadhaarNumber" placeholder="Aadhaar Number" value={formValues.aadhaarNumber} onChange={handleInputChange} className="px-3 py-2 border border-gray-300 rounded-lg text-sm" />
-                                        <input type="text" name="uanNumber" placeholder="UAN Number" value={formValues.uanNumber} onChange={handleInputChange} className="px-3 py-2 border border-gray-300 rounded-lg text-sm" />
-                                    </div>
+                        <form onSubmit={handleSaveEmployee} className="flex min-h-0 flex-1 flex-col">
+                            <div className="flex-1 overflow-y-auto p-6">
+                                <div className="flex flex-col gap-8">
+                                    {formSections.map((section, index) => (
+                                        <section
+                                            key={section.title}
+                                            className={
+                                                index > 0 ? "border-t border-gray-100 pt-8" : ""
+                                            }
+                                        >
+                                            <h4 className="text-sm font-bold text-gray-900">{section.title}</h4>
+                                            <p className="mt-0.5 text-xs text-gray-500">{section.subtitle}</p>
+                                            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                                {section.fields.map((field) => renderField(field))}
+                                            </div>
+                                        </section>
+                                    ))}
                                 </div>
                             </div>
 
-                            <div className="mt-6 flex items-center justify-end gap-3">
+                            <div className="flex shrink-0 items-center justify-end gap-3 border-t border-gray-100 px-6 py-4">
                                 <button
                                     type="button"
-                                    onClick={() => setIsAddModalOpen(false)}
-                                    className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                                    onClick={closeModal}
+                                    disabled={isSubmitting}
+                                    className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
-                                    className="px-4 py-2 rounded-lg bg-[#0a2a5e] text-sm font-semibold text-white hover:opacity-90"
+                                    disabled={isSubmitting}
+                                    className="rounded-xl bg-gradient-to-r from-[#06124f] to-[#0a2a5e] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                                 >
-                                    Save Employee
+                                    {isSubmitting
+                                        ? "Saving…"
+                                        : editingRecordId !== null
+                                          ? "Update employee"
+                                          : "Save employee"}
                                 </button>
                             </div>
                         </form>
