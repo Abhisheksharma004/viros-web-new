@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { Check, Eye, Loader2, Pencil, Trash2, X } from "lucide-react";
 
 type DepartmentStatus = "Active" | "Growing" | "On Hold" | "Planned" | "Inactive";
 
@@ -12,6 +13,12 @@ type Department = {
     status: DepartmentStatus;
     budgetAmount: number;
 };
+
+type DepartmentDetail = Department & { notes: string };
+
+type DeptModalMode = "add" | "edit" | "view" | null;
+
+type RowActionBusy = { id: number; kind: "view" | "edit" | "delete" } | null;
 
 const initialDepartments: Department[] = [
     { id: 1, name: "Sales", head: "Rahul Sharma", employees: 12, status: "Active", budgetAmount: 0 },
@@ -48,9 +55,46 @@ function formatBudgetShort(total: number) {
     return formatINR(total);
 }
 
+function mapApiRowToDepartment(row: DepartmentApiRow): Department {
+    return {
+        id: row.id,
+        name: row.name,
+        head: row.head,
+        employees: Number(row.employees) || 0,
+        status: row.status,
+        budgetAmount: Number(row.budget_amount) || 0,
+    };
+}
+
+function DepartmentStatusViewBadge({ status }: { status: DepartmentStatus }) {
+    const isActive = status === "Active";
+    const isGrowing = status === "Growing";
+    const isOnHold = status === "On Hold";
+    const isPlanned = status === "Planned";
+    const tone = isActive
+        ? "bg-green-50 text-green-800 ring-1 ring-green-600/15"
+        : isGrowing
+          ? "bg-blue-50 text-blue-800 ring-1 ring-blue-600/15"
+          : isOnHold
+            ? "bg-amber-50 text-amber-800 ring-1 ring-amber-600/15"
+            : isPlanned
+              ? "bg-purple-50 text-purple-800 ring-1 ring-purple-600/15"
+              : "bg-gray-100 text-gray-700 ring-1 ring-gray-200";
+
+    return (
+        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${tone}`}>
+            {isActive ? <Check className="h-3.5 w-3.5 shrink-0" strokeWidth={2.5} aria-hidden /> : null}
+            {status}
+        </span>
+    );
+}
+
 export default function DepartmentPage() {
     const [departments, setDepartments] = useState<Department[]>(initialDepartments);
-    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [deptModalMode, setDeptModalMode] = useState<DeptModalMode>(null);
+    const [editingId, setEditingId] = useState<number | null>(null);
+    const [viewDetail, setViewDetail] = useState<DepartmentDetail | null>(null);
+    const [actionBusy, setActionBusy] = useState<RowActionBusy>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState("");
@@ -72,14 +116,7 @@ export default function DepartmentPage() {
                 }
 
                 const rows: DepartmentApiRow[] = await response.json();
-                const mapped = rows.map((row) => ({
-                    id: row.id,
-                    name: row.name,
-                    head: row.head,
-                    employees: Number(row.employees) || 0,
-                    status: row.status,
-                    budgetAmount: Number(row.budget_amount) || 0,
-                }));
+                const mapped = rows.map(mapApiRowToDepartment);
                 setDepartments(mapped);
             } catch (error) {
                 console.error("Error loading departments:", error);
@@ -121,9 +158,84 @@ export default function DepartmentPage() {
             status: "Active",
             description: "",
         });
+        setEditingId(null);
     };
 
-    const handleAddDepartment = async (e: React.FormEvent<HTMLFormElement>) => {
+    const closeDeptModal = () => {
+        setDeptModalMode(null);
+        setViewDetail(null);
+        resetForm();
+    };
+
+    const openAddModal = () => {
+        resetForm();
+        setDeptModalMode("add");
+    };
+
+    const loadDepartmentDetail = async (id: number, kind: "view" | "edit") => {
+        try {
+            setActionBusy({ id, kind });
+            const response = await fetch(`/api/admin/departments/${id}`, { cache: "no-store" });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                throw new Error(typeof data.message === "string" ? data.message : "Failed to load");
+            }
+            const row = data as DepartmentApiRow & { notes?: string | null };
+            const detail: DepartmentDetail = {
+                ...mapApiRowToDepartment(row),
+                notes: typeof row.notes === "string" ? row.notes : "",
+            };
+            if (kind === "view") {
+                setViewDetail(detail);
+                setDeptModalMode("view");
+            } else {
+                setFormValues({
+                    name: detail.name,
+                    head: detail.head,
+                    employees: String(detail.employees),
+                    status: detail.status,
+                    description: detail.notes,
+                });
+                setEditingId(id);
+                setDeptModalMode("edit");
+            }
+        } catch (error) {
+            console.error("Error loading department:", error);
+            alert(kind === "view" ? "Could not load department details." : "Could not load department for editing.");
+        } finally {
+            setActionBusy(null);
+        }
+    };
+
+    const openViewDepartment = (d: Department) => {
+        void loadDepartmentDetail(d.id, "view");
+    };
+
+    const openEditDepartment = (d: Department) => {
+        void loadDepartmentDetail(d.id, "edit");
+    };
+
+    const handleDeleteDepartment = async (d: Department) => {
+        const ok = window.confirm(`Delete department “${d.name}”? This cannot be undone.`);
+        if (!ok) return;
+
+        try {
+            setActionBusy({ id: d.id, kind: "delete" });
+            const response = await fetch(`/api/admin/departments/${d.id}`, { method: "DELETE" });
+            if (!response.ok) {
+                const data = await response.json().catch(() => ({}));
+                throw new Error(typeof data.message === "string" ? data.message : "Delete failed");
+            }
+            setDepartments((prev) => prev.filter((x) => x.id !== d.id));
+        } catch (error) {
+            console.error("Error deleting department:", error);
+            alert("Unable to delete this department. Please try again.");
+        } finally {
+            setActionBusy(null);
+        }
+    };
+
+    const handleSaveDepartment = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const employees = Math.max(0, parseInt(formValues.employees, 10) || 0);
         const payload = {
@@ -136,32 +248,30 @@ export default function DepartmentPage() {
 
         try {
             setIsSubmitting(true);
-            const response = await fetch("/api/admin/departments", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload),
-            });
+            const isEdit = editingId !== null;
+            const response = await fetch(
+                isEdit ? `/api/admin/departments/${editingId}` : "/api/admin/departments",
+                {
+                    method: isEdit ? "PUT" : "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload),
+                },
+            );
 
             if (!response.ok) {
                 throw new Error("Failed to save department");
             }
 
-            const created: DepartmentApiRow = await response.json();
-            setDepartments((prev) => [
-                ...prev,
-                {
-                    id: created.id,
-                    name: created.name,
-                    head: created.head,
-                    employees: Number(created.employees) || 0,
-                    status: created.status,
-                    budgetAmount: Number(created.budget_amount) || 0,
-                },
-            ]);
-            setIsAddModalOpen(false);
-            resetForm();
+            const saved: DepartmentApiRow = await response.json();
+            const mapped = mapApiRowToDepartment(saved);
+            if (isEdit) {
+                setDepartments((prev) => prev.map((x) => (x.id === mapped.id ? mapped : x)));
+            } else {
+                setDepartments((prev) => [...prev, mapped]);
+            }
+            closeDeptModal();
         } catch (error) {
-            console.error("Error creating department:", error);
+            console.error("Error saving department:", error);
             alert("Unable to save department right now. Please try again.");
         } finally {
             setIsSubmitting(false);
@@ -186,7 +296,7 @@ export default function DepartmentPage() {
                 </div>
                 <button
                     type="button"
-                    onClick={() => setIsAddModalOpen(true)}
+                    onClick={openAddModal}
                     disabled={isLoading}
                     className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-[#06124f] to-[#0a2a5e] hover:opacity-90 transition-opacity shadow-sm"
                 >
@@ -220,12 +330,13 @@ export default function DepartmentPage() {
                                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Department Head</th>
                                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Employees</th>
                                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
+                                <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                             {isLoading && (
                                 <tr>
-                                    <td className="px-6 py-8 text-sm text-gray-500" colSpan={4}>
+                                    <td className="px-6 py-8 text-sm text-gray-500" colSpan={5}>
                                         Loading departments...
                                     </td>
                                 </tr>
@@ -242,6 +353,52 @@ export default function DepartmentPage() {
                                             {department.status}
                                         </span>
                                     </td>
+                                    <td className="px-6 py-4 text-right">
+                                        <div className="inline-flex flex-wrap items-center justify-end gap-1.5">
+                                            <button
+                                                type="button"
+                                                onClick={() => openViewDepartment(department)}
+                                                disabled={actionBusy !== null || isSubmitting}
+                                                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                                title="View department"
+                                                aria-label="View department"
+                                            >
+                                                {actionBusy?.id === department.id && actionBusy.kind === "view" ? (
+                                                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                                                ) : (
+                                                    <Eye className="h-4 w-4" aria-hidden />
+                                                )}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => openEditDepartment(department)}
+                                                disabled={actionBusy !== null || isSubmitting}
+                                                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-[#0a2a5e] shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                                title="Edit department"
+                                                aria-label="Edit department"
+                                            >
+                                                {actionBusy?.id === department.id && actionBusy.kind === "edit" ? (
+                                                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                                                ) : (
+                                                    <Pencil className="h-4 w-4" aria-hidden />
+                                                )}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => void handleDeleteDepartment(department)}
+                                                disabled={actionBusy !== null || isSubmitting}
+                                                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-red-200 bg-red-50 text-red-700 shadow-sm transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+                                                title="Delete department"
+                                                aria-label="Delete department"
+                                            >
+                                                {actionBusy?.id === department.id && actionBusy.kind === "delete" ? (
+                                                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                                                ) : (
+                                                    <Trash2 className="h-4 w-4" aria-hidden />
+                                                )}
+                                            </button>
+                                        </div>
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>
@@ -249,14 +406,82 @@ export default function DepartmentPage() {
                 </div>
             </div>
 
-            {isAddModalOpen && (
+            {deptModalMode === "view" && viewDetail && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6">
+                    <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px]" aria-hidden onClick={closeDeptModal} />
+                    <div
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="dept-view-title"
+                        className="relative flex max-h-[min(90vh,640px)] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl"
+                    >
+                        <div className="flex shrink-0 items-center justify-between gap-4 border-b border-gray-100 px-6 py-5">
+                            <h3 id="dept-view-title" className="text-lg font-bold tracking-tight text-[#001540]">
+                                Department details
+                            </h3>
+                            <button
+                                type="button"
+                                onClick={closeDeptModal}
+                                className="shrink-0 rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+                                aria-label="Close"
+                            >
+                                <X className="h-5 w-5" strokeWidth={2} />
+                            </button>
+                        </div>
+                        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
+                            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                                <div>
+                                    <p className="text-xs font-medium text-gray-500">Department name</p>
+                                    <p className="mt-1 text-sm font-semibold text-gray-900 break-words">{viewDetail.name}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-medium text-gray-500">Status</p>
+                                    <div className="mt-1">
+                                        <DepartmentStatusViewBadge status={viewDetail.status} />
+                                    </div>
+                                </div>
+                                <div className="sm:col-span-2">
+                                    <p className="text-xs font-medium text-gray-500">Department head</p>
+                                    <p className="mt-1 text-sm font-semibold text-gray-900 break-words">{viewDetail.head}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-medium text-gray-500">Team size</p>
+                                    <p className="mt-1 text-sm font-semibold text-gray-900">{viewDetail.employees}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-medium text-gray-500">Budget</p>
+                                    <p className="mt-1 text-sm font-semibold text-gray-900">
+                                        {formatINR(viewDetail.budgetAmount)}
+                                    </p>
+                                </div>
+                                <div className="sm:col-span-2">
+                                    <p className="text-xs font-medium text-gray-500">Notes</p>
+                                    <p className="mt-1 whitespace-pre-wrap break-words text-sm font-semibold text-gray-900">
+                                        {viewDetail.notes.trim() || "—"}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="flex shrink-0 justify-end border-t border-gray-100 px-6 py-4">
+                            <button
+                                type="button"
+                                onClick={closeDeptModal}
+                                className="rounded-lg bg-[#001540] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90"
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {(deptModalMode === "add" || deptModalMode === "edit") && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6">
                     <div
                         className="absolute inset-0 bg-black/50 backdrop-blur-[2px]"
                         aria-hidden
                         onClick={() => {
-                            setIsAddModalOpen(false);
-                            resetForm();
+                            if (!isSubmitting) closeDeptModal();
                         }}
                     />
                     <div
@@ -268,15 +493,18 @@ export default function DepartmentPage() {
                         <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-[#06124f] to-[#0a2a5e] flex items-start justify-between gap-4 shrink-0">
                             <div className="min-w-0">
                                 <h3 id="add-dept-title" className="text-lg font-bold text-white">
-                                    Add Department
+                                    {deptModalMode === "edit" ? "Edit department" : "Add Department"}
                                 </h3>
-                                <p className="text-xs text-cyan-100/90 mt-0.5">Register a new department and department head.</p>
+                                <p className="text-xs text-cyan-100/90 mt-0.5">
+                                    {deptModalMode === "edit"
+                                        ? "Update department details and save changes."
+                                        : "Register a new department and department head."}
+                                </p>
                             </div>
                             <button
                                 type="button"
                                 onClick={() => {
-                                    setIsAddModalOpen(false);
-                                    resetForm();
+                                    if (!isSubmitting) closeDeptModal();
                                 }}
                                 className="shrink-0 text-white/70 hover:text-white rounded-lg p-1.5 hover:bg-white/10 transition-colors"
                                 aria-label="Close"
@@ -287,7 +515,7 @@ export default function DepartmentPage() {
                             </button>
                         </div>
 
-                        <form onSubmit={handleAddDepartment} className="p-6 overflow-y-auto flex-1 flex flex-col gap-4">
+                        <form onSubmit={handleSaveDepartment} className="p-6 overflow-y-auto flex-1 flex flex-col gap-4">
                             <div>
                                 <label htmlFor="dept-name" className="block text-sm font-semibold text-gray-700 mb-1.5">
                                     Department name
@@ -374,8 +602,7 @@ export default function DepartmentPage() {
                                 <button
                                     type="button"
                                     onClick={() => {
-                                        setIsAddModalOpen(false);
-                                        resetForm();
+                                        if (!isSubmitting) closeDeptModal();
                                     }}
                                     disabled={isSubmitting}
                                     className="px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
@@ -387,7 +614,11 @@ export default function DepartmentPage() {
                                     disabled={isSubmitting}
                                     className="px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-[#06124f] to-[#0a2a5e] hover:opacity-90 transition-opacity shadow-sm"
                                 >
-                                    {isSubmitting ? "Saving..." : "Create department"}
+                                    {isSubmitting
+                                        ? "Saving..."
+                                        : deptModalMode === "edit"
+                                          ? "Save changes"
+                                          : "Create department"}
                                 </button>
                             </div>
                         </form>

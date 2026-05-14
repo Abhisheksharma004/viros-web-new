@@ -3,7 +3,15 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+/** Pick the single best-matching sub-route (longest href) so nested paths do not highlight shorter parents. */
+function pickActiveSubHref(pathname: string | null, subs: { href: string }[]): string | null {
+    if (!pathname) return null;
+    const candidates = subs.filter((s) => pathname === s.href || pathname.startsWith(`${s.href}/`));
+    if (candidates.length === 0) return null;
+    return candidates.reduce((a, b) => (a.href.length >= b.href.length ? a : b)).href;
+}
 
 const menuItems = [
     {
@@ -40,15 +48,6 @@ const menuItems = [
                     </svg>
                 ),
                 href: "/admin-dashboard/users/add",
-            },
-            {
-                title: "Roles & Permissions",
-                icon: (
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-                    </svg>
-                ),
-                href: "/admin-dashboard/users/roles",
             },
         ],
     },
@@ -110,11 +109,10 @@ const menuItems = [
                 title: "Roles",
                 icon: (
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33h.09A1.65 1.65 0 0010 3.09V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51h.09a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v.09a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
                     </svg>
                 ),
-                href: "/admin-dashboard/users/roles",
+                href: "/admin-dashboard/roles",
             },
         ],
     },
@@ -214,6 +212,13 @@ export default function AdminSidebar({
     const pathname = usePathname();
     const [openSections, setOpenSections] = useState<string[]>([]);
 
+    useEffect(() => {
+        const titlesToOpen = menuItems
+            .filter((item) => item.subItems && pickActiveSubHref(pathname, item.subItems))
+            .map((item) => item.title);
+        setOpenSections(titlesToOpen);
+    }, [pathname]);
+
     const toggleSection = (title: string) => {
         setOpenSections((prev) =>
             prev.includes(title) ? prev.filter((t) => t !== title) : [...prev, title]
@@ -256,9 +261,8 @@ export default function AdminSidebar({
 
                 <nav className="p-4 space-y-1 overflow-y-auto h-[calc(100vh-80px)]">
                     {menuItems.map((item) => {
-                        const isItemActive = item.href
-                            ? pathname === item.href
-                            : item.subItems?.some((s) => pathname?.startsWith(s.href));
+                        const activeSubHref = item.subItems ? pickActiveSubHref(pathname, item.subItems) : null;
+                        const isItemActive = item.href ? pathname === item.href : activeSubHref !== null;
 
                         if (!item.subItems) {
                             return (
@@ -311,7 +315,7 @@ export default function AdminSidebar({
                                 {sectionOpen && (
                                     <div className="ml-4 mt-1 space-y-1">
                                         {item.subItems.map((sub) => {
-                                            const subActive = pathname === sub.href || pathname?.startsWith(sub.href + "/");
+                                            const subActive = activeSubHref === sub.href;
                                             return (
                                                 <Link
                                                     key={sub.href}
