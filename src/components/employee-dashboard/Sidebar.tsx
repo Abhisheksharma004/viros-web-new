@@ -3,7 +3,15 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+/** Longest matching sub-route wins so nested paths highlight one item only. */
+function pickActiveSubHref(pathname: string | null, subs: { href: string }[]): string | null {
+    if (!pathname) return null;
+    const candidates = subs.filter((s) => pathname === s.href || pathname.startsWith(`${s.href}/`));
+    if (candidates.length === 0) return null;
+    return candidates.reduce((a, b) => (a.href.length >= b.href.length ? a : b)).href;
+}
 
 const menuItems = [
     {
@@ -157,15 +165,22 @@ export default function EmployeeSidebar({
     const pathname = usePathname();
     const [openSections, setOpenSections] = useState<string[]>([]);
 
+    useEffect(() => {
+        for (const item of menuItems) {
+            if ("subItems" in item && item.subItems && pickActiveSubHref(pathname, item.subItems)) {
+                setOpenSections([item.title]);
+                return;
+            }
+        }
+        setOpenSections([]);
+    }, [pathname]);
+
     const toggleSection = (title: string) => {
-        setOpenSections((prev) =>
-            prev.includes(title) ? prev.filter((t) => t !== title) : [...prev, title]
-        );
+        setOpenSections((prev) => (prev.includes(title) ? [] : [title]));
     };
 
     const isActive = (href: string) => pathname === href;
-    const isSectionActive = (subItems: { href: string }[]) =>
-        subItems?.some((s) => pathname === s.href);
+    const isSectionActive = (subItems: { href: string }[]) => pickActiveSubHref(pathname, subItems) !== null;
 
     return (
         <>
@@ -244,7 +259,7 @@ export default function EmployeeSidebar({
                                         <span className="font-medium">{item.title}</span>
                                     </div>
                                     <svg
-                                        className={`w-4 h-4 transition-transform duration-200 ${sectionOpen ? "rotate-180" : ""}`}
+                                        className={`w-4 h-4 shrink-0 transition-transform duration-300 ease-in-out motion-reduce:transition-none ${sectionOpen ? "rotate-180" : ""}`}
                                         fill="none"
                                         stroke="currentColor"
                                         viewBox="0 0 24 24"
@@ -253,17 +268,25 @@ export default function EmployeeSidebar({
                                     </svg>
                                 </button>
 
-                                {sectionOpen && (
-                                    <div className="ml-4 mt-1 space-y-1">
-                                        {item.subItems.map((sub) => (
+                                <div
+                                    className={`grid transition-[grid-template-rows] duration-300 ease-in-out motion-reduce:transition-none ${
+                                        sectionOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+                                    }`}
+                                >
+                                    <div className="min-h-0 overflow-hidden">
+                                        <div className="ml-4 mt-1 space-y-1 pb-0.5">
+                                        {item.subItems.map((sub) => {
+                                            const activeHref = pickActiveSubHref(pathname, item.subItems);
+                                            const subIsActive = activeHref === sub.href;
+                                            return (
                                             <Link
                                                 key={sub.title}
                                                 href={sub.href}
                                                 onClick={onClose}
                                                 className={`
                                                     flex items-center space-x-3 px-4 py-2 rounded-lg
-                                                    transition-all duration-200
-                                                    ${isActive(sub.href)
+                                                    transition-colors duration-200
+                                                    ${subIsActive
                                                         ? "bg-[#06b6d4] text-white shadow-lg"
                                                         : "text-white/60 hover:bg-white/10 hover:text-white"}
                                                 `}
@@ -271,9 +294,11 @@ export default function EmployeeSidebar({
                                                 {sub.icon}
                                                 <span className="text-sm">{sub.title}</span>
                                             </Link>
-                                        ))}
+                                            );
+                                        })}
+                                        </div>
                                     </div>
-                                )}
+                                </div>
                             </div>
                         );
                     })}

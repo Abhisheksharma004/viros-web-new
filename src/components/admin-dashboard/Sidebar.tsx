@@ -192,6 +192,52 @@ const menuItems = [
         ],
     },
     {
+        title: "Project",
+        icon: (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+        ),
+        subItems: [
+            {
+                title: "Proposal",
+                icon: (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                ),
+                href: "/dashboard/project/proposal",
+            },
+            {
+                title: "Scope",
+                icon: (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                    </svg>
+                ),
+                href: "/dashboard/project/scope",
+            },
+            {
+                title: "Letter",
+                icon: (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 19v-8.93a2 2 0 01.89-1.664l7-4.666a2 2 0 012.22 0l7 4.666A2 2 0 0121 10.07V19M3 19a2 2 0 002 2h14a2 2 0 002-2M3 19l6.75-4.5M21 19l-6.75-4.5M3 10l6.75 4.5M21 10l-6.75 4.5m0 0l-1.14.76a2 2 0 01-2.22 0l-1.14-.76" />
+                    </svg>
+                ),
+                href: "/dashboard/project/letter",
+            },
+            {
+                title: "Offer Letter",
+                icon: (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                ),
+                href: "/dashboard/project/offer-letter",
+            },
+        ],
+    },
+    {
         title: "Website Dashboard",
         icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -213,16 +259,17 @@ export default function AdminSidebar({
     const [openSections, setOpenSections] = useState<string[]>([]);
 
     useEffect(() => {
-        const titlesToOpen = menuItems
-            .filter((item) => item.subItems && pickActiveSubHref(pathname, item.subItems))
-            .map((item) => item.title);
-        setOpenSections(titlesToOpen);
+        for (const item of menuItems) {
+            if (item.subItems && pickActiveSubHref(pathname, item.subItems)) {
+                setOpenSections([item.title]);
+                return;
+            }
+        }
+        setOpenSections([]);
     }, [pathname]);
 
     const toggleSection = (title: string) => {
-        setOpenSections((prev) =>
-            prev.includes(title) ? prev.filter((t) => t !== title) : [...prev, title]
-        );
+        setOpenSections((prev) => (prev.includes(title) ? [] : [title]));
     };
 
     return (
@@ -303,7 +350,7 @@ export default function AdminSidebar({
                                         <span className="font-medium">{item.title}</span>
                                     </div>
                                     <svg
-                                        className={`w-4 h-4 transition-transform duration-200 ${sectionOpen ? "rotate-180" : ""}`}
+                                        className={`w-4 h-4 shrink-0 transition-transform duration-300 ease-in-out motion-reduce:transition-none ${sectionOpen ? "rotate-180" : ""}`}
                                         fill="none"
                                         stroke="currentColor"
                                         viewBox="0 0 24 24"
@@ -312,8 +359,13 @@ export default function AdminSidebar({
                                     </svg>
                                 </button>
 
-                                {sectionOpen && (
-                                    <div className="ml-4 mt-1 space-y-1">
+                                <div
+                                    className={`grid transition-[grid-template-rows] duration-300 ease-in-out motion-reduce:transition-none ${
+                                        sectionOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+                                    }`}
+                                >
+                                    <div className="min-h-0 overflow-hidden">
+                                        <div className="ml-4 mt-1 space-y-1 pb-0.5">
                                         {item.subItems.map((sub) => {
                                             const subActive = activeSubHref === sub.href;
                                             return (
@@ -323,7 +375,7 @@ export default function AdminSidebar({
                                                     onClick={onClose}
                                                     className={`
                                                         flex items-center space-x-3 px-4 py-2 rounded-lg
-                                                        transition-all duration-200
+                                                        transition-colors duration-200
                                                         ${subActive
                                                             ? "bg-[#06b6d4] text-white shadow-lg"
                                                             : "text-white/60 hover:bg-white/10 hover:text-white"}
@@ -334,8 +386,9 @@ export default function AdminSidebar({
                                                 </Link>
                                             );
                                         })}
+                                        </div>
                                     </div>
-                                )}
+                                </div>
                             </div>
                         );
                     })}

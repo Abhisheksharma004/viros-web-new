@@ -317,15 +317,15 @@ export default function AdminRolesPage() {
 
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                 {roleStats.map((item) => (
-                    <div key={item.label} className="rounded-3xl border border-[#e9eef7] bg-white p-5 shadow-sm">
+                    <div key={item.label} className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
                         <p className="text-sm text-gray-500">{item.label}</p>
                         <p className={`mt-3 text-3xl font-semibold ${item.tone}`}>{item.value}</p>
                     </div>
                 ))}
             </div>
 
-            <div className="overflow-hidden rounded-3xl border border-[#e9eef7] bg-white">
-                <div className="border-b border-[#e9eef7] p-6">
+            <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+                <div className="border-b border-gray-100 p-6">
                     <p className="text-sm font-semibold text-gray-900">Role roster</p>
                     <p className="mt-1 text-sm text-gray-500">
                         {isLoading ? "Loading…" : `Showing ${roles.length} role(s).`}
