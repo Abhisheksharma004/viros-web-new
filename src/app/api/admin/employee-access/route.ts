@@ -3,8 +3,10 @@ import { NextResponse } from "next/server";
 import pool from "@/lib/db";
 import { hashPassword } from "@/lib/auth";
 import {
+    EMPLOYEE_ACCESS_DEFAULT_PASSWORD,
     EMPLOYEE_ACCESS_LIST_FROM,
     EMPLOYEE_ACCESS_LIST_SELECT,
+    employeeExists,
     ensureEmployeeAccessDependencies,
 } from "@/lib/adminEmployeeAccess";
 
@@ -53,29 +55,32 @@ export async function POST(request: Request) {
         const body = await request.json();
 
         const employeeId = str(body.employee_id);
-        const fullName = str(body.full_name);
         const password = str(body.password);
 
-        if (!employeeId || !fullName) {
-            return NextResponse.json({ message: "Employee ID and full name are required" }, { status: 400 });
+        if (!employeeId) {
+            return NextResponse.json({ message: "Employee ID is required" }, { status: 400 });
         }
 
         if (!password) {
             return NextResponse.json({ message: "Password is required" }, { status: 400 });
         }
 
-        const department = str(body.department);
-        const designation = str(body.designation);
+        if (!(await employeeExists(employeeId))) {
+            return NextResponse.json({ message: "Employee not found. Add the employee first." }, { status: 404 });
+        }
+
         const officialEmail = str(body.official_email);
         const portalStatus = pickPortalStatus(body.portal_status);
-        const passwordHash = await hashPassword(password);
+        const [passwordHash, defaultPasswordHash] = await Promise.all([
+            hashPassword(password),
+            hashPassword(EMPLOYEE_ACCESS_DEFAULT_PASSWORD),
+        ]);
 
         const [result] = await pool.query(
             `INSERT INTO admin_employee_access (
-                employee_id, full_name, department, designation, official_email,
-                portal_status, password_hash
-            ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [employeeId, fullName, department, designation, officialEmail, portalStatus, passwordHash],
+                employee_id, official_email, portal_status, default_password, password_hash
+            ) VALUES (?, ?, ?, ?, ?)`,
+            [employeeId, officialEmail, portalStatus, defaultPasswordHash, passwordHash],
         );
 
         const insertId = (result as ResultSetHeader).insertId;

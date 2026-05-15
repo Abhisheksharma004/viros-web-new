@@ -65,23 +65,12 @@ export async function PUT(request: Request, { params }: Ctx) {
         }
 
         const body = await request.json();
-        const employeeId = str(body.employee_id);
-        const fullName = str(body.full_name);
-
-        if (!employeeId || !fullName) {
-            return NextResponse.json({ message: "Employee ID and full name are required" }, { status: 400 });
-        }
-
-        const department = str(body.department);
-        const designation = str(body.designation);
         const officialEmail = str(body.official_email);
         const portalStatus = pickPortalStatus(body.portal_status);
         const password = str(body.password);
 
-        let updateSql = `UPDATE admin_employee_access
-             SET employee_id = ?, full_name = ?, department = ?, designation = ?, official_email = ?,
-                 portal_status = ?`;
-        const updateParams: unknown[] = [employeeId, fullName, department, designation, officialEmail, portalStatus];
+        let updateSql = `UPDATE admin_employee_access SET official_email = ?, portal_status = ?`;
+        const updateParams: unknown[] = [officialEmail, portalStatus];
 
         if (password) {
             const passwordHash = await hashPassword(password);

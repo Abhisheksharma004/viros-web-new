@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Check, Eye, Loader2, Pencil, Trash2, X } from "lucide-react";
-
 type EmployeeAccessStatus = "Active" | "On Leave" | "Probation" | "Inactive" | "Resigned";
 type PortalStatus = "Active" | "Disabled" | "Inactive";
 
@@ -371,11 +370,13 @@ export default function EmployeeAccessPage() {
             return;
         }
 
+        if (!isEdit && !showEmployeeDetails) {
+            alert("Please enter a valid Employee ID and wait for employee details to load.");
+            return;
+        }
+
         const payload: Record<string, string> = {
             employee_id: formValues.employeeId.trim(),
-            full_name: formValues.fullName.trim(),
-            department: formValues.department,
-            designation: formValues.role,
             official_email: formValues.email.trim(),
             portal_status: formValues.portalStatus,
         };
@@ -745,7 +746,7 @@ export default function EmployeeAccessPage() {
                                     value={formValues.fullName}
                                     onChange={handleInputChange}
                                     required
-                                    readOnly={accessModalMode === "add"}
+                                    readOnly
                                     className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e] read-only:bg-gray-50 read-only:cursor-default"
                                     placeholder="e.g. Priya Patel"
                                 />
@@ -761,7 +762,7 @@ export default function EmployeeAccessPage() {
                                     value={formValues.department}
                                     onChange={handleInputChange}
                                     required
-                                    readOnly={accessModalMode === "add"}
+                                    readOnly
                                     className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e] read-only:bg-gray-50 read-only:cursor-default"
                                     placeholder="Department"
                                 />
@@ -777,7 +778,7 @@ export default function EmployeeAccessPage() {
                                     value={formValues.role}
                                     onChange={handleInputChange}
                                     required
-                                    readOnly={accessModalMode === "add"}
+                                    readOnly
                                     className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e] read-only:bg-gray-50 read-only:cursor-default"
                                     placeholder="Role"
                                 />
