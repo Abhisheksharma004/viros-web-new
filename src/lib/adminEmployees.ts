@@ -1,6 +1,18 @@
 import pool from "@/lib/db";
 
+let ensureEmployeesTablePromise: Promise<void> | null = null;
+
 export async function ensureAdminEmployeesTable() {
+    if (!ensureEmployeesTablePromise) {
+        ensureEmployeesTablePromise = runEnsureAdminEmployeesTable().catch((error) => {
+            ensureEmployeesTablePromise = null;
+            throw error;
+        });
+    }
+    await ensureEmployeesTablePromise;
+}
+
+async function runEnsureAdminEmployeesTable() {
     await pool.query(`
         CREATE TABLE IF NOT EXISTS admin_employees (
             id INT AUTO_INCREMENT PRIMARY KEY,
