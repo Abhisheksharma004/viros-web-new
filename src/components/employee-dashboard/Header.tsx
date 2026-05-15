@@ -2,7 +2,33 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+
+const PAGE_HEADERS: Record<string, { title: string; subtitle?: string }> = {
+    "/employee-dashboard": {
+        title: "Employee Portal",
+        subtitle: "Welcome to your workspace",
+    },
+    "/employee-dashboard/profile": {
+        title: "My Profile",
+        subtitle: "Your personal and work information on file",
+    },
+    "/employee-dashboard/change-password": {
+        title: "Change password",
+        subtitle: "Update your portal login password",
+    },
+};
+
+function getPageHeader(pathname: string) {
+    if (PAGE_HEADERS[pathname]) return PAGE_HEADERS[pathname];
+
+    const match = Object.entries(PAGE_HEADERS)
+        .filter(([path]) => path !== "/employee-dashboard")
+        .sort((a, b) => b[0].length - a[0].length)
+        .find(([path]) => pathname === path || pathname.startsWith(`${path}/`));
+
+    return match?.[1] ?? PAGE_HEADERS["/employee-dashboard"];
+}
 
 type EmployeeSession = {
     name: string;
@@ -28,6 +54,8 @@ export default function EmployeeHeader({ onMenuClick }: { onMenuClick: () => voi
     const [showNotifications, setShowNotifications] = useState(false);
     const [employee, setEmployee] = useState<EmployeeSession | null>(null);
     const router = useRouter();
+    const pathname = usePathname();
+    const pageHeader = useMemo(() => getPageHeader(pathname), [pathname]);
 
     useEffect(() => {
         let active = true;
@@ -84,7 +112,7 @@ export default function EmployeeHeader({ onMenuClick }: { onMenuClick: () => voi
 
     return (
         <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
-            <div className="flex items-center justify-between px-4 py-5">
+            <div className="flex items-center justify-between gap-2 px-3 py-3 sm:px-4 sm:py-5">
                 {/* Left: Hamburger */}
                 <button
                     onClick={onMenuClick}
@@ -95,9 +123,14 @@ export default function EmployeeHeader({ onMenuClick }: { onMenuClick: () => voi
                     </svg>
                 </button>
 
-                {/* Center: Title */}
-                <div className="flex-1 px-4">
-                    <h1 className="text-xl font-bold text-gray-900 hidden sm:block">Employee Portal</h1>
+                {/* Center: Page title */}
+                <div className="flex-1 min-w-0 px-2 sm:px-4">
+                    <h1 className="text-base sm:text-xl font-bold text-gray-900 truncate">{pageHeader.title}</h1>
+                    {pageHeader.subtitle ? (
+                        <p className="text-xs sm:text-sm text-gray-500 mt-0.5 line-clamp-2 sm:line-clamp-1 sm:truncate">
+                            {pageHeader.subtitle}
+                        </p>
+                    ) : null}
                 </div>
 
                 {/* Right */}
