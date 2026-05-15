@@ -1,41 +1,61 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
 export function middleware(request: NextRequest) {
-    const token = request.cookies.get('auth_token')?.value;
+    const adminToken = request.cookies.get("auth_token")?.value;
+    const employeeToken = request.cookies.get("employee_auth_token")?.value;
+    const pathname = request.nextUrl.pathname;
 
-    // Paths that require authentication
-    const isProtectedPath =
-        request.nextUrl.pathname.startsWith('/dashboard') ||
-        request.nextUrl.pathname.startsWith('/admin-dashboard');
+    const isAdminProtected = pathname.startsWith("/admin-dashboard");
+    const isEmployeeProtected = pathname.startsWith("/employee-dashboard");
+    const isLegacyDashboardProtected = pathname.startsWith("/dashboard");
 
-    // Paths that should not be accessible if already logged in
-    const isAuthPath =
-        request.nextUrl.pathname.startsWith('/login') ||
-        request.nextUrl.pathname.startsWith('/admin-login');
+    const isAuthPath = pathname.startsWith("/login") || pathname.startsWith("/admin-login");
 
-    if (isProtectedPath && !token) {
-        const loginTarget = request.nextUrl.pathname.startsWith('/admin-dashboard') ? '/admin-login' : '/login';
-        return NextResponse.redirect(new URL(loginTarget, request.url));
+    if (isAdminProtected && !adminToken) {
+        return NextResponse.redirect(new URL("/admin-login", request.url));
     }
 
-    if (isAuthPath && token) {
-        const redirectTarget = request.nextUrl.pathname.startsWith('/admin-login') ? '/admin-dashboard' : '/dashboard';
-        return NextResponse.redirect(new URL(redirectTarget, request.url));
+    if (isEmployeeProtected && !employeeToken) {
+        return NextResponse.redirect(new URL("/admin-login", request.url));
+    }
+
+    if (isLegacyDashboardProtected && !adminToken) {
+        return NextResponse.redirect(new URL("/login", request.url));
+    }
+
+    if (isAuthPath) {
+        if (pathname.startsWith("/admin-login")) {
+            if (employeeToken) {
+                return NextResponse.redirect(new URL("/employee-dashboard", request.url));
+            }
+            if (adminToken) {
+                return NextResponse.redirect(new URL("/admin-dashboard", request.url));
+            }
+        } else if (adminToken) {
+            return NextResponse.redirect(new URL("/dashboard", request.url));
+        } else if (employeeToken) {
+            return NextResponse.redirect(new URL("/employee-dashboard", request.url));
+        }
     }
 
     const response = NextResponse.next();
 
-    // Prevent browser from serving cached auth pages when navigating back.
     if (isAuthPath) {
-        response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
-        response.headers.set('Pragma', 'no-cache');
-        response.headers.set('Expires', '0');
+        response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
+        response.headers.set("Pragma", "no-cache");
+        response.headers.set("Expires", "0");
     }
 
     return response;
 }
 
 export const config = {
-    matcher: ['/dashboard/:path*', '/admin-dashboard/:path*', '/login', '/admin-login'],
+    matcher: [
+        "/dashboard/:path*",
+        "/admin-dashboard/:path*",
+        "/employee-dashboard/:path*",
+        "/login",
+        "/admin-login",
+    ],
 };

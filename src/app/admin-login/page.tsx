@@ -19,7 +19,7 @@ const FEATURES = [
 export default function AdminLoginPage() {
     const router = useRouter();
     const [showPassword, setShowPassword] = useState(false);
-    const [formValues, setFormValues] = useState({ email: "", password: "" });
+    const [formValues, setFormValues] = useState({ identifier: "", password: "" });
     const [rememberMe, setRememberMe] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -29,17 +29,23 @@ export default function AdminLoginPage() {
 
         const redirectIfAuthenticated = async () => {
             try {
-                const response = await fetch("/api/auth/me", {
-                    method: "GET",
-                    cache: "no-store",
-                });
+                const [employeeRes, adminRes] = await Promise.all([
+                    fetch("/api/employee-auth/me", { method: "GET", cache: "no-store" }),
+                    fetch("/api/auth/me", { method: "GET", cache: "no-store" }),
+                ]);
 
-                if (!active || !response.ok) {
+                if (!active) return;
+
+                if (employeeRes.ok) {
+                    router.replace("/employee-dashboard");
+                    router.refresh();
                     return;
                 }
 
-                router.replace("/admin-dashboard");
-                router.refresh();
+                if (adminRes.ok) {
+                    router.replace("/admin-dashboard");
+                    router.refresh();
+                }
             } catch {
                 // User is not authenticated or network failed; keep login page.
             }
@@ -80,11 +86,9 @@ export default function AdminLoginPage() {
         try {
             const response = await fetch("/api/login", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    email: formValues.email.trim(),
+                    identifier: formValues.identifier.trim(),
                     password: formValues.password,
                     rememberMe,
                 }),
@@ -96,7 +100,9 @@ export default function AdminLoginPage() {
                 throw new Error(data.message || "Invalid credentials");
             }
 
-            router.push("/admin-dashboard");
+            const destination = data.role === "employee" ? "/employee-dashboard" : "/admin-dashboard";
+            router.push(destination);
+            router.refresh();
         } catch (err) {
             const message = err instanceof Error ? err.message : "Login failed";
             setError(message);
@@ -239,15 +245,17 @@ export default function AdminLoginPage() {
                             </div>
                         )}
 
-                        {/* Email */}
+                        {/* Identifier */}
                         <div>
-                            <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-1.5">Email Address</label>
+                            <label htmlFor="identifier" className="block text-sm font-semibold text-gray-700 mb-1.5">
+                                Employee ID or Email
+                            </label>
                             <input
-                                id="email"
-                                type="email"
-                                placeholder="Enter your email"
-                                autoComplete="email"
-                                value={formValues.email}
+                                id="identifier"
+                                type="text"
+                                placeholder="e.g. EMP001 or name@company.com"
+                                autoComplete="username"
+                                value={formValues.identifier}
                                 onChange={handleInput}
                                 required
                                 className="w-full px-4 bg-gray-50 border border-gray-200 rounded-2xl text-sm text-gray-800 placeholder-gray-400 outline-none transition-all"

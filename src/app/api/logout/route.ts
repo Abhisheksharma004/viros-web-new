@@ -9,16 +9,18 @@ export async function POST() {
     // Match login cookie options so deletion is reliable.
     const isSecure = process.env.NEXT_PUBLIC_SITE_URL?.startsWith("https://") || false;
 
-    response.cookies.set({
-        name: "auth_token",
-        value: "",
-        httpOnly: true,
-        secure: isSecure,
-        sameSite: "lax",
-        path: "/",
-        maxAge: 0,
-        expires: new Date(0),
-    });
+    for (const name of ["auth_token", "employee_auth_token"]) {
+        response.cookies.set({
+            name,
+            value: "",
+            httpOnly: true,
+            secure: isSecure,
+            sameSite: "lax",
+            path: "/",
+            maxAge: 0,
+            expires: new Date(0),
+        });
+    }
 
     return response;
 }

@@ -20,15 +20,6 @@ type DeptModalMode = "add" | "edit" | "view" | null;
 
 type RowActionBusy = { id: number; kind: "view" | "edit" | "delete" } | null;
 
-const initialDepartments: Department[] = [
-    { id: 1, name: "Sales", head: "Rahul Sharma", employees: 12, status: "Active", budgetAmount: 0 },
-    { id: 2, name: "IT", head: "Amit Kumar", employees: 10, status: "Active", budgetAmount: 0 },
-    { id: 3, name: "HR", head: "Priya Patel", employees: 6, status: "Active", budgetAmount: 0 },
-    { id: 4, name: "Marketing", head: "Sneha Joshi", employees: 8, status: "Active", budgetAmount: 0 },
-    { id: 5, name: "Finance", head: "Vikram Singh", employees: 7, status: "Active", budgetAmount: 0 },
-    { id: 6, name: "Operations", head: "Neha Verma", employees: 5, status: "Growing", budgetAmount: 0 },
-];
-
 type DepartmentApiRow = {
     id: number;
     name: string;
@@ -90,7 +81,7 @@ function DepartmentStatusViewBadge({ status }: { status: DepartmentStatus }) {
 }
 
 export default function DepartmentPage() {
-    const [departments, setDepartments] = useState<Department[]>(initialDepartments);
+    const [departments, setDepartments] = useState<Department[]>([]);
     const [deptModalMode, setDeptModalMode] = useState<DeptModalMode>(null);
     const [editingId, setEditingId] = useState<number | null>(null);
     const [viewDetail, setViewDetail] = useState<DepartmentDetail | null>(null);
@@ -111,17 +102,20 @@ export default function DepartmentPage() {
             try {
                 setLoadError("");
                 const response = await fetch("/api/admin/departments", { cache: "no-store" });
+                const data = await response.json().catch(() => ({}));
+
                 if (!response.ok) {
-                    throw new Error("Failed to fetch department data");
+                    const msg = typeof data?.message === "string" ? data.message : "Failed to fetch department data";
+                    throw new Error(msg);
                 }
 
-                const rows: DepartmentApiRow[] = await response.json();
-                const mapped = rows.map(mapApiRowToDepartment);
-                setDepartments(mapped);
+                const rows: DepartmentApiRow[] = Array.isArray(data) ? data : [];
+                setDepartments(rows.map(mapApiRowToDepartment));
             } catch (error) {
                 console.error("Error loading departments:", error);
-                setLoadError("Unable to load departments from database. Showing sample data.");
-                setDepartments(initialDepartments);
+                const message = error instanceof Error ? error.message : "Failed to fetch department data";
+                setLoadError(message);
+                setDepartments([]);
             } finally {
                 setIsLoading(false);
             }
@@ -341,7 +335,15 @@ export default function DepartmentPage() {
                                     </td>
                                 </tr>
                             )}
-                            {departments.map((department) => (
+                            {!isLoading && departments.length === 0 && (
+                                <tr>
+                                    <td className="px-6 py-8 text-sm text-gray-500" colSpan={5}>
+                                        {loadError || "No departments yet. Add a department to get started."}
+                                    </td>
+                                </tr>
+                            )}
+                            {!isLoading &&
+                                departments.map((department) => (
                                 <tr key={department.id} className="hover:bg-gray-50 transition-colors">
                                     <td className="px-6 py-4 text-sm font-semibold text-gray-900">{department.name}</td>
                                     <td className="px-6 py-4 text-sm text-gray-700">{department.head}</td>

@@ -1,39 +1,32 @@
+import type { ResultSetHeader, RowDataPacket } from "mysql2";
 import { NextResponse } from "next/server";
 import pool from "@/lib/db";
+import { DEPARTMENT_LIST_COLUMNS, ensureAdminDepartmentsTable } from "@/lib/adminDepartments";
 
-async function ensureAdminDepartmentsTable() {
-    await pool.query(`
-        CREATE TABLE IF NOT EXISTS admin_departments (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            name VARCHAR(255) NOT NULL,
-            head VARCHAR(255) NOT NULL,
-            employees INT NOT NULL DEFAULT 0,
-            status ENUM('Active', 'Growing', 'On Hold', 'Planned', 'Inactive') NOT NULL DEFAULT 'Active',
-            budget_amount DECIMAL(12,2) NOT NULL DEFAULT 0,
-            notes TEXT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-        )
-    `);
-}
+const ALLOWED_STATUSES = ["Active", "Growing", "On Hold", "Planned", "Inactive"] as const;
 
 export async function GET() {
     try {
         await ensureAdminDepartmentsTable();
         const [rows] = await pool.query(
-            "SELECT id, name, head, employees, status, budget_amount FROM admin_departments ORDER BY created_at ASC"
+            `SELECT ${DEPARTMENT_LIST_COLUMNS} FROM admin_departments ORDER BY created_at ASC`,
         );
-        return NextResponse.json(rows, {
+
+        const list = (rows as RowDataPacket[]).map((row) => ({
+            ...row,
+            employees: Number(row.employees) || 0,
+            budget_amount: Number(row.budget_amount) || 0,
+        }));
+
+        return NextResponse.json(list, {
             headers: {
                 "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
             },
         });
-    } catch (error: any) {
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : "Unknown error";
         console.error("Error fetching admin departments:", error);
-        return NextResponse.json(
-            { message: "Failed to fetch departments", error: error.message },
-            { status: 500 }
-        );
+        return NextResponse.json({ message: "Failed to fetch departments", error: message }, { status: 500 });
     }
 }
 
@@ -41,36 +34,41 @@ export async function POST(request: Request) {
     try {
         await ensureAdminDepartmentsTable();
         const body = await request.json();
-        const { name, head, employees, status, notes } = body;
+        const name = typeof body.name === "string" ? body.name.trim() : "";
+        const head = typeof body.head === "string" ? body.head.trim() : "";
 
         if (!name || !head) {
-            return NextResponse.json(
-                { message: "Department name and head are required" },
-                { status: 400 }
-            );
+            return NextResponse.json({ message: "Department name and head are required" }, { status: 400 });
         }
 
-        const safeEmployees = Number.isFinite(Number(employees)) ? Math.max(0, Number(employees)) : 0;
-        const allowedStatuses = ["Active", "Growing", "On Hold", "Planned", "Inactive"];
-        const safeStatus = allowedStatuses.includes(status) ? status : "Active";
+        const safeEmployees = Number.isFinite(Number(body.employees)) ? Math.max(0, Number(body.employees)) : 0;
+        const safeStatus = ALLOWED_STATUSES.includes(body.status) ? body.status : "Active";
+        const notes = typeof body.notes === "string" ? body.notes : null;
 
-        const [result]: any = await pool.query(
+        const [result] = await pool.query(
             `INSERT INTO admin_departments (name, head, employees, status, budget_amount, notes)
              VALUES (?, ?, ?, ?, ?, ?)`,
-            [name, head, safeEmployees, safeStatus, 0, notes || null]
+            [name, head, safeEmployees, safeStatus, 0, notes],
         );
 
-        const [rows]: any = await pool.query(
-            "SELECT id, name, head, employees, status, budget_amount FROM admin_departments WHERE id = ?",
-            [result.insertId]
+        const insertId = (result as ResultSetHeader).insertId;
+        const [rows] = await pool.query(
+            `SELECT ${DEPARTMENT_LIST_COLUMNS} FROM admin_departments WHERE id = ?`,
+            [insertId],
         );
 
-        return NextResponse.json(rows[0], { status: 201 });
-    } catch (error: any) {
-        console.error("Error creating admin department:", error);
+        const row = (rows as RowDataPacket[])[0];
         return NextResponse.json(
-            { message: "Failed to create department", error: error.message },
-            { status: 500 }
+            {
+                ...row,
+                employees: Number(row.employees) || 0,
+                budget_amount: Number(row.budget_amount) || 0,
+            },
+            { status: 201 },
         );
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        console.error("Error creating admin department:", error);
+        return NextResponse.json({ message: "Failed to create department", error: message }, { status: 500 });
     }
 }

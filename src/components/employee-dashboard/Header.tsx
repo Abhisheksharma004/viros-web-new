@@ -1,13 +1,61 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+
+type EmployeeSession = {
+    name: string;
+    employeeId: string;
+    email: string;
+};
+
+function displayName(session: EmployeeSession | null): string {
+    if (!session) return "Employee";
+    const name = session.name.trim();
+    if (name) return name;
+    if (session.employeeId.trim()) return session.employeeId;
+    return "Employee";
+}
+
+function avatarInitial(session: EmployeeSession | null): string {
+    const label = displayName(session);
+    return label.charAt(0).toUpperCase() || "E";
+}
 
 export default function EmployeeHeader({ onMenuClick }: { onMenuClick: () => void }) {
     const [showProfileMenu, setShowProfileMenu] = useState(false);
     const [showNotifications, setShowNotifications] = useState(false);
+    const [employee, setEmployee] = useState<EmployeeSession | null>(null);
     const router = useRouter();
+
+    useEffect(() => {
+        let active = true;
+
+        const loadEmployee = async () => {
+            try {
+                const response = await fetch("/api/employee-auth/me", { cache: "no-store" });
+                if (!response.ok || !active) return;
+
+                const data = await response.json();
+                setEmployee({
+                    name: typeof data.name === "string" ? data.name : "",
+                    employeeId: typeof data.employeeId === "string" ? data.employeeId : "",
+                    email: typeof data.email === "string" ? data.email : "",
+                });
+            } catch {
+                // Keep fallback label if session fetch fails.
+            }
+        };
+
+        void loadEmployee();
+        return () => {
+            active = false;
+        };
+    }, []);
+
+    const employeeName = useMemo(() => displayName(employee), [employee]);
+    const initial = useMemo(() => avatarInitial(employee), [employee]);
 
     const notifications = [
         { text: "Your leave request has been approved", time: "30 min ago", unread: true },
@@ -99,12 +147,10 @@ export default function EmployeeHeader({ onMenuClick }: { onMenuClick: () => voi
                             onClick={() => { setShowProfileMenu(!showProfileMenu); setShowNotifications(false); }}
                             className="flex items-center space-x-2 text-gray-700 hover:text-gray-900"
                         >
-                            <div
-                                className="w-8 h-8 bg-linear-to-r from-[#06b6d4] to-[#06124f] rounded-full flex items-center justify-center text-white text-sm font-bold"
-                            >
-                                E
+                            <div className="w-8 h-8 bg-gradient-to-r from-[#06b6d4] to-[#06124f] rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0">
+                                {initial}
                             </div>
-                            <span className="hidden sm:block font-medium">Employee</span>
+                            <span className="hidden sm:block font-medium max-w-[140px] truncate">{employeeName}</span>
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                             </svg>
@@ -115,8 +161,10 @@ export default function EmployeeHeader({ onMenuClick }: { onMenuClick: () => voi
                                 <div className="fixed inset-0 z-10" onClick={() => setShowProfileMenu(false)} />
                                 <div className="absolute right-0 mt-2 w-52 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
                                     <div className="px-4 py-2.5 border-b border-gray-200">
-                                        <p className="text-sm font-bold text-gray-900">Employee</p>
-                                        <p className="text-xs text-gray-400">Staff Member</p>
+                                        <p className="text-sm font-bold text-gray-900 truncate">{employeeName}</p>
+                                        <p className="text-xs text-gray-400 truncate">
+                                            {employee?.employeeId || "Staff Member"}
+                                        </p>
                                     </div>
                                     <Link
                                         href="/employee-dashboard/profile"

@@ -1,22 +1,9 @@
 import type { ResultSetHeader, RowDataPacket } from "mysql2";
 import { NextResponse } from "next/server";
 import pool from "@/lib/db";
+import { DEPARTMENT_LIST_COLUMNS, ensureAdminDepartmentsTable } from "@/lib/adminDepartments";
 
-async function ensureAdminDepartmentsTable() {
-    await pool.query(`
-        CREATE TABLE IF NOT EXISTS admin_departments (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            name VARCHAR(255) NOT NULL,
-            head VARCHAR(255) NOT NULL,
-            employees INT NOT NULL DEFAULT 0,
-            status ENUM('Active', 'Growing', 'On Hold', 'Planned', 'Inactive') NOT NULL DEFAULT 'Active',
-            budget_amount DECIMAL(12,2) NOT NULL DEFAULT 0,
-            notes TEXT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-        )
-    `);
-}
+const ALLOWED_STATUSES = ["Active", "Growing", "On Hold", "Planned", "Inactive"] as const;
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -30,16 +17,20 @@ export async function GET(_request: Request, { params }: Ctx) {
         }
 
         const [rows] = await pool.query(
-            "SELECT id, name, head, employees, status, budget_amount, notes FROM admin_departments WHERE id = ? LIMIT 1",
+            `SELECT ${DEPARTMENT_LIST_COLUMNS}, notes FROM admin_departments WHERE id = ? LIMIT 1`,
             [id],
         );
-        const list = rows as RowDataPacket[];
-        const row = list[0];
+
+        const row = (rows as RowDataPacket[])[0];
         if (!row) {
             return NextResponse.json({ message: "Department not found" }, { status: 404 });
         }
 
-        return NextResponse.json(row);
+        return NextResponse.json({
+            ...row,
+            employees: Number(row.employees) || 0,
+            budget_amount: Number(row.budget_amount) || 0,
+        });
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : "Unknown error";
         console.error("Error fetching admin department:", error);
@@ -57,21 +48,22 @@ export async function PUT(request: Request, { params }: Ctx) {
         }
 
         const body = await request.json();
-        const { name, head, employees, status, notes } = body;
+        const name = typeof body.name === "string" ? body.name.trim() : "";
+        const head = typeof body.head === "string" ? body.head.trim() : "";
 
         if (!name || !head) {
             return NextResponse.json({ message: "Department name and head are required" }, { status: 400 });
         }
 
-        const safeEmployees = Number.isFinite(Number(employees)) ? Math.max(0, Number(employees)) : 0;
-        const allowedStatuses = ["Active", "Growing", "On Hold", "Planned", "Inactive"];
-        const safeStatus = allowedStatuses.includes(status) ? status : "Active";
+        const safeEmployees = Number.isFinite(Number(body.employees)) ? Math.max(0, Number(body.employees)) : 0;
+        const safeStatus = ALLOWED_STATUSES.includes(body.status) ? body.status : "Active";
+        const notes = typeof body.notes === "string" ? body.notes : null;
 
         const [result] = await pool.query(
             `UPDATE admin_departments
              SET name = ?, head = ?, employees = ?, status = ?, notes = ?
              WHERE id = ?`,
-            [name, head, safeEmployees, safeStatus, notes || null, id],
+            [name, head, safeEmployees, safeStatus, notes, id],
         );
 
         const affected = (result as ResultSetHeader).affectedRows;
@@ -80,11 +72,16 @@ export async function PUT(request: Request, { params }: Ctx) {
         }
 
         const [rows] = await pool.query(
-            "SELECT id, name, head, employees, status, budget_amount FROM admin_departments WHERE id = ?",
+            `SELECT ${DEPARTMENT_LIST_COLUMNS} FROM admin_departments WHERE id = ?`,
             [id],
         );
+
         const updated = (rows as RowDataPacket[])[0];
-        return NextResponse.json(updated);
+        return NextResponse.json({
+            ...updated,
+            employees: Number(updated.employees) || 0,
+            budget_amount: Number(updated.budget_amount) || 0,
+        });
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : "Unknown error";
         console.error("Error updating admin department:", error);

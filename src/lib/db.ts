@@ -7,18 +7,16 @@ const pool = mysql.createPool({
     database: process.env.DB_NAME || 'viros_website',
     port: parseInt(process.env.DB_PORT || '3306'),
     waitForConnections: true,
-    connectionLimit: 10,
+    connectionLimit: 20,
     queueLimit: 0,
     connectTimeout: 10000, // 10 seconds
     enableKeepAlive: true,
     keepAliveInitialDelay: 10000, // 10 seconds
 });
 
-// Handle pool errors
-pool.on('connection', (connection) => {
-    console.log('New database connection established');
-    connection.on('error', (err) => {
-        console.error('Database connection error:', err);
+pool.on("connection", (connection) => {
+    connection.on("error", (err) => {
+        console.error("Database connection error:", err);
     });
 });
 
