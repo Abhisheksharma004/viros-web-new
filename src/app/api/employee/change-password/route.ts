@@ -1,8 +1,13 @@
-import type { ResultSetHeader } from "mysql2";
+import type { ResultSetHeader, RowDataPacket } from "mysql2";
 import { NextResponse } from "next/server";
 import pool from "@/lib/db";
 import { comparePassword, hashPassword } from "@/lib/auth";
 import { getEmployeeSession } from "@/lib/employeeSession";
+
+type AccessPasswordRow = RowDataPacket & {
+    password_hash: string;
+    default_password: string;
+};
 
 export async function POST(request: Request) {
     try {
@@ -23,7 +28,7 @@ export async function POST(request: Request) {
             return NextResponse.json({ message: "New password must be at least 6 characters" }, { status: 400 });
         }
 
-        const [rows] = await pool.query<{ password_hash: string; default_password: string }[]>(
+        const [rows] = await pool.query<AccessPasswordRow[]>(
             `SELECT password_hash, default_password FROM admin_employee_access WHERE employee_id = ? LIMIT 1`,
             [session.employeeId],
         );

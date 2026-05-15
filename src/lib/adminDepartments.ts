@@ -1,9 +1,12 @@
+import type { RowDataPacket } from "mysql2";
 import pool from "@/lib/db";
 
 const TABLE = "admin_departments";
 
+type ColumnNameRow = RowDataPacket & { COLUMN_NAME: string };
+
 async function getExistingColumns(): Promise<Set<string>> {
-    const [rows] = await pool.query<{ COLUMN_NAME: string }[]>(
+    const [rows] = await pool.query<ColumnNameRow[]>(
         `SELECT COLUMN_NAME
          FROM information_schema.COLUMNS
          WHERE TABLE_SCHEMA = DATABASE()

@@ -19,8 +19,10 @@ const ALLOWED_COLUMNS = new Set([
     "created_at",
 ]);
 
+type ColumnNameRow = RowDataPacket & { COLUMN_NAME: string };
+
 async function getExistingColumns(table: string): Promise<Set<string>> {
-    const [rows] = await pool.query<{ COLUMN_NAME: string }[]>(
+    const [rows] = await pool.query<ColumnNameRow[]>(
         `SELECT COLUMN_NAME
          FROM information_schema.COLUMNS
          WHERE TABLE_SCHEMA = DATABASE()
