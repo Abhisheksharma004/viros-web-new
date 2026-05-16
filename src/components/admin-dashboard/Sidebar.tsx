@@ -65,20 +65,6 @@ const menuItems = [
                 href: "/admin-dashboard/add-asset",
             },
             {
-                title: "Verify Asset",
-                icon: (
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                    </svg>
-                ),
-                href: "/admin-dashboard/amc/verify-assets",
-            },
-            {
                 title: "AMC Report",
                 icon: (
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -391,7 +377,7 @@ export default function AdminSidebar({
                     </button>
                 </div>
 
-                <nav className="p-4 space-y-1 overflow-y-auto h-[calc(100vh-80px)]">
+                <nav className="admin-sidebar-scroll h-[calc(100vh-80px)] space-y-1 overflow-y-auto p-4 pr-2">
                     {menuItems.map((item) => {
                         const activeSubHref = item.subItems ? pickActiveSubHref(pathname, item.subItems) : null;
                         const isItemActive = item.href ? pathname === item.href : activeSubHref !== null;
