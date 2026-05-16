@@ -257,15 +257,15 @@ export default function AssetBarcodeScanner({ onScan, onClose, disabled }: Asset
     const busy = isStarting || isSwitching;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6">
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-[1px]" aria-hidden onClick={onClose} />
+        <div className="fixed inset-0 z-50 flex flex-col bg-black sm:items-center sm:justify-center sm:bg-black/60 sm:p-4 sm:backdrop-blur-[1px]">
+            <div className="absolute inset-0 hidden sm:block" aria-hidden onClick={onClose} />
             <div
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="barcode-scanner-title"
-                className="relative w-full max-w-md overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl"
+                className="relative flex h-full w-full flex-col overflow-hidden bg-white sm:h-auto sm:max-h-[min(100dvh,640px)] sm:max-w-md sm:rounded-2xl sm:border sm:border-gray-200 sm:shadow-2xl"
             >
-                <div className="flex items-center justify-between gap-3 border-b border-gray-100 px-4 py-3">
+                <div className="flex shrink-0 items-center justify-between gap-3 border-b border-gray-100 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] sm:pt-3">
                     <h3 id="barcode-scanner-title" className="text-base font-bold text-gray-900 flex items-center gap-2">
                         <ScanLine className="h-5 w-5 text-[#0d4f3c]" aria-hidden />
                         Scan asset barcode
@@ -273,28 +273,28 @@ export default function AssetBarcodeScanner({ onScan, onClose, disabled }: Asset
                     <button
                         type="button"
                         onClick={onClose}
-                        className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                        className="flex min-h-[2.75rem] min-w-[2.75rem] items-center justify-center rounded-xl p-2.5 text-gray-500 touch-manipulation transition hover:bg-gray-100 hover:text-gray-700 active:scale-95"
                         aria-label="Close scanner"
                     >
-                        <X className="h-5 w-5" />
+                        <X className="h-6 w-6" />
                     </button>
                 </div>
 
-                <div className="relative bg-gray-900">
+                <div className="relative flex min-h-0 flex-1 flex-col bg-gray-900 sm:flex-none">
                     <div
                         id={containerId}
-                        className={`min-h-[280px] w-full [&_video]:!object-cover ${busy ? "invisible" : ""}`}
+                        className={`min-h-0 flex-1 w-full sm:min-h-[280px] [&_video]:!h-full [&_video]:!w-full [&_video]:!object-cover ${busy ? "invisible" : ""}`}
                     />
                     {busy && !cameraError ? (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-gray-900 text-white min-h-[280px]">
+                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-gray-900 text-white">
                             <Loader2 className="h-8 w-8 animate-spin" aria-hidden />
                             <p className="text-sm">{isSwitching ? "Switching camera…" : "Starting camera…"}</p>
                         </div>
                     ) : null}
                     {cameraError ? (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-gray-900/90 px-6 text-center text-white min-h-[280px]">
+                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-gray-900/90 px-6 text-center text-white">
                             <Camera className="h-10 w-10 text-white/70" aria-hidden />
-                            <p className="text-sm">{cameraError}</p>
+                            <p className="max-w-xs text-sm">{cameraError}</p>
                         </div>
                     ) : null}
 
@@ -303,16 +303,19 @@ export default function AssetBarcodeScanner({ onScan, onClose, disabled }: Asset
                             type="button"
                             onClick={() => void switchCamera()}
                             disabled={isSwitching || disabled}
-                            className="absolute bottom-3 right-3 inline-flex items-center gap-2 rounded-full bg-black/55 px-3 py-2 text-xs font-semibold text-white backdrop-blur-sm transition hover:bg-black/70 disabled:opacity-50"
+                            className="absolute bottom-4 right-4 inline-flex min-h-[3rem] items-center gap-2 rounded-full bg-black/60 px-4 py-3 text-sm font-semibold text-white backdrop-blur-sm transition touch-manipulation hover:bg-black/75 active:scale-95 disabled:opacity-50 sm:bottom-3 sm:right-3 sm:min-h-0 sm:px-3 sm:py-2 sm:text-xs"
                             aria-label={`Switch camera. Currently using ${activeLabel} camera`}
                         >
-                            <SwitchCamera className="h-4 w-4 shrink-0" aria-hidden />
+                            <SwitchCamera className="h-5 w-5 shrink-0 sm:h-4 sm:w-4" aria-hidden />
                             {activeLabel}
                         </button>
                     ) : null}
                 </div>
 
-                <p className="px-4 py-3 text-xs text-gray-500 border-t border-gray-100">
+                <p
+                    className="shrink-0 border-t border-gray-100 px-4 py-3 text-center text-xs text-gray-500 sm:text-left"
+                    style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
+                >
                     Point the camera at the asset tag or barcode.
                     {cameras.length > 1 ? " Tap the camera button to switch between front and back." : ""}
                 </p>

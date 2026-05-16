@@ -57,6 +57,22 @@ async function runEnsureAdminAmcAssetsTable() {
             column: "updated_at",
             sql: `ALTER TABLE ${TABLE} ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`,
         },
+        {
+            column: "user_known_issue",
+            sql: `ALTER TABLE ${TABLE} ADD COLUMN user_known_issue TEXT NULL AFTER status`,
+        },
+        {
+            column: "user_issue_reporting_date",
+            sql: `ALTER TABLE ${TABLE} ADD COLUMN user_issue_reporting_date DATE NULL AFTER user_known_issue`,
+        },
+        {
+            column: "engineer_remarks",
+            sql: `ALTER TABLE ${TABLE} ADD COLUMN engineer_remarks TEXT NULL AFTER user_issue_reporting_date`,
+        },
+        {
+            column: "engineer_remarks_date_time",
+            sql: `ALTER TABLE ${TABLE} ADD COLUMN engineer_remarks_date_time TIMESTAMP NULL AFTER engineer_remarks`,
+        },
     ];
 
     for (const migration of migrations) {

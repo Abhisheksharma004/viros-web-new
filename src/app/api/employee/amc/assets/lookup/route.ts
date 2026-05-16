@@ -2,11 +2,13 @@ import type { RowDataPacket } from "mysql2";
 import { NextResponse } from "next/server";
 import pool from "@/lib/db";
 import { ensureAdminAmcAssetsTable } from "@/lib/adminAmcAssets";
+import { ensureAdminAmcWorkRecordsTable } from "@/lib/adminAmcWorkRecords";
 import { ensureAdminAmcCompaniesTable } from "@/lib/adminAmcCompanies";
 import { getEmployeeSession } from "@/lib/employeeSession";
 
 const ASSET_LOOKUP_SQL = `
   SELECT a.id, a.company_id, a.asset_name, a.asset_description, a.tag_code, a.category, a.status,
+         a.user_known_issue, a.user_issue_reporting_date, a.engineer_remarks, a.engineer_remarks_date_time,
          c.company_name AS company_name
   FROM admin_amc_assets a
   LEFT JOIN admin_amc_companies c ON c.id = a.company_id
@@ -29,6 +31,7 @@ export async function GET(request: Request) {
 
         await ensureAdminAmcCompaniesTable();
         await ensureAdminAmcAssetsTable();
+        await ensureAdminAmcWorkRecordsTable();
 
         const [rows] = await pool.query<RowDataPacket[]>(ASSET_LOOKUP_SQL, [code]);
         const row = rows[0];
