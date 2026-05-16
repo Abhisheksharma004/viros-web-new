@@ -19,6 +19,7 @@
     "bcryptjs": "^2.4.3",
     "cookie": "^1.1.1",
     "exceljs": "^4.4.0",
+    "html5-qrcode": "^2.3.8",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.562.0",
     "mysql2": "^3.11.0",
