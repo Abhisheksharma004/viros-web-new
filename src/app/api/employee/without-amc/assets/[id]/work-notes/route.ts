@@ -2,8 +2,15 @@ import type { ResultSetHeader, RowDataPacket } from "mysql2";
 import { NextResponse } from "next/server";
 import pool from "@/lib/db";
 import { optDate, optText } from "@/lib/amcWorkNotesHelpers";
-import { ensureAdminAmcAssetsTable } from "@/lib/adminAmcAssets";
-import { ensureAdminAmcWorkRecordsTable, WORK_RECORD_SELECT } from "@/lib/adminAmcWorkRecords";
+import {
+    ensureAdminWithoutAmcAssetsTable,
+    WITHOUT_AMC_ASSETS_TABLE,
+} from "@/lib/adminWithoutAmcAssets";
+import {
+    ensureAdminWithoutAmcWorkRecordsTable,
+    WITHOUT_AMC_WORK_RECORDS_TABLE,
+    WITHOUT_WORK_RECORD_SELECT,
+} from "@/lib/adminWithoutAmcWorkRecords";
 import { ensureAdminAmcCompaniesTable } from "@/lib/adminAmcCompanies";
 import { getEmployeeSession } from "@/lib/employeeSession";
 
@@ -13,7 +20,7 @@ const ASSET_ROW_SQL = `
   SELECT a.id, a.company_id, a.asset_name, a.asset_description, a.tag_code, a.category, a.status,
          a.user_known_issue, a.user_issue_reporting_date, a.engineer_remarks, a.engineer_remarks_date_time,
          c.company_name AS company_name
-  FROM admin_amc_assets a
+  FROM ${WITHOUT_AMC_ASSETS_TABLE} a
   LEFT JOIN admin_amc_companies c ON c.id = a.company_id
   WHERE a.id = ?
   LIMIT 1
@@ -51,8 +58,8 @@ export async function PATCH(request: Request, { params }: Ctx) {
         const employeeName = session.name.trim() || employeeId;
 
         await ensureAdminAmcCompaniesTable();
-        await ensureAdminAmcAssetsTable();
-        await ensureAdminAmcWorkRecordsTable();
+        await ensureAdminWithoutAmcAssetsTable();
+        await ensureAdminWithoutAmcWorkRecordsTable();
 
         await conn.beginTransaction();
 
@@ -96,7 +103,7 @@ export async function PATCH(request: Request, { params }: Ctx) {
         const remarksTimestampSql = newEngineerRemarks !== null ? "CURRENT_TIMESTAMP" : "engineer_remarks_date_time";
 
         await conn.query(
-            `UPDATE admin_amc_assets
+            `UPDATE ${WITHOUT_AMC_ASSETS_TABLE}
              SET user_known_issue = ?, user_issue_reporting_date = ?, engineer_remarks = ?,
                  engineer_remarks_date_time = ${remarksTimestampSql}
              WHERE id = ?`,
@@ -106,11 +113,11 @@ export async function PATCH(request: Request, { params }: Ctx) {
         const recordRemarksTimestampSql = newEngineerRemarks !== null ? "CURRENT_TIMESTAMP" : "NULL";
 
         const [insertResult] = await conn.query<ResultSetHeader>(
-            `INSERT INTO admin_amc_work_records
+            `INSERT INTO ${WITHOUT_AMC_WORK_RECORDS_TABLE}
              (asset_id, employee_id, employee_name, scanned_tag_code,
               company_id, company_name, asset_name, asset_description, tag_code, category, status,
-              user_known_issue, user_issue_reporting_date, engineer_remarks, engineer_remarks_date_time, work_type)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ${recordRemarksTimestampSql}, 'amc')`,
+              user_known_issue, user_issue_reporting_date, engineer_remarks, engineer_remarks_date_time)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ${recordRemarksTimestampSql})`,
             [
                 assetId,
                 employeeId,
@@ -136,10 +143,10 @@ export async function PATCH(request: Request, { params }: Ctx) {
             SELECT a.id, a.company_id, a.asset_name, a.asset_description, a.tag_code, a.category, a.status,
                    a.user_known_issue, a.user_issue_reporting_date, a.engineer_remarks, a.engineer_remarks_date_time,
                    c.company_name AS company_name,
-                   ${WORK_RECORD_SELECT}
-            FROM admin_amc_assets a
+                   ${WITHOUT_WORK_RECORD_SELECT}
+            FROM ${WITHOUT_AMC_ASSETS_TABLE} a
             LEFT JOIN admin_amc_companies c ON c.id = a.company_id
-            LEFT JOIN admin_amc_work_records r ON r.id = ?
+            LEFT JOIN ${WITHOUT_AMC_WORK_RECORDS_TABLE} r ON r.id = ?
             WHERE a.id = ?
             LIMIT 1
             `,
@@ -160,7 +167,7 @@ export async function PATCH(request: Request, { params }: Ctx) {
     } catch (error: unknown) {
         await conn.rollback();
         const message = error instanceof Error ? error.message : "Unknown error";
-        console.error("Error saving AMC work record:", error);
+        console.error("Error saving without-AMC work record:", error);
         return NextResponse.json({ message: "Failed to save work record", error: message }, { status: 500 });
     } finally {
         conn.release();

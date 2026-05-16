@@ -40,17 +40,29 @@ export const AMC_REPORT_EXPORT_COLUMNS: {
     { header: "Updated At", key: "updatedAt", width: 22 },
 ];
 
-function buildExportTable(rows: AmcReportExportRow[]) {
+export const WITHOUT_AMC_REPORT_EXPORT_COLUMNS = AMC_REPORT_EXPORT_COLUMNS.filter(
+    (col) => col.key !== "workType",
+);
+
+type ExportColumn = (typeof AMC_REPORT_EXPORT_COLUMNS)[number];
+
+function buildExportTable(rows: AmcReportExportRow[], columns: ExportColumn[] = AMC_REPORT_EXPORT_COLUMNS) {
     return {
-        headers: AMC_REPORT_EXPORT_COLUMNS.map((col) => col.header),
+        headers: columns.map((col) => col.header),
         body: rows.map((row) =>
-            AMC_REPORT_EXPORT_COLUMNS.map((col) => {
+            columns.map((col) => {
                 const raw = row[col.key];
                 return raw === null || raw === undefined ? "" : String(raw);
             }),
         ),
     };
 }
+
+type ReportExportMeta = {
+    reportTitle: string;
+    worksheetName: string;
+    filePrefix: string;
+};
 
 function exportFileStamp(): string {
     return new Date().toISOString().slice(0, 10);
@@ -67,12 +79,16 @@ function downloadBlob(blob: Blob, filename: string) {
     window.URL.revokeObjectURL(url);
 }
 
-export async function exportAmcReportToExcel(rows: AmcReportExportRow[]) {
+async function exportWorkRecordsToExcel(
+    rows: AmcReportExportRow[],
+    columns: ExportColumn[],
+    meta: ReportExportMeta,
+) {
     const ExcelJS = (await import("exceljs")).default;
     const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet("AMC Report");
+    const worksheet = workbook.addWorksheet(meta.worksheetName);
 
-    worksheet.columns = AMC_REPORT_EXPORT_COLUMNS.map((col) => ({
+    worksheet.columns = columns.map((col) => ({
         header: col.header,
         key: col.key,
         width: col.width,
@@ -97,22 +113,26 @@ export async function exportAmcReportToExcel(rows: AmcReportExportRow[]) {
     const blob = new Blob([buffer], {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     });
-    downloadBlob(blob, `amc-report-${exportFileStamp()}.xlsx`);
+    downloadBlob(blob, `${meta.filePrefix}-${exportFileStamp()}.xlsx`);
 }
 
-export async function exportAmcReportToPdf(rows: AmcReportExportRow[]) {
+async function exportWorkRecordsToPdf(
+    rows: AmcReportExportRow[],
+    columns: ExportColumn[],
+    meta: ReportExportMeta,
+) {
     const [{ jsPDF }, autoTableModule] = await Promise.all([
         import("jspdf"),
         import("jspdf-autotable"),
     ]);
     const autoTable = autoTableModule.default;
 
-    const { headers, body } = buildExportTable(rows);
+    const { headers, body } = buildExportTable(rows, columns);
     const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
 
     doc.setFontSize(16);
     doc.setTextColor(6, 18, 79);
-    doc.text("AMC Report", 14, 14);
+    doc.text(meta.reportTitle, 14, 14);
 
     doc.setFontSize(10);
     doc.setTextColor(85, 85, 85);
@@ -142,5 +162,37 @@ export async function exportAmcReportToPdf(rows: AmcReportExportRow[]) {
         tableWidth: "auto",
     });
 
-    doc.save(`amc-report-${exportFileStamp()}.pdf`);
+    doc.save(`${meta.filePrefix}-${exportFileStamp()}.pdf`);
+}
+
+export async function exportAmcReportToExcel(rows: AmcReportExportRow[]) {
+    await exportWorkRecordsToExcel(rows, AMC_REPORT_EXPORT_COLUMNS, {
+        reportTitle: "AMC Report",
+        worksheetName: "AMC Report",
+        filePrefix: "amc-report",
+    });
+}
+
+export async function exportAmcReportToPdf(rows: AmcReportExportRow[]) {
+    await exportWorkRecordsToPdf(rows, AMC_REPORT_EXPORT_COLUMNS, {
+        reportTitle: "AMC Report",
+        worksheetName: "AMC Report",
+        filePrefix: "amc-report",
+    });
+}
+
+export async function exportWithoutAmcReportToExcel(rows: AmcReportExportRow[]) {
+    await exportWorkRecordsToExcel(rows, WITHOUT_AMC_REPORT_EXPORT_COLUMNS, {
+        reportTitle: "Without AMC Report",
+        worksheetName: "Without AMC Report",
+        filePrefix: "without-amc-report",
+    });
+}
+
+export async function exportWithoutAmcReportToPdf(rows: AmcReportExportRow[]) {
+    await exportWorkRecordsToPdf(rows, WITHOUT_AMC_REPORT_EXPORT_COLUMNS, {
+        reportTitle: "Without AMC Report",
+        worksheetName: "Without AMC Report",
+        filePrefix: "without-amc-report",
+    });
 }
