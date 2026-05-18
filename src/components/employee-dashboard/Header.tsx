@@ -17,6 +17,10 @@ const PAGE_HEADERS: Record<string, { title: string; subtitle?: string }> = {
         title: "Change password",
         subtitle: "Update your portal login password",
     },
+    "/employee-dashboard/attendance": {
+        title: "My Attendance",
+        subtitle: "Check in, view calendar, and track your monthly record",
+    },
 };
 
 function getPageHeader(pathname: string) {
