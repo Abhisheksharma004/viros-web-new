@@ -266,7 +266,7 @@ export function computeLateSeconds(punchedAtIso: string, shift: ReturnType<typeo
     };
 }
 
-function mapPunchProof(
+export function mapPunchProof(
     time: string | undefined,
     photo: string | null,
     lat: number | null,
