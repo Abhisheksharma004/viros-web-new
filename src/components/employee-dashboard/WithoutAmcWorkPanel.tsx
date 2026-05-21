@@ -19,12 +19,14 @@ type WorkRecordRow = {
     category?: string | null;
     status?: string | null;
     user_known_issue?: string | null;
+    ticket_number?: string | null;
     user_issue_reporting_date?: string | null;
     engineer_remarks?: string | null;
     engineer_remarks_date_time?: string | null;
 };
 
 type PreviousWorkRecord = {
+    ticketNumber: string;
     userIssueReportingDate: string;
     userKnownIssue: string;
     engineerRemarks: string;
@@ -32,6 +34,7 @@ type PreviousWorkRecord = {
 };
 
 type NewWorkNotesForm = {
+    ticketNumber: string;
     userIssueReportingDate: string;
     userKnownIssue: string;
     engineerRemarks: string;
@@ -50,6 +53,7 @@ type ManualAssetForm = {
 type AssetStatus = "Active" | "Inactive" | "Maintenance";
 
 const emptyNewWorkNotes = (): NewWorkNotesForm => ({
+    ticketNumber: "",
     userIssueReportingDate: "",
     userKnownIssue: "",
     engineerRemarks: "",
@@ -102,19 +106,33 @@ function str(value: unknown): string {
 }
 
 function previousFromRow(row: WorkRecordRow): PreviousWorkRecord | null {
+    const ticketNumber = str(row.ticket_number);
     const userKnownIssue = str(row.user_known_issue);
     const userIssueReportingDate = toDateInputValue(row.user_issue_reporting_date);
     const engineerRemarks = str(row.engineer_remarks);
     const engineerRemarksDateTime = formatDisplayDateTime(row.engineer_remarks_date_time);
-    if (!userKnownIssue && !userIssueReportingDate && !engineerRemarks && !engineerRemarksDateTime) {
+    if (
+        !ticketNumber &&
+        !userKnownIssue &&
+        !userIssueReportingDate &&
+        !engineerRemarks &&
+        !engineerRemarksDateTime
+    ) {
         return null;
     }
-    return { userKnownIssue, userIssueReportingDate, engineerRemarks, engineerRemarksDateTime };
+    return {
+        ticketNumber,
+        userKnownIssue,
+        userIssueReportingDate,
+        engineerRemarks,
+        engineerRemarksDateTime,
+    };
 }
 
 function hasNewWorkEntry(notes: NewWorkNotesForm): boolean {
     return Boolean(
-        notes.userKnownIssue.trim() ||
+        notes.ticketNumber.trim() ||
+            notes.userKnownIssue.trim() ||
             notes.userIssueReportingDate.trim() ||
             notes.engineerRemarks.trim(),
     );
@@ -306,6 +324,7 @@ export default function WithoutAmcWorkPanel() {
             const payload: Record<string, string | null> = {
                 serial,
                 scanned_tag_code: serial,
+                ticket_number: newWorkNotes.ticketNumber.trim() || null,
                 user_known_issue: newWorkNotes.userKnownIssue.trim() || null,
                 user_issue_reporting_date: newWorkNotes.userIssueReportingDate.trim() || null,
                 engineer_remarks: newWorkNotes.engineerRemarks.trim() || null,
@@ -458,6 +477,12 @@ export default function WithoutAmcWorkPanel() {
                                         <p className="text-xs text-gray-500 leading-relaxed">
                                             From Without AMC history — add a new entry below.
                                         </p>
+                                        {previousRecord.ticketNumber ? (
+                                            <DetailField
+                                                label="Ticket number"
+                                                value={previousRecord.ticketNumber}
+                                            />
+                                        ) : null}
                                         {previousRecord.userIssueReportingDate ? (
                                             <DetailField
                                                 label="Issue reporting date"
@@ -677,6 +702,20 @@ function WorkNotesForm({
     return (
         <div className="space-y-4">
             <p className="text-xs font-bold uppercase tracking-wide text-[#0d4f3c]">Work entry</p>
+            <div>
+                <label htmlFor="new-ticket-number" className="block text-xs font-semibold text-gray-600 mb-2">
+                    Ticket number
+                </label>
+                <input
+                    id="new-ticket-number"
+                    name="ticketNumber"
+                    type="text"
+                    value={newWorkNotes.ticketNumber}
+                    onChange={onChange}
+                    placeholder="Enter ticket number"
+                    className={inputField}
+                />
+            </div>
             <div>
                 <label htmlFor="new-issue-reporting-date" className="block text-xs font-semibold text-gray-600 mb-2">
                     Issue reporting date

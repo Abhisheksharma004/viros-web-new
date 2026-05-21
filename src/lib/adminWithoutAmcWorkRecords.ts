@@ -111,8 +111,12 @@ async function runEnsureAdminWithoutAmcWorkRecordsTable() {
             sql: `ALTER TABLE ${WITHOUT_AMC_WORK_RECORDS_TABLE} ADD COLUMN user_known_issue TEXT NULL AFTER status`,
         },
         {
+            column: "ticket_number",
+            sql: `ALTER TABLE ${WITHOUT_AMC_WORK_RECORDS_TABLE} ADD COLUMN ticket_number VARCHAR(120) NULL AFTER user_known_issue`,
+        },
+        {
             column: "user_issue_reporting_date",
-            sql: `ALTER TABLE ${WITHOUT_AMC_WORK_RECORDS_TABLE} ADD COLUMN user_issue_reporting_date DATE NULL AFTER user_known_issue`,
+            sql: `ALTER TABLE ${WITHOUT_AMC_WORK_RECORDS_TABLE} ADD COLUMN user_issue_reporting_date DATE NULL AFTER ticket_number`,
         },
         {
             column: "engineer_remarks",
@@ -184,6 +188,7 @@ export const WITHOUT_WORK_RECORD_SELECT = `
   r.category AS work_record_category,
   r.status AS work_record_status,
   r.user_known_issue AS work_record_user_known_issue,
+  r.ticket_number AS work_record_ticket_number,
   r.user_issue_reporting_date AS work_record_user_issue_reporting_date,
   r.engineer_remarks AS work_record_engineer_remarks,
   r.engineer_remarks_date_time AS work_record_engineer_remarks_date_time,

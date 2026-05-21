@@ -81,6 +81,11 @@ async function runEnsureAdminAmcAssetsTable() {
             columns.add(migration.column);
         }
     }
+
+    columns = await getExistingColumns();
+    if (columns.has("ticket_number")) {
+        await pool.query(`ALTER TABLE ${TABLE} DROP COLUMN ticket_number`);
+    }
 }
 
 export async function ensureAdminAmcAssetsTable() {

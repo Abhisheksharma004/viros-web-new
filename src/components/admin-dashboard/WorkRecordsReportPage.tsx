@@ -80,6 +80,7 @@ type WorkRecord = {
     tagCode: string;
     category: string;
     status: string;
+    ticketNumber: string;
     userKnownIssue: string;
     userIssueReportingDate: string;
     engineerRemarks: string;
@@ -126,6 +127,7 @@ type WorkRecordApiRow = {
     category?: string | null;
     status?: string | null;
     user_known_issue?: string | null;
+    ticket_number?: string | null;
     user_issue_reporting_date?: string | null;
     engineer_remarks?: string | null;
     engineer_remarks_date_time?: string | null;
@@ -135,7 +137,7 @@ type WorkRecordApiRow = {
     updated_at?: string | null;
 };
 
-const TABLE_COL_SPAN = 10;
+const TABLE_COL_SPAN = 11;
 
 function str(value: unknown): string {
     return typeof value === "string" ? value.trim() : value === null || value === undefined ? "" : String(value).trim();
@@ -219,6 +221,7 @@ function mapApiRow(row: WorkRecordApiRow, variant: WorkRecordsReportVariant): Wo
         tagCode: str(row.tag_code),
         category: str(row.category),
         status: str(row.status),
+        ticketNumber: str(row.ticket_number),
         userKnownIssue: str(row.user_known_issue),
         userIssueReportingDate: toDateOnly(row.user_issue_reporting_date),
         engineerRemarks: str(row.engineer_remarks),
@@ -248,6 +251,7 @@ function recordMatchesFilters(r: WorkRecord, filters: ReportFilters): boolean {
         r.tagCode,
         r.scannedTagCode,
         r.category,
+        r.ticketNumber,
         r.userKnownIssue,
         r.engineerRemarks,
     ]
@@ -268,6 +272,7 @@ function toExportRows(records: WorkRecord[]): AmcReportExportRow[] {
         tagSerial: r.tagCode,
         category: r.category,
         assetStatus: r.status,
+        ticketNumber: r.ticketNumber,
         issueReportingDate: r.userIssueReportingDate
             ? formatDateDisplay(r.userIssueReportingDate)
             : "",
@@ -637,6 +642,9 @@ export default function WorkRecordsReportPage({ variant }: { variant: WorkRecord
                                     Category
                                 </th>
                                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">
+                                    Ticket number
+                                </th>
+                                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">
                                     Issue date
                                 </th>
                                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">
@@ -702,6 +710,13 @@ export default function WorkRecordsReportPage({ variant }: { variant: WorkRecord
                                         </td>
                                         <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
                                             {r.category.trim() ? r.category : <span className="text-gray-400">—</span>}
+                                        </td>
+                                        <td className="px-4 py-3 text-xs text-gray-700 whitespace-nowrap font-mono">
+                                            {r.ticketNumber.trim() ? (
+                                                r.ticketNumber
+                                            ) : (
+                                                <span className="text-gray-400 font-sans">—</span>
+                                            )}
                                         </td>
                                         <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
                                             {r.userIssueReportingDate ? (
@@ -775,6 +790,7 @@ export default function WorkRecordsReportPage({ variant }: { variant: WorkRecord
                                 <Detail label="Scanned code" value={viewDetail.scannedTagCode} />
                                 <Detail label="Category" value={viewDetail.category} />
                                 <Detail label="Asset status" value={viewDetail.status} />
+                                <Detail label="Ticket number" value={viewDetail.ticketNumber} />
                                 <Detail
                                     label="Issue reporting date"
                                     value={

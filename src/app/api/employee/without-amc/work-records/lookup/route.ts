@@ -10,7 +10,7 @@ import { getEmployeeSession } from "@/lib/employeeSession";
 const SERIAL_LOOKUP_SQL = `
   SELECT id, asset_id, employee_id, employee_name, scanned_tag_code,
          company_id, company_name, asset_name, asset_description, tag_code, category, status,
-         user_known_issue, user_issue_reporting_date, engineer_remarks, engineer_remarks_date_time,
+         user_known_issue, ticket_number, user_issue_reporting_date, engineer_remarks, engineer_remarks_date_time,
          created_at, updated_at
   FROM ${WITHOUT_AMC_WORK_RECORDS_TABLE}
   WHERE TRIM(tag_code) = ? OR TRIM(scanned_tag_code) = ?

@@ -6,7 +6,7 @@ import { ensureAdminAmcWorkRecordsTable } from "@/lib/adminAmcWorkRecords";
 const WORK_RECORDS_LIST_SQL = `
   SELECT id, asset_id, employee_id, employee_name, scanned_tag_code,
          company_id, company_name, asset_name, asset_description, tag_code, category, status,
-         user_known_issue, user_issue_reporting_date, engineer_remarks, engineer_remarks_date_time,
+         user_known_issue, ticket_number, user_issue_reporting_date, engineer_remarks, engineer_remarks_date_time,
          work_type, created_at, updated_at
   FROM admin_amc_work_records
   WHERE work_type = 'amc'

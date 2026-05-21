@@ -21,6 +21,10 @@ const PAGE_HEADERS: Record<string, { title: string; subtitle?: string }> = {
         title: "My Attendance",
         subtitle: "Check in, view calendar, and track your monthly record",
     },
+    "/employee-dashboard/attendance/leave": {
+        title: "Leave request",
+        subtitle: "Apply for leave and view your balance",
+    },
 };
 
 function getPageHeader(pathname: string) {

@@ -11,7 +11,7 @@ import { getEmployeeSession } from "@/lib/employeeSession";
 const SERIAL_LOOKUP_SQL = `
   SELECT id, asset_id, employee_id, employee_name, scanned_tag_code,
          company_id, company_name, asset_name, asset_description, tag_code, category, status,
-         user_known_issue, user_issue_reporting_date, engineer_remarks, engineer_remarks_date_time,
+         user_known_issue, ticket_number, user_issue_reporting_date, engineer_remarks, engineer_remarks_date_time,
          created_at, updated_at
   FROM ${WITHOUT_AMC_WORK_RECORDS_TABLE}
   WHERE TRIM(tag_code) = ? OR TRIM(scanned_tag_code) = ?
@@ -36,6 +36,9 @@ export async function POST(request: Request) {
 
         const scannedTagCode = optText(body.scanned_tag_code ?? body.scannedTagCode) ?? serial;
         const newUserKnownIssue = optText(body.user_known_issue ?? body.userKnownIssue);
+        const newTicketNumber = optText(
+            body.ticket_number ?? body.ticketNumber ?? body.new_ticket_number ?? body.newTicketNumber,
+        );
         const newUserIssueReportingDate = optDate(
             body.user_issue_reporting_date ?? body.userIssueReportingDate,
         );
@@ -43,6 +46,7 @@ export async function POST(request: Request) {
 
         const hasWorkEntry =
             newUserKnownIssue !== null ||
+            newTicketNumber !== null ||
             newUserIssueReportingDate !== null ||
             newEngineerRemarks !== null;
 
@@ -115,8 +119,8 @@ export async function POST(request: Request) {
             `INSERT INTO ${WITHOUT_AMC_WORK_RECORDS_TABLE}
              (asset_id, employee_id, employee_name, scanned_tag_code,
               company_id, company_name, asset_name, asset_description, tag_code, category, status,
-              user_known_issue, user_issue_reporting_date, engineer_remarks, engineer_remarks_date_time)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ${recordRemarksTimestampSql})`,
+              user_known_issue, ticket_number, user_issue_reporting_date, engineer_remarks, engineer_remarks_date_time)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ${recordRemarksTimestampSql})`,
             [
                 snapshotAssetId,
                 employeeId,
@@ -130,6 +134,7 @@ export async function POST(request: Request) {
                 snapshotCategory,
                 snapshotStatus,
                 newUserKnownIssue,
+                newTicketNumber,
                 newUserIssueReportingDate,
                 newEngineerRemarks,
             ],
@@ -138,7 +143,7 @@ export async function POST(request: Request) {
         const [rows] = await pool.query<RowDataPacket[]>(
             `SELECT id, asset_id, employee_id, employee_name, scanned_tag_code,
                     company_id, company_name, asset_name, asset_description, tag_code, category, status,
-                    user_known_issue, user_issue_reporting_date, engineer_remarks, engineer_remarks_date_time,
+                    user_known_issue, ticket_number, user_issue_reporting_date, engineer_remarks, engineer_remarks_date_time,
                     created_at, updated_at
              FROM ${WITHOUT_AMC_WORK_RECORDS_TABLE}
              WHERE id = ?

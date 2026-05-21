@@ -3,12 +3,17 @@ import { NextResponse } from "next/server";
 import pool from "@/lib/db";
 import { ensureAdminAmcAssetsTable } from "@/lib/adminAmcAssets";
 import { ensureAdminWithoutAmcAssetsTable, WITHOUT_AMC_ASSETS_TABLE } from "@/lib/adminWithoutAmcAssets";
+import { ensureAdminWithoutAmcWorkRecordsTable } from "@/lib/adminWithoutAmcWorkRecords";
 import { ensureAdminAmcCompaniesTable } from "@/lib/adminAmcCompanies";
 import { getEmployeeSession } from "@/lib/employeeSession";
 
 const WITHOUT_ASSET_LOOKUP_SQL = `
   SELECT a.id, a.amc_asset_id, a.company_id, a.asset_name, a.asset_description, a.tag_code, a.category, a.status,
          a.user_known_issue, a.user_issue_reporting_date, a.engineer_remarks, a.engineer_remarks_date_time,
+         (SELECT r.ticket_number FROM admin_without_amc_work_records r
+          WHERE (r.asset_id = a.id OR TRIM(r.tag_code) = TRIM(a.tag_code) OR TRIM(r.scanned_tag_code) = TRIM(a.tag_code))
+            AND r.ticket_number IS NOT NULL AND TRIM(r.ticket_number) <> ''
+          ORDER BY r.id DESC LIMIT 1) AS ticket_number,
          c.company_name AS company_name
   FROM ${WITHOUT_AMC_ASSETS_TABLE} a
   LEFT JOIN admin_amc_companies c ON c.id = a.company_id
@@ -42,6 +47,7 @@ export async function GET(request: Request) {
         await ensureAdminAmcCompaniesTable();
         await ensureAdminAmcAssetsTable();
         await ensureAdminWithoutAmcAssetsTable();
+        await ensureAdminWithoutAmcWorkRecordsTable();
 
         const [existingRows] = await pool.query<RowDataPacket[]>(WITHOUT_ASSET_LOOKUP_SQL, [code]);
         if (existingRows[0]) {
@@ -79,6 +85,10 @@ export async function GET(request: Request) {
             `
             SELECT a.id, a.amc_asset_id, a.company_id, a.asset_name, a.asset_description, a.tag_code, a.category, a.status,
                    a.user_known_issue, a.user_issue_reporting_date, a.engineer_remarks, a.engineer_remarks_date_time,
+                   (SELECT r.ticket_number FROM admin_without_amc_work_records r
+                    WHERE (r.asset_id = a.id OR TRIM(r.tag_code) = TRIM(a.tag_code) OR TRIM(r.scanned_tag_code) = TRIM(a.tag_code))
+                      AND r.ticket_number IS NOT NULL AND TRIM(r.ticket_number) <> ''
+                    ORDER BY r.id DESC LIMIT 1) AS ticket_number,
                    c.company_name AS company_name
             FROM ${WITHOUT_AMC_ASSETS_TABLE} a
             LEFT JOIN admin_amc_companies c ON c.id = a.company_id

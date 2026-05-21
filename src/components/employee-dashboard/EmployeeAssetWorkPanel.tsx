@@ -12,6 +12,7 @@ const AssetBarcodeScanner = dynamic(() => import("@/components/employee-dashboar
 export type EmployeeAssetWorkType = "amc" | "without_amc";
 
 type PreviousWorkRecord = {
+    ticketNumber: string;
     userIssueReportingDate: string;
     userKnownIssue: string;
     engineerRemarks: string;
@@ -19,12 +20,14 @@ type PreviousWorkRecord = {
 };
 
 type NewWorkNotesForm = {
+    ticketNumber: string;
     userIssueReportingDate: string;
     userKnownIssue: string;
     engineerRemarks: string;
 };
 
 const emptyNewWorkNotes = (): NewWorkNotesForm => ({
+    ticketNumber: "",
     userIssueReportingDate: "",
     userKnownIssue: "",
     engineerRemarks: "",
@@ -51,6 +54,7 @@ type AssetApiRow = {
     company_name?: string | null;
     status?: string | null;
     user_known_issue?: string | null;
+    ticket_number?: string | null;
     user_issue_reporting_date?: string | null;
     engineer_remarks?: string | null;
     engineer_remarks_date_time?: string | null;
@@ -80,19 +84,33 @@ function formatDisplayDate(raw: string): string {
 }
 
 function previousFromRow(row: AssetApiRow): PreviousWorkRecord | null {
+    const ticketNumber = typeof row.ticket_number === "string" ? row.ticket_number.trim() : "";
     const userKnownIssue = typeof row.user_known_issue === "string" ? row.user_known_issue.trim() : "";
     const userIssueReportingDate = toDateInputValue(row.user_issue_reporting_date);
     const engineerRemarks = typeof row.engineer_remarks === "string" ? row.engineer_remarks.trim() : "";
     const engineerRemarksDateTime = formatDisplayDateTime(row.engineer_remarks_date_time);
-    if (!userKnownIssue && !userIssueReportingDate && !engineerRemarks && !engineerRemarksDateTime) {
+    if (
+        !ticketNumber &&
+        !userKnownIssue &&
+        !userIssueReportingDate &&
+        !engineerRemarks &&
+        !engineerRemarksDateTime
+    ) {
         return null;
     }
-    return { userKnownIssue, userIssueReportingDate, engineerRemarks, engineerRemarksDateTime };
+    return {
+        ticketNumber,
+        userKnownIssue,
+        userIssueReportingDate,
+        engineerRemarks,
+        engineerRemarksDateTime,
+    };
 }
 
 function hasNewWorkEntry(notes: NewWorkNotesForm): boolean {
     return Boolean(
-        notes.userKnownIssue.trim() ||
+        notes.ticketNumber.trim() ||
+            notes.userKnownIssue.trim() ||
             notes.userIssueReportingDate.trim() ||
             notes.engineerRemarks.trim(),
     );
@@ -271,6 +289,7 @@ export default function EmployeeAssetWorkPanel({
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
+                    ticket_number: newWorkNotes.ticketNumber.trim() || null,
                     user_known_issue: newWorkNotes.userKnownIssue.trim() || null,
                     user_issue_reporting_date: newWorkNotes.userIssueReportingDate.trim() || null,
                     engineer_remarks: newWorkNotes.engineerRemarks.trim() || null,
@@ -406,6 +425,12 @@ export default function EmployeeAssetWorkPanel({
                                             For reference only — not the current issue. Add a new issue below if
                                             needed.
                                         </p>
+                                        {previousRecord.ticketNumber ? (
+                                            <DetailField
+                                                label="Ticket number"
+                                                value={previousRecord.ticketNumber}
+                                            />
+                                        ) : null}
                                         {previousRecord.userIssueReportingDate ? (
                                             <DetailField
                                                 label="Issue reporting date"
@@ -437,6 +462,23 @@ export default function EmployeeAssetWorkPanel({
                                     <p className="text-xs font-bold uppercase tracking-wide text-[#0d4f3c]">
                                         New entry
                                     </p>
+                                    <div>
+                                        <label
+                                            htmlFor="new-ticket-number"
+                                            className="block text-xs font-semibold text-gray-600 mb-2"
+                                        >
+                                            Ticket number
+                                        </label>
+                                        <input
+                                            id="new-ticket-number"
+                                            name="ticketNumber"
+                                            type="text"
+                                            value={newWorkNotes.ticketNumber}
+                                            onChange={handleNewWorkNotesChange}
+                                            placeholder="Enter ticket number"
+                                            className={inputField}
+                                        />
+                                    </div>
                                     <div>
                                         <label
                                             htmlFor="new-issue-reporting-date"

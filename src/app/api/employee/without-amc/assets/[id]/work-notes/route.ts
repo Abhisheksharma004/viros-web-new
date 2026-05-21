@@ -46,6 +46,9 @@ export async function PATCH(request: Request, { params }: Ctx) {
         const newUserKnownIssue = optText(
             body.user_known_issue ?? body.new_issue ?? body.newIssue ?? body.userKnownIssue,
         );
+        const newTicketNumber = optText(
+            body.ticket_number ?? body.ticketNumber ?? body.new_ticket_number ?? body.newTicketNumber,
+        );
         const newUserIssueReportingDate = optDate(
             body.user_issue_reporting_date ?? body.new_issue_reporting_date ?? body.newIssueReportingDate,
         );
@@ -83,6 +86,7 @@ export async function PATCH(request: Request, { params }: Ctx) {
 
         const hasNewEntry =
             newUserKnownIssue !== null ||
+            newTicketNumber !== null ||
             newUserIssueReportingDate !== null ||
             newEngineerRemarks !== null;
         if (!hasNewEntry) {
@@ -116,8 +120,8 @@ export async function PATCH(request: Request, { params }: Ctx) {
             `INSERT INTO ${WITHOUT_AMC_WORK_RECORDS_TABLE}
              (asset_id, employee_id, employee_name, scanned_tag_code,
               company_id, company_name, asset_name, asset_description, tag_code, category, status,
-              user_known_issue, user_issue_reporting_date, engineer_remarks, engineer_remarks_date_time)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ${recordRemarksTimestampSql})`,
+              user_known_issue, ticket_number, user_issue_reporting_date, engineer_remarks, engineer_remarks_date_time)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ${recordRemarksTimestampSql})`,
             [
                 assetId,
                 employeeId,
@@ -131,6 +135,7 @@ export async function PATCH(request: Request, { params }: Ctx) {
                 snapshotCategory,
                 snapshotStatus,
                 newUserKnownIssue,
+                newTicketNumber,
                 newUserIssueReportingDate,
                 newEngineerRemarks,
             ],

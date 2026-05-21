@@ -9,6 +9,7 @@ export type AmcReportExportRow = {
     tagSerial: string;
     category: string;
     assetStatus: string;
+    ticketNumber: string;
     issueReportingDate: string;
     userIssue: string;
     engineerRemarks: string;
@@ -32,6 +33,7 @@ export const AMC_REPORT_EXPORT_COLUMNS: {
     { header: "Tag / Serial", key: "tagSerial", width: 16 },
     { header: "Category", key: "category", width: 14 },
     { header: "Asset Status", key: "assetStatus", width: 14 },
+    { header: "Ticket Number", key: "ticketNumber", width: 16 },
     { header: "Issue Reporting Date", key: "issueReportingDate", width: 18 },
     { header: "User Issue", key: "userIssue", width: 32 },
     { header: "Engineer Remarks", key: "engineerRemarks", width: 32 },
