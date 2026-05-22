@@ -72,7 +72,11 @@ export async function POST(request: Request) {
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : "Unknown error";
         const status =
-            message.includes("Already") || message.includes("Check in first") ? 409 : 500;
+            message.includes("Already") ||
+            message.includes("Check in first") ||
+            message.includes("Cannot check in")
+                ? 409
+                : 500;
         console.error("Error saving attendance punch:", error);
         return NextResponse.json({ message: message || "Failed to save punch" }, { status });
     }

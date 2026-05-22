@@ -21,11 +21,11 @@ const PAGE_HEADERS: Record<string, { title: string; subtitle?: string }> = {
         title: "My Attendance",
         subtitle: "Check in, view calendar, and track your monthly record",
     },
-    "/employee-dashboard/attendance/leave": {
+    "/employee-dashboard/leave": {
         title: "Leave request",
         subtitle: "Apply for leave and view your balance",
     },
-    "/employee-dashboard/attendance/history": {
+    "/employee-dashboard/history": {
         title: "Leave history",
         subtitle: "Past, rejected, and withdrawn leave requests",
     },

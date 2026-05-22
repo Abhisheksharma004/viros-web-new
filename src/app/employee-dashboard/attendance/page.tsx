@@ -7,15 +7,27 @@ import {
     ChevronLeft,
     ChevronRight,
     Clock,
+    FileText,
     LogIn,
     LogOut,
     MapPin,
     TrendingUp,
 } from "lucide-react";
+import Link from "next/link";
 import AttendancePunchModal, { type PunchCapture } from "@/components/employee-dashboard/AttendancePunchModal";
 import PhotoLightbox from "@/components/employee-dashboard/PhotoLightbox";
 
-type AttendanceStatus = "present" | "absent" | "late" | "leave" | "holiday" | "weekend" | "half-day";
+type AttendanceStatus =
+    | "present"
+    | "absent"
+    | "late"
+    | "leave"
+    | "leave-pending"
+    | "holiday"
+    | "weekend"
+    | "half-day";
+
+type LeaveRequestStatus = "pending" | "l1_approved" | "approved";
 
 type PunchProof = {
     time?: string;
@@ -35,6 +47,16 @@ type DayRecord = {
     note?: string;
     checkInProof?: PunchProof;
     checkOutProof?: PunchProof;
+    leaveRequestStatus?: LeaveRequestStatus | "rejected" | "cancelled";
+};
+
+type TodayLeaveInfo = {
+    blocking: boolean;
+    status: LeaveRequestStatus;
+    policyName: string;
+    requestId: string;
+    dayType: "full" | "first-half" | "second-half";
+    message: string;
 };
 
 const STATUS_CONFIG: Record<
@@ -45,6 +67,12 @@ const STATUS_CONFIG: Record<
     absent: { label: "Absent", dot: "bg-red-500", bg: "bg-red-50", text: "text-red-700" },
     late: { label: "Late", dot: "bg-amber-500", bg: "bg-amber-50", text: "text-amber-700" },
     leave: { label: "Leave", dot: "bg-blue-500", bg: "bg-blue-50", text: "text-blue-700" },
+    "leave-pending": {
+        label: "Leave (pending)",
+        dot: "bg-indigo-400",
+        bg: "bg-indigo-50",
+        text: "text-indigo-700",
+    },
     holiday: { label: "Holiday", dot: "bg-purple-500", bg: "bg-purple-50", text: "text-purple-700" },
     weekend: { label: "Weekend", dot: "bg-gray-400", bg: "bg-gray-100", text: "text-gray-600" },
     "half-day": { label: "Half day", dot: "bg-teal-500", bg: "bg-teal-50", text: "text-teal-700" },
@@ -411,6 +439,18 @@ type TodaySessionApi = {
     late: LateCheckResult;
 };
 
+function normalizeLeaveDisplayStatus(record: DayRecord): DayRecord {
+    if (
+        record.leaveRequestStatus === "pending" ||
+        record.leaveRequestStatus === "l1_approved"
+    ) {
+        if (record.status === "leave") {
+            return { ...record, status: "leave-pending" };
+        }
+    }
+    return record;
+}
+
 function mergeMonthWithWeekends(year: number, month: number, dbRecords: DayRecord[]): DayRecord[] {
     const map = new Map(dbRecords.map((r) => [r.date, r]));
     const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -420,7 +460,7 @@ function mergeMonthWithWeekends(year: number, month: number, dbRecords: DayRecor
         const iso = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
         const existing = map.get(iso);
         if (existing) {
-            merged.push(existing);
+            merged.push(normalizeLeaveDisplayStatus(existing));
             continue;
         }
         const dow = new Date(year, month, d).getDay();
@@ -465,6 +505,7 @@ export default function EmployeeAttendancePage() {
     const [isPunching, setIsPunching] = useState(false);
     const [todayLate, setTodayLate] = useState<LateCheckResult | null>(null);
     const [photoLightbox, setPhotoLightbox] = useState<{ src: string; alt: string } | null>(null);
+    const [todayLeave, setTodayLeave] = useState<TodayLeaveInfo | null>(null);
 
     const openPhotoLightbox = (src: string, alt: string) => {
         setPhotoLightbox({ src, alt });
@@ -497,7 +538,12 @@ export default function EmployeeAttendancePage() {
             }
 
             const records: DayRecord[] = Array.isArray(data.records) ? data.records : [];
-            setMonthRecords(mergeMonthWithWeekends(year, monthIndex, records));
+            setMonthRecords(records.map((r) => normalizeLeaveDisplayStatus(r as DayRecord)));
+            setTodayLeave(
+                data.todayLeave && typeof data.todayLeave === "object"
+                    ? (data.todayLeave as TodayLeaveInfo)
+                    : null,
+            );
 
             if (data.shift) {
                 setEmployeeShift(data.shift as EmployeeShiftApi);
@@ -515,7 +561,7 @@ export default function EmployeeAttendancePage() {
         } catch (error) {
             console.error("Load attendance failed:", error);
             setAttendanceError(error instanceof Error ? error.message : "Failed to load attendance");
-            setMonthRecords(mergeMonthWithWeekends(year, monthIndex, []));
+            setMonthRecords([]);
         } finally {
             setAttendanceLoading(false);
         }
@@ -592,13 +638,14 @@ export default function EmployeeAttendancePage() {
 
     const stats = useMemo(() => {
         const working = monthRecords.filter(
-            (r) => !["weekend", "holiday"].includes(r.status),
+            (r) => !["weekend", "holiday", "leave-pending"].includes(r.status),
         );
         return {
             present: working.filter((r) => r.status === "present" || r.status === "late").length,
             absent: working.filter((r) => r.status === "absent").length,
             late: working.filter((r) => r.status === "late").length,
             leave: working.filter((r) => r.status === "leave" || r.status === "half-day").length,
+            leavePending: monthRecords.filter((r) => r.status === "leave-pending").length,
             total: working.length,
         };
     }, [monthRecords]);
@@ -606,7 +653,15 @@ export default function EmployeeAttendancePage() {
     const tableRows = useMemo(
         () =>
             [...monthRecords]
-                .filter((r) => r.status !== "weekend" && (r.checkIn || r.checkOut))
+                .filter(
+                    (r) =>
+                        r.status !== "weekend" &&
+                        (r.checkIn ||
+                            r.checkOut ||
+                            r.status === "leave" ||
+                            r.status === "half-day" ||
+                            r.status === "leave-pending"),
+                )
                 .reverse(),
         [monthRecords],
     );
@@ -617,7 +672,9 @@ export default function EmployeeAttendancePage() {
             present: working.filter((r) => r.status === "present" || r.status === "late").length,
             absent: working.filter((r) => r.status === "absent").length,
             halfDay: working.filter((r) => r.status === "half-day").length,
-            leave: working.filter((r) => r.status === "leave").length,
+            leave:
+                working.filter((r) => r.status === "leave").length +
+                working.filter((r) => r.status === "leave-pending").length,
         };
     }, [monthRecords]);
 
@@ -671,6 +728,24 @@ export default function EmployeeAttendancePage() {
             {attendanceError && (
                 <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                     {attendanceError}
+                </div>
+            )}
+            {todayLeave && (
+                <div
+                    className={`rounded-xl border px-4 py-3 text-sm ${
+                        todayLeave.blocking
+                            ? "border-blue-200 bg-blue-50 text-blue-900"
+                            : "border-indigo-200 bg-indigo-50 text-indigo-900"
+                    }`}
+                >
+                    <p className="font-semibold">{todayLeave.message}</p>
+                    <Link
+                        href="/employee-dashboard/leave"
+                        className="mt-2 inline-flex items-center gap-1.5 text-xs font-bold text-[#0a2a5e] hover:text-[#06b6d4]"
+                    >
+                        <FileText className="h-3.5 w-3.5" aria-hidden />
+                        View leave requests
+                    </Link>
                 </div>
             )}
             {/* Punch card + stats */}
@@ -735,15 +810,21 @@ export default function EmployeeAttendancePage() {
                                     Shift: {shiftTimingText}
                                 </p>
                                 {!checkedIn && !checkOutCapture ? (
-                                    <button
-                                        type="button"
-                                        onClick={() => setPunchModal("check-in")}
-                                        disabled={isPunching || attendanceLoading}
-                                        className="flex w-full min-h-[52px] items-center justify-center gap-2 rounded-xl bg-[#06b6d4] px-5 text-base font-bold text-white shadow-lg active:scale-[0.98] hover:bg-[#05a8b8] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:min-h-0 sm:py-2.5 sm:text-sm"
-                                    >
-                                        <LogIn className="h-5 w-5 sm:h-4 sm:w-4" aria-hidden />
-                                        Check in
-                                    </button>
+                                    todayLeave?.blocking ? (
+                                        <p className="rounded-xl border border-white/25 bg-white/10 px-4 py-3 text-center text-sm font-semibold text-white/90 sm:text-left">
+                                            Check-in disabled — approved leave today
+                                        </p>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            onClick={() => setPunchModal("check-in")}
+                                            disabled={isPunching || attendanceLoading}
+                                            className="flex w-full min-h-[52px] items-center justify-center gap-2 rounded-xl bg-[#06b6d4] px-5 text-base font-bold text-white shadow-lg active:scale-[0.98] hover:bg-[#05a8b8] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:min-h-0 sm:py-2.5 sm:text-sm"
+                                        >
+                                            <LogIn className="h-5 w-5 sm:h-4 sm:w-4" aria-hidden />
+                                            Check in
+                                        </button>
+                                    )
                                 ) : checkedIn ? (
                                     <button
                                         type="button"
@@ -848,6 +929,13 @@ export default function EmployeeAttendancePage() {
                     <p className="text-xs leading-relaxed text-gray-500">
                         You have marked present on <strong>{stats.present}</strong> of{" "}
                         <strong>{stats.total}</strong> working days this month.
+                        {stats.leavePending > 0 ? (
+                            <>
+                                {" "}
+                                <strong>{stats.leavePending}</strong> day
+                                {stats.leavePending === 1 ? "" : "s"} have pending leave.
+                            </>
+                        ) : null}
                     </p>
                 </div>
             </div>

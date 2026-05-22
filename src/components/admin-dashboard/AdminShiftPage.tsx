@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import {
+    CalendarCheck,
     Clock,
     Eye,
     Loader2,
@@ -12,6 +14,8 @@ import {
     User,
     X,
 } from "lucide-react";
+import WorkingDaysPills from "@/components/admin-dashboard/WorkingDaysPills";
+import { adminAttendanceForEmployee } from "@/lib/adminDashboardRoutes";
 
 type EmployeeLookupRow = {
     employee_id: string;
@@ -92,6 +96,11 @@ function apiToShift(row: ShiftApiRow): ShiftRecord {
         graceMinutes: row.grace_minutes,
         active: row.is_active,
     };
+}
+
+function currentMonthParam(): string {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
 function formToApiBody(form: typeof emptyForm) {
@@ -207,29 +216,6 @@ function EmployeeDetailsBlock({
                     <dd className="mt-0.5 text-sm font-semibold text-gray-900">{role || "—"}</dd>
                 </div>
             </dl>
-        </div>
-    );
-}
-
-function WorkingDaysPills({ days }: { days: number[] }) {
-    return (
-        <div className="flex flex-wrap gap-1">
-            {WEEKDAYS.map((d) => {
-                const on = days.includes(d.value);
-                return (
-                    <span
-                        key={d.value}
-                        className={`inline-flex h-7 w-8 items-center justify-center rounded-md text-[10px] font-bold ${
-                            on
-                                ? "bg-[#0a2a5e] text-white"
-                                : "bg-gray-100 text-gray-400"
-                        }`}
-                        title={d.full}
-                    >
-                        {d.label}
-                    </span>
-                );
-            })}
         </div>
     );
 }
@@ -493,18 +479,28 @@ export default function AdminShiftPage() {
                     </div>
                     <p className="mt-1 text-sm text-gray-500">
                         Set shift timings, working locations, and weekly working days per employee ID.
+                        Attendance calendars and daily status follow each employee&apos;s working days below.
                     </p>
                     {loadError && <p className="mt-2 text-xs text-amber-600">{loadError}</p>}
                 </div>
-                <button
-                    type="button"
-                    onClick={openAdd}
-                    disabled={isLoading}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0a2a5e] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
-                >
-                    <Plus className="h-4 w-4" aria-hidden />
-                    Add shift
-                </button>
+                <div className="flex flex-wrap items-center gap-2">
+                    <Link
+                        href="/admin-dashboard/attendance"
+                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#0a2a5e]/20 bg-white px-4 py-3 text-sm font-semibold text-[#0a2a5e] shadow-sm transition hover:bg-[#0a2a5e]/5"
+                    >
+                        <CalendarCheck className="h-4 w-4" aria-hidden />
+                        Attendance
+                    </Link>
+                    <button
+                        type="button"
+                        onClick={openAdd}
+                        disabled={isLoading}
+                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0a2a5e] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
+                    >
+                        <Plus className="h-4 w-4" aria-hidden />
+                        Add shift
+                    </button>
+                </div>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-3">
@@ -599,6 +595,15 @@ export default function AdminShiftPage() {
                                         </td>
                                         <td className="px-4 py-4">
                                             <WorkingDaysPills days={shift.workingDays} />
+                                            <Link
+                                                href={adminAttendanceForEmployee(shift.employeeId, {
+                                                    month: currentMonthParam(),
+                                                })}
+                                                className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-[#06b6d4] hover:text-[#0a2a5e]"
+                                            >
+                                                <CalendarCheck className="h-3.5 w-3.5" aria-hidden />
+                                                Manage attendance
+                                            </Link>
                                         </td>
                                         <td className="px-4 py-4">
                                             <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${shift.active ? "bg-emerald-50 text-emerald-700" : "bg-gray-100 text-gray-600"}`}>
@@ -702,6 +707,19 @@ export default function AdminShiftPage() {
                                     <div className="mt-2">
                                         <WorkingDaysPills days={viewDetail.workingDays} />
                                     </div>
+                                    <p className="mt-2 text-xs text-gray-500">
+                                        Attendance for this employee is calculated only on these days; other
+                                        days show as off days.
+                                    </p>
+                                    <Link
+                                        href={adminAttendanceForEmployee(viewDetail.employeeId, {
+                                            month: currentMonthParam(),
+                                        })}
+                                        className="mt-3 inline-flex items-center gap-2 rounded-lg bg-[#06b6d4]/15 px-4 py-2.5 text-sm font-bold text-[#0a2a5e] hover:bg-[#06b6d4]/25"
+                                    >
+                                        <CalendarCheck className="h-4 w-4" aria-hidden />
+                                        Manage attendance for this schedule
+                                    </Link>
                                 </div>
                                 <div>
                                     <p className="text-xs font-medium text-gray-500">Shift status</p>

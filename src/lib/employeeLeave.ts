@@ -8,6 +8,10 @@ import {
     type AdminLeavePolicyRow,
 } from "@/lib/adminLeavePolicies";
 import {
+    clearSyncedLeaveAttendance,
+    syncApprovedLeaveToAttendance,
+} from "@/lib/attendanceLeaveSync";
+import {
     countLeaveDays,
     validateLeaveRequest,
     type ValidateLeaveInput,
@@ -634,6 +638,16 @@ export async function updateLeaveRequestStatus(
     if (!updated) {
         throw new Error("Leave request updated but could not be loaded");
     }
+
+    if (nextStatus === "approved") {
+        await syncApprovedLeaveToAttendance(updated.employee_id, updated);
+    } else if (
+        (nextStatus === "rejected" || nextStatus === "cancelled") &&
+        current === "approved"
+    ) {
+        await clearSyncedLeaveAttendance(updated.employee_id, updated);
+    }
+
     return updated;
 }
 

@@ -116,6 +116,28 @@ export function mapShiftRowToApi(row: AdminEmployeeShiftRow) {
     };
 }
 
+export async function getShiftByEmployeeId(employeeId: string) {
+    await ensureAdminEmployeeShiftsTable();
+    const [rows] = await pool.query(`${SHIFT_SELECT_JOIN} WHERE s.employee_id = ? LIMIT 1`, [
+        employeeId.trim(),
+    ]);
+    const row = (rows as AdminEmployeeShiftRow[])[0];
+    return row ? mapShiftRowToApi(row) : null;
+}
+
+export async function getActiveShiftWorkingDaysMap(): Promise<Map<string, number[]>> {
+    await ensureAdminEmployeeShiftsTable();
+    const [rows] = await pool.query<RowDataPacket[]>(
+        `SELECT employee_id, working_days, is_active FROM ${TABLE}`,
+    );
+    const map = new Map<string, number[]>();
+    for (const row of rows) {
+        if (!Number(row.is_active)) continue;
+        map.set(String(row.employee_id), parseWorkingDaysJson(row.working_days));
+    }
+    return map;
+}
+
 export async function employeeExists(employeeId: string): Promise<boolean> {
     await ensureAdminEmployeesTable();
     const [rows] = await pool.query<RowDataPacket[]>(

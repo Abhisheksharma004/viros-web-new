@@ -13,6 +13,20 @@ import {
     type AttendanceStatus,
     type EmployeeAttendanceRow,
 } from "@/lib/employeeAttendance";
+import {
+    fetchLeaveRequestsOverlappingMonth,
+    mergeLeaveRequestsIntoAttendanceRecords,
+} from "@/lib/attendanceLeaveSync";
+import {
+    DEFAULT_SHIFT_WORKING_DAYS,
+    isDateWorkingDay,
+    mergeMonthRecordsWithShift,
+    offDayNote,
+} from "@/lib/attendanceSchedule";
+import {
+    getActiveShiftWorkingDaysMap,
+    getShiftByEmployeeId,
+} from "@/lib/adminEmployeeShifts";
 
 const ATTENDANCE_TABLE = "employee_attendance";
 
@@ -86,6 +100,8 @@ export type AdminDailyAttendanceRow = {
     checkInProof?: AttendancePunchProof;
     checkOutProof?: AttendancePunchProof;
     canMarkPresent: boolean;
+    isWorkingDay: boolean;
+    hasShift: boolean;
 };
 
 export type AdminMonthlySummaryRow = {
@@ -100,6 +116,17 @@ export type AdminMonthlySummaryRow = {
     totalRecords: number;
 };
 
+export type AdminEmployeeShiftContext = {
+    configured: boolean;
+    active: boolean;
+    startTime: string;
+    endTime: string;
+    graceMinutes: number;
+    workingDays: number[];
+    locationType: string;
+    locationLabel: string;
+};
+
 export type AdminEmployeeMonthlyDetail = {
     employee: {
         employeeId: string;
@@ -107,6 +134,7 @@ export type AdminEmployeeMonthlyDetail = {
         department: string;
         designation: string;
     };
+    shift: AdminEmployeeShiftContext;
     records: AttendanceDayRecord[];
 };
 
@@ -118,18 +146,34 @@ function isoDateOnly(value: string): string {
     return trimmed;
 }
 
-function mapJoinRowToDaily(row: EmployeeJoinRow, dateIso: string): AdminDailyAttendanceRow {
+function mapJoinRowToDaily(
+    row: EmployeeJoinRow,
+    dateIso: string,
+    workingDays: number[] | null,
+    hasShift: boolean,
+): AdminDailyAttendanceRow {
     const hasRecord = row.attendance_id != null;
-    const status: AttendanceStatus | "absent" = hasRecord
-        ? (row.status as AttendanceStatus)
-        : "absent";
+    const shiftDays = workingDays ?? DEFAULT_SHIFT_WORKING_DAYS;
+    const isWorking = isDateWorkingDay(dateIso, shiftDays);
+
+    let status: AttendanceStatus | "absent";
+    if (hasRecord) {
+        status = row.status as AttendanceStatus;
+    } else if (!isWorking) {
+        status = "weekend";
+    } else {
+        status = "absent";
+    }
 
     const workingSeconds = row.working_seconds != null ? Number(row.working_seconds) : null;
     const checkIn = formatDbTime12h(row.check_in_at);
     const checkOut = formatDbTime12h(row.check_out_at);
 
     const canMarkPresent =
-        !hasRecord || status === "absent" || (hasRecord && !row.check_in_at && status !== "leave");
+        isWorking &&
+        (!hasRecord ||
+            status === "absent" ||
+            (hasRecord && !row.check_in_at && status !== "leave" && status !== "weekend"));
 
     return {
         employeeId: row.employee_id,
@@ -142,7 +186,10 @@ function mapJoinRowToDaily(row: EmployeeJoinRow, dateIso: string): AdminDailyAtt
         checkIn,
         checkOut,
         hours: workingSeconds != null ? formatDurationHms(workingSeconds) : undefined,
-        note: row.note ?? undefined,
+        note:
+            !hasRecord && !isWorking
+                ? offDayNote()
+                : row.note ?? undefined,
         checkInProof: mapPunchProof(
             checkIn,
             row.check_in_photo,
@@ -160,6 +207,8 @@ function mapJoinRowToDaily(row: EmployeeJoinRow, dateIso: string): AdminDailyAtt
             row.check_out_address,
         ),
         canMarkPresent,
+        isWorkingDay: isWorking,
+        hasShift,
     };
 }
 
@@ -173,7 +222,12 @@ export async function getAdminDailyAttendance(dateIso: string): Promise<AdminDai
         [date],
     );
 
-    return rows.map((row) => mapJoinRowToDaily(row, date));
+    const shiftMap = await getActiveShiftWorkingDaysMap();
+
+    return rows.map((row) => {
+        const wd = shiftMap.get(row.employee_id) ?? null;
+        return mapJoinRowToDaily(row, date, wd, shiftMap.has(row.employee_id));
+    });
 }
 
 export async function getAdminMonthlySummary(
@@ -277,6 +331,39 @@ export async function getAdminEmployeeMonthlyDetail(
         [trimmedId, start, end],
     );
 
+    const shiftRow = await getShiftByEmployeeId(trimmedId);
+    const workingDays = shiftRow?.working_days ?? DEFAULT_SHIFT_WORKING_DAYS;
+    const dbRecords = attRows.map(mapRowToDayRecord);
+    const leaveRequests = await fetchLeaveRequestsOverlappingMonth(trimmedId, year, month);
+    const withLeave = mergeLeaveRequestsIntoAttendanceRecords(dbRecords, leaveRequests);
+    const todayIso = new Date().toISOString().slice(0, 10);
+    const records = mergeMonthRecordsWithShift(year, month, withLeave, workingDays, {
+        todayIso,
+        markPastAbsent: true,
+    });
+
+    const shift: AdminEmployeeShiftContext = shiftRow
+        ? {
+              configured: true,
+              active: shiftRow.is_active,
+              startTime: shiftRow.start_time,
+              endTime: shiftRow.end_time,
+              graceMinutes: shiftRow.grace_minutes,
+              workingDays: shiftRow.working_days,
+              locationType: shiftRow.location_type,
+              locationLabel: shiftRow.location_label,
+          }
+        : {
+              configured: false,
+              active: false,
+              startTime: "09:00",
+              endTime: "18:00",
+              graceMinutes: 0,
+              workingDays: DEFAULT_SHIFT_WORKING_DAYS,
+              locationType: "office",
+              locationLabel: "",
+          };
+
     return {
         employee: {
             employeeId: emp.employee_id,
@@ -284,7 +371,8 @@ export async function getAdminEmployeeMonthlyDetail(
             department: emp.department ?? "",
             designation: emp.designation ?? "",
         },
-        records: attRows.map(mapRowToDayRecord),
+        shift,
+        records,
     };
 }
 
@@ -310,6 +398,12 @@ export async function adminMarkEmployeePresent(
     const noteText = adminNote?.trim()
         ? `Marked present by admin: ${adminNote.trim()}`
         : "Marked present by admin";
+
+    const shiftRow = await getShiftByEmployeeId(trimmedId);
+    const workingDays = shiftRow?.working_days ?? DEFAULT_SHIFT_WORKING_DAYS;
+    if (!isDateWorkingDay(date, workingDays)) {
+        throw new Error("Cannot mark attendance on a non-working day for this employee's shift");
+    }
 
     const existing = await getAttendanceByDate(trimmedId, date);
 

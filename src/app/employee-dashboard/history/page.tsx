@@ -71,7 +71,7 @@ export default function EmployeeLeaveHistoryPage() {
     return (
         <div className="mx-auto w-full max-w-6xl space-y-4 pb-8 sm:space-y-6">
             <Link
-                href="/employee-dashboard/attendance/leave"
+                href="/employee-dashboard/leave"
                 className="inline-flex touch-manipulation items-center gap-2 text-sm font-bold text-[#0a2a5e] hover:text-[#06b6d4]"
             >
                 <FileText className="h-4 w-4" aria-hidden />

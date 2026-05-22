@@ -25,7 +25,7 @@ const stats = [
             </svg>
         ),
         color: "from-teal-500 to-emerald-500",
-        href: "/employee-dashboard/attendance/leave",
+        href: "/employee-dashboard/leave",
     },
     {
         title: "Pending Tasks",
@@ -55,7 +55,7 @@ const stats = [
 
 const quickActions = [
     { title: "My Attendance", href: "/employee-dashboard/attendance", icon: "📅" },
-    { title: "Apply Leave", href: "/employee-dashboard/attendance/leave", icon: "🏖️" },
+    { title: "Apply Leave", href: "/employee-dashboard/leave", icon: "🏖️" },
     { title: "My Tasks", href: "/employee-dashboard/tasks", icon: "✅" },
     { title: "Salary Slip", href: "/employee-dashboard/payroll/slip", icon: "💰" },
     { title: "My Profile", href: "/employee-dashboard/profile", icon: "👤" },

@@ -8,6 +8,12 @@ import {
     mapRowToTodaySession,
 } from "@/lib/employeeAttendance";
 import { getEmployeeSession } from "@/lib/employeeSession";
+import {
+    fetchLeaveRequestsOverlappingMonth,
+    getTodayLeaveInfo,
+    mergeLeaveRequestsIntoAttendanceRecords,
+} from "@/lib/attendanceLeaveSync";
+import { mergeMonthRecordsWithShift } from "@/lib/attendanceSchedule";
 
 export async function GET(request: Request) {
     try {
@@ -28,11 +34,16 @@ export async function GET(request: Request) {
         }
 
         const employeeId = session.employeeId.trim();
-        const records = await getAttendanceForMonth(employeeId, year, month);
+        const shift = await getEmployeeShiftForLate(employeeId);
+        const dbRecords = await getAttendanceForMonth(employeeId, year, month);
+        const leaveRequests = await fetchLeaveRequestsOverlappingMonth(employeeId, year, month);
+        const withLeave = mergeLeaveRequestsIntoAttendanceRecords(dbRecords, leaveRequests);
+        const workingDays = shift?.working_days?.length ? shift.working_days : [1, 2, 3, 4, 5];
+        const records = mergeMonthRecordsWithShift(year, month, withLeave, workingDays);
 
         const todayIso = attendanceDateFromIso(now.toISOString());
+        const todayLeave = await getTodayLeaveInfo(employeeId, todayIso);
         const todayRow = await getAttendanceByDate(employeeId, todayIso);
-        const shift = await getEmployeeShiftForLate(employeeId);
 
         let today = {
             record: null as ReturnType<typeof mapRowToTodaySession>["record"] | null,
@@ -54,7 +65,7 @@ export async function GET(request: Request) {
         }
 
         return NextResponse.json(
-            { records, today, shift },
+            { records, today, shift, todayLeave },
             { headers: { "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0" } },
         );
     } catch (error: unknown) {

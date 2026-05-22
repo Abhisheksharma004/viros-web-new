@@ -1,6 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import type { AdminAttendanceTab } from "@/lib/adminDashboardRoutes";
 import {
     Calendar,
     Check,
@@ -17,6 +19,8 @@ import {
     X,
 } from "lucide-react";
 import PhotoLightbox from "@/components/employee-dashboard/PhotoLightbox";
+import WorkingDaysPills from "@/components/admin-dashboard/WorkingDaysPills";
+import Link from "next/link";
 import type { AttendancePunchProof } from "@/lib/employeeAttendance";
 import {
     exportDailyAttendanceExcel,
@@ -70,9 +74,20 @@ type EmployeeListItem = {
     department: string | null;
 };
 
+type EmployeeShiftContext = {
+    configured: boolean;
+    active: boolean;
+    startTime: string;
+    endTime: string;
+    graceMinutes: number;
+    workingDays: number[];
+    locationType: string;
+    locationLabel: string;
+};
+
 type EmployeeRecord = {
     date: string;
-    status: AttendanceStatus;
+    status: AttendanceStatus | "weekend";
     checkIn?: string;
     checkOut?: string;
     hours?: string;
@@ -87,6 +102,7 @@ const STATUS_STYLES: Record<string, { label: string; className: string }> = {
     absent: { label: "Absent", className: "bg-red-100 text-red-900 ring-red-600/30" },
     leave: { label: "Leave", className: "bg-blue-100 text-blue-900 ring-blue-600/30" },
     "half-day": { label: "Half day", className: "bg-teal-100 text-teal-900 ring-teal-600/30" },
+    weekend: { label: "Off day", className: "bg-gray-100 text-gray-600 ring-gray-400/30" },
 };
 
 const TH =
@@ -355,7 +371,13 @@ function formatDeptDesignation(department?: string | null, designation?: string 
     return dept || desig;
 }
 
-export default function AdminEmployeeAttendancePage() {
+function isAttendanceTab(value: string | null): value is TabId {
+    return value === "daily" || value === "monthly" || value === "employee";
+}
+
+function AdminEmployeeAttendancePageContent() {
+    const searchParams = useSearchParams();
+
     const today = useMemo(() => toIsoDate(new Date()), []);
     const [tab, setTab] = useState<TabId>("daily");
     const [search, setSearch] = useState("");
@@ -379,6 +401,7 @@ export default function AdminEmployeeAttendancePage() {
         department: string;
         designation: string;
     } | null>(null);
+    const [employeeShift, setEmployeeShift] = useState<EmployeeShiftContext | null>(null);
     const [employeeLoading, setEmployeeLoading] = useState(false);
     const [employeeError, setEmployeeError] = useState("");
 
@@ -403,6 +426,40 @@ export default function AdminEmployeeAttendancePage() {
 
     const monthInputValue = `${viewYear}-${String(viewMonth).padStart(2, "0")}`;
 
+    const urlEmployeeId = searchParams.get("employeeId")?.trim().toUpperCase() ?? "";
+
+    useEffect(() => {
+        const tabParam = searchParams.get("tab") as AdminAttendanceTab | null;
+        if (isAttendanceTab(tabParam)) {
+            setTab(tabParam);
+        }
+
+        const monthParam = searchParams.get("month");
+        if (monthParam && /^\d{4}-\d{2}$/.test(monthParam)) {
+            const [y, m] = monthParam.split("-").map(Number);
+            if (y && m >= 1 && m <= 12) {
+                setViewYear(y);
+                setViewMonth(m);
+            }
+        }
+
+        const dateParam = searchParams.get("date");
+        if (dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
+            setDailyDate(dateParam);
+        }
+
+        if (urlEmployeeId) {
+            setSelectedEmployeeId(urlEmployeeId);
+            if (!tabParam || tabParam === "employee") {
+                setTab("employee");
+            }
+            if (tabParam === "daily") {
+                setSearch(urlEmployeeId);
+            }
+        }
+
+    }, [searchParams, urlEmployeeId]);
+
     const loadEmployees = useCallback(async () => {
         try {
             const resp = await fetch("/api/admin/employees", { cache: "no-store" });
@@ -416,13 +473,15 @@ export default function AdminEmployeeAttendancePage() {
                   }))
                 : [];
             setEmployees(rows);
-            if (rows.length && !selectedEmployeeId) {
+            if (rows.length && !selectedEmployeeId && !urlEmployeeId) {
                 setSelectedEmployeeId(rows[0].employee_id);
+            } else if (urlEmployeeId && rows.some((r) => r.employee_id === urlEmployeeId)) {
+                setSelectedEmployeeId(urlEmployeeId);
             }
         } catch {
             // non-blocking
         }
-    }, [selectedEmployeeId]);
+    }, [selectedEmployeeId, urlEmployeeId]);
 
     const loadDaily = useCallback(async () => {
         try {
@@ -488,11 +547,17 @@ export default function AdminEmployeeAttendancePage() {
                       }
                     : null,
             );
+            setEmployeeShift(
+                data.shift && typeof data.shift === "object"
+                    ? (data.shift as EmployeeShiftContext)
+                    : null,
+            );
             setEmployeeRecords(Array.isArray(data.records) ? data.records : []);
         } catch (error) {
             setEmployeeError(error instanceof Error ? error.message : "Failed to load");
             setEmployeeRecords([]);
             setEmployeeMeta(null);
+            setEmployeeShift(null);
         } finally {
             setEmployeeLoading(false);
         }
@@ -932,7 +997,9 @@ export default function AdminEmployeeAttendancePage() {
                                                     <StatusBadge status={row.status} />
                                                 </td>
                                                 <td className={`${TD} text-center`}>
-                                                    {row.canMarkPresent ? (
+                                                    {row.status === "weekend" ? (
+                                                        <span className={`${EMPTY} text-xs`}>Off day</span>
+                                                    ) : row.canMarkPresent ? (
                                                         <button
                                                             type="button"
                                                             disabled={markingKey === `${row.employeeId}-${dailyDate}`}
@@ -1151,6 +1218,40 @@ export default function AdminEmployeeAttendancePage() {
                                 {selectedEmployeeId} · {employeeMeta.department || "—"} ·{" "}
                                 {employeeMeta.designation || "—"}
                             </p>
+                            {employeeShift ? (
+                                <div className="mt-4 rounded-xl border border-white/15 bg-white/10 p-3 sm:p-4">
+                                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                        <div>
+                                            <p className="text-[10px] font-bold uppercase tracking-wider text-white/70">
+                                                Shift schedule (attendance follows these working days)
+                                            </p>
+                                            <p className="mt-1 text-sm font-semibold text-white">
+                                                {employeeShift.configured
+                                                    ? `${employeeShift.startTime} – ${employeeShift.endTime}`
+                                                    : "No shift assigned — using Mon–Fri default"}
+                                                {employeeShift.configured && employeeShift.graceMinutes > 0
+                                                    ? ` · ${employeeShift.graceMinutes}m grace`
+                                                    : ""}
+                                            </p>
+                                            <div className="mt-2">
+                                                <WorkingDaysPills days={employeeShift.workingDays} />
+                                            </div>
+                                            {!employeeShift.configured ? (
+                                                <p className="mt-2 text-xs text-amber-200">
+                                                    Assign a shift on the Emp. Shift page to match this
+                                                    calendar to the employee&apos;s real working week.
+                                                </p>
+                                            ) : null}
+                                        </div>
+                                        <Link
+                                            href="/admin-dashboard/shift"
+                                            className="inline-flex shrink-0 items-center justify-center rounded-lg border border-white/25 bg-white/10 px-3 py-2 text-xs font-bold text-white hover:bg-white/20"
+                                        >
+                                            Edit shift
+                                        </Link>
+                                    </div>
+                                </div>
+                            ) : null}
                         </div>
                     )}
 
@@ -1318,5 +1419,19 @@ export default function AdminEmployeeAttendancePage() {
                 onClose={() => setPhotoLightbox(null)}
             />
         </div>
+    );
+}
+
+export default function AdminEmployeeAttendancePage() {
+    return (
+        <Suspense
+            fallback={
+                <div className="mx-auto max-w-7xl px-4 py-16 text-center text-sm text-gray-500">
+                    Loading attendance…
+                </div>
+            }
+        >
+            <AdminEmployeeAttendancePageContent />
+        </Suspense>
     );
 }

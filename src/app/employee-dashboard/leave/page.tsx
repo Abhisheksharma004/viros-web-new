@@ -1003,7 +1003,7 @@ export default function EmployeeLeaveRequestPage() {
 
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
                         <Link
-                            href="/employee-dashboard/attendance/history"
+                            href="/employee-dashboard/history"
                             className="inline-flex h-11 w-full touch-manipulation items-center justify-center gap-2 rounded-xl border border-[#0a2a5e]/20 bg-[#0a2a5e]/5 px-4 text-sm font-bold text-[#0a2a5e] active:bg-[#0a2a5e]/10 sm:h-10 sm:w-auto sm:rounded-lg"
                         >
                             <Clock className="h-4 w-4" aria-hidden />

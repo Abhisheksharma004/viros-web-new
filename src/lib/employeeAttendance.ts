@@ -1,5 +1,6 @@
 import type { RowDataPacket } from "mysql2";
 import pool from "@/lib/db";
+import { findLeaveBlockingCheckIn } from "@/lib/attendanceLeaveSync";
 import { ensureAdminEmployeesTable } from "@/lib/adminEmployees";
 import {
     SHIFT_SELECT_JOIN,
@@ -95,7 +96,13 @@ export function parseISTDateTime(value: Date | string | null): Date | null {
     return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
-export type AttendanceStatus = "present" | "late" | "absent" | "leave" | "half-day";
+export type AttendanceStatus =
+    | "present"
+    | "late"
+    | "absent"
+    | "leave"
+    | "half-day"
+    | "weekend";
 
 export type AttendancePunchProof = {
     time?: string;
@@ -407,6 +414,13 @@ export async function punchAttendance(employeeId: string, punch: PunchInput) {
     }
 
     if (punch.type === "check-in") {
+        const leaveBlock = await findLeaveBlockingCheckIn(employeeId, dateIso);
+        if (leaveBlock) {
+            throw new Error(
+                `Cannot check in: you are on approved leave (${leaveBlock.policyName}).`,
+            );
+        }
+
         const existing = await getAttendanceByDate(employeeId, dateIso);
         if (existing?.check_in_at) {
             throw new Error("Already checked in for today");
