@@ -65,7 +65,9 @@ type MonthlyRow = {
     absent: number;
     leave: number;
     halfDay: number;
-    totalRecords: number;
+    totalPresent: number;
+    totalWorkingDays: number;
+    weekOff: number;
 };
 
 type EmployeeListItem = {
@@ -698,7 +700,9 @@ function AdminEmployeeAttendancePageContent() {
                 absent: r.absent,
                 leave: r.leave,
                 halfDay: r.halfDay,
-                totalDays: r.totalRecords,
+                totalPresent: r.totalPresent,
+                totalWorkingDays: r.totalWorkingDays,
+                weekOff: r.weekOff,
             })),
         [filteredMonthly],
     );
@@ -1096,20 +1100,22 @@ function AdminEmployeeAttendancePageContent() {
                                         <th className={`${TH_CENTER} text-amber-800`}>Late</th>
                                         <th className={`${TH_CENTER} text-red-800`}>Absent</th>
                                         <th className={`${TH_CENTER} text-blue-800`}>Leave</th>
-                                        <th className={`${TH_CENTER} text-teal-800`}>Half day</th>
-                                        <th className={`${TH_CENTER} text-[#0a2a5e]`}>Total days</th>
+                                        <th className={`${TH_CENTER} text-violet-800`}>Half day</th>
+                                        <th className={`${TH_CENTER} text-[#0a2a5e]`}>Total working days</th>
+                                        <th className={`${TH_CENTER} text-gray-700`}>Week off</th>
+                                        <th className={`${TH_CENTER} text-teal-800`}>Total present</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-200">
                                     {monthlyLoading ? (
                                         <tr>
-                                            <td colSpan={8} className={`${TD} py-14 text-center ${TD_MUTED}`}>
+                                            <td colSpan={10} className={`${TD} py-14 text-center ${TD_MUTED}`}>
                                                 <Loader2 className="mx-auto h-6 w-6 animate-spin" />
                                             </td>
                                         </tr>
                                     ) : filteredMonthly.length === 0 ? (
                                         <tr>
-                                            <td colSpan={8} className={`${TD} py-14 text-center ${TD_MUTED}`}>
+                                            <td colSpan={10} className={`${TD} py-14 text-center ${TD_MUTED}`}>
                                                 No data for this month.
                                             </td>
                                         </tr>
@@ -1142,11 +1148,17 @@ function AdminEmployeeAttendancePageContent() {
                                                 <td className={`${TD} text-center text-lg font-black text-blue-800`}>
                                                     {row.leave}
                                                 </td>
-                                                <td className={`${TD} text-center text-lg font-black text-teal-800`}>
+                                                <td className={`${TD} text-center text-lg font-black text-violet-800`}>
                                                     {row.halfDay}
                                                 </td>
                                                 <td className={`${TD} text-center text-lg font-black text-[#0a2a5e]`}>
-                                                    {row.totalRecords}
+                                                    {row.totalWorkingDays}
+                                                </td>
+                                                <td className={`${TD} text-center text-lg font-black text-gray-700`}>
+                                                    {row.weekOff}
+                                                </td>
+                                                <td className={`${TD} text-center text-lg font-black text-teal-800`}>
+                                                    {row.totalPresent}
                                                 </td>
                                             </tr>
                                         ))

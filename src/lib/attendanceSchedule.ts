@@ -65,3 +65,23 @@ export function mergeMonthRecordsWithShift(
 export function parseWorkingDaysFromShiftRow(raw: unknown): number[] {
     return parseWorkingDaysJson(raw);
 }
+
+/** Count scheduled working vs off days in a calendar month for a shift. */
+export function countMonthScheduleDays(
+    year: number,
+    monthOneBased: number,
+    workingDays: number[],
+): { totalWorkingDays: number; weekOff: number } {
+    const daysInMonth = new Date(year, monthOneBased, 0).getDate();
+    let totalWorkingDays = 0;
+    let weekOff = 0;
+    for (let d = 1; d <= daysInMonth; d++) {
+        const iso = `${year}-${String(monthOneBased).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+        if (isDateWorkingDay(iso, workingDays)) {
+            totalWorkingDays += 1;
+        } else {
+            weekOff += 1;
+        }
+    }
+    return { totalWorkingDays, weekOff };
+}

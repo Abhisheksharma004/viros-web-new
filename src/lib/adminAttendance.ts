@@ -18,6 +18,7 @@ import {
     mergeLeaveRequestsIntoAttendanceRecords,
 } from "@/lib/attendanceLeaveSync";
 import {
+    countMonthScheduleDays,
     DEFAULT_SHIFT_WORKING_DAYS,
     isDateWorkingDay,
     mergeMonthRecordsWithShift,
@@ -113,7 +114,9 @@ export type AdminMonthlySummaryRow = {
     absent: number;
     leave: number;
     halfDay: number;
-    totalRecords: number;
+    totalPresent: number;
+    totalWorkingDays: number;
+    weekOff: number;
 };
 
 export type AdminEmployeeShiftContext = {
@@ -251,7 +254,6 @@ export async function getAdminMonthlySummary(
             absent: number;
             leave_count: number;
             half_day: number;
-            total_records: number;
         })[]
     >(
         `SELECT
@@ -262,8 +264,7 @@ export async function getAdminMonthlySummary(
             COALESCE(SUM(CASE WHEN a.status = 'late' THEN 1 ELSE 0 END), 0) AS late,
             COALESCE(SUM(CASE WHEN a.status = 'absent' THEN 1 ELSE 0 END), 0) AS absent,
             COALESCE(SUM(CASE WHEN a.status = 'leave' THEN 1 ELSE 0 END), 0) AS leave_count,
-            COALESCE(SUM(CASE WHEN a.status = 'half-day' THEN 1 ELSE 0 END), 0) AS half_day,
-            COUNT(a.id) AS total_records
+            COALESCE(SUM(CASE WHEN a.status = 'half-day' THEN 1 ELSE 0 END), 0) AS half_day
          FROM admin_employees e
          LEFT JOIN ${ATTENDANCE_TABLE} a
             ON a.employee_id = e.employee_id
@@ -275,17 +276,29 @@ export async function getAdminMonthlySummary(
         [start, end],
     );
 
-    return rows.map((row) => ({
-        employeeId: row.employee_id,
-        fullName: row.full_name,
-        department: row.department ?? "",
-        present: Number(row.present) || 0,
-        late: Number(row.late) || 0,
-        absent: Number(row.absent) || 0,
-        leave: Number(row.leave_count) || 0,
-        halfDay: Number(row.half_day) || 0,
-        totalRecords: Number(row.total_records) || 0,
-    }));
+    const shiftMap = await getActiveShiftWorkingDaysMap();
+
+    return rows.map((row) => {
+        const workingDays = shiftMap.get(row.employee_id) ?? DEFAULT_SHIFT_WORKING_DAYS;
+        const { totalWorkingDays, weekOff } = countMonthScheduleDays(year, month, workingDays);
+        const present = Number(row.present) || 0;
+        const late = Number(row.late) || 0;
+        const leave = Number(row.leave_count) || 0;
+        const halfDay = Number(row.half_day) || 0;
+        return {
+            employeeId: row.employee_id,
+            fullName: row.full_name,
+            department: row.department ?? "",
+            present,
+            late,
+            absent: Number(row.absent) || 0,
+            leave,
+            halfDay,
+            totalPresent: present + late + leave + halfDay,
+            totalWorkingDays,
+            weekOff,
+        };
+    });
 }
 
 export async function getAdminEmployeeMonthlyDetail(

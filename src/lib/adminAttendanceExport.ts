@@ -18,7 +18,9 @@ export type AttendanceMonthlyExportRow = {
     absent: number;
     leave: number;
     halfDay: number;
-    totalDays: number;
+    totalPresent: number;
+    totalWorkingDays: number;
+    weekOff: number;
 };
 
 export type AttendanceEmployeeExportRow = {
@@ -55,7 +57,9 @@ const MONTHLY_COLUMNS: ExportColumn<keyof AttendanceMonthlyExportRow>[] = [
     { header: "Absent", key: "absent", width: 10 },
     { header: "Leave", key: "leave", width: 10 },
     { header: "Half day", key: "halfDay", width: 10 },
-    { header: "Total days", key: "totalDays", width: 12 },
+    { header: "Total working days", key: "totalWorkingDays", width: 18 },
+    { header: "Week off", key: "weekOff", width: 12 },
+    { header: "Total present", key: "totalPresent", width: 14 },
 ];
 
 const EMPLOYEE_COLUMNS: ExportColumn<keyof AttendanceEmployeeExportRow>[] = [
