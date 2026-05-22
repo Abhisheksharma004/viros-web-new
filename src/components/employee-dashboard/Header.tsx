@@ -25,6 +25,10 @@ const PAGE_HEADERS: Record<string, { title: string; subtitle?: string }> = {
         title: "Leave request",
         subtitle: "Apply for leave and view your balance",
     },
+    "/employee-dashboard/attendance/history": {
+        title: "Leave history",
+        subtitle: "Past, rejected, and withdrawn leave requests",
+    },
 };
 
 function getPageHeader(pathname: string) {
