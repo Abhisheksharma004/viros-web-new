@@ -13,6 +13,10 @@ import {
     type LeaveDayType,
 } from "@/lib/employeeLeave";
 import { getEmployeeSession } from "@/lib/employeeSession";
+import {
+    fetchEmployeeProfileForEmail,
+    sendLeaveApplicationNotification,
+} from "@/lib/leaveNotificationEmail";
 
 function isoToday() {
     const d = new Date();
@@ -156,6 +160,24 @@ export async function POST(request: Request) {
             reason,
             attachmentName,
             appliedOn: isoToday(),
+        });
+
+        const profile = await fetchEmployeeProfileForEmail(session.employeeId);
+        void sendLeaveApplicationNotification({
+            employeeId: session.employeeId,
+            employeeName: profile.fullName,
+            department: profile.department,
+            request: {
+                request_id: created.request_id,
+                policy_name: created.policy_name,
+                policy_code: created.policy_code,
+                start_date: created.start_date,
+                end_date: created.end_date,
+                days: created.days,
+                day_type: created.day_type,
+                reason: created.reason,
+                applied_on: created.applied_on,
+            },
         });
 
         return NextResponse.json(created, { status: 201 });

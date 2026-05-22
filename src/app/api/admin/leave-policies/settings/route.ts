@@ -24,6 +24,7 @@ export async function GET() {
                 max_consecutive_days_default: 15,
                 allow_half_day: true,
                 count_weekends_in_leave: false,
+                notification_emails: [],
             });
         }
         return NextResponse.json(mapOrgSettingsRowToApi(row), {
@@ -48,7 +49,8 @@ export async function PUT(request: Request) {
         await pool.query(
             `UPDATE admin_leave_org_settings
              SET fiscal_year_start_month = ?, default_min_notice_days = ?,
-                 max_consecutive_days_default = ?, allow_half_day = ?, count_weekends_in_leave = ?
+                 max_consecutive_days_default = ?, allow_half_day = ?, count_weekends_in_leave = ?,
+                 notification_emails = ?
              WHERE id = ?`,
             [
                 parsed.fiscalYearStartMonth,
@@ -56,6 +58,7 @@ export async function PUT(request: Request) {
                 parsed.maxConsecutiveDaysDefault,
                 parsed.allowHalfDay ? 1 : 0,
                 parsed.countWeekendsInLeave ? 1 : 0,
+                parsed.notificationEmailsJson,
                 SETTINGS_ROW_ID,
             ],
         );

@@ -48,7 +48,10 @@ export type AdminLeaveOrgSettingsRow = RowDataPacket & {
     max_consecutive_days_default: number;
     allow_half_day: number;
     count_weekends_in_leave: number;
+    notification_emails: string | unknown;
 };
+
+const MAX_NOTIFICATION_EMAILS = 30;
 
 let ensurePoliciesPromise: Promise<void> | null = null;
 let ensureSettingsPromise: Promise<void> | null = null;
@@ -125,6 +128,48 @@ async function runEnsureAdminLeavePoliciesTable() {
     `);
 }
 
+export function parseNotificationEmailsJson(raw: unknown): string[] {
+    let list: unknown[] = [];
+    if (Array.isArray(raw)) {
+        list = raw;
+    } else if (typeof raw === "string" && raw.trim()) {
+        try {
+            const parsed = JSON.parse(raw) as unknown;
+            if (Array.isArray(parsed)) list = parsed;
+        } catch {
+            list = raw.split(/[,;\s]+/).filter(Boolean);
+        }
+    }
+
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const item of list) {
+        const email = typeof item === "string" ? item.trim().toLowerCase() : "";
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) continue;
+        if (seen.has(email)) continue;
+        seen.add(email);
+        out.push(email);
+        if (out.length >= MAX_NOTIFICATION_EMAILS) break;
+    }
+    return out;
+}
+
+export function serializeNotificationEmails(emails: string[]): string {
+    return JSON.stringify(parseNotificationEmailsJson(emails));
+}
+
+async function migrateLeaveOrgSettingsColumns() {
+    const [cols] = await pool.query<RowDataPacket[]>(`SHOW COLUMNS FROM ${SETTINGS_TABLE}`);
+    const names = new Set(cols.map((c) => String(c.Field)));
+    if (!names.has("notification_emails")) {
+        await pool.query(
+            `ALTER TABLE ${SETTINGS_TABLE}
+             ADD COLUMN notification_emails JSON NOT NULL DEFAULT ('[]')
+             AFTER count_weekends_in_leave`,
+        );
+    }
+}
+
 async function runEnsureAdminLeaveOrgSettingsTable() {
     await pool.query(`
         CREATE TABLE IF NOT EXISTS ${SETTINGS_TABLE} (
@@ -134,9 +179,11 @@ async function runEnsureAdminLeaveOrgSettingsTable() {
             max_consecutive_days_default INT NOT NULL DEFAULT 15,
             allow_half_day TINYINT(1) NOT NULL DEFAULT 1,
             count_weekends_in_leave TINYINT(1) NOT NULL DEFAULT 0,
+            notification_emails JSON NOT NULL DEFAULT ('[]'),
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
         )
     `);
+    await migrateLeaveOrgSettingsColumns();
     const [rows] = await pool.query<RowDataPacket[]>(
         `SELECT id FROM ${SETTINGS_TABLE} WHERE id = ? LIMIT 1`,
         [SETTINGS_ROW_ID],
@@ -144,8 +191,8 @@ async function runEnsureAdminLeaveOrgSettingsTable() {
     if (rows.length === 0) {
         await pool.query(
             `INSERT INTO ${SETTINGS_TABLE}
-             (id, fiscal_year_start_month, default_min_notice_days, max_consecutive_days_default, allow_half_day, count_weekends_in_leave)
-             VALUES (?, 4, 2, 15, 1, 0)`,
+             (id, fiscal_year_start_month, default_min_notice_days, max_consecutive_days_default, allow_half_day, count_weekends_in_leave, notification_emails)
+             VALUES (?, 4, 2, 15, 1, 0, '[]')`,
             [SETTINGS_ROW_ID],
         );
     }
@@ -220,6 +267,7 @@ export function mapOrgSettingsRowToApi(row: AdminLeaveOrgSettingsRow) {
         max_consecutive_days_default: Number(row.max_consecutive_days_default) || 1,
         allow_half_day: Boolean(row.allow_half_day),
         count_weekends_in_leave: Boolean(row.count_weekends_in_leave),
+        notification_emails: parseNotificationEmailsJson(row.notification_emails),
     };
 }
 
@@ -281,6 +329,9 @@ export function parseOrgSettingsBody(body: Record<string, unknown>) {
         maxConsecutiveDaysDefault: Math.max(1, parseNum(body.max_consecutive_days_default, 1)),
         allowHalfDay: parseBool(body.allow_half_day),
         countWeekendsInLeave: parseBool(body.count_weekends_in_leave),
+        notificationEmailsJson: serializeNotificationEmails(
+            parseNotificationEmailsJson(body.notification_emails),
+        ),
     };
 }
 

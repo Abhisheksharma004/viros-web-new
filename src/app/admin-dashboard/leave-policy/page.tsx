@@ -6,6 +6,7 @@ import {
     Eye,
     FileText,
     Loader2,
+    Mail,
     Pencil,
     Plus,
     Save,
@@ -89,6 +90,7 @@ type OrgSettingsApi = {
     max_consecutive_days_default: number;
     allow_half_day: boolean;
     count_weekends_in_leave: boolean;
+    notification_emails: string[];
 };
 
 function apiToPolicy(row: PolicyApiRow): LeavePolicyRow {
@@ -133,6 +135,9 @@ function apiToGlobalSettings(row: OrgSettingsApi): GlobalSettings {
         maxConsecutiveDaysDefault: row.max_consecutive_days_default,
         allowHalfDay: row.allow_half_day,
         countWeekendsInLeave: row.count_weekends_in_leave,
+        notificationEmails: Array.isArray(row.notification_emails)
+            ? row.notification_emails
+            : [],
     };
 }
 
@@ -220,7 +225,16 @@ function globalSettingsToApiBody(settings: GlobalSettings) {
         max_consecutive_days_default: settings.maxConsecutiveDaysDefault,
         allow_half_day: settings.allowHalfDay,
         count_weekends_in_leave: settings.countWeekendsInLeave,
+        notification_emails: settings.notificationEmails,
     };
+}
+
+function normalizeEmailDraft(value: string): string {
+    return value.trim().toLowerCase();
+}
+
+function isValidEmail(value: string): boolean {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
 type GlobalSettings = {
@@ -229,6 +243,7 @@ type GlobalSettings = {
     maxConsecutiveDaysDefault: number;
     allowHalfDay: boolean;
     countWeekendsInLeave: boolean;
+    notificationEmails: string[];
 };
 
 const ALL_MONTHS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const;
@@ -260,6 +275,7 @@ const DEFAULT_GLOBAL: GlobalSettings = {
     maxConsecutiveDaysDefault: 15,
     allowHalfDay: true,
     countWeekendsInLeave: false,
+    notificationEmails: [],
 };
 
 const emptyPolicyForm = {
@@ -364,6 +380,12 @@ export default function Page() {
     const [editingId, setEditingId] = useState<number | null>(null);
     const [form, setForm] = useState(emptyPolicyForm);
     const [formError, setFormError] = useState("");
+    const [emailModalOpen, setEmailModalOpen] = useState(false);
+    const [emailDraft, setEmailDraft] = useState<string[]>([]);
+    const [newEmailInput, setNewEmailInput] = useState("");
+    const [emailError, setEmailError] = useState("");
+    const [isSavingEmails, setIsSavingEmails] = useState(false);
+    const [emailsSaved, setEmailsSaved] = useState(false);
 
     const fetchPolicies = useCallback(async () => {
         try {
@@ -594,6 +616,96 @@ export default function Page() {
         }
     };
 
+    const openEmailModal = () => {
+        setEmailDraft([...globalSettings.notificationEmails]);
+        setNewEmailInput("");
+        setEmailError("");
+        setEmailsSaved(false);
+        setEmailModalOpen(true);
+    };
+
+    const closeEmailModal = () => {
+        setEmailModalOpen(false);
+        setEmailError("");
+        setNewEmailInput("");
+    };
+
+    const addEmailToDraft = () => {
+        const email = normalizeEmailDraft(newEmailInput);
+        if (!email) {
+            setEmailError("Enter an email address.");
+            return;
+        }
+        if (!isValidEmail(email)) {
+            setEmailError("Enter a valid email address.");
+            return;
+        }
+        if (emailDraft.includes(email)) {
+            setEmailError("This email is already in the list.");
+            return;
+        }
+        if (emailDraft.length >= 30) {
+            setEmailError("You can store up to 30 emails.");
+            return;
+        }
+        setEmailDraft((prev) => [...prev, email]);
+        setNewEmailInput("");
+        setEmailError("");
+    };
+
+    const removeEmailFromDraft = (email: string) => {
+        setEmailDraft((prev) => prev.filter((e) => e !== email));
+    };
+
+    const saveNotificationEmails = async () => {
+        const cleaned = emailDraft
+            .map(normalizeEmailDraft)
+            .filter((e) => e && isValidEmail(e));
+        const unique = [...new Set(cleaned)];
+
+        try {
+            setIsSavingEmails(true);
+            setEmailError("");
+            const payload = globalSettingsToApiBody({
+                ...globalSettings,
+                notificationEmails: unique,
+            });
+            const resp = await fetch("/api/admin/leave-policies/settings", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            });
+            const data = await resp.json().catch(() => ({}));
+            if (!resp.ok) {
+                throw new Error(typeof data.message === "string" ? data.message : "Save failed");
+            }
+            const saved = apiToGlobalSettings(data as OrgSettingsApi);
+            setGlobalSettings(saved);
+            setEmailDraft([...saved.notificationEmails]);
+            setEmailsSaved(true);
+            window.setTimeout(() => setEmailsSaved(false), 2500);
+        } catch (error) {
+            console.error("Save notification emails failed:", error);
+            setEmailError(error instanceof Error ? error.message : "Failed to save emails");
+        } finally {
+            setIsSavingEmails(false);
+        }
+    };
+
+    useEffect(() => {
+        if (!emailModalOpen) return;
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Escape") closeEmailModal();
+        };
+        window.addEventListener("keydown", onKeyDown);
+        const prev = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+        return () => {
+            window.removeEventListener("keydown", onKeyDown);
+            document.body.style.overflow = prev;
+        };
+    }, [emailModalOpen]);
+
     const saveGlobalSettings = async () => {
         try {
             setIsSavingSettings(true);
@@ -666,9 +778,22 @@ export default function Page() {
             </div>
 
             <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-                <div className="mb-4 flex items-center gap-2 text-[#0a2a5e]">
-                    <Settings2 className="h-5 w-5" aria-hidden />
-                    <h2 className="text-base font-bold text-gray-900">Organization settings</h2>
+                <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-2 text-[#0a2a5e]">
+                        <Settings2 className="h-5 w-5" aria-hidden />
+                        <h2 className="text-base font-bold text-gray-900">Organization settings</h2>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={openEmailModal}
+                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#0a2a5e]/20 bg-[#0a2a5e]/5 px-4 py-2.5 text-sm font-semibold text-[#0a2a5e] transition hover:bg-[#0a2a5e]/10"
+                    >
+                        <Mail className="h-4 w-4" aria-hidden />
+                        Notification emails
+                        <span className="rounded-full bg-[#06b6d4]/20 px-2 py-0.5 text-xs font-bold text-[#0a2a5e]">
+                            {globalSettings.notificationEmails.length}
+                        </span>
+                    </button>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     <div>
@@ -1594,6 +1719,146 @@ export default function Page() {
                                 )}
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {emailModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6">
+                    <div
+                        className="absolute inset-0 bg-black/40 backdrop-blur-[1px]"
+                        aria-hidden
+                        onClick={closeEmailModal}
+                    />
+                    <div
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="leave-notification-emails-title"
+                        className="relative flex max-h-[min(90vh,640px)] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div
+                            className="shrink-0 border-b border-white/10 px-5 py-4 sm:px-6"
+                            style={{
+                                background:
+                                    "linear-gradient(135deg, #06124f 0%, #0a2a5e 55%, #0d3a7a 100%)",
+                            }}
+                        >
+                            <div className="flex items-start justify-between gap-3 text-white">
+                                <div>
+                                    <h2
+                                        id="leave-notification-emails-title"
+                                        className="text-lg font-bold"
+                                    >
+                                        Notification emails
+                                    </h2>
+                                    <p className="text-xs text-white/75">
+                                        These addresses receive an email automatically when an
+                                        employee submits a new leave request.
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={closeEmailModal}
+                                    className="flex h-9 w-9 items-center justify-center rounded-full bg-white/15 hover:bg-white/25"
+                                    aria-label="Close"
+                                >
+                                    <X className="h-5 w-5" />
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="min-h-0 flex-1 overflow-y-auto p-5 sm:p-6">
+                            {emailError && (
+                                <p className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                                    {emailError}
+                                </p>
+                            )}
+
+                            <div className="flex gap-2">
+                                <input
+                                    type="email"
+                                    value={newEmailInput}
+                                    onChange={(e) => setNewEmailInput(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter") {
+                                            e.preventDefault();
+                                            addEmailToDraft();
+                                        }
+                                    }}
+                                    placeholder="name@company.com"
+                                    className={inputClass}
+                                    aria-label="New notification email"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={addEmailToDraft}
+                                    className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-[#0a2a5e] px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90"
+                                >
+                                    <Plus className="h-4 w-4" aria-hidden />
+                                    Add
+                                </button>
+                            </div>
+
+                            <div className="mt-4">
+                                {emailDraft.length === 0 ? (
+                                    <p className="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-4 py-8 text-center text-sm text-gray-500">
+                                        No emails saved yet. Add at least one address.
+                                    </p>
+                                ) : (
+                                    <ul className="space-y-2">
+                                        {emailDraft.map((email) => (
+                                            <li
+                                                key={email}
+                                                className="flex items-center justify-between gap-3 rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5"
+                                            >
+                                                <span className="flex min-w-0 items-center gap-2 text-sm font-medium text-gray-900">
+                                                    <Mail className="h-4 w-4 shrink-0 text-[#06b6d4]" aria-hidden />
+                                                    <span className="truncate">{email}</span>
+                                                </span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeEmailFromDraft(email)}
+                                                    className="rounded-lg p-2 text-red-500 hover:bg-red-50"
+                                                    aria-label={`Remove ${email}`}
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </button>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 border-t border-gray-100 bg-white p-4 sm:px-6">
+                            {emailsSaved && (
+                                <span className="mr-auto inline-flex items-center gap-1 text-sm font-semibold text-emerald-700">
+                                    <Check className="h-4 w-4" aria-hidden />
+                                    Emails saved
+                                </span>
+                            )}
+                            <button
+                                type="button"
+                                onClick={closeEmailModal}
+                                className="rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-800 hover:bg-gray-50"
+                            >
+                                Close
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => void saveNotificationEmails()}
+                                disabled={isSavingEmails}
+                                className="inline-flex items-center gap-2 rounded-xl bg-[#06b6d4] px-5 py-2.5 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
+                            >
+                                {isSavingEmails ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                                ) : (
+                                    <Save className="h-4 w-4" aria-hidden />
+                                )}
+                                {isSavingEmails ? "Saving…" : "Save emails"}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

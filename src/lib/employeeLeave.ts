@@ -367,6 +367,7 @@ export async function fetchOrgSettings(): Promise<EmployeeLeaveOrgSettings> {
             max_consecutive_days_default: 15,
             allow_half_day: 1,
             count_weekends_in_leave: 0,
+            notification_emails: "[]",
         } as AdminLeaveOrgSettingsRow);
     }
     return mapOrgSettingsRowToApi(row);
