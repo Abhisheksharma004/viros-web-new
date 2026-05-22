@@ -37,7 +37,7 @@ import {
 
 type TabId = "daily" | "monthly" | "employee";
 
-type AttendanceStatus = "present" | "absent" | "late" | "leave" | "half-day";
+type AttendanceStatus = "present" | "absent" | "late" | "leave" | "half-day" | "weekend";
 
 type DailyRow = {
     employeeId: string;
@@ -46,7 +46,7 @@ type DailyRow = {
     designation: string;
     attendanceId: number | null;
     date: string;
-    status: AttendanceStatus | "absent";
+    status: AttendanceStatus;
     checkIn?: string;
     checkOut?: string;
     hours?: string;

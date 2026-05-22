@@ -93,7 +93,7 @@ export type AdminDailyAttendanceRow = {
     designation: string;
     attendanceId: number | null;
     date: string;
-    status: AttendanceStatus | "absent";
+    status: AttendanceStatus;
     checkIn?: string;
     checkOut?: string;
     hours?: string;
@@ -159,7 +159,7 @@ function mapJoinRowToDaily(
     const shiftDays = workingDays ?? DEFAULT_SHIFT_WORKING_DAYS;
     const isWorking = isDateWorkingDay(dateIso, shiftDays);
 
-    let status: AttendanceStatus | "absent";
+    let status: AttendanceStatus;
     if (hasRecord) {
         status = row.status as AttendanceStatus;
     } else if (!isWorking) {

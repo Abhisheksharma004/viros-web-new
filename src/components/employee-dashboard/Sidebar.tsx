@@ -13,6 +13,9 @@ function pickActiveSubHref(pathname: string | null, subs: { href: string }[]): s
     return candidates.reduce((a, b) => (a.href.length >= b.href.length ? a : b)).href;
 }
 
+/** Set true when employee payroll routes are ready. */
+const SHOW_PAYROLL_NAV = false;
+
 const menuItems = [
     {
         title: "Dashboard",
@@ -172,7 +175,7 @@ const menuItems = [
         ),
         href: "/employee-dashboard/announcements",
     },
-];
+].filter((item) => SHOW_PAYROLL_NAV || item.title !== "Payroll");
 
 export default function EmployeeSidebar({
     isOpen,
