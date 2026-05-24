@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 const ACCENT = "#0a2a5e";
@@ -23,6 +22,17 @@ export default function AdminLoginPage() {
     const [rememberMe, setRememberMe] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [forgotOpen, setForgotOpen] = useState(false);
+    const [forgotStep, setForgotStep] = useState<"request" | "verify" | "success">("request");
+    const [forgotIdentifier, setForgotIdentifier] = useState("");
+    const [forgotEmail, setForgotEmail] = useState("");
+    const [forgotAccountType, setForgotAccountType] = useState<"employee" | "admin">("employee");
+    const [forgotOtp, setForgotOtp] = useState("");
+    const [forgotNewPassword, setForgotNewPassword] = useState("");
+    const [forgotConfirmPassword, setForgotConfirmPassword] = useState("");
+    const [showForgotPassword, setShowForgotPassword] = useState(false);
+    const [forgotLoading, setForgotLoading] = useState(false);
+    const [forgotError, setForgotError] = useState<string | null>(null);
 
     useEffect(() => {
         let active = true;
@@ -73,6 +83,151 @@ export default function AdminLoginPage() {
             document.removeEventListener("visibilitychange", handleVisibilityChange);
         };
     }, [router]);
+
+    useEffect(() => {
+        if (!forgotOpen) return;
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Escape") closeForgotModal();
+        };
+        document.body.style.overflow = "hidden";
+        window.addEventListener("keydown", onKeyDown);
+        return () => {
+            document.body.style.overflow = "";
+            window.removeEventListener("keydown", onKeyDown);
+        };
+    }, [forgotOpen]);
+
+    const closeForgotModal = () => {
+        setForgotOpen(false);
+        setForgotStep("request");
+        setForgotIdentifier("");
+        setForgotEmail("");
+        setForgotAccountType("employee");
+        setForgotOtp("");
+        setForgotNewPassword("");
+        setForgotConfirmPassword("");
+        setShowForgotPassword(false);
+        setForgotLoading(false);
+        setForgotError(null);
+    };
+
+    const handleForgotCloseClick = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        closeForgotModal();
+    };
+
+    const handleRequestOTP = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        setForgotLoading(true);
+        setForgotError(null);
+
+        try {
+            const response = await fetch("/api/employee-forgot-password/request", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ identifier: forgotIdentifier.trim() }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || "Failed to send OTP");
+            }
+
+            if (typeof data.email === "string") {
+                setForgotEmail(data.email);
+            }
+            if (data.accountType === "admin" || data.accountType === "employee") {
+                setForgotAccountType(data.accountType);
+            }
+
+            setForgotStep("verify");
+        } catch (err) {
+            setForgotError(err instanceof Error ? err.message : "Failed to send OTP");
+        } finally {
+            setForgotLoading(false);
+        }
+    };
+
+    const handleResetPassword = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        setForgotError(null);
+
+        if (forgotNewPassword !== forgotConfirmPassword) {
+            setForgotError("Passwords do not match");
+            return;
+        }
+
+        const minPasswordLength = forgotAccountType === "admin" ? 8 : 6;
+        if (forgotNewPassword.length < minPasswordLength) {
+            setForgotError(`Password must be at least ${minPasswordLength} characters`);
+            return;
+        }
+
+        if (forgotOtp.length !== 7) {
+            setForgotError("Enter the 7-digit code from your email");
+            return;
+        }
+
+        setForgotLoading(true);
+
+        try {
+            const response = await fetch("/api/employee-forgot-password/reset", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    email: forgotEmail.trim(),
+                    otp: forgotOtp,
+                    newPassword: forgotNewPassword,
+                    accountType: forgotAccountType,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || "Failed to reset password");
+            }
+
+            setForgotStep("success");
+        } catch (err) {
+            setForgotError(err instanceof Error ? err.message : "Failed to reset password");
+        } finally {
+            setForgotLoading(false);
+        }
+    };
+
+    const handleResendOTP = async () => {
+        setForgotOtp("");
+        setForgotError(null);
+        setForgotLoading(true);
+
+        try {
+            const response = await fetch("/api/employee-forgot-password/request", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ identifier: forgotIdentifier.trim() || forgotEmail.trim() }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || "Failed to resend OTP");
+            }
+
+            if (typeof data.email === "string") {
+                setForgotEmail(data.email);
+            }
+            if (data.accountType === "admin" || data.accountType === "employee") {
+                setForgotAccountType(data.accountType);
+            }
+        } catch (err) {
+            setForgotError(err instanceof Error ? err.message : "Failed to resend OTP");
+        } finally {
+            setForgotLoading(false);
+        }
+    };
 
     const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormValues((prev) => ({ ...prev, [e.target.id]: e.target.value }));
@@ -238,7 +393,10 @@ export default function AdminLoginPage() {
                     </div>
 
                     {/* Form */}
-                    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                    <form
+                        onSubmit={handleSubmit}
+                        className="flex flex-col gap-4 [&_button]:cursor-pointer [&_button:disabled]:cursor-not-allowed"
+                    >
                         {error && (
                             <div className="p-3 rounded-xl text-sm font-medium bg-red-50 text-red-700 border border-red-200">
                                 {error}
@@ -285,7 +443,7 @@ export default function AdminLoginPage() {
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword((p) => !p)}
-                                    className="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                                    className="absolute inset-y-0 right-3 flex cursor-pointer items-center text-gray-400 hover:text-gray-600 transition-colors"
                                 >
                                     {showPassword ? (
                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -313,16 +471,21 @@ export default function AdminLoginPage() {
                                 />
                                 <span className="text-sm text-gray-600">Remember me</span>
                             </label>
-                            <Link href="/forgot-password" className="text-sm font-bold transition-colors" style={{ color: ACCENT }}>
+                            <button
+                                type="button"
+                                onClick={() => setForgotOpen(true)}
+                                className="cursor-pointer text-sm font-bold transition-colors hover:opacity-80"
+                                style={{ color: ACCENT }}
+                            >
                                 Forgot password?
-                            </Link>
+                            </button>
                         </div>
 
                         {/* Submit */}
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full font-bold text-sm text-white tracking-wide rounded-2xl transition-all duration-200 active:scale-[0.97] hover:opacity-90"
+                            className="w-full cursor-pointer font-bold text-sm text-white tracking-wide rounded-2xl transition-all duration-200 active:scale-[0.97] hover:opacity-90 disabled:cursor-not-allowed"
                             style={{ height: "54px", background: GRADIENT, boxShadow: `0 6px 20px ${SHADOW}` }}
                         >
                             {isLoading ? "Signing In..." : "Sign In"}
@@ -336,6 +499,295 @@ export default function AdminLoginPage() {
 
                 </div>
             </div>
+
+            {/* Forgot password modal — employee OTP reset */}
+            {forgotOpen && (
+                <div
+                    className="fixed inset-0 z-50 flex cursor-pointer items-end justify-center overflow-hidden bg-[#06124f]/60 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="forgot-password-title"
+                    onClick={closeForgotModal}
+                >
+                    <div
+                        className="relative z-10 flex w-full max-w-md max-h-[min(92dvh,720px)] cursor-default flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:rounded-3xl [&_button]:cursor-pointer [&_button:disabled]:cursor-not-allowed"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div
+                            className="relative shrink-0 overflow-hidden px-6 pb-8 pt-6"
+                            style={{ background: "linear-gradient(145deg, #06124f 0%, #0a2a5e 55%, #0d3a7a 100%)" }}
+                        >
+                            <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full opacity-20" style={{ background: "#00bcd4" }} />
+                            <div className="pointer-events-none absolute -bottom-6 -left-6 h-24 w-24 rounded-full opacity-15" style={{ background: "#00bcd4" }} />
+
+                            <button
+                                type="button"
+                                onClick={handleForgotCloseClick}
+                                className="absolute right-4 top-4 z-20 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-white/10 text-white/80 transition-colors hover:bg-white/20 hover:text-white"
+                                aria-label="Close forgot password dialog"
+                            >
+                                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+
+                            <div className="relative flex flex-col items-center text-center">
+                                <div
+                                    className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl shadow-lg"
+                                    style={{ background: "rgba(0,188,212,0.2)", border: "1px solid rgba(0,188,212,0.4)" }}
+                                >
+                                    {forgotStep === "success" ? (
+                                        <svg className="h-7 w-7 text-[#00e5ff]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    ) : forgotStep === "verify" ? (
+                                        <svg className="h-7 w-7 text-[#00e5ff]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                        </svg>
+                                    ) : (
+                                        <svg className="h-7 w-7 text-[#00e5ff]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                                        </svg>
+                                    )}
+                                </div>
+                                <h3 id="forgot-password-title" className="text-xl font-black text-white">
+                                    {forgotStep === "request" && "Forgot password?"}
+                                    {forgotStep === "verify" && "Enter verification code"}
+                                    {forgotStep === "success" && "Password updated"}
+                                </h3>
+                                <p className="mt-2 max-w-xs text-sm leading-relaxed text-white/60">
+                                    {forgotStep === "request" &&
+                                        "Enter employee ID or email. We verify admin (users) or employee (portal) accounts, then send a 7-digit OTP to the registered email."}
+                                    {forgotStep === "verify" && (
+                                        <>
+                                            Code sent to{" "}
+                                            <span className="font-semibold text-white/80">{forgotEmail}</span>
+                                        </>
+                                    )}
+                                    {forgotStep === "success" &&
+                                        "Your password has been updated. Sign in with your new password."}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div
+                            className={`min-h-0 flex-1 px-6 py-6 ${
+                                forgotStep === "verify" ? "overflow-y-auto overscroll-contain" : "overflow-x-hidden"
+                            }`}
+                        >
+                            {forgotError && (
+                                <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700">
+                                    {forgotError}
+                                </div>
+                            )}
+
+                            {forgotStep === "request" && (
+                                <form
+                                    onSubmit={handleRequestOTP}
+                                    className="flex flex-col gap-4 [&_button]:cursor-pointer [&_button:disabled]:cursor-not-allowed"
+                                >
+                                    <div>
+                                        <label htmlFor="forgot-identifier" className="mb-1.5 block text-sm font-semibold text-gray-700">
+                                            Employee ID or email
+                                        </label>
+                                        <input
+                                            id="forgot-identifier"
+                                            type="text"
+                                            placeholder="e.g. EMP001 or name@company.com"
+                                            autoComplete="username"
+                                            value={forgotIdentifier}
+                                            onChange={(e) => setForgotIdentifier(e.target.value)}
+                                            required
+                                            disabled={forgotLoading}
+                                            className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 text-sm text-gray-800 placeholder-gray-400 outline-none transition-all disabled:opacity-60"
+                                            style={{ height: "52px" }}
+                                            onFocus={(e) => {
+                                                e.currentTarget.style.boxShadow = `0 0 0 3px ${ACCENT}28`;
+                                                e.currentTarget.style.borderColor = ACCENT;
+                                                e.currentTarget.style.background = "#fff";
+                                            }}
+                                            onBlur={(e) => {
+                                                e.currentTarget.style.boxShadow = "none";
+                                                e.currentTarget.style.borderColor = "#e5e7eb";
+                                                e.currentTarget.style.background = "#f9fafb";
+                                            }}
+                                        />
+                                    </div>
+
+                                    <button
+                                        type="submit"
+                                        disabled={forgotLoading}
+                                        className="w-full cursor-pointer rounded-2xl text-sm font-bold tracking-wide text-white transition-all duration-200 hover:opacity-90 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-70"
+                                        style={{ height: "52px", background: GRADIENT, boxShadow: `0 6px 20px ${SHADOW}` }}
+                                    >
+                                        {forgotLoading ? "Sending..." : "Send OTP"}
+                                    </button>
+                                </form>
+                            )}
+
+                            {forgotStep === "verify" && (
+                                <form
+                                    onSubmit={handleResetPassword}
+                                    className="flex flex-col gap-4 [&_button]:cursor-pointer [&_button:disabled]:cursor-not-allowed"
+                                >
+                                    <div>
+                                        <label htmlFor="forgot-otp" className="mb-1.5 block text-sm font-semibold text-gray-700">
+                                            7-digit OTP
+                                        </label>
+                                        <input
+                                            id="forgot-otp"
+                                            type="text"
+                                            inputMode="numeric"
+                                            pattern="\d{7}"
+                                            maxLength={7}
+                                            placeholder="0000000"
+                                            value={forgotOtp}
+                                            onChange={(e) => setForgotOtp(e.target.value.replace(/\D/g, ""))}
+                                            required
+                                            disabled={forgotLoading}
+                                            className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 text-center font-mono text-2xl tracking-widest text-gray-800 outline-none transition-all disabled:opacity-60"
+                                            style={{ height: "52px" }}
+                                            onFocus={(e) => {
+                                                e.currentTarget.style.boxShadow = `0 0 0 3px ${ACCENT}28`;
+                                                e.currentTarget.style.borderColor = ACCENT;
+                                                e.currentTarget.style.background = "#fff";
+                                            }}
+                                            onBlur={(e) => {
+                                                e.currentTarget.style.boxShadow = "none";
+                                                e.currentTarget.style.borderColor = "#e5e7eb";
+                                                e.currentTarget.style.background = "#f9fafb";
+                                            }}
+                                        />
+                                        <p className="mt-1 text-center text-xs text-gray-400">Expires in 15 minutes</p>
+                                    </div>
+
+                                    <div>
+                                        <label htmlFor="forgot-new-password" className="mb-1.5 block text-sm font-semibold text-gray-700">
+                                            New password
+                                        </label>
+                                        <div className="relative">
+                                            <input
+                                                id="forgot-new-password"
+                                                type={showForgotPassword ? "text" : "password"}
+                                                placeholder="Enter new password"
+                                                value={forgotNewPassword}
+                                                onChange={(e) => setForgotNewPassword(e.target.value)}
+                                                required
+                                            minLength={forgotAccountType === "admin" ? 8 : 6}
+                                            disabled={forgotLoading}
+                                            className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 pr-12 text-sm text-gray-800 placeholder-gray-400 outline-none transition-all disabled:opacity-60"
+                                            style={{ height: "52px" }}
+                                            onFocus={(e) => {
+                                                e.currentTarget.style.boxShadow = `0 0 0 3px ${ACCENT}28`;
+                                                e.currentTarget.style.borderColor = ACCENT;
+                                                e.currentTarget.style.background = "#fff";
+                                            }}
+                                            onBlur={(e) => {
+                                                e.currentTarget.style.boxShadow = "none";
+                                                e.currentTarget.style.borderColor = "#e5e7eb";
+                                                e.currentTarget.style.background = "#f9fafb";
+                                            }}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowForgotPassword((p) => !p)}
+                                            className="absolute inset-y-0 right-3 flex cursor-pointer items-center text-gray-400 hover:text-gray-600"
+                                        >
+                                                {showForgotPassword ? (
+                                                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                                                    </svg>
+                                                ) : (
+                                                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                    </svg>
+                                                )}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label htmlFor="forgot-confirm-password" className="mb-1.5 block text-sm font-semibold text-gray-700">
+                                            Confirm password
+                                        </label>
+                                        <input
+                                            id="forgot-confirm-password"
+                                            type={showForgotPassword ? "text" : "password"}
+                                            placeholder="Confirm new password"
+                                            value={forgotConfirmPassword}
+                                            onChange={(e) => setForgotConfirmPassword(e.target.value)}
+                                            required
+                                            minLength={forgotAccountType === "admin" ? 8 : 6}
+                                            disabled={forgotLoading}
+                                            className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 text-sm text-gray-800 placeholder-gray-400 outline-none transition-all disabled:opacity-60"
+                                            style={{ height: "52px" }}
+                                            onFocus={(e) => {
+                                                e.currentTarget.style.boxShadow = `0 0 0 3px ${ACCENT}28`;
+                                                e.currentTarget.style.borderColor = ACCENT;
+                                                e.currentTarget.style.background = "#fff";
+                                            }}
+                                            onBlur={(e) => {
+                                                e.currentTarget.style.boxShadow = "none";
+                                                e.currentTarget.style.borderColor = "#e5e7eb";
+                                                e.currentTarget.style.background = "#f9fafb";
+                                            }}
+                                        />
+                                    </div>
+
+                                    <button
+                                        type="submit"
+                                        disabled={forgotLoading}
+                                        className="w-full cursor-pointer rounded-2xl text-sm font-bold tracking-wide text-white transition-all duration-200 hover:opacity-90 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-70"
+                                        style={{ height: "52px", background: GRADIENT, boxShadow: `0 6px 20px ${SHADOW}` }}
+                                    >
+                                        {forgotLoading ? "Updating..." : "Reset password"}
+                                    </button>
+
+                                    <p className="text-center text-xs text-gray-400">
+                                        Didn&apos;t receive the code?{" "}
+                                        <button
+                                            type="button"
+                                            onClick={handleResendOTP}
+                                            disabled={forgotLoading}
+                                            className="cursor-pointer font-semibold transition-colors hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+                                            style={{ color: ACCENT }}
+                                        >
+                                            Resend OTP
+                                        </button>
+                                    </p>
+                                </form>
+                            )}
+
+                            {forgotStep === "success" && (
+                                <div className="flex flex-col gap-4">
+                                    <div
+                                        className="flex items-start gap-3 rounded-2xl border px-4 py-3.5"
+                                        style={{ background: "rgba(0,188,212,0.08)", borderColor: "rgba(0,188,212,0.25)" }}
+                                    >
+                                        <span className="mt-0.5 text-lg">✓</span>
+                                        <div>
+                                            <p className="text-sm font-semibold text-gray-800">Password reset complete</p>
+                                            <p className="mt-0.5 text-xs leading-relaxed text-gray-500">
+                                                Only your portal password was updated. You can sign in now.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        onClick={closeForgotModal}
+                                        className="w-full cursor-pointer rounded-2xl text-sm font-bold tracking-wide text-white transition-all duration-200 hover:opacity-90 active:scale-[0.97]"
+                                        style={{ height: "52px", background: GRADIENT, boxShadow: `0 6px 20px ${SHADOW}` }}
+                                    >
+                                        Continue to sign in
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
