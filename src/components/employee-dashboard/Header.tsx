@@ -32,6 +32,10 @@ const PAGE_HEADERS: Record<string, { title: string; subtitle?: string }> = {
     "/employee-dashboard/tasks": {
         title: "My Tasks",
     },
+    "/employee-dashboard/task-history": {
+        title: "Task History",
+        subtitle: "Completed tasks assigned to you",
+    },
 };
 
 function getPageHeader(pathname: string) {

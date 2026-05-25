@@ -24,6 +24,7 @@ import {
 const textareaClass = `${inputClass} min-h-[100px] resize-y py-2.5`;
 
 type ModalMode = "view" | "update" | null;
+type TasksPageVariant = "my" | "history";
 
 function employeeEditableStatus(status: TaskStatus): TaskStatus {
     if (status === "pending" || status === "in-progress" || status === "completed") {
@@ -34,6 +35,10 @@ function employeeEditableStatus(status: TaskStatus): TaskStatus {
 
 function isTeamTask(task: TaskRow): boolean {
     return (task.assignees?.length ?? 0) > 1;
+}
+
+function canEmployeeUpdateTask(task: TaskRow): boolean {
+    return task.status !== "completed";
 }
 
 function assigneeSummary(task: TaskRow): string {
@@ -124,19 +129,22 @@ function TaskCard({
                 </div>
             </button>
 
-            <button
-                type="button"
-                onClick={() => onUpdate(task)}
-                className="inline-flex min-h-10 w-full cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-[#06b6d4] text-sm font-bold text-white shadow-md transition hover:bg-[#05a8b8] active:scale-[0.98]"
-            >
-                <Pencil className="h-4 w-4" aria-hidden />
-                Update
-            </button>
+            {canEmployeeUpdateTask(task) ? (
+                <button
+                    type="button"
+                    onClick={() => onUpdate(task)}
+                    className="inline-flex min-h-10 w-full cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-[#06b6d4] text-sm font-bold text-white shadow-md transition hover:bg-[#05a8b8] active:scale-[0.98]"
+                >
+                    <Pencil className="h-4 w-4" aria-hidden />
+                    Update
+                </button>
+            ) : null}
         </div>
     );
 }
 
-export default function EmployeeTasksPage() {
+export function EmployeeTasksPageContent({ variant = "my" }: { variant?: TasksPageVariant }) {
+    const isHistory = variant === "history";
     const [tasks, setTasks] = useState<TaskRow[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
@@ -179,13 +187,20 @@ export default function EmployeeTasksPage() {
         void loadTasks();
     }, [loadTasks]);
 
+    const scopedTasks = useMemo(() => {
+        if (isHistory) return tasks.filter((t) => t.status === "completed");
+        return tasks.filter((t) => t.status !== "completed");
+    }, [tasks, isHistory]);
+
     const filteredTasks = useMemo(() => {
         const q = search.trim().toLowerCase();
-        return tasks.filter((task) => {
-            if (statusFilter === "overdue") {
-                if (!task.isOverdue) return false;
-            } else if (statusFilter !== "all" && task.status !== statusFilter) {
-                return false;
+        return scopedTasks.filter((task) => {
+            if (!isHistory) {
+                if (statusFilter === "overdue") {
+                    if (!task.isOverdue) return false;
+                } else if (statusFilter !== "all" && task.status !== statusFilter) {
+                    return false;
+                }
             }
             if (priorityFilter !== "all" && task.priority !== priorityFilter) return false;
             if (!q) return true;
@@ -197,33 +212,79 @@ export default function EmployeeTasksPage() {
                 assigneeText.includes(q)
             );
         });
-    }, [tasks, search, statusFilter, priorityFilter]);
+    }, [scopedTasks, search, statusFilter, priorityFilter, isHistory]);
 
-    const stats = useMemo(
-        () => [
+    const stats = useMemo(() => {
+        if (isHistory) {
+            return [
+                {
+                    label: "Completed",
+                    value: String(scopedTasks.length),
+                    tone: "text-[#0a2a5e]",
+                    ring: "ring-[#0a2a5e]/15",
+                },
+                {
+                    label: "Team Task",
+                    value: String(scopedTasks.filter((t) => isTeamTask(t)).length),
+                    tone: "text-indigo-600",
+                    ring: "ring-indigo-200",
+                },
+                {
+                    label: "With Remarks",
+                    value: String(scopedTasks.filter((t) => (t.remarks?.length ?? 0) > 0).length),
+                    tone: "text-[#058a9a]",
+                    ring: "ring-[#06b6d4]/20",
+                },
+                {
+                    label: "High Priority",
+                    value: String(scopedTasks.filter((t) => t.priority === "high").length),
+                    tone: "text-red-600",
+                    ring: "ring-red-200",
+                },
+                {
+                    label: "Medium",
+                    value: String(scopedTasks.filter((t) => t.priority === "medium").length),
+                    tone: "text-amber-600",
+                    ring: "ring-amber-200",
+                },
+                {
+                    label: "Low",
+                    value: String(scopedTasks.filter((t) => t.priority === "low").length),
+                    tone: "text-gray-600",
+                    ring: "ring-gray-200",
+                },
+            ];
+        }
+        return [
             {
                 label: "My Tasks",
-                value: String(tasks.length),
+                value: String(scopedTasks.length),
                 tone: "text-[#0a2a5e]",
                 ring: "ring-[#06b6d4]/25",
             },
             {
                 label: "Team Task",
-                value: String(tasks.filter((t) => isTeamTask(t)).length),
+                value: String(scopedTasks.filter((t) => isTeamTask(t)).length),
                 tone: "text-indigo-600",
                 ring: "ring-indigo-200",
             },
             {
                 label: "Pending",
-                value: String(tasks.filter((t) => t.status === "pending").length),
+                value: String(scopedTasks.filter((t) => t.status === "pending").length),
                 tone: "text-amber-600",
                 ring: "ring-amber-200",
             },
             {
                 label: "In Progress",
-                value: String(tasks.filter((t) => t.status === "in-progress").length),
+                value: String(scopedTasks.filter((t) => t.status === "in-progress").length),
                 tone: "text-[#058a9a]",
                 ring: "ring-[#06b6d4]/20",
+            },
+            {
+                label: "Overdue",
+                value: String(scopedTasks.filter((t) => t.isOverdue).length),
+                tone: "text-red-600",
+                ring: "ring-red-200",
             },
             {
                 label: "Completed",
@@ -231,15 +292,8 @@ export default function EmployeeTasksPage() {
                 tone: "text-[#0a2a5e]",
                 ring: "ring-[#0a2a5e]/15",
             },
-            {
-                label: "Overdue",
-                value: String(tasks.filter((t) => t.isOverdue).length),
-                tone: "text-red-600",
-                ring: "ring-red-200",
-            },
-        ],
-        [tasks],
-    );
+        ];
+    }, [scopedTasks, tasks, isHistory]);
 
     const openViewModal = (task: TaskRow) => {
         setViewTask(task);
@@ -248,6 +302,7 @@ export default function EmployeeTasksPage() {
     };
 
     const openUpdateModal = (task: TaskRow) => {
+        if (!canEmployeeUpdateTask(task)) return;
         setViewTask(task);
         setEditStatus(employeeEditableStatus(task.status));
         setEditRemark("");
@@ -306,8 +361,10 @@ export default function EmployeeTasksPage() {
     };
 
     const emptyMessage =
-        tasks.length === 0
-            ? "No tasks assigned to you yet."
+        scopedTasks.length === 0
+            ? isHistory
+                ? "No completed tasks yet."
+                : "No active tasks assigned to you yet."
             : "No tasks match your filters.";
 
     return (
@@ -332,18 +389,26 @@ export default function EmployeeTasksPage() {
             </div>
 
             {/* Filters — single row */}
-            <div className="grid w-full min-w-0 grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.15fr)] items-center gap-2">
-                <select
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-                    className={`${selectClass} min-h-10 min-w-0 px-2 text-xs touch-manipulation sm:min-h-11 sm:px-3 sm:text-sm`}
-                >
-                    {STATUS_FILTERS.map((f) => (
-                        <option key={f.id} value={f.id}>
-                            {f.label === "All" ? "All statuses" : f.label}
-                        </option>
-                    ))}
-                </select>
+            <div
+                className={`grid w-full min-w-0 items-center gap-2 ${
+                    isHistory
+                        ? "grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]"
+                        : "grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.15fr)]"
+                }`}
+            >
+                {!isHistory ? (
+                    <select
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+                        className={`${selectClass} min-h-10 min-w-0 px-2 text-xs touch-manipulation sm:min-h-11 sm:px-3 sm:text-sm`}
+                    >
+                        {STATUS_FILTERS.map((f) => (
+                            <option key={f.id} value={f.id}>
+                                {f.label === "All" ? "All statuses" : f.label}
+                            </option>
+                        ))}
+                    </select>
+                ) : null}
                 <select
                     value={priorityFilter}
                     onChange={(e) => setPriorityFilter(e.target.value as PriorityFilter)}
@@ -375,9 +440,11 @@ export default function EmployeeTasksPage() {
 
             <div className="overflow-hidden rounded-2xl border border-[#0a2a5e]/10 bg-white shadow-sm">
                 <div className="flex items-center justify-between gap-2 border-b border-gray-100 px-4 py-3.5 sm:px-6 sm:py-4">
-                    <h2 className="text-sm font-bold text-gray-900 sm:text-base">Assigned tasks</h2>
+                    <h2 className="text-sm font-bold text-gray-900 sm:text-base">
+                        {isHistory ? "Completed tasks" : "Assigned tasks"}
+                    </h2>
                     <p className="shrink-0 text-xs text-gray-500">
-                        {filteredTasks.length}/{tasks.length}
+                        {filteredTasks.length}/{scopedTasks.length}
                     </p>
                 </div>
 
@@ -485,15 +552,17 @@ export default function EmployeeTasksPage() {
                                                     >
                                                         <Eye className="h-4 w-4" aria-hidden />
                                                     </button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => openUpdateModal(task)}
-                                                        className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg bg-[#06b6d4] text-white shadow-md transition hover:bg-[#05a8b8]"
-                                                        title="Update task"
-                                                        aria-label="Update task"
-                                                    >
-                                                        <Pencil className="h-4 w-4" aria-hidden />
-                                                    </button>
+                                                    {canEmployeeUpdateTask(task) ? (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => openUpdateModal(task)}
+                                                            className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg bg-[#06b6d4] text-white shadow-md transition hover:bg-[#05a8b8]"
+                                                            title="Update task"
+                                                            aria-label="Update task"
+                                                        >
+                                                            <Pencil className="h-4 w-4" aria-hidden />
+                                                        </button>
+                                                    ) : null}
                                                 </div>
                                             </td>
                                         </tr>
@@ -643,13 +712,15 @@ export default function EmployeeTasksPage() {
                             </div>
                         </div>
                         <div className="flex shrink-0 flex-col gap-2 border-t border-gray-100 px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:flex-row sm:justify-end sm:px-6">
-                            <button
-                                type="button"
-                                onClick={() => openUpdateModal(viewTask)}
-                                className="min-h-11 w-full cursor-pointer rounded-xl border border-[#0a2a5e]/20 bg-white px-6 py-2.5 text-sm font-semibold text-[#0a2a5e] shadow-sm hover:bg-[#06b6d4]/5 sm:w-auto"
-                            >
-                                Update task
-                            </button>
+                            {canEmployeeUpdateTask(viewTask) ? (
+                                <button
+                                    type="button"
+                                    onClick={() => openUpdateModal(viewTask)}
+                                    className="min-h-11 w-full cursor-pointer rounded-xl border border-[#0a2a5e]/20 bg-white px-6 py-2.5 text-sm font-semibold text-[#0a2a5e] shadow-sm hover:bg-[#06b6d4]/5 sm:w-auto"
+                                >
+                                    Update task
+                                </button>
+                            ) : null}
                             <button
                                 type="button"
                                 onClick={closeModal}
@@ -662,7 +733,7 @@ export default function EmployeeTasksPage() {
                 </div>
             )}
 
-            {viewTask && modalMode === "update" && (
+            {viewTask && modalMode === "update" && canEmployeeUpdateTask(viewTask) && (
                 <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:px-4 sm:py-6">
                     <div
                         className="absolute inset-0 bg-black/40"
@@ -795,4 +866,8 @@ export default function EmployeeTasksPage() {
             )}
         </div>
     );
+}
+
+export default function EmployeeTasksPage() {
+    return <EmployeeTasksPageContent variant="my" />;
 }

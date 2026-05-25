@@ -367,6 +367,15 @@ export async function employeeUpdateTask(
     const assigned = await isEmployeeAssignedToTask(recordId, trimmedId);
     if (!assigned) return null;
 
+    const [statusRows] = await pool.query<RowDataPacket[]>(
+        `SELECT status FROM ${TASKS_TABLE} WHERE id = ? LIMIT 1`,
+        [recordId],
+    );
+    const currentStatus = statusRows[0]?.status;
+    if (currentStatus === "completed") {
+        throw new Error("Completed tasks cannot be updated.");
+    }
+
     const status =
         input.status && EMPLOYEE_UPDATABLE_STATUSES.includes(input.status) ? input.status : null;
     const remark = typeof input.remark === "string" ? input.remark.trim() : "";

@@ -1,11 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Eye, Loader2, Pencil, Plus, Search, Trash2, X } from "lucide-react";
+import { Eye, Loader2, MessageSquare, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 import {
     PRIORITY_FILTERS,
     STATUS_FILTERS,
     formatAssignDate,
+    formatRemarkDateTime,
     formatTaskDate,
     getPriorityStyles,
     getStatusLabel,
@@ -20,7 +21,7 @@ import {
     type TaskStatus,
 } from "@/lib/adminTaskUiShared";
 
-type ModalMode = "add" | "edit" | "view" | null;
+type ModalMode = "add" | "edit" | "view" | "remarks" | null;
 
 type EmployeeOption = {
     employee_id: string;
@@ -266,6 +267,11 @@ export default function AdminTasksPage() {
         setModalMode("view");
     };
 
+    const openRemarksModal = (task: TaskRow) => {
+        setViewTask(task);
+        setModalMode("remarks");
+    };
+
     const closeModal = () => {
         setModalMode(null);
         setEditingRecordId(null);
@@ -496,7 +502,7 @@ export default function AdminTasksPage() {
                                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
                                     Due date
                                 </th>
-                                <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                                <th className="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">
                                     Actions
                                 </th>
                             </tr>
@@ -557,8 +563,8 @@ export default function AdminTasksPage() {
                                                 {formatTaskDate(task.dueDate)}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <div className="inline-flex flex-wrap items-center justify-end gap-1.5">
+                                        <td className="px-6 py-4">
+                                            <div className="mx-auto grid w-[5.25rem] grid-cols-2 gap-1.5">
                                                 <button
                                                     type="button"
                                                     onClick={() => openViewModal(task)}
@@ -567,6 +573,20 @@ export default function AdminTasksPage() {
                                                     aria-label="View task"
                                                 >
                                                     <Eye className="h-4 w-4" aria-hidden />
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => openRemarksModal(task)}
+                                                    className="relative inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-gray-200 bg-white text-[#0a2a5e] shadow-sm transition hover:bg-slate-50"
+                                                    title="View remarks"
+                                                    aria-label="View remarks"
+                                                >
+                                                    <MessageSquare className="h-4 w-4" aria-hidden />
+                                                    {(task.remarks?.length ?? 0) > 0 ? (
+                                                        <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#06b6d4] px-1 text-[10px] font-bold text-white">
+                                                            {task.remarks!.length}
+                                                        </span>
+                                                    ) : null}
                                                 </button>
                                                 <button
                                                     type="button"
@@ -600,6 +620,92 @@ export default function AdminTasksPage() {
                     </table>
                 </div>
             </div>
+
+            {modalMode === "remarks" && viewTask && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6">
+                    <div
+                        className="absolute inset-0 bg-black/40 backdrop-blur-[1px]"
+                        aria-hidden
+                        onClick={closeModal}
+                    />
+                    <div
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="task-remarks-title"
+                        className="relative flex max-h-[min(85vh,560px)] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="flex shrink-0 items-center justify-between gap-4 border-b border-gray-100 bg-gradient-to-r from-[#06124f] to-[#0a2a5e] px-6 py-4">
+                            <div className="min-w-0">
+                                <h3 id="task-remarks-title" className="text-lg font-bold text-white">
+                                    Task remarks
+                                </h3>
+                                <p className="truncate text-xs text-cyan-100/90">
+                                    {viewTask.id} · {viewTask.title}
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={closeModal}
+                                className="shrink-0 cursor-pointer rounded-lg p-2 text-white/80 transition hover:bg-white/10 hover:text-white"
+                                aria-label="Close"
+                            >
+                                <X className="h-5 w-5" strokeWidth={2} />
+                            </button>
+                        </div>
+                        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
+                            {viewTask.remarks && viewTask.remarks.length > 0 ? (
+                                <ul className="space-y-3">
+                                    {viewTask.remarks.map((r) => (
+                                        <li
+                                            key={r.id}
+                                            className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3"
+                                        >
+                                            <p className="whitespace-pre-wrap break-words text-sm text-gray-800">
+                                                {r.remark}
+                                            </p>
+                                            <p className="mt-2 text-xs font-medium text-gray-500">
+                                                {r.employeeName}
+                                                {r.employeeId ? (
+                                                    <span className="font-normal text-gray-400">
+                                                        {" "}
+                                                        ({r.employeeId})
+                                                    </span>
+                                                ) : null}
+                                            </p>
+                                            <p className="mt-0.5 text-xs text-gray-400">
+                                                {formatRemarkDateTime(r.createdAt)}
+                                            </p>
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center py-12 text-center">
+                                    <MessageSquare
+                                        className="h-10 w-10 text-gray-300"
+                                        aria-hidden
+                                    />
+                                    <p className="mt-3 text-sm font-semibold text-gray-700">
+                                        No remarks yet
+                                    </p>
+                                    <p className="mt-1 text-xs text-gray-500">
+                                        Employees can add remarks when they update a task.
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                        <div className="flex shrink-0 justify-end border-t border-gray-100 px-6 py-4">
+                            <button
+                                type="button"
+                                onClick={closeModal}
+                                className="cursor-pointer rounded-lg bg-[#001540] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90"
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {modalMode === "view" && viewTask && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6">
