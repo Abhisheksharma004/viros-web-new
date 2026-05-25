@@ -29,6 +29,9 @@ const PAGE_HEADERS: Record<string, { title: string; subtitle?: string }> = {
         title: "Leave history",
         subtitle: "Past, rejected, and withdrawn leave requests",
     },
+    "/employee-dashboard/tasks": {
+        title: "My Tasks",
+    },
 };
 
 function getPageHeader(pathname: string) {
@@ -138,7 +141,18 @@ export default function EmployeeHeader({ onMenuClick }: { onMenuClick: () => voi
                 {/* Center: Page title */}
                 <div className="flex-1 min-w-0 px-2 sm:px-4">
                     <h1 className="text-base sm:text-xl font-bold text-gray-900 truncate">{pageHeader.title}</h1>
-                    {pageHeader.subtitle ? (
+                    {pathname === "/employee-dashboard/tasks" ? (
+                        <p className="mt-0.5 text-xs text-gray-500 line-clamp-2 sm:line-clamp-1 sm:text-sm sm:truncate">
+                            Tasks assigned to you
+                            {employee && employeeName !== "Employee" ? (
+                                <>
+                                    {" "}
+                                    —{" "}
+                                    <span className="font-semibold text-[#0a2a5e]">{employeeName}</span>
+                                </>
+                            ) : null}
+                        </p>
+                    ) : pageHeader.subtitle ? (
                         <p className="text-xs sm:text-sm text-gray-500 mt-0.5 line-clamp-2 sm:line-clamp-1 sm:truncate">
                             {pageHeader.subtitle}
                         </p>
