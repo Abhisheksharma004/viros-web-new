@@ -20,7 +20,7 @@ export default function EmployeeDashboardLayout({
                 <main className="flex-1 overflow-y-auto p-3 pb-20 sm:p-6 sm:pb-20 lg:p-8 lg:pb-8">
                     {children}
                 </main>
-                <EmployeeBottomNav onMenuClick={() => setSidebarOpen(true)} />
+                <EmployeeBottomNav />
             </div>
         </div>
     );

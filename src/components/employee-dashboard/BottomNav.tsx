@@ -28,6 +28,20 @@ const navItems = [
         ),
     },
     {
+        title: "Expense",
+        href: "/employee-dashboard/add-expense",
+        match: (path: string) =>
+            path.startsWith("/employee-dashboard/add-expense") ||
+            path.startsWith("/employee-dashboard/expense-history") ||
+            path.startsWith("/employee-dashboard/monthly-history") ||
+            path.startsWith("/employee-dashboard/reject-expense"),
+        icon: (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+        ),
+    },
+    {
         title: "Tasks",
         href: "/employee-dashboard/tasks",
         match: (path: string) =>
@@ -62,7 +76,7 @@ const navItems = [
     },
 ];
 
-export default function EmployeeBottomNav({ onMenuClick }: { onMenuClick: () => void }) {
+export default function EmployeeBottomNav() {
     const pathname = usePathname() ?? "";
 
     return (
@@ -88,17 +102,6 @@ export default function EmployeeBottomNav({ onMenuClick }: { onMenuClick: () => 
                         </Link>
                     );
                 })}
-                <button
-                    type="button"
-                    onClick={onMenuClick}
-                    className="flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-lg px-1 py-1 text-gray-500 transition-colors hover:text-[#06124f]"
-                    aria-label="Open menu"
-                >
-                    <svg className="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                    </svg>
-                    <span className="truncate text-[10px] font-semibold">Menu</span>
-                </button>
             </div>
         </nav>
     );

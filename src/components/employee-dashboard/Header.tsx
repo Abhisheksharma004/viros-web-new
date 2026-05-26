@@ -36,6 +36,22 @@ const PAGE_HEADERS: Record<string, { title: string; subtitle?: string }> = {
         title: "Task History",
         subtitle: "Completed tasks assigned to you",
     },
+    "/employee-dashboard/add-expense": {
+        title: "Add Expense",
+        subtitle: "Submit a new expense claim",
+    },
+    "/employee-dashboard/expense-history": {
+        title: "Expense History",
+        subtitle: "Approved expense records",
+    },
+    "/employee-dashboard/monthly-history": {
+        title: "Monthly History",
+        subtitle: "Month-wise total, approved and rejected expenses",
+    },
+    "/employee-dashboard/reject-expense": {
+        title: "Reject Expense",
+        subtitle: "Expenses that were rejected for this month",
+    },
 };
 
 function getPageHeader(pathname: string) {
