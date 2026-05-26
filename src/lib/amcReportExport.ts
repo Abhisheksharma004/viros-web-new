@@ -1,3 +1,5 @@
+import { todayDateOnly } from "@/lib/dateOnly";
+
 /** Columns included in AMC Report Excel/PDF export. */
 export type AmcReportExportRow = {
     countSerial: number;
@@ -67,7 +69,7 @@ type ReportExportMeta = {
 };
 
 function exportFileStamp(): string {
-    return new Date().toISOString().slice(0, 10);
+    return todayDateOnly();
 }
 
 function downloadBlob(blob: Blob, filename: string) {

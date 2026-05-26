@@ -1,5 +1,6 @@
 import type { ResultSetHeader, RowDataPacket } from "mysql2";
 import pool from "@/lib/db";
+import { toDateOnlyString } from "@/lib/dateOnly";
 import {
     isTaskOverdue,
     type TaskAssignee,
@@ -197,14 +198,7 @@ export async function ensureAdminTasksTables() {
 
 function toDateString(value: Date | string | null): string {
     if (!value) return "";
-    if (value instanceof Date) {
-        const y = value.getFullYear();
-        const m = String(value.getMonth() + 1).padStart(2, "0");
-        const d = String(value.getDate()).padStart(2, "0");
-        return `${y}-${m}-${d}`;
-    }
-    const s = String(value);
-    return s.length >= 10 ? s.slice(0, 10) : s;
+    return toDateOnlyString(value);
 }
 
 function toIsoDateTime(value: Date | string): string {

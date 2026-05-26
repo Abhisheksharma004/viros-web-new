@@ -5,6 +5,7 @@ import {
     EXPENSE_SERIAL_LENGTH,
     getExpenseIdPeriod,
 } from "@/lib/employeeExpenseId";
+import { toDateOnlyString } from "@/lib/dateOnly";
 
 const TABLE = "employee_expenses";
 
@@ -265,8 +266,7 @@ async function backfillMissingExpenseIds() {
 }
 
 function toIsoDate(v: Date | string): string {
-    if (v instanceof Date) return v.toISOString().slice(0, 10);
-    return String(v).slice(0, 10);
+    return toDateOnlyString(v);
 }
 
 function toIsoDateTime(v: Date | string): string {

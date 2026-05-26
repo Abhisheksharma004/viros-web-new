@@ -8,6 +8,7 @@ import {
     expensePrimaryButtonClass,
     expenseSecondaryButtonClass,
 } from "@/lib/employeeExpenseUi";
+import { todayDateOnly } from "@/lib/dateOnly";
 
 export type AddExpenseFormValues = {
     expense_date: string;
@@ -49,7 +50,7 @@ export default function AddExpenseFormModal({
     onSubmit,
 }: AddExpenseFormModalProps) {
     const [form, setForm] = useState<AddExpenseFormValues>(() =>
-        emptyExpenseForm(new Date().toISOString().slice(0, 10)),
+        emptyExpenseForm(todayDateOnly()),
     );
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState("");

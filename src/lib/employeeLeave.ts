@@ -1,5 +1,6 @@
 import type { ResultSetHeader, RowDataPacket } from "mysql2";
 import pool from "@/lib/db";
+import { toDateOnlyString } from "@/lib/dateOnly";
 import {
     ensureAdminLeaveModule,
     mapOrgSettingsRowToApi,
@@ -87,29 +88,9 @@ export type EmployeeLeaveRequestRow = RowDataPacket & {
     applied_on: string | Date;
 };
 
-/** Calendar date as YYYY-MM-DD (local timezone — avoids UTC shift on MySQL DATE values). */
+/** Calendar date as YYYY-MM-DD (avoids UTC shift on MySQL DATE values). */
 function toDateIso(raw: string | Date | null | undefined): string {
-    if (!raw) return "";
-    if (typeof raw === "string") {
-        const trimmed = raw.trim();
-        if (/^\d{4}-\d{2}-\d{2}/.test(trimmed)) return trimmed.slice(0, 10);
-        const parsed = new Date(trimmed);
-        if (!Number.isNaN(parsed.getTime())) {
-            return `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, "0")}-${String(parsed.getDate()).padStart(2, "0")}`;
-        }
-        return trimmed.slice(0, 10);
-    }
-    if (raw instanceof Date) {
-        if (Number.isNaN(raw.getTime())) return "";
-        return `${raw.getFullYear()}-${String(raw.getMonth() + 1).padStart(2, "0")}-${String(raw.getDate()).padStart(2, "0")}`;
-    }
-    const text = String(raw).trim();
-    if (/^\d{4}-\d{2}-\d{2}/.test(text)) return text.slice(0, 10);
-    const parsed = new Date(text);
-    if (!Number.isNaN(parsed.getTime())) {
-        return `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, "0")}-${String(parsed.getDate()).padStart(2, "0")}`;
-    }
-    return text.slice(0, 10);
+    return toDateOnlyString(raw);
 }
 
 let ensureRequestsPromise: Promise<void> | null = null;

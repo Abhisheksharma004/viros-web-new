@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { useCallback, useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import { Check, Loader2, ScanLine, Search } from "lucide-react";
+import { toDateOnlyString } from "@/lib/dateOnly";
 
 const AssetBarcodeScanner = dynamic(() => import("@/components/employee-dashboard/AssetBarcodeScanner"), {
     ssr: false,
@@ -117,14 +118,7 @@ function hasNewWorkEntry(notes: NewWorkNotesForm): boolean {
 }
 
 function toDateInputValue(raw: unknown): string {
-    if (raw === null || raw === undefined) return "";
-    if (raw instanceof Date && !Number.isNaN(raw.getTime())) {
-        return raw.toISOString().slice(0, 10);
-    }
-    const s = String(raw).trim();
-    if (!s) return "";
-    const match = s.match(/^(\d{4}-\d{2}-\d{2})/);
-    return match ? match[1] : "";
+    return toDateOnlyString(raw);
 }
 
 function normalizeStatus(raw: string | undefined | null): AssetStatus {

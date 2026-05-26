@@ -1,4 +1,5 @@
 import pool from "@/lib/db";
+import { toDateOnlyString } from "@/lib/dateOnly";
 
 let ensureEmployeesTablePromise: Promise<void> | null = null;
 
@@ -91,7 +92,8 @@ export function strFromBody(body: Record<string, unknown>, key: string): string 
 export function dateOrNullFromBody(body: Record<string, unknown>, key: string): string | null {
     const s = strFromBody(body, key);
     if (!s) return null;
-    return s;
+    const normalized = toDateOnlyString(s);
+    return normalized || null;
 }
 
 /** Values in column order for INSERT or UPDATE (excluding id). */
@@ -160,8 +162,11 @@ export function employeeFormToSqlValues(body: Record<string, unknown>): unknown[
 
 function cellString(v: unknown): string {
     if (v === undefined || v === null) return "";
-    if (v instanceof Date) return v.toISOString().slice(0, 10);
     return String(v);
+}
+
+function dateCell(v: unknown): string {
+    return toDateOnlyString(v);
 }
 
 function cellText(v: unknown): string {
@@ -175,7 +180,7 @@ export function employeeRowToFormState(row: Record<string, unknown>): Record<str
         employeeId: cellString(row.employee_id),
         fullName: cellText(row.full_name),
         gender: cellString(row.gender),
-        dateOfBirth: cellString(row.date_of_birth),
+        dateOfBirth: dateCell(row.date_of_birth),
         maritalStatus: cellString(row.marital_status),
         bloodGroup: cellString(row.blood_group),
         nationality: cellText(row.nationality),
@@ -201,7 +206,7 @@ export function employeeRowToFormState(row: Record<string, unknown>): Record<str
         role: cellText(row.designation),
         employeeType: cellString(row.employee_type),
         employmentCategory: cellString(row.employment_category),
-        joiningDate: cellString(row.joining_date),
+        joiningDate: dateCell(row.joining_date),
         probationPeriod: cellText(row.probation_period),
         workLocation: cellText(row.work_location),
         branchName: cellText(row.branch_name),
@@ -211,8 +216,8 @@ export function employeeRowToFormState(row: Record<string, unknown>): Record<str
         previousDesignation: cellText(row.previous_designation),
         previousSalary: cellText(row.previous_salary),
         workExperienceYears: cellText(row.work_experience_years),
-        previousJoiningDate: cellString(row.previous_joining_date),
-        previousRelievingDate: cellString(row.previous_relieving_date),
+        previousJoiningDate: dateCell(row.previous_joining_date),
+        previousRelievingDate: dateCell(row.previous_relieving_date),
         reasonForLeaving: cellText(row.reason_for_leaving),
         referencePersonName: cellText(row.reference_person_name),
         referenceContactNumber: cellText(row.reference_contact_number),

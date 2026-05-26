@@ -1,3 +1,5 @@
+import { todayDateOnly } from "@/lib/dateOnly";
+
 export type AttendanceDailyExportRow = {
     employeeId: string;
     fullName: string;
@@ -77,7 +79,7 @@ type ExportMeta = {
 };
 
 function exportFileStamp(): string {
-    return new Date().toISOString().slice(0, 10);
+    return todayDateOnly();
 }
 
 function downloadBlob(blob: Blob, filename: string) {

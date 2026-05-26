@@ -1,5 +1,6 @@
 import type { RowDataPacket } from "mysql2";
 import pool from "@/lib/db";
+import { todayDateOnly } from "@/lib/dateOnly";
 import { ensureAdminEmployeesTable } from "@/lib/adminEmployees";
 import {
     ensureEmployeeAttendanceTable,
@@ -349,7 +350,7 @@ export async function getAdminEmployeeMonthlyDetail(
     const dbRecords = attRows.map(mapRowToDayRecord);
     const leaveRequests = await fetchLeaveRequestsOverlappingMonth(trimmedId, year, month);
     const withLeave = mergeLeaveRequestsIntoAttendanceRecords(dbRecords, leaveRequests);
-    const todayIso = new Date().toISOString().slice(0, 10);
+    const todayIso = todayDateOnly();
     const records = mergeMonthRecordsWithShift(year, month, withLeave, workingDays, {
         todayIso,
         markPastAbsent: true,

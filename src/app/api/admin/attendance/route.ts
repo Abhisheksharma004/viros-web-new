@@ -5,6 +5,7 @@ import {
     getAdminEmployeeMonthlyDetail,
     getAdminMonthlySummary,
 } from "@/lib/adminAttendance";
+import { todayDateOnly } from "@/lib/dateOnly";
 
 function parseYearMonth(searchParams: URLSearchParams) {
     const now = new Date();
@@ -22,9 +23,7 @@ export async function GET(request: Request) {
         const view = searchParams.get("view") ?? "daily";
 
         if (view === "daily") {
-            const date =
-                searchParams.get("date") ??
-                new Date().toISOString().slice(0, 10);
+            const date = searchParams.get("date") ?? todayDateOnly();
             const rows = await getAdminDailyAttendance(date);
             return NextResponse.json(
                 { view: "daily", date, rows },

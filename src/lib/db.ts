@@ -20,6 +20,8 @@ function createPool() {
         connectTimeout: 10_000,
         enableKeepAlive: true,
         keepAliveInitialDelay: 10_000,
+        /** Keep DATE columns as YYYY-MM-DD strings (avoids UTC day shift from JS Date). */
+        dateStrings: ["DATE"],
     });
 }
 

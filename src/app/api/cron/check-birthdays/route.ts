@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import mysql from 'mysql2/promise';
+import { todayDateOnly } from '@/lib/dateOnly';
 import nodemailer from 'nodemailer';
 import fs from 'fs/promises';
 import path from 'path';
@@ -168,7 +169,7 @@ export async function POST(request: Request) {
             return NextResponse.json({
                 success: true,
                 message: 'No birthdays today',
-                date: today.toISOString().split('T')[0],
+                date: todayDateOnly(),
                 count: 0,
                 results: []
             });
@@ -194,7 +195,7 @@ export async function POST(request: Request) {
         return NextResponse.json({
             success: true,
             message: `Processed ${birthdays.length} birthday(s)`,
-            date: today.toISOString().split('T')[0],
+            date: todayDateOnly(),
             count: birthdays.length,
             successCount,
             failCount,
@@ -248,7 +249,7 @@ export async function GET(request: Request) {
         );
 
         return NextResponse.json({
-            date: today.toISOString().split('T')[0],
+            date: todayDateOnly(),
             count: (birthdays as any[]).length,
             birthdays
         });

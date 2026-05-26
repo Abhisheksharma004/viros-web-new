@@ -8,6 +8,7 @@ import {
     mapShiftRowToApi,
     type AdminEmployeeShiftRow,
 } from "@/lib/adminEmployeeShifts";
+import { formatDateOnlyInTimeZone, IST_TIMEZONE } from "@/lib/dateOnly";
 
 const TABLE = "employee_attendance";
 
@@ -68,8 +69,7 @@ export function toMySQLDateTimeIST(isoOrDate: string | Date): string {
 }
 
 function toIsoDateIST(date: Date): string {
-    const p = getPartsInTimeZone(date, ATTENDANCE_TIMEZONE);
-    return `${p.year}-${p.month}-${p.day}`;
+    return formatDateOnlyInTimeZone(date, IST_TIMEZONE);
 }
 
 /** Parse MySQL DATETIME string stored as IST wall clock */

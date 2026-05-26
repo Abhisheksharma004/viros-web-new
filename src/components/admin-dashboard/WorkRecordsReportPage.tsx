@@ -14,6 +14,7 @@ import {
     Search,
     X,
 } from "lucide-react";
+import { toDateOnlyString } from "@/lib/dateOnly";
 import {
     exportAmcReportToExcel,
     exportAmcReportToPdf,
@@ -158,10 +159,7 @@ function formatDateTime(raw: unknown): string {
 }
 
 function datePartFromRaw(raw: unknown): string {
-    if (raw === null || raw === undefined || raw === "") return "";
-    const d = raw instanceof Date ? raw : new Date(String(raw));
-    if (Number.isNaN(d.getTime())) return "";
-    return d.toISOString().slice(0, 10);
+    return toDateOnlyString(raw);
 }
 
 function engineerKey(r: Pick<WorkRecord, "employeeId" | "employeeName">): string {

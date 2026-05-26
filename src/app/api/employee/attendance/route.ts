@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import {
-    attendanceDateFromIso,
     ensureEmployeeAttendanceTable,
     getAttendanceByDate,
     getAttendanceForMonth,
@@ -14,6 +13,7 @@ import {
     mergeLeaveRequestsIntoAttendanceRecords,
 } from "@/lib/attendanceLeaveSync";
 import { mergeMonthRecordsWithShift } from "@/lib/attendanceSchedule";
+import { todayDateOnly } from "@/lib/dateOnly";
 
 export async function GET(request: Request) {
     try {
@@ -41,7 +41,7 @@ export async function GET(request: Request) {
         const workingDays = shift?.working_days?.length ? shift.working_days : [1, 2, 3, 4, 5];
         const records = mergeMonthRecordsWithShift(year, month, withLeave, workingDays);
 
-        const todayIso = attendanceDateFromIso(now.toISOString());
+        const todayIso = todayDateOnly();
         const todayLeave = await getTodayLeaveInfo(employeeId, todayIso);
         const todayRow = await getAttendanceByDate(employeeId, todayIso);
 
