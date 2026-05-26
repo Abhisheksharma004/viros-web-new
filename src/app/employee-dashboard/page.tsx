@@ -1,193 +1,410 @@
 "use client";
 
 import Link from "next/link";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+    ArrowRight,
+    Bell,
+    CalendarCheck,
+    CalendarDays,
+    CheckCircle2,
+    Circle,
+    ClipboardList,
+    IndianRupee,
+    MapPin,
+    Receipt,
+    User,
+    Wrench,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import DashboardHeroSlider from "@/components/employee-dashboard/DashboardHeroSlider";
+import type {
+    DashboardActivityItem,
+    DashboardHeroSlide,
+    DashboardTaskItem,
+    DashboardUpdateItem,
+    EmployeeDashboardPayload,
+} from "@/lib/employeeDashboard";
+import { getPriorityStyles } from "@/lib/adminTaskUiShared";
 
-const stats = [
-    {
-        title: "Days Present",
-        value: "22",
-        change: "This month",
-        icon: (
-            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-            </svg>
-        ),
-        color: "from-[#0d4f3c] to-[#0a7c5c]",
-        href: "/employee-dashboard/attendance",
-    },
-    {
-        title: "Leave Balance",
-        value: "8",
-        change: "Days remaining",
-        icon: (
-            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-        ),
-        color: "from-teal-500 to-emerald-500",
-        href: "/employee-dashboard/leave",
-    },
-    {
-        title: "Pending Tasks",
-        value: "5",
-        change: "Due this week",
-        icon: (
-            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-            </svg>
-        ),
-        color: "from-amber-500 to-orange-500",
-        href: "/employee-dashboard/tasks",
-    },
-    {
-        title: "This Month Salary",
-        value: "₹45K",
-        change: "Processed",
-        icon: (
-            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
-        ),
-        color: "from-purple-500 to-purple-600",
-        href: "/employee-dashboard/payroll/slip",
-    },
-];
-
-const quickActions = [
-    { title: "My Attendance", href: "/employee-dashboard/attendance", icon: "📅" },
-    { title: "Apply Leave", href: "/employee-dashboard/leave", icon: "🏖️" },
-    { title: "My Tasks", href: "/employee-dashboard/tasks", icon: "✅" },
-    { title: "Salary Slip", href: "/employee-dashboard/payroll/slip", icon: "💰" },
-    { title: "My Profile", href: "/employee-dashboard/profile", icon: "👤" },
-    { title: "Announcements", href: "/employee-dashboard/announcements", icon: "📢" },
-];
-
-const recentActivity = [
-    { action: "Leave request submitted for May 5–6", time: "Today, 9:30 AM", type: "info" },
-    { action: "Task completed: Q1 Sales Report", time: "Yesterday", type: "success" },
-    { action: "Attendance marked: Present", time: "Yesterday, 9:02 AM", type: "success" },
-    { action: "Salary slip for April downloaded", time: "Apr 28", type: "info" },
-    { action: "Password changed successfully", time: "Apr 20", type: "warning" },
-];
-
-const myTasks = [
-    { title: "Submit Q2 sales forecast", due: "Today", priority: "High", done: false },
-    { title: "Review onboarding documents", due: "Tomorrow", priority: "Medium", done: false },
-    { title: "Update CRM client list", due: "May 3", priority: "Low", done: false },
-    { title: "Prepare department meeting notes", due: "May 5", priority: "Medium", done: true },
-    { title: "Coordinate with logistics team", due: "May 6", priority: "High", done: false },
-];
-
-const announcements = [
-    { title: "Office closed on May 1 (Labour Day)", date: "Apr 28, 2026", tag: "Holiday" },
-    { title: "Q2 appraisal cycle starts May 15", date: "Apr 25, 2026", tag: "HR" },
-    { title: "New employee wellness program launched", date: "Apr 20, 2026", tag: "General" },
-];
-
-const priorityColors: Record<string, string> = {
-    High: "bg-red-50 text-red-700",
-    Medium: "bg-amber-50 text-amber-700",
-    Low: "bg-green-50 text-green-700",
+type StatCard = {
+    title: string;
+    value: string;
+    change: string;
+    icon: LucideIcon;
+    color: string;
+    href: string;
 };
 
-export default function EmployeeDashboardPage() {
+type QuickAction = {
+    title: string;
+    href: string;
+    icon: LucideIcon;
+    accent: string;
+};
+
+const quickActions: QuickAction[] = [
+    {
+        title: "Attendance",
+        href: "/employee-dashboard/attendance",
+        icon: CalendarCheck,
+        accent: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+    },
+    {
+        title: "Apply Leave",
+        href: "/employee-dashboard/leave",
+        icon: CalendarDays,
+        accent: "bg-blue-50 text-blue-700 ring-blue-200",
+    },
+    {
+        title: "My Tasks",
+        href: "/employee-dashboard/tasks",
+        icon: ClipboardList,
+        accent: "bg-amber-50 text-amber-800 ring-amber-200",
+    },
+    {
+        title: "Add Expense",
+        href: "/employee-dashboard/add-expense",
+        icon: IndianRupee,
+        accent: "bg-[#0a2a5e]/10 text-[#0a2a5e] ring-[#0a2a5e]/20",
+    },
+    {
+        title: "AMC Work",
+        href: "/employee-dashboard/amc-work",
+        icon: Wrench,
+        accent: "bg-violet-50 text-violet-700 ring-violet-200",
+    },
+    {
+        title: "My Profile",
+        href: "/employee-dashboard/profile",
+        icon: User,
+        accent: "bg-gray-50 text-gray-800 ring-gray-200",
+    },
+];
+
+const activityDot: Record<string, string> = {
+    success: "bg-emerald-500",
+    warning: "bg-amber-500",
+    info: "bg-blue-500",
+};
+
+const updateTagStyles: Record<DashboardUpdateItem["tagStyle"], string> = {
+    leave: "bg-blue-50 text-blue-700 ring-blue-200",
+    expense: "bg-amber-50 text-amber-800 ring-amber-200",
+    task: "bg-gray-100 text-gray-700 ring-gray-200",
+};
+
+function SectionHeader({
+    title,
+    href,
+    linkLabel = "View all",
+}: {
+    title: string;
+    href?: string;
+    linkLabel?: string;
+}) {
     return (
-        <div className="space-y-6">
+        <div className="flex items-center justify-between gap-2">
+            <h2 className="text-sm font-bold text-gray-900 sm:text-base">{title}</h2>
+            {href ? (
+                <Link
+                    href={href}
+                    className="inline-flex min-h-9 shrink-0 items-center gap-0.5 rounded-lg px-2 text-xs font-semibold text-[#0a2a5e] touch-manipulation active:scale-[0.98] hover:underline"
+                >
+                    {linkLabel}
+                    <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+                </Link>
+            ) : null}
+        </div>
+    );
+}
 
-            {/* Page Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-black text-gray-900">My Dashboard</h1>
-                    <p className="text-gray-500 text-sm mt-0.5">Welcome back! Here's your work summary for today.</p>
-                </div>
-                <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-green-50 text-green-700 border border-green-200">
-                        <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                        Present Today
-                    </span>
-                </div>
+function TaskRowCard({ task }: { task: DashboardTaskItem }) {
+    const priorityClass = getPriorityStyles(task.priorityKey);
+    return (
+        <Link
+            href={task.href}
+            className="flex items-start gap-3 rounded-xl border border-gray-100 bg-gray-50/80 p-3 touch-manipulation active:scale-[0.99] lg:items-center lg:px-5 lg:py-3.5 lg:hover:bg-gray-50/80"
+        >
+            <div
+                className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 lg:mt-0 ${
+                    task.done ? "border-emerald-500 bg-emerald-500" : "border-gray-300 bg-white"
+                }`}
+            >
+                {task.done ? (
+                    <CheckCircle2 className="h-3 w-3 text-white" aria-hidden />
+                ) : (
+                    <Circle className="h-3 w-3 text-transparent" aria-hidden />
+                )}
             </div>
+            <div className="min-w-0 flex-1">
+                <p
+                    className={`text-sm font-semibold leading-snug lg:truncate ${
+                        task.done ? "text-gray-400 line-through" : "text-gray-900 lg:text-gray-800"
+                    }`}
+                >
+                    {task.title}
+                </p>
+                <p className="mt-1 text-xs text-gray-500 lg:mt-0.5 lg:text-gray-400">Due: {task.due}</p>
+            </div>
+            <span
+                className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ring-1 lg:px-2.5 lg:py-1 lg:text-xs lg:font-semibold ${priorityClass}`}
+            >
+                {task.priority}
+            </span>
+        </Link>
+    );
+}
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                {stats.map((stat) => (
-                    <Link
-                        key={stat.title}
-                        href={stat.href}
-                        className="group bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
-                    >
-                        <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{stat.title}</p>
-                                <p className="text-3xl font-black text-gray-900 mb-1">{stat.value}</p>
-                                <p className="text-xs text-gray-400">{stat.change}</p>
-                            </div>
-                            <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center text-white shadow`}>
-                                {stat.icon}
-                            </div>
-                        </div>
-                    </Link>
+function ActivityItem({ item }: { item: DashboardActivityItem }) {
+    const inner = (
+        <div className="flex gap-3 sm:items-start">
+            <div className="flex flex-col items-center">
+                <span
+                    className={`h-2.5 w-2.5 shrink-0 rounded-full ${activityDot[item.type] ?? activityDot.info}`}
+                />
+            </div>
+            <div className="min-w-0 flex-1 pb-1">
+                <p className="text-sm font-medium leading-snug text-gray-800">{item.action}</p>
+                <p className="mt-0.5 text-xs text-gray-400">{item.time}</p>
+            </div>
+        </div>
+    );
+
+    if (item.href) {
+        return (
+            <Link href={item.href} className="block touch-manipulation active:opacity-90">
+                {inner}
+            </Link>
+        );
+    }
+    return inner;
+}
+
+function DashboardSkeleton() {
+    return (
+        <div className="mx-auto w-full min-w-0 max-w-6xl animate-pulse space-y-3 pb-2 sm:space-y-6 sm:pb-6">
+            <div className="h-40 rounded-2xl bg-gray-200 sm:rounded-3xl" />
+            <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+                {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="h-24 rounded-2xl bg-gray-100" />
                 ))}
             </div>
+            <div className="h-48 rounded-2xl bg-gray-100" />
+        </div>
+    );
+}
 
-            {/* Middle Row */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+export default function EmployeeDashboardPage() {
+    const [data, setData] = useState<(EmployeeDashboardPayload & { greeting: string }) | null>(
+        null,
+    );
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-                {/* My Tasks */}
-                <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                        <h2 className="text-base font-bold text-gray-900">My Tasks</h2>
-                        <Link href="/employee-dashboard/tasks" className="text-xs font-semibold text-[#0a2a5e] hover:underline">
-                            View all →
-                        </Link>
-                    </div>
-                    <div className="divide-y divide-gray-50">
-                        {myTasks.map((task) => (
-                            <div key={task.title} className="flex items-center gap-4 px-6 py-3.5 hover:bg-gray-50 transition-colors">
-                                <div className={`w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center ${task.done ? "bg-emerald-500 border-emerald-500" : "border-gray-300"}`}>
-                                    {task.done && (
-                                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                                        </svg>
-                                    )}
+    const load = useCallback(async () => {
+        setError(null);
+        try {
+            const res = await fetch("/api/employee/dashboard", { cache: "no-store" });
+            if (!res.ok) {
+                const body = (await res.json().catch(() => ({}))) as { message?: string };
+                throw new Error(body.message ?? "Failed to load dashboard");
+            }
+            const json = (await res.json()) as EmployeeDashboardPayload & { greeting: string };
+            setData(json);
+        } catch (e) {
+            setError(e instanceof Error ? e.message : "Failed to load dashboard");
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        void load();
+    }, [load]);
+
+    const stats: StatCard[] = useMemo(() => {
+        if (!data) return [];
+        return [
+            {
+                title: "Days Present",
+                value: String(data.stats.daysPresent),
+                change: "This month",
+                icon: CalendarCheck,
+                color: "from-[#0d4f3c] to-[#0a7c5c]",
+                href: "/employee-dashboard/attendance",
+            },
+            {
+                title: "Leave Balance",
+                value: String(data.stats.leaveBalance),
+                change: "Days left",
+                icon: CalendarDays,
+                color: "from-teal-500 to-emerald-500",
+                href: "/employee-dashboard/leave",
+            },
+            {
+                title: "Pending Tasks",
+                value: String(data.stats.pendingTasks),
+                change: data.stats.pendingTasks > 0 ? "Open items" : "All caught up",
+                icon: ClipboardList,
+                color: "from-amber-500 to-orange-500",
+                href: "/employee-dashboard/tasks",
+            },
+            {
+                title: "Expenses",
+                value: data.stats.expenseTotal,
+                change: data.stats.expenseSubtext,
+                icon: Receipt,
+                color: "from-[#06124f] to-[#0a2a5e]",
+                href: "/employee-dashboard/add-expense",
+            },
+        ];
+    }, [data]);
+
+    if (loading) return <DashboardSkeleton />;
+
+    if (error || !data) {
+        return (
+            <div className="mx-auto max-w-lg rounded-2xl border border-red-100 bg-red-50 p-6 text-center">
+                <p className="text-sm font-semibold text-red-800">{error ?? "Unable to load dashboard"}</p>
+                <button
+                    type="button"
+                    onClick={() => {
+                        setLoading(true);
+                        void load();
+                    }}
+                    className="mt-4 rounded-lg bg-[#0a2a5e] px-4 py-2 text-sm font-semibold text-white"
+                >
+                    Try again
+                </button>
+            </div>
+        );
+    }
+
+    const heroSlides: DashboardHeroSlide[] = data.heroSlides;
+    const tasks = data.tasks;
+    const attendanceBars = data.attendanceBars;
+    const updates = data.updates;
+    const recentActivity = data.recentActivity;
+
+    return (
+        <div className="mx-auto w-full min-w-0 max-w-6xl space-y-3 pb-2 sm:space-y-6 sm:pb-6">
+            <DashboardHeroSlider slides={heroSlides} />
+
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4">
+                {stats.map((stat) => {
+                    const Icon = stat.icon;
+                    return (
+                        <Link
+                            key={stat.title}
+                            href={stat.href}
+                            className="group flex min-h-[5.5rem] flex-col justify-between rounded-2xl border border-gray-100 bg-white p-3 shadow-sm ring-1 ring-gray-100 touch-manipulation transition active:scale-[0.98] sm:min-h-0 sm:p-4 sm:hover:-translate-y-0.5 sm:hover:shadow-md"
+                        >
+                            <div className="flex items-start justify-between gap-2">
+                                <div className="min-w-0 flex-1">
+                                    <p className="truncate text-[9px] font-bold uppercase tracking-wide text-gray-500 sm:text-xs">
+                                        {stat.title}
+                                    </p>
+                                    <p className="mt-1 text-xl font-black leading-none text-gray-900 sm:text-2xl">
+                                        {stat.value}
+                                    </p>
+                                    <p className="mt-1 truncate text-[10px] text-gray-400 sm:text-xs">
+                                        {stat.change}
+                                    </p>
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className={`text-sm font-semibold truncate ${task.done ? "line-through text-gray-400" : "text-gray-800"}`}>{task.title}</p>
-                                    <p className="text-xs text-gray-400 mt-0.5">Due: {task.due}</p>
+                                <div
+                                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${stat.color} text-white shadow sm:h-11 sm:w-11`}
+                                >
+                                    <Icon className="h-5 w-5" aria-hidden />
                                 </div>
-                                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${priorityColors[task.priority]}`}>
-                                    {task.priority}
-                                </span>
                             </div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Attendance Summary */}
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                        <h2 className="text-base font-bold text-gray-900">This Month</h2>
-                        <Link href="/employee-dashboard/attendance" className="text-xs font-semibold text-[#0a2a5e] hover:underline">
-                            View →
                         </Link>
+                    );
+                })}
+            </div>
+
+            <section className="rounded-2xl border border-gray-100 bg-white p-3 shadow-sm sm:p-5">
+                <SectionHeader title="Quick actions" />
+                <div className="mt-3 grid grid-cols-3 gap-2 sm:gap-3">
+                    {quickActions.map((action) => {
+                        const Icon = action.icon;
+                        return (
+                            <Link
+                                key={action.title}
+                                href={action.href}
+                                className="flex min-h-[5.25rem] flex-col items-center justify-center gap-2 rounded-2xl border border-gray-100 bg-gray-50/80 p-2.5 touch-manipulation transition active:scale-[0.97] sm:min-h-0 sm:p-3 sm:hover:border-[#0a2a5e]/20 sm:hover:bg-[#0a2a5e]/5"
+                            >
+                                <span
+                                    className={`flex h-11 w-11 items-center justify-center rounded-2xl ring-1 sm:h-12 sm:w-12 ${action.accent}`}
+                                >
+                                    <Icon className="h-5 w-5" aria-hidden />
+                                </span>
+                                <span className="text-center text-[10px] font-bold leading-tight text-gray-700 sm:text-xs">
+                                    {action.title}
+                                </span>
+                            </Link>
+                        );
+                    })}
+                </div>
+            </section>
+
+            <div className="grid grid-cols-1 gap-3 lg:grid-cols-3 lg:gap-5">
+                <section className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm lg:col-span-2">
+                    <div className="border-b border-gray-100 px-3 py-3 sm:px-5 sm:py-4">
+                        <SectionHeader
+                            title="My tasks"
+                            href="/employee-dashboard/tasks"
+                            linkLabel="All tasks"
+                        />
                     </div>
-                    <div className="px-6 py-5 space-y-4">
-                        {[
-                            { label: "Present", value: 22, total: 26, color: "#0a7c5c" },
-                            { label: "Absent", value: 2, total: 26, color: "#ef4444" },
-                            { label: "Leave Taken", value: 2, total: 12, color: "#f59e0b" },
-                            { label: "Overtime", value: 4, total: 10, color: "#8b5cf6" },
-                        ].map((item) => (
+
+                    {tasks.length === 0 ? (
+                        <p className="px-4 py-8 text-center text-sm text-gray-500">
+                            No tasks assigned yet.{" "}
+                            <Link href="/employee-dashboard/tasks" className="font-semibold text-[#0a2a5e]">
+                                View tasks
+                            </Link>
+                        </p>
+                    ) : (
+                        <>
+                            <div className="space-y-2 p-3 lg:hidden">
+                                {tasks.map((task) => (
+                                    <TaskRowCard key={task.recordId} task={task} />
+                                ))}
+                            </div>
+                            <div className="hidden divide-y divide-gray-50 lg:block">
+                                {tasks.map((task) => (
+                                    <TaskRowCard key={task.recordId} task={task} />
+                                ))}
+                            </div>
+                        </>
+                    )}
+                </section>
+
+                <section className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+                    <div className="border-b border-gray-100 px-3 py-3 sm:px-5 sm:py-4">
+                        <SectionHeader
+                            title="This month"
+                            href="/employee-dashboard/attendance"
+                            linkLabel="Attendance"
+                        />
+                    </div>
+                    <div className="space-y-3.5 px-3 py-4 sm:px-5 sm:py-5">
+                        {attendanceBars.map((item) => (
                             <div key={item.label}>
-                                <div className="flex items-center justify-between mb-1">
-                                    <span className="text-sm font-medium text-gray-700">{item.label}</span>
-                                    <span className="text-xs font-bold text-gray-500">{item.value} days</span>
+                                <div className="mb-1 flex items-center justify-between">
+                                    <span className="text-xs font-semibold text-gray-700 sm:text-sm">
+                                        {item.label}
+                                    </span>
+                                    <span className="text-[11px] font-bold text-gray-500 sm:text-xs">
+                                        {item.value} days
+                                    </span>
                                 </div>
-                                <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                                <div className="h-2 overflow-hidden rounded-full bg-gray-100">
                                     <div
                                         className="h-full rounded-full transition-all duration-500"
                                         style={{
-                                            width: `${(item.value / item.total) * 100}%`,
+                                            width: `${Math.min(100, (item.value / item.total) * 100)}%`,
                                             background: item.color,
                                         }}
                                     />
@@ -195,106 +412,65 @@ export default function EmployeeDashboardPage() {
                             </div>
                         ))}
                     </div>
-                </div>
+                </section>
             </div>
 
-            {/* Bottom Row */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-
-                {/* Quick Actions */}
-                <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                    <h2 className="text-base font-bold text-gray-900 mb-4">Quick Actions</h2>
-                    <div className="grid grid-cols-3 gap-3">
-                        {quickActions.map((action) => (
+            {updates.length > 0 ? (
+                <section className="rounded-2xl border border-gray-100 bg-white p-3 shadow-sm sm:p-5">
+                    <div className="flex items-center gap-2">
+                        <Bell className="h-4 w-4 text-[#0a2a5e]" aria-hidden />
+                        <SectionHeader title="Updates" />
+                    </div>
+                    <div className="mt-3 space-y-2 sm:space-y-3">
+                        {updates.map((a) => (
                             <Link
-                                key={action.title}
-                                href={action.href}
-                                className="flex flex-col items-center justify-center p-3 border-2 border-gray-100 rounded-xl hover:border-[#0a2a5e]/30 hover:bg-[#0a2a5e]/5 transition-all duration-200 group text-center gap-1.5"
+                                key={a.id}
+                                href={a.href}
+                                className="flex items-start gap-3 rounded-xl border border-gray-100 bg-gray-50/60 p-3 touch-manipulation active:scale-[0.99] sm:p-3.5"
                             >
-                                <span className="text-2xl">{action.icon}</span>
-                                <span className="text-xs font-semibold text-gray-600 group-hover:text-[#0a2a5e] leading-tight">{action.title}</span>
+                                <span
+                                    className={`mt-0.5 shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ring-1 ${updateTagStyles[a.tagStyle]}`}
+                                >
+                                    {a.tag}
+                                </span>
+                                <div className="min-w-0 flex-1">
+                                    <p className="text-sm font-semibold leading-snug text-gray-900">{a.title}</p>
+                                    <p className="mt-1 text-xs text-gray-500">{a.date}</p>
+                                </div>
                             </Link>
                         ))}
                     </div>
-                </div>
+                </section>
+            ) : null}
 
-                {/* Announcements */}
-                <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                    <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-base font-bold text-gray-900">Announcements</h2>
-                        <Link href="/employee-dashboard/announcements" className="text-xs font-semibold text-[#0a2a5e] hover:underline">
-                            All →
-                        </Link>
-                    </div>
-                    <div className="space-y-3">
-                        {announcements.map((a, i) => (
-                            <div key={i} className="flex items-start gap-3 pb-3 border-b border-gray-50 last:border-0 last:pb-0">
-                                <span className={`text-xs font-bold px-2 py-0.5 rounded-full shrink-0 mt-0.5 ${
-                                    a.tag === "Holiday" ? "bg-red-50 text-red-600" :
-                                    a.tag === "HR" ? "bg-blue-50 text-blue-600" :
-                                    "bg-gray-100 text-gray-600"
-                                }`}>
-                                    {a.tag}
-                                </span>
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-semibold text-gray-800">{a.title}</p>
-                                    <p className="text-xs text-gray-400 mt-0.5">{a.date}</p>
-                                </div>
-                            </div>
+            {recentActivity.length > 0 ? (
+                <section className="rounded-2xl border border-gray-100 bg-white p-3 shadow-sm sm:p-5">
+                    <SectionHeader title="Recent activity" />
+                    <div className="mt-3 space-y-3 sm:grid sm:grid-cols-2 sm:gap-4 lg:grid-cols-1 lg:space-y-3 xl:grid-cols-2">
+                        {recentActivity.map((item) => (
+                            <ActivityItem key={item.id} item={item} />
                         ))}
                     </div>
-                </div>
-            </div>
+                </section>
+            ) : null}
 
-            {/* Recent Activity */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                <h2 className="text-base font-bold text-gray-900 mb-4">Recent Activity</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                    {recentActivity.map((item, i) => (
-                        <div key={i} className="flex items-start gap-3">
-                            <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${
-                                item.type === "success" ? "bg-green-500" :
-                                item.type === "warning" ? "bg-amber-500" :
-                                "bg-blue-500"
-                            }`} />
-                            <div>
-                                <p className="text-sm font-medium text-gray-800">{item.action}</p>
-                                <p className="text-xs text-gray-400 mt-0.5">{item.time}</p>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-
-            {/* Status Banner */}
-            <div
-                className="rounded-2xl p-5 text-white shadow"
-                style={{ background: "linear-gradient(135deg, #06124f 0%, #0a2a5e 60%, #0d3a7a 100%)" }}
+            <Link
+                href="/employee-dashboard/attendance"
+                className="flex items-center justify-between gap-3 rounded-2xl border border-[#0a2a5e]/15 bg-gradient-to-r from-[#0a2a5e]/5 to-[#06b6d4]/10 px-4 py-3.5 touch-manipulation active:scale-[0.99] sm:px-5 sm:py-4"
             >
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
-                        <h3 className="text-base font-bold mb-0.5">Your Work Status</h3>
-                        <p className="text-white/60 text-sm">Attendance · Tasks · Payroll — All up to date</p>
-                    </div>
-                    <div className="flex items-center gap-6">
-                        {[
-                            { label: "Attendance", value: "89%" },
-                            { label: "Tasks Done", value: "72%" },
-                            { label: "On Time", value: "96%" },
-                        ].map((m) => (
-                            <div key={m.label} className="text-center">
-                                <p className="text-white font-black text-lg">{m.value}</p>
-                                <p className="text-white/40 text-xs">{m.label}</p>
-                            </div>
-                        ))}
-                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-500/20 border border-green-400/30">
-                            <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                            <span className="text-green-300 text-xs font-semibold">Active</span>
-                        </div>
+                <div className="flex min-w-0 items-center gap-3">
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#0a2a5e] text-white shadow">
+                        <MapPin className="h-5 w-5" aria-hidden />
+                    </span>
+                    <div className="min-w-0">
+                        <p className="text-sm font-bold text-gray-900">
+                            {data.todayCheckedIn ? "View attendance" : "Mark attendance"}
+                        </p>
+                        <p className="text-xs text-gray-500">{data.punchSubtitle}</p>
                     </div>
                 </div>
-            </div>
-
+                <ArrowRight className="h-5 w-5 shrink-0 text-[#0a2a5e]" aria-hidden />
+            </Link>
         </div>
     );
 }

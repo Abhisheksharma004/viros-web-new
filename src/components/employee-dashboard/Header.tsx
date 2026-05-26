@@ -6,8 +6,8 @@ import { usePathname, useRouter } from "next/navigation";
 
 const PAGE_HEADERS: Record<string, { title: string; subtitle?: string }> = {
     "/employee-dashboard": {
-        title: "Employee Portal",
-        subtitle: "Welcome to your workspace",
+        title: "Dashboard",
+        subtitle: "Your work summary",
     },
     "/employee-dashboard/profile": {
         title: "My Profile",
