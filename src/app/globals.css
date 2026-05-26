@@ -79,6 +79,22 @@ body {
   animation-play-state: paused;
 }
 
+/* Barcode scanner — horizontal line sweeps up and down */
+@keyframes barcode-scan-sweep {
+  0%,
+  100% {
+    top: 10%;
+  }
+
+  50% {
+    top: 90%;
+  }
+}
+
+.animate-barcode-scan-sweep {
+  animation: barcode-scan-sweep 2.4s ease-in-out infinite;
+}
+
 /* Line clamp utility */
 .line-clamp-3 {
   display: -webkit-box;

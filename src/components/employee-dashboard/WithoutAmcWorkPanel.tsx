@@ -653,6 +653,8 @@ export default function WithoutAmcWorkPanel() {
 
             {scannerOpen ? (
                 <AssetBarcodeScanner
+                    title="Scan barcode"
+                    hint="Point the camera at the serial number or barcode."
                     onScan={handleScan}
                     onClose={() => setScannerOpen(false)}
                     disabled={lookupBusy}

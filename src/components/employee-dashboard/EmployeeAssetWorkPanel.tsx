@@ -602,6 +602,8 @@ export default function EmployeeAssetWorkPanel({
 
             {scannerOpen ? (
                 <AssetBarcodeScanner
+                    title="Scan asset barcode"
+                    hint="Point the camera at the asset tag or barcode."
                     onScan={handleScan}
                     onClose={() => setScannerOpen(false)}
                     disabled={lookupBusy}

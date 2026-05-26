@@ -9,7 +9,15 @@ type AssetBarcodeScannerProps = {
     onScan: (code: string) => void;
     onClose: () => void;
     disabled?: boolean;
+    /** Modal title — defaults to asset barcode copy (AMC work). */
+    title?: string;
+    /** Footer hint below the viewfinder. */
+    hint?: string;
 };
+
+const DEFAULT_SCANNER_TITLE = "Scan asset barcode";
+const DEFAULT_SCANNER_HINT =
+    "Point the camera at the asset tag or barcode.";
 
 /** Time for the OS/browser to release the previous camera device. */
 const CAMERA_RELEASE_DELAY_MS = 400;
@@ -17,8 +25,8 @@ const CAMERA_RELEASE_DELAY_MS = 400;
 const SCANNER_CONFIG = {
     fps: 10,
     qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
-        const size = Math.min(viewfinderWidth, viewfinderHeight) * 0.75;
-        return { width: Math.floor(size), height: Math.floor(Math.min(size * 0.55, 180)) };
+        const edge = Math.floor(Math.min(viewfinderWidth, viewfinderHeight) * 0.9);
+        return { width: edge, height: edge };
     },
     aspectRatio: 1,
 } as const;
@@ -69,7 +77,13 @@ function stopMediaTracksInContainer(containerId: string): void {
     });
 }
 
-export default function AssetBarcodeScanner({ onScan, onClose, disabled }: AssetBarcodeScannerProps) {
+export default function AssetBarcodeScanner({
+    onScan,
+    onClose,
+    disabled,
+    title = DEFAULT_SCANNER_TITLE,
+    hint = DEFAULT_SCANNER_HINT,
+}: AssetBarcodeScannerProps) {
     const containerId = useId().replace(/:/g, "");
     const scannerRef = useRef<import("html5-qrcode").Html5Qrcode | null>(null);
     const onScanRef = useRef(onScan);
@@ -268,7 +282,7 @@ export default function AssetBarcodeScanner({ onScan, onClose, disabled }: Asset
                 <div className="flex shrink-0 items-center justify-between gap-3 border-b border-gray-100 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] sm:pt-3">
                     <h3 id="barcode-scanner-title" className="text-base font-bold text-gray-900 flex items-center gap-2">
                         <ScanLine className="h-5 w-5 text-[#0d4f3c]" aria-hidden />
-                        Scan asset barcode
+                        {title}
                     </h3>
                     <button
                         type="button"
@@ -280,43 +294,59 @@ export default function AssetBarcodeScanner({ onScan, onClose, disabled }: Asset
                     </button>
                 </div>
 
-                <div className="relative flex min-h-0 flex-1 flex-col bg-gray-900 sm:flex-none">
-                    <div
-                        id={containerId}
-                        className={`min-h-0 flex-1 w-full sm:min-h-[280px] [&_video]:!h-full [&_video]:!w-full [&_video]:!object-cover ${busy ? "invisible" : ""}`}
-                    />
-                    {busy && !cameraError ? (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-gray-900 text-white">
-                            <Loader2 className="h-8 w-8 animate-spin" aria-hidden />
-                            <p className="text-sm">{isSwitching ? "Switching camera…" : "Starting camera…"}</p>
-                        </div>
-                    ) : null}
-                    {cameraError ? (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-gray-900/90 px-6 text-center text-white">
-                            <Camera className="h-10 w-10 text-white/70" aria-hidden />
-                            <p className="max-w-xs text-sm">{cameraError}</p>
-                        </div>
-                    ) : null}
+                <div className="relative flex min-h-0 flex-1 items-center justify-center bg-gray-900 px-4 py-5 sm:flex-none sm:py-4">
+                    <div className="relative aspect-square w-full max-w-[min(100%,400px)]">
+                        <div
+                            id={containerId}
+                            className={`absolute inset-0 overflow-hidden rounded-lg [&>div]:!size-full [&_video]:!size-full [&_video]:!object-cover ${busy ? "invisible" : ""}`}
+                        />
+                        {busy && !cameraError ? (
+                            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-lg bg-gray-900 text-white">
+                                <Loader2 className="h-8 w-8 animate-spin" aria-hidden />
+                                <p className="text-sm">
+                                    {isSwitching ? "Switching camera…" : "Starting camera…"}
+                                </p>
+                            </div>
+                        ) : null}
+                        {cameraError ? (
+                            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-lg bg-gray-900/90 px-4 text-center text-white">
+                                <Camera className="h-10 w-10 text-white/70" aria-hidden />
+                                <p className="max-w-xs text-sm">{cameraError}</p>
+                            </div>
+                        ) : null}
 
-                    {showViewfinder && cameras.length > 1 && !busy ? (
-                        <button
-                            type="button"
-                            onClick={() => void switchCamera()}
-                            disabled={isSwitching || disabled}
-                            className="absolute bottom-4 right-4 inline-flex min-h-[3rem] items-center gap-2 rounded-full bg-black/60 px-4 py-3 text-sm font-semibold text-white backdrop-blur-sm transition touch-manipulation hover:bg-black/75 active:scale-95 disabled:opacity-50 sm:bottom-3 sm:right-3 sm:min-h-0 sm:px-3 sm:py-2 sm:text-xs"
-                            aria-label={`Switch camera. Currently using ${activeLabel} camera`}
-                        >
-                            <SwitchCamera className="h-5 w-5 shrink-0 sm:h-4 sm:w-4" aria-hidden />
-                            {activeLabel}
-                        </button>
-                    ) : null}
+                        {showViewfinder && !busy ? (
+                            <div
+                                className="pointer-events-none absolute inset-0 z-[5] overflow-hidden rounded-lg"
+                                aria-hidden
+                            >
+                                <div className="absolute left-[7%] right-[7%] animate-barcode-scan-sweep">
+                                    <div className="h-[2px] w-full rounded-full bg-[#06b6d4] shadow-[0_0_10px_2px_rgba(6,182,212,0.85)]" />
+                                    <div className="h-10 w-full bg-gradient-to-b from-[#06b6d4]/35 to-transparent" />
+                                </div>
+                            </div>
+                        ) : null}
+
+                        {showViewfinder && cameras.length > 1 && !busy ? (
+                            <button
+                                type="button"
+                                onClick={() => void switchCamera()}
+                                disabled={isSwitching || disabled}
+                                className="absolute bottom-3 right-3 z-10 inline-flex min-h-[2.75rem] items-center gap-2 rounded-full bg-black/60 px-3 py-2 text-xs font-semibold text-white backdrop-blur-sm transition touch-manipulation hover:bg-black/75 active:scale-95 disabled:opacity-50"
+                                aria-label={`Switch camera. Currently using ${activeLabel} camera`}
+                            >
+                                <SwitchCamera className="h-4 w-4 shrink-0" aria-hidden />
+                                {activeLabel}
+                            </button>
+                        ) : null}
+                    </div>
                 </div>
 
                 <p
                     className="shrink-0 border-t border-gray-100 px-4 py-3 text-center text-xs text-gray-500 sm:text-left"
                     style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
                 >
-                    Point the camera at the asset tag or barcode.
+                    {hint}
                     {cameras.length > 1 ? " Tap the camera button to switch between front and back." : ""}
                 </p>
             </div>
