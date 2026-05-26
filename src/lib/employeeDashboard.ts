@@ -31,17 +31,28 @@ import {
 } from "@/lib/employeeExpenses";
 import { formatCurrency, formatExpenseDateTime } from "@/lib/employeeExpenseUi";
 import type { EmployeeSession } from "@/lib/employeeSession";
+import {
+    fetchEmployeeBirthdayAlerts,
+    type EmployeeBirthdayAlert,
+} from "@/lib/employeeBirthdays";
 
 export type DashboardActivityType = "success" | "info" | "warning";
 
+export type DashboardHeroSlideVariant = "default" | "birthday-today" | "birthday-soon";
+
 export type DashboardHeroSlide = {
     id: string;
+    variant?: DashboardHeroSlideVariant;
     eyebrow: string;
     title: string;
     subtitle: string;
-    badge?: { text: string; variant: "emerald" | "amber" | "cyan" };
+    badge?: { text: string; variant: "emerald" | "amber" | "cyan" | "rose" };
     metrics: { label: string; value: string }[];
     href?: string;
+    /** Initials shown on birthday slide avatar */
+    birthdayInitials?: string;
+    /** Short line below subtitle on birthday slides */
+    birthdayHint?: string;
 };
 
 export type DashboardTaskItem = {
@@ -97,6 +108,63 @@ export type EmployeeDashboardPayload = {
     recentActivity: DashboardActivityItem[];
     heroSlides: DashboardHeroSlide[];
 };
+
+function firstName(fullName: string) {
+    const trimmed = fullName.trim();
+    if (!trimmed) return "Team member";
+    return trimmed.split(/\s+/)[0] ?? trimmed;
+}
+
+function birthdayWhenLabel(daysUntil: number) {
+    if (daysUntil === 1) return "Tomorrow";
+    if (daysUntil === 2) return "In 2 days";
+    return `In ${daysUntil} days`;
+}
+
+function initialsFromName(fullName: string) {
+    const parts = fullName.trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return "?";
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return `${parts[0][0] ?? ""}${parts[parts.length - 1][0] ?? ""}`.toUpperCase();
+}
+
+function birthdayAlertsToSlides(alerts: EmployeeBirthdayAlert[]): DashboardHeroSlide[] {
+    return alerts.map((a) => {
+        const name = firstName(a.fullName);
+        const when = birthdayWhenLabel(a.daysUntil);
+        const initials = initialsFromName(a.fullName);
+
+        if (a.kind === "today") {
+            return {
+                id: `birthday-today-${a.employeeId}`,
+                variant: "birthday-today" as const,
+                eyebrow: a.isSelf ? "Your special day" : "Birthday today",
+                title: a.isSelf ? `Happy Birthday, ${name}!` : a.fullName,
+                subtitle: a.isSelf
+                    ? "Wishing you a wonderful year from the VIROS family"
+                    : `Send your best wishes · ${a.displayDate}`,
+                badge: { text: "Today", variant: "rose" as const },
+                metrics: [],
+                birthdayInitials: initials,
+                birthdayHint: "Celebrate with the team today",
+            };
+        }
+
+        return {
+            id: `birthday-soon-${a.employeeId}`,
+            variant: "birthday-soon" as const,
+            eyebrow: a.isSelf ? "Your birthday" : "Upcoming birthday",
+            title: a.isSelf ? `${name}, get ready!` : a.fullName,
+            subtitle: a.isSelf
+                ? `Your birthday is on ${a.displayDate}`
+                : `Birthday on ${a.displayDate}`,
+            badge: { text: when, variant: "cyan" as const },
+            metrics: [],
+            birthdayInitials: initials,
+            birthdayHint: "Plan a wish or surprise for your colleague",
+        };
+    });
+}
 
 function currentMonthKey() {
     const d = new Date();
@@ -367,6 +435,7 @@ export async function buildEmployeeDashboard(
         expenses,
         expenseSummary,
         expenseApproved,
+        birthdayAlerts,
     ] = await Promise.all([
         getAttendanceForMonth(employeeId, year, month),
         fetchLeaveRequestsOverlappingMonth(employeeId, year, month),
@@ -379,6 +448,7 @@ export async function buildEmployeeDashboard(
         listEmployeeExpenses(employeeId, { month: monthKey, limit: 15 }),
         getEmployeeExpenseSummary(employeeId, monthKey),
         getEmployeeExpenseSummaryByStatus(employeeId, monthKey, "approved"),
+        fetchEmployeeBirthdayAlerts(employeeId),
     ]);
 
     const withLeave = mergeLeaveRequestsIntoAttendanceRecords(dbRecords, leaveRequestsMonth);
@@ -442,9 +512,11 @@ export async function buildEmployeeDashboard(
     ];
 
     const expenseTotalCompact = formatCurrencyCompact(expenseSummary.totalAmount);
-    const heroSlides: DashboardHeroSlide[] = [
+    const birthdaySlides = birthdayAlertsToSlides(birthdayAlerts);
+    const summarySlides: DashboardHeroSlide[] = [
         {
             id: "dashboard",
+            variant: "default",
             eyebrow: greeting,
             title: session.name ? `Hi, ${session.name.split(" ")[0]}` : "My Dashboard",
             subtitle: "Your work summary for today",
@@ -458,6 +530,7 @@ export async function buildEmployeeDashboard(
         },
         {
             id: "attendance",
+            variant: "default",
             eyebrow: "Attendance",
             title: monthLabel,
             subtitle: "Your punch & presence record",
@@ -471,6 +544,7 @@ export async function buildEmployeeDashboard(
         },
         {
             id: "tasks",
+            variant: "default",
             eyebrow: "Tasks & leave",
             title: "Action Items",
             subtitle: "Pending work & leave balance",
@@ -487,6 +561,7 @@ export async function buildEmployeeDashboard(
         },
         {
             id: "expenses",
+            variant: "default",
             eyebrow: "Expenses",
             title: "Claims",
             subtitle: "Track submissions this month",
@@ -498,6 +573,7 @@ export async function buildEmployeeDashboard(
             ],
         },
     ];
+    const heroSlides: DashboardHeroSlide[] = [...birthdaySlides, ...summarySlides];
 
     return {
         employeeName: session.name,
