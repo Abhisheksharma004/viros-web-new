@@ -1,88 +1,24 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Check, Loader2, Mail, Phone, RefreshCw, User } from "lucide-react";
+import { Check, Loader2, Mail, Pencil, Phone, RefreshCw, User } from "lucide-react";
+import EmployeeProfileEditModal from "@/components/employee-dashboard/EmployeeProfileEditModal";
+import {
+    profileToFormValues,
+    type EmployeeProfileFormValues,
+} from "@/lib/employeeProfileFormSections";
 
-type EmployeeProfile = {
-    employeeId: string;
-    fullName: string;
-    gender: string;
-    dateOfBirth: string;
-    maritalStatus: string;
-    bloodGroup: string;
-    nationality: string;
-    personalEmail: string;
-    personalMobileNumber: string;
-    officialEmail: string;
-    officialMobileNumber: string;
-    currentAddress: string;
-    permanentAddress: string;
-    department: string;
-    role: string;
-    employeeType: string;
-    employmentCategory: string;
-    joiningDate: string;
-    workLocation: string;
-    branchName: string;
-    reportingManager: string;
-    probationPeriod: string;
-    employeeStatus: string;
-    higherEducationQualification: string;
-    higherEducationCourseName: string;
-    higherEducationInstitution: string;
-    higherEducationPassingYear: string;
-    higherEducationCgpaOrPercentage: string;
-    higherEducationSpecialization: string;
-    bankName: string;
-    bankBranchName: string;
-    accountHolderName: string;
-    accountNumber: string;
-    ifscCode: string;
-    upiId: string;
+type EmployeeProfile = EmployeeProfileFormValues & {
     portalEmail: string;
     portalStatus: string;
 };
 
 function normalizeProfile(data: Record<string, unknown>): EmployeeProfile {
-    const str = (key: keyof EmployeeProfile) =>
-        typeof data[key] === "string" ? (data[key] as string) : "";
+    const base = profileToFormValues(data as Partial<EmployeeProfileFormValues>);
+    const str = (key: string) => (typeof data[key] === "string" ? data[key] : "");
 
     return {
-        employeeId: str("employeeId"),
-        fullName: str("fullName"),
-        gender: str("gender"),
-        dateOfBirth: str("dateOfBirth"),
-        maritalStatus: str("maritalStatus"),
-        bloodGroup: str("bloodGroup"),
-        nationality: str("nationality"),
-        personalEmail: str("personalEmail"),
-        personalMobileNumber: str("personalMobileNumber"),
-        officialEmail: str("officialEmail"),
-        officialMobileNumber: str("officialMobileNumber"),
-        currentAddress: str("currentAddress"),
-        permanentAddress: str("permanentAddress"),
-        department: str("department"),
-        role: str("role"),
-        employeeType: str("employeeType"),
-        employmentCategory: str("employmentCategory"),
-        joiningDate: str("joiningDate"),
-        workLocation: str("workLocation"),
-        branchName: str("branchName"),
-        reportingManager: str("reportingManager"),
-        probationPeriod: str("probationPeriod"),
-        employeeStatus: str("employeeStatus"),
-        higherEducationQualification: str("higherEducationQualification"),
-        higherEducationCourseName: str("higherEducationCourseName"),
-        higherEducationInstitution: str("higherEducationInstitution"),
-        higherEducationPassingYear: str("higherEducationPassingYear"),
-        higherEducationCgpaOrPercentage: str("higherEducationCgpaOrPercentage"),
-        higherEducationSpecialization: str("higherEducationSpecialization"),
-        bankName: str("bankName"),
-        bankBranchName: str("bankBranchName"),
-        accountHolderName: str("accountHolderName"),
-        accountNumber: str("accountNumber"),
-        ifscCode: str("ifscCode"),
-        upiId: str("upiId"),
+        ...base,
         portalEmail: str("portalEmail"),
         portalStatus: str("portalStatus"),
     };
@@ -95,6 +31,10 @@ function display(value: string) {
 
 function hasValue(value: string) {
     return value.trim().length > 0;
+}
+
+function hasAny(values: string[]) {
+    return values.some(hasValue);
 }
 
 function ProfileField({ label, value }: { label: string; value: string }) {
@@ -140,6 +80,8 @@ export default function EmployeeProfilePage() {
     const [profile, setProfile] = useState<EmployeeProfile | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState("");
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [saveMessage, setSaveMessage] = useState("");
 
     const loadProfile = useCallback(async () => {
         setIsLoading(true);
@@ -173,57 +115,12 @@ export default function EmployeeProfilePage() {
         return name.charAt(0).toUpperCase();
     }, [profile]);
 
-    const showPersonal = profile
-        ? [
-              profile.gender,
-              profile.dateOfBirth,
-              profile.maritalStatus,
-              profile.bloodGroup,
-              profile.nationality,
-              profile.personalEmail,
-              profile.personalMobileNumber,
-          ].some(hasValue)
-        : false;
+    const formInitialValues = useMemo(() => (profile ? profileToFormValues(profile) : null), [profile]);
 
-    const showWork = profile
-        ? [
-              profile.department,
-              profile.role,
-              profile.employeeType,
-              profile.employmentCategory,
-              profile.joiningDate,
-              profile.workLocation,
-              profile.branchName,
-              profile.reportingManager,
-              profile.probationPeriod,
-          ].some(hasValue)
-        : false;
-
-    const showAddress = profile
-        ? [profile.currentAddress, profile.permanentAddress].some(hasValue)
-        : false;
-
-    const showEducation = profile
-        ? [
-              profile.higherEducationQualification,
-              profile.higherEducationCourseName,
-              profile.higherEducationInstitution,
-              profile.higherEducationPassingYear,
-              profile.higherEducationCgpaOrPercentage,
-              profile.higherEducationSpecialization,
-          ].some(hasValue)
-        : false;
-
-    const showBank = profile
-        ? [
-              profile.bankName,
-              profile.bankBranchName,
-              profile.accountHolderName,
-              profile.accountNumber,
-              profile.ifscCode,
-              profile.upiId,
-          ].some(hasValue)
-        : false;
+    const handleProfileSaved = (data: Record<string, unknown>) => {
+        setProfile(normalizeProfile(data));
+        setSaveMessage("Profile updated successfully");
+    };
 
     if (isLoading) {
         return (
@@ -236,7 +133,7 @@ export default function EmployeeProfilePage() {
         );
     }
 
-    if (loadError || !profile) {
+    if (loadError || !profile || !formInitialValues) {
         return (
             <div className="space-y-6 relative">
                 <div className="rounded-2xl border border-red-200 bg-red-50 px-6 py-10 text-center space-y-4">
@@ -255,19 +152,101 @@ export default function EmployeeProfilePage() {
     }
 
     const p = profile;
-    const hasDetailSections = showPersonal || showWork || showAddress || showEducation || showBank;
+
+    const showBasic = hasAny([
+        p.gender,
+        p.dateOfBirth,
+        p.maritalStatus,
+        p.bloodGroup,
+        p.nationality,
+        p.religion,
+        p.category,
+    ]);
+    const showContact = hasAny([
+        p.personalEmail,
+        p.personalMobileNumber,
+        p.officialEmail,
+        p.officialMobileNumber,
+        p.currentAddress,
+        p.permanentAddress,
+    ]);
+    const showParent = hasAny([p.parentName, p.parentMobileNumber, p.parentOccupation, p.guardianRelation]);
+    const showWork = hasAny([
+        p.department,
+        p.role,
+        p.employeeType,
+        p.employmentCategory,
+        p.joiningDate,
+        p.workLocation,
+        p.branchName,
+        p.reportingManager,
+        p.probationPeriod,
+    ]);
+    const showEducation = hasAny([
+        p.higherEducationQualification,
+        p.higherEducationCourseName,
+        p.higherEducationInstitution,
+        p.higherEducationPassingYear,
+        p.higherEducationCgpaOrPercentage,
+        p.higherEducationSpecialization,
+    ]);
+    const showPrevious = hasAny([
+        p.previousCompanyName,
+        p.previousDesignation,
+        p.previousSalary,
+        p.workExperienceYears,
+        p.previousJoiningDate,
+        p.previousRelievingDate,
+        p.reasonForLeaving,
+        p.referencePersonName,
+        p.referenceContactNumber,
+    ]);
+    const showIdentity = hasAny([
+        p.aadhaarNumber,
+        p.panNumber,
+        p.passportNumber,
+        p.voterIdNumber,
+        p.drivingLicenseNumber,
+        p.uanNumber,
+        p.esicNumber,
+        p.pfNumber,
+    ]);
+    const showBank = hasAny([
+        p.bankName,
+        p.bankBranchName,
+        p.accountHolderName,
+        p.accountNumber,
+        p.ifscCode,
+        p.upiId,
+    ]);
+
+    const hasDetailSections =
+        showBasic || showContact || showParent || showWork || showEducation || showPrevious || showIdentity || showBank;
 
     return (
         <div className="space-y-4 sm:space-y-6 relative pb-6">
-            {loadError && (
-                <p className="text-xs text-amber-600 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
-                    {loadError}
+            {saveMessage ? (
+                <p className="text-sm text-emerald-800 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+                    {saveMessage}
                 </p>
-            )}
+            ) : null}
 
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                <div className="bg-gradient-to-r from-[#06124f] to-[#0a2a5e] px-4 sm:px-6 pt-5 pb-6 sm:pt-6 sm:pb-8">
-                    <div className="flex items-start sm:items-center gap-3 sm:gap-5">
+                <div className="relative bg-gradient-to-r from-[#06124f] to-[#0a2a5e] px-4 sm:px-6 pt-5 pb-6 sm:pt-6 sm:pb-8">
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setSaveMessage("");
+                            setIsEditModalOpen(true);
+                        }}
+                        className="absolute top-4 right-4 z-10 inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/30 bg-white/15 text-white backdrop-blur-sm transition hover:bg-white/25 sm:top-6 sm:right-6 sm:h-auto sm:w-auto sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm sm:font-semibold"
+                        aria-label="Edit profile"
+                    >
+                        <Pencil className="h-4 w-4 shrink-0" aria-hidden />
+                        <span className="hidden sm:inline">Edit profile</span>
+                    </button>
+
+                    <div className="flex items-start sm:items-center gap-3 sm:gap-5 pr-12 sm:pr-36">
                         <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-br from-[#06b6d4] to-[#06124f] flex items-center justify-center text-white text-xl sm:text-2xl font-black shadow-lg ring-4 ring-white/90 shrink-0">
                             {initials}
                         </div>
@@ -312,15 +291,39 @@ export default function EmployeeProfilePage() {
                 </div>
             </div>
 
-            {showPersonal && (
+            {showBasic && (
                 <SectionCard title="Personal information">
                     <ProfileField label="Gender" value={p.gender} />
                     <ProfileField label="Date of birth" value={p.dateOfBirth} />
                     <ProfileField label="Marital status" value={p.maritalStatus} />
                     <ProfileField label="Blood group" value={p.bloodGroup} />
                     <ProfileField label="Nationality" value={p.nationality} />
-                    <ProfileField label="Personal email" value={p.personalEmail} />
+                    <ProfileField label="Religion" value={p.religion} />
+                    <ProfileField label="Category" value={p.category} />
+                </SectionCard>
+            )}
+
+            {showContact && (
+                <SectionCard title="Contact details">
                     <ProfileField label="Personal mobile" value={p.personalMobileNumber} />
+                    <ProfileField label="Official mobile" value={p.officialMobileNumber} />
+                    <ProfileField label="Personal email" value={p.personalEmail} />
+                    <ProfileField label="Official email" value={p.officialEmail} />
+                    <div className="sm:col-span-2 lg:col-span-3">
+                        <ProfileField label="Current address" value={p.currentAddress} />
+                    </div>
+                    <div className="sm:col-span-2 lg:col-span-3">
+                        <ProfileField label="Permanent address" value={p.permanentAddress} />
+                    </div>
+                </SectionCard>
+            )}
+
+            {showParent && (
+                <SectionCard title="Parent / family details">
+                    <ProfileField label="Parent name" value={p.parentName} />
+                    <ProfileField label="Parent mobile" value={p.parentMobileNumber} />
+                    <ProfileField label="Parent occupation" value={p.parentOccupation} />
+                    <ProfileField label="Guardian relation" value={p.guardianRelation} />
                 </SectionCard>
             )}
 
@@ -338,17 +341,6 @@ export default function EmployeeProfilePage() {
                 </SectionCard>
             )}
 
-            {showAddress && (
-                <SectionCard title="Address">
-                    <div className="sm:col-span-2 lg:col-span-3">
-                        <ProfileField label="Current address" value={p.currentAddress} />
-                    </div>
-                    <div className="sm:col-span-2 lg:col-span-3">
-                        <ProfileField label="Permanent address" value={p.permanentAddress} />
-                    </div>
-                </SectionCard>
-            )}
-
             {showEducation && (
                 <SectionCard title="Education">
                     <ProfileField label="Qualification" value={p.higherEducationQualification} />
@@ -357,6 +349,35 @@ export default function EmployeeProfilePage() {
                     <ProfileField label="Passing year" value={p.higherEducationPassingYear} />
                     <ProfileField label="CGPA / percentage" value={p.higherEducationCgpaOrPercentage} />
                     <ProfileField label="Specialization" value={p.higherEducationSpecialization} />
+                </SectionCard>
+            )}
+
+            {showPrevious && (
+                <SectionCard title="Previous employment">
+                    <ProfileField label="Company" value={p.previousCompanyName} />
+                    <ProfileField label="Designation" value={p.previousDesignation} />
+                    <ProfileField label="Salary" value={p.previousSalary} />
+                    <ProfileField label="Experience (years)" value={p.workExperienceYears} />
+                    <ProfileField label="Joining date" value={p.previousJoiningDate} />
+                    <ProfileField label="Relieving date" value={p.previousRelievingDate} />
+                    <div className="sm:col-span-2 lg:col-span-3">
+                        <ProfileField label="Reason for leaving" value={p.reasonForLeaving} />
+                    </div>
+                    <ProfileField label="Reference person" value={p.referencePersonName} />
+                    <ProfileField label="Reference contact" value={p.referenceContactNumber} />
+                </SectionCard>
+            )}
+
+            {showIdentity && (
+                <SectionCard title="Identity & government details">
+                    <ProfileField label="Aadhaar" value={p.aadhaarNumber} />
+                    <ProfileField label="PAN" value={p.panNumber} />
+                    <ProfileField label="Passport" value={p.passportNumber} />
+                    <ProfileField label="Voter ID" value={p.voterIdNumber} />
+                    <ProfileField label="Driving license" value={p.drivingLicenseNumber} />
+                    <ProfileField label="UAN" value={p.uanNumber} />
+                    <ProfileField label="ESIC" value={p.esicNumber} />
+                    <ProfileField label="PF" value={p.pfNumber} />
                 </SectionCard>
             )}
 
@@ -373,15 +394,23 @@ export default function EmployeeProfilePage() {
 
             {!hasDetailSections && (
                 <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 sm:px-6 py-5 text-sm text-amber-800">
-                    HR has not added full employee details yet. Your portal access is active — contact admin to
-                    complete your profile in the employees module.
+                    Your profile details are not filled yet. Tap <strong>Edit profile</strong> to complete your
+                    employee record (all fields available in admin employee form).
                 </div>
             )}
 
             <p className="text-xs text-gray-400 flex items-center gap-1.5 pb-2 px-1">
                 <User className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                Profile details are managed by HR. Contact admin to update your records.
+                Use Edit profile to update all employee details. Employee ID cannot be changed.
             </p>
+
+            <EmployeeProfileEditModal
+                open={isEditModalOpen}
+                employeeId={p.employeeId}
+                initialValues={formInitialValues}
+                onClose={() => setIsEditModalOpen(false)}
+                onSaved={handleProfileSaved}
+            />
         </div>
     );
 }
