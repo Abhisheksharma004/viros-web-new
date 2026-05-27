@@ -376,13 +376,7 @@ export default function AdminTasksPage() {
 
     return (
         <div className="space-y-6 relative">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-black text-gray-900">Tasks Management</h1>
-                    <p className="text-sm text-gray-500 mt-1">
-                        Overview of assigned work, priorities, and completion status.
-                    </p>
-                </div>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-4">
                 <button
                     type="button"
                     onClick={openAddModal}

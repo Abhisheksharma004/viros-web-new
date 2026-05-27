@@ -295,7 +295,6 @@ function CellText({ value, maxWidth = "max-w-[200px]" }: { value: string; maxWid
 
 export default function WorkRecordsReportPage({ variant }: { variant: WorkRecordsReportVariant }) {
     const config = VARIANT_CONFIG[variant];
-    const TitleIcon = config.icon;
     const [records, setRecords] = useState<WorkRecord[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState("");
@@ -405,14 +404,7 @@ export default function WorkRecordsReportPage({ variant }: { variant: WorkRecord
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900 flex flex-wrap items-center gap-2">
-                        <TitleIcon className="h-7 w-7 text-[#06124f] shrink-0" aria-hidden />
-                        {config.title}
-                    </h1>
-                    <p className="text-sm text-gray-500 mt-1">{config.description}</p>
-                </div>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-end">
                 <div className="flex flex-wrap items-center gap-2">
                     <button
                         type="button"

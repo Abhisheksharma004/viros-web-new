@@ -122,13 +122,6 @@ export default function AdminNewsletterPage() {
 
     return (
         <div className="space-y-5">
-            <div>
-                <h1 className="text-2xl font-bold text-gray-900">Newsletter</h1>
-                <p className="mt-1 text-sm text-gray-500">
-                    Subscribers from the website footer newsletter form.
-                </p>
-            </div>
-
             {error ? (
                 <div className="flex items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                     <span className="min-w-0 break-words">{error}</span>

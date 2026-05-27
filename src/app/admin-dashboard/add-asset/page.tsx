@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Check, Download, Eye, Loader2, Package, Pencil, Trash2, Upload, X } from "lucide-react";
+import { Check, Download, Eye, Loader2, Pencil, Trash2, Upload, X } from "lucide-react";
 
 type AssetStatus = "Active" | "Inactive" | "Maintenance";
 
@@ -397,17 +397,8 @@ export default function AddAssetPage() {
     return (
         <div className="space-y-6 relative">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-black text-gray-900 flex flex-wrap items-center gap-2">
-                        <Package className="h-7 w-7 text-[#0a2a5e] shrink-0" aria-hidden />
-                        Assets
-                    </h1>
-                    <p className="text-sm text-gray-500 mt-1">
-                        Track hardware and linked companies for AMC and verification.
-                    </p>
-                    {loadError && <p className="text-xs text-amber-600 mt-2">{loadError}</p>}
-                </div>
-                <div className="flex flex-wrap gap-2 sm:justify-end">
+                {loadError ? <p className="text-xs text-amber-600">{loadError}</p> : <span className="hidden sm:block" aria-hidden />}
+                <div className="flex flex-wrap gap-2 sm:justify-end sm:ml-auto">
                     <input
                         ref={csvFileInputRef}
                         type="file"

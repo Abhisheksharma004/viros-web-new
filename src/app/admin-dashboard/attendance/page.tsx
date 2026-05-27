@@ -826,16 +826,6 @@ function AdminEmployeeAttendancePageContent() {
 
     return (
         <div className="mx-auto max-w-7xl space-y-6">
-            <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-[#06b6d4]">
-                    HRMS
-                </p>
-                <h1 className="text-2xl font-black text-gray-900">Attendance</h1>
-                <p className="mt-1 text-sm font-medium text-gray-700">
-                    Daily punches, monthly summary, and mark absent employees as present.
-                </p>
-            </div>
-
             <div className="flex flex-wrap gap-2 border-b border-gray-200 pb-1">
                 {tabs.map((t) => {
                     const Icon = t.icon;

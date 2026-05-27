@@ -297,13 +297,7 @@ export default function AdminRolesPage() {
     return (
         <div className="space-y-8">
             <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-                <div>
-                    <h1 className="text-2xl font-semibold text-gray-900">Role directory</h1>
-                    <p className="mt-1 text-sm text-gray-500">
-                        Manage designations by department, status, and notes—aligned with your HRMS structure.
-                    </p>
-                    {loadError && <p className="mt-2 text-xs text-amber-600">{loadError}</p>}
-                </div>
+                {loadError ? <p className="text-xs text-amber-600">{loadError}</p> : <span className="hidden md:block" aria-hidden />}
 
                 <button
                     type="button"

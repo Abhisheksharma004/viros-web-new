@@ -283,11 +283,7 @@ export default function DepartmentPage() {
     return (
         <div className="space-y-6 relative">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-black text-gray-900">Departments</h1>
-                    <p className="text-sm text-gray-500 mt-1">Overview of all departments, team heads and allocation.</p>
-                    {loadError && <p className="text-xs text-amber-600 mt-2">{loadError}</p>}
-                </div>
+                {loadError ? <p className="text-xs text-amber-600">{loadError}</p> : <span className="hidden sm:block" aria-hidden />}
                 <button
                     type="button"
                     onClick={openAddModal}

@@ -637,13 +637,11 @@ export default function AdminEmployeesPage() {
     return (
         <div className="space-y-8">
             <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-                <div>
-                    <h1 className="text-2xl font-semibold text-gray-900">Employee directory</h1>
-                    <p className="mt-1 text-sm text-gray-500">
-                        Manage employees and add new hires from the HRMS registration modal.
-                    </p>
-                    {employeesLoadError && <p className="mt-2 text-xs text-amber-600">{employeesLoadError}</p>}
-                </div>
+                {employeesLoadError ? (
+                    <p className="text-xs text-amber-600">{employeesLoadError}</p>
+                ) : (
+                    <span className="hidden md:block" aria-hidden />
+                )}
 
                 <button
                     type="button"

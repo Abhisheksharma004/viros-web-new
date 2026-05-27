@@ -737,16 +737,7 @@ export default function Page() {
     return (
         <div className="mx-auto max-w-7xl space-y-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                    <div className="flex items-center gap-2 text-[#0a2a5e]">
-                        <FileText className="h-6 w-6" aria-hidden />
-                        <h1 className="text-2xl font-semibold text-gray-900">Leave policy</h1>
-                    </div>
-                    <p className="mt-1 text-sm text-gray-500">
-                        Define leave types, annual quotas, carry-forward, and approval rules for all employees.
-                    </p>
-                    {loadError && <p className="mt-2 text-xs text-amber-600">{loadError}</p>}
-                </div>
+                {loadError ? <p className="text-xs text-amber-600">{loadError}</p> : <span className="hidden sm:block" aria-hidden />}
                 <button
                     type="button"
                     onClick={openAdd}

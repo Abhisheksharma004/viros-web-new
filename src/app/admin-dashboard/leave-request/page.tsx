@@ -337,15 +337,6 @@ export default function AdminLeaveRequestPage() {
 
     return (
         <div className="mx-auto w-full max-w-7xl space-y-5 pb-8 sm:space-y-6">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                    <h1 className="text-xl font-bold text-[#0a2a5e] sm:text-2xl">Leave requests</h1>
-                    <p className="mt-1 text-sm text-gray-600">
-                        Review employee leave applications and approve or reject them.
-                    </p>
-                </div>
-            </div>
-
             {loadError && (
                 <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
                     {loadError}

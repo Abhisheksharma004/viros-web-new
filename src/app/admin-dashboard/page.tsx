@@ -91,12 +91,7 @@ export default function AdminDashboardPage() {
     return (
         <div className="space-y-6">
 
-            {/* Page Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-black text-gray-900">Admin Overview</h1>
-                    <p className="text-gray-500 text-sm mt-0.5">Welcome back, Administrator. Here's your system summary.</p>
-                </div>
+            <div className="flex items-center justify-end">
                 <div className="flex items-center gap-2">
                     <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-green-50 text-green-700 border border-green-200">
                         <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />

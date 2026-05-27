@@ -2,13 +2,16 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { getAdminPageMeta } from "@/lib/adminPageMeta";
 
 export default function AdminHeader({ onMenuClick }: { onMenuClick: () => void }) {
     const [showProfileMenu, setShowProfileMenu] = useState(false);
     const [showNotifications, setShowNotifications] = useState(false);
     const [adminEmail, setAdminEmail] = useState("");
     const router = useRouter();
+    const pathname = usePathname();
+    const pageMeta = getAdminPageMeta(pathname);
 
     const notifications = [
         { text: "New employee added: Rahul Sharma", time: "10 min ago", unread: true },
@@ -62,21 +65,24 @@ export default function AdminHeader({ onMenuClick }: { onMenuClick: () => void }
     };
 
     return (
-        <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
-            <div className="flex items-center justify-between px-4 py-5">
-                {/* Left: Hamburger */}
+        <header className="sticky top-0 z-30 border-b border-gray-200 bg-white">
+            <div className="flex items-start justify-between gap-3 px-4 py-4 sm:items-center sm:py-5">
                 <button
+                    type="button"
                     onClick={onMenuClick}
-                    className="lg:hidden text-gray-600 hover:text-gray-900"
+                    className="mt-0.5 shrink-0 text-gray-600 hover:text-gray-900 lg:hidden sm:mt-0"
+                    aria-label="Open menu"
                 >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                     </svg>
                 </button>
 
-                {/* Center: Title */}
-                <div className="flex-1 px-4">
-                    <h1 className="text-xl font-bold text-gray-900 hidden sm:block">Admin Control Panel</h1>
+                <div className="min-w-0 flex-1 px-0 sm:px-2 lg:px-4">
+                    <h1 className="truncate text-xl font-black text-gray-900 sm:text-2xl">{pageMeta.title}</h1>
+                    {pageMeta.subtitle ? (
+                        <p className="mt-0.5 line-clamp-2 text-sm text-gray-500">{pageMeta.subtitle}</p>
+                    ) : null}
                 </div>
 
                 {/* Right */}

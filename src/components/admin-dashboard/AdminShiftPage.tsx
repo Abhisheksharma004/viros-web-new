@@ -472,18 +472,8 @@ export default function AdminShiftPage() {
     return (
         <div className="mx-auto max-w-7xl space-y-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                    <div className="flex items-center gap-2 text-[#0a2a5e]">
-                        <Clock className="h-6 w-6" aria-hidden />
-                        <h1 className="text-2xl font-semibold text-gray-900">Employee shifts</h1>
-                    </div>
-                    <p className="mt-1 text-sm text-gray-500">
-                        Set shift timings, working locations, and weekly working days per employee ID.
-                        Attendance calendars and daily status follow each employee&apos;s working days below.
-                    </p>
-                    {loadError && <p className="mt-2 text-xs text-amber-600">{loadError}</p>}
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
+                {loadError ? <p className="text-xs text-amber-600">{loadError}</p> : <span className="hidden sm:block" aria-hidden />}
+                <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
                     <Link
                         href="/admin-dashboard/attendance"
                         className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#0a2a5e]/20 bg-white px-4 py-3 text-sm font-semibold text-[#0a2a5e] shadow-sm transition hover:bg-[#0a2a5e]/5"
