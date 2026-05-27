@@ -27,10 +27,18 @@ import type {
 } from "@/lib/employeeDashboard";
 import { getPriorityStyles } from "@/lib/adminTaskUiShared";
 
+type ExpenseSubtext = {
+    approved: string;
+    reject: string;
+    all: string;
+};
+
 type StatCard = {
+    id: string;
     title: string;
     value: string;
     change: string;
+    expenseSubtext?: ExpenseSubtext;
     icon: LucideIcon;
     color: string;
     href: string;
@@ -227,6 +235,7 @@ export default function EmployeeDashboardPage() {
         if (!data) return [];
         return [
             {
+                id: "attendance",
                 title: "Days Present",
                 value: String(data.stats.daysPresent),
                 change: "This month",
@@ -235,6 +244,7 @@ export default function EmployeeDashboardPage() {
                 href: "/employee-dashboard/attendance",
             },
             {
+                id: "leave",
                 title: "Leave Balance",
                 value: String(data.stats.leaveBalance),
                 change: "Days left",
@@ -243,6 +253,7 @@ export default function EmployeeDashboardPage() {
                 href: "/employee-dashboard/leave",
             },
             {
+                id: "tasks",
                 title: "Pending Tasks",
                 value: String(data.stats.pendingTasks),
                 change: data.stats.pendingTasks > 0 ? "Open items" : "All caught up",
@@ -251,9 +262,15 @@ export default function EmployeeDashboardPage() {
                 href: "/employee-dashboard/tasks",
             },
             {
+                id: "expenses",
                 title: "Expenses",
                 value: data.stats.expenseTotal,
-                change: data.stats.expenseSubtext,
+                change: "",
+                expenseSubtext: {
+                    approved: data.stats.expenseSubtextApproved,
+                    reject: data.stats.expenseSubtextReject,
+                    all: data.stats.expenseSubtextAll,
+                },
                 icon: Receipt,
                 color: "from-[#06124f] to-[#0a2a5e]",
                 href: "/employee-dashboard/add-expense",
@@ -296,7 +313,7 @@ export default function EmployeeDashboardPage() {
                     const Icon = stat.icon;
                     return (
                         <Link
-                            key={stat.title}
+                            key={stat.id}
                             href={stat.href}
                             className="group flex min-h-[5.5rem] flex-col justify-between rounded-2xl border border-gray-100 bg-white p-3 shadow-sm ring-1 ring-gray-100 touch-manipulation transition active:scale-[0.98] sm:min-h-0 sm:p-4 sm:hover:-translate-y-0.5 sm:hover:shadow-md"
                         >
@@ -308,9 +325,23 @@ export default function EmployeeDashboardPage() {
                                     <p className="mt-1 text-xl font-black leading-none text-gray-900 sm:text-2xl">
                                         {stat.value}
                                     </p>
-                                    <p className="mt-1 truncate text-[10px] text-gray-400 sm:text-xs">
-                                        {stat.change}
-                                    </p>
+                                    {stat.expenseSubtext ? (
+                                        <p className="mt-1 line-clamp-2 text-[10px] leading-snug text-gray-400 sm:text-xs">
+                                            <span>{stat.expenseSubtext.approved}</span>
+                                            <span className="text-gray-300"> · </span>
+                                            <span className="font-medium text-red-600">
+                                                {stat.expenseSubtext.reject}
+                                            </span>
+                                            <span className="text-gray-300"> · </span>
+                                            <span className="font-medium text-[#0a2a5e]">
+                                                {stat.expenseSubtext.all}
+                                            </span>
+                                        </p>
+                                    ) : (
+                                        <p className="mt-1 truncate text-[10px] text-gray-400 sm:text-xs">
+                                            {stat.change}
+                                        </p>
+                                    )}
                                 </div>
                                 <div
                                     className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${stat.color} text-white shadow sm:h-11 sm:w-11`}

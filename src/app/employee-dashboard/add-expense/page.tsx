@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
     Calendar,
     CheckCircle2,
@@ -99,20 +100,32 @@ function matchesExpenseSearch(exp: EmployeeExpenseRow, query: string) {
     return haystack.includes(q);
 }
 
+type ExpenseStatusFilter = "all" | "approved" | "rejected" | "pending";
+
+function parseStatusFilter(value: string | null): ExpenseStatusFilter {
+    if (value === "approved" || value === "rejected" || value === "pending") return value;
+    return "all";
+}
+
 function filterExpenses(
     expenses: EmployeeExpenseRow[],
     fromDate: string,
     toDate: string,
     search: string,
+    status: ExpenseStatusFilter,
 ) {
     return expenses.filter((exp) => {
         if (fromDate && exp.expense_date < fromDate) return false;
         if (toDate && exp.expense_date > toDate) return false;
+        if (status !== "all" && exp.status !== status) return false;
         return matchesExpenseSearch(exp, search);
     });
 }
 
 export default function AddExpensePage() {
+    const searchParams = useSearchParams();
+    const initialStatus = parseStatusFilter(searchParams.get("status"));
+
     const [month, setMonth] = useState(() => getTodayIso().slice(0, 7));
     const [expenses, setExpenses] = useState<EmployeeExpenseRow[]>([]);
     const [summary, setSummary] = useState<ExpenseSummary>({
@@ -135,6 +148,7 @@ export default function AddExpensePage() {
     const [filterFrom, setFilterFrom] = useState(() => getMonthDateRange(getTodayIso().slice(0, 7)).from);
     const [filterTo, setFilterTo] = useState(() => getMonthDateRange(getTodayIso().slice(0, 7)).to);
     const [search, setSearch] = useState("");
+    const [statusFilter, setStatusFilter] = useState<ExpenseStatusFilter>(initialStatus);
     const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
     const loadExpenses = useCallback(async () => {
@@ -178,24 +192,30 @@ export default function AddExpensePage() {
         setMobileFiltersOpen(false);
     }, [month]);
 
+    useEffect(() => {
+        setStatusFilter(parseStatusFilter(searchParams.get("status")));
+    }, [searchParams]);
+
     const monthLabel = useMemo(() => formatMonthLabel(month), [month]);
     const monthShortLabel = useMemo(() => formatMonthShort(month), [month]);
     const monthRange = useMemo(() => getMonthDateRange(month), [month]);
 
     const filteredExpenses = useMemo(
-        () => filterExpenses(expenses, filterFrom, filterTo, search),
-        [expenses, filterFrom, filterTo, search],
+        () => filterExpenses(expenses, filterFrom, filterTo, search, statusFilter),
+        [expenses, filterFrom, filterTo, search, statusFilter],
     );
 
     const hasActiveFilters =
         search.trim().length > 0 ||
         filterFrom !== monthRange.from ||
-        filterTo !== monthRange.to;
+        filterTo !== monthRange.to ||
+        statusFilter !== "all";
 
     const clearFilters = () => {
         setFilterFrom(monthRange.from);
         setFilterTo(monthRange.to);
         setSearch("");
+        setStatusFilter("all");
     };
 
     const handleAddExpense = async (form: AddExpenseFormValues) => {

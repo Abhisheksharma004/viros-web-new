@@ -29,7 +29,11 @@ import {
     getEmployeeExpenseSummaryByStatus,
     listEmployeeExpenses,
 } from "@/lib/employeeExpenses";
-import { formatCurrency, formatExpenseDateTime } from "@/lib/employeeExpenseUi";
+import {
+    formatCurrency,
+    formatCurrencyWhole,
+    formatExpenseDateTime,
+} from "@/lib/employeeExpenseUi";
 import type { EmployeeSession } from "@/lib/employeeSession";
 import { buildBirthdayWishCards } from "@/lib/employeeBirthdayCards";
 import { fetchEmployeeBirthdayAlerts } from "@/lib/employeeBirthdays";
@@ -97,7 +101,11 @@ export type EmployeeDashboardPayload = {
         leaveBalance: number;
         pendingTasks: number;
         expenseTotal: string;
-        expenseSubtext: string;
+        expenseSubtextApproved: string;
+        expenseSubtextReject: string;
+        expenseSubtextAll: string;
+        expenseApprovedCount: number;
+        expenseRejectedCount: number;
     };
     attendanceBars: DashboardAttendanceBar[];
     attendanceRate: number;
@@ -395,6 +403,7 @@ export async function buildEmployeeDashboard(
         expenses,
         expenseSummary,
         expenseApproved,
+        expenseRejected,
         birthdayAlerts,
     ] = await Promise.all([
         getAttendanceForMonth(employeeId, year, month),
@@ -408,6 +417,7 @@ export async function buildEmployeeDashboard(
         listEmployeeExpenses(employeeId, { month: monthKey, limit: 15 }),
         getEmployeeExpenseSummary(employeeId, monthKey),
         getEmployeeExpenseSummaryByStatus(employeeId, monthKey, "approved"),
+        getEmployeeExpenseSummaryByStatus(employeeId, monthKey, "rejected"),
         fetchEmployeeBirthdayAlerts(employeeId),
     ]);
 
@@ -472,6 +482,9 @@ export async function buildEmployeeDashboard(
     ];
 
     const expenseTotalCompact = formatCurrencyCompact(expenseSummary.totalAmount);
+    const expenseApprovedFormatted = formatCurrencyWhole(expenseApproved.totalAmount);
+    const expenseRejectedFormatted = formatCurrencyWhole(expenseRejected.totalAmount);
+    const expenseAllFormatted = formatCurrencyWhole(expenseSummary.totalAmount);
     const birthdaySlides = birthdayCardsToHeroSlides(buildBirthdayWishCards(birthdayAlerts));
     const summarySlides: DashboardHeroSlide[] = [
         {
@@ -544,11 +557,15 @@ export async function buildEmployeeDashboard(
             daysPresent: att.present,
             leaveBalance,
             pendingTasks,
-            expenseTotal: expenseTotalCompact,
-            expenseSubtext:
-                expenseSummary.pendingCount > 0
-                    ? `${expenseSummary.pendingCount} pending`
-                    : "This month",
+            expenseTotal: expenseApprovedFormatted,
+            expenseSubtextApproved:
+                expenseApproved.expenseCount > 0
+                    ? `${expenseApproved.expenseCount} approved`
+                    : "No approved",
+            expenseSubtextReject: `Reject ${expenseRejectedFormatted}`,
+            expenseSubtextAll: `All ${expenseAllFormatted}`,
+            expenseApprovedCount: expenseApproved.expenseCount,
+            expenseRejectedCount: expenseRejected.expenseCount,
         },
         attendanceBars,
         attendanceRate: att.rate,
