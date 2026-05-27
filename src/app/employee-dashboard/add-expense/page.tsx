@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
     Calendar,
@@ -122,7 +122,7 @@ function filterExpenses(
     });
 }
 
-export default function AddExpensePage() {
+function AddExpensePageInner() {
     const searchParams = useSearchParams();
     const initialStatus = parseStatusFilter(searchParams.get("status"));
 
@@ -607,6 +607,14 @@ function parseExpenseSuccessMessage(message: string) {
         return { title: match[1].trim(), subtitle: match[2].trim() };
     }
     return { title: message, subtitle: "" };
+}
+
+export default function AddExpensePage() {
+    return (
+        <Suspense fallback={null}>
+            <AddExpensePageInner />
+        </Suspense>
+    );
 }
 
 function ExpenseSuccessAlert({

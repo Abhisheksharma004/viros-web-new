@@ -139,6 +139,14 @@ async function fetchLegacyBirthdayRows(): Promise<LegacyBirthdayRow[]> {
 }
 
 /**
+ * Birthdays for admin dashboard (same window: today + next 2 days).
+ * No viewer employee — cards always show colleague messaging.
+ */
+export async function fetchAdminBirthdayAlerts(): Promise<EmployeeBirthdayAlert[]> {
+    return fetchEmployeeBirthdayAlerts("");
+}
+
+/**
  * Birthdays on every employee dashboard:
  * - today (daysUntil === 0)
  * - coming soon (daysUntil === 1 or 2)
