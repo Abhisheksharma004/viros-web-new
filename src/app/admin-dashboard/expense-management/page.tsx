@@ -1,8 +1,26 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Eye, LayoutList, Loader2, RefreshCw, Search, Users, XCircle } from "lucide-react";
+import {
+    Eye,
+    FileSpreadsheet,
+    FileText,
+    LayoutList,
+    Loader2,
+    RefreshCw,
+    Search,
+    Users,
+    XCircle,
+} from "lucide-react";
 import type { AdminExpenseEmployeeSummary, EmployeeExpenseRow, ExpenseStatus } from "@/lib/employeeExpenses";
+import {
+    exportAdminExpenseEmployeeSummaryToExcel,
+    exportAdminExpenseEmployeeSummaryToPdf,
+    exportAdminExpensesToExcel,
+    exportAdminExpensesToPdf,
+    mapEmployeeSummariesToExportRows,
+    mapExpensesToExportRows,
+} from "@/lib/adminExpenseExport";
 import { formatCurrency, formatExpenseDate, getExpenseStatusLabel, getExpenseStatusStyles } from "@/lib/employeeExpenseUi";
 
 type StatusFilter = ExpenseStatus | "all";
@@ -42,6 +60,9 @@ export default function ExpenseManagementPage() {
     const [rejectModal, setRejectModal] = useState<EmployeeExpenseRow | null>(null);
     const [rejectReason, setRejectReason] = useState("");
     const [rejectError, setRejectError] = useState("");
+    const [exportBusy, setExportBusy] = useState<"excel" | "pdf" | null>(null);
+
+    const monthLabel = useMemo(() => formatMonthLabel(month), [month]);
 
     const loadExpenses = useCallback(async () => {
         setLoading(true);
@@ -203,6 +224,47 @@ export default function ExpenseManagementPage() {
         else void loadEmployeeSummaries();
     };
 
+    const expenseExportRows = useMemo(() => mapExpensesToExportRows(expenses), [expenses]);
+    const employeeSummaryExportRows = useMemo(
+        () => mapEmployeeSummariesToExportRows(employeeSummaries),
+        [employeeSummaries],
+    );
+
+    const exportCount = tab === "all" ? expenseExportRows.length : employeeSummaryExportRows.length;
+    const canExport = !loading && exportCount > 0;
+
+    const runExportExcel = async () => {
+        if (!canExport) return;
+        setExportBusy("excel");
+        try {
+            if (tab === "all") {
+                await exportAdminExpensesToExcel(expenseExportRows, monthLabel);
+            } else {
+                await exportAdminExpenseEmployeeSummaryToExcel(employeeSummaryExportRows, monthLabel);
+            }
+        } catch (err) {
+            window.alert(err instanceof Error ? err.message : "Failed to export Excel file.");
+        } finally {
+            setExportBusy(null);
+        }
+    };
+
+    const runExportPdf = async () => {
+        if (!canExport) return;
+        setExportBusy("pdf");
+        try {
+            if (tab === "all") {
+                await exportAdminExpensesToPdf(expenseExportRows, monthLabel);
+            } else {
+                await exportAdminExpenseEmployeeSummaryToPdf(employeeSummaryExportRows, monthLabel);
+            }
+        } catch (err) {
+            window.alert(err instanceof Error ? err.message : "Failed to export PDF.");
+        } finally {
+            setExportBusy(null);
+        }
+    };
+
     const tabs: { id: TabId; label: string; icon: typeof LayoutList }[] = [
         { id: "all", label: "All expenses", icon: LayoutList },
         { id: "employee-wise", label: "Employee-wise", icon: Users },
@@ -249,7 +311,7 @@ export default function ExpenseManagementPage() {
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
                 <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
                     <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Month</p>
-                    <p className="mt-1 text-base font-bold text-gray-900">{formatMonthLabel(month)}</p>
+                    <p className="mt-1 text-base font-bold text-gray-900">{monthLabel}</p>
                 </div>
                 <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
                     <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
@@ -273,7 +335,7 @@ export default function ExpenseManagementPage() {
 
             <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    <div className="grid flex-1 grid-cols-1 gap-3 sm:grid-cols-3">
                         <div>
                             <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-gray-600">
                                 Status
@@ -315,6 +377,57 @@ export default function ExpenseManagementPage() {
                                 />
                             </div>
                         </div>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                        <button
+                            type="button"
+                            onClick={() => void runExportExcel()}
+                            disabled={!canExport || exportBusy !== null}
+                            className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-800 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+                            title={
+                                canExport
+                                    ? `Export ${exportCount} row(s) from current tab to Excel`
+                                    : "No data to export"
+                            }
+                        >
+                            {exportBusy === "excel" ? (
+                                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                            ) : (
+                                <FileSpreadsheet className="h-4 w-4 text-green-700" aria-hidden />
+                            )}
+                            Export Excel
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => void runExportPdf()}
+                            disabled={!canExport || exportBusy !== null}
+                            className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-800 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+                            title={
+                                canExport
+                                    ? `Export ${exportCount} row(s) from current tab to PDF`
+                                    : "No data to export"
+                            }
+                        >
+                            {exportBusy === "pdf" ? (
+                                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                            ) : (
+                                <FileText className="h-4 w-4 text-red-700" aria-hidden />
+                            )}
+                            Export PDF
+                        </button>
+                        <button
+                            type="button"
+                            onClick={refreshCurrentTab}
+                            disabled={loading || exportBusy !== null}
+                            className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-800 shadow-sm transition hover:bg-gray-50 disabled:opacity-60"
+                        >
+                            {loading ? (
+                                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                            ) : (
+                                <RefreshCw className="h-4 w-4" aria-hidden />
+                            )}
+                            Refresh
+                        </button>
                     </div>
                 </div>
 
