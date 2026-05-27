@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import BirthdayWishCard from "@/components/employee-dashboard/BirthdayWishCard";
+import type { BirthdayWishCardData } from "@/lib/employeeBirthdayCards";
 
 interface WhatsNewItem {
     id: number;
@@ -19,6 +21,7 @@ interface WhatsNewItem {
 export default function WhatsNewPanel() {
     const [isOpen, setIsOpen] = useState(false);
     const [items, setItems] = useState<WhatsNewItem[]>([]);
+    const [birthdayCards, setBirthdayCards] = useState<BirthdayWishCardData[]>([]);
 
     useEffect(() => {
         fetch("/api/whats-new")
@@ -27,13 +30,22 @@ export default function WhatsNewPanel() {
                 setItems(Array.isArray(data) ? data.filter((i) => i.is_active) : []);
             })
             .catch(() => {});
+
+        fetch("/api/employee/birthdays", { cache: "no-store" })
+            .then((r) => {
+                if (!r.ok) return { cards: [] as BirthdayWishCardData[] };
+                return r.json() as Promise<{ cards: BirthdayWishCardData[] }>;
+            })
+            .then((data) => {
+                setBirthdayCards(Array.isArray(data.cards) ? data.cards : []);
+            })
+            .catch(() => setBirthdayCards([]));
     }, []);
 
-    const newCount = items.filter((i) => i.is_new).length;
+    const newCount = items.filter((i) => i.is_new).length + birthdayCards.length;
 
     return (
         <>
-            {/* Overlay */}
             {isOpen && (
                 <div
                     className="fixed inset-0 z-998 bg-black/40"
@@ -41,7 +53,6 @@ export default function WhatsNewPanel() {
                 />
             )}
 
-            {/* Vertical Tab Button */}
             <div
                 className="fixed z-999"
                 style={{
@@ -51,7 +62,6 @@ export default function WhatsNewPanel() {
                     transition: "right 0.35s cubic-bezier(0.4,0,0.2,1)",
                 }}
             >
-                {/* Badge sits outside/above the button, top-left corner */}
                 {newCount > 0 && (
                     <span
                         className="absolute flex items-center justify-center rounded-full text-white font-black"
@@ -99,14 +109,25 @@ export default function WhatsNewPanel() {
 
                 <style jsx global>{`
                     @keyframes wn-pulse {
-                        0%   { box-shadow: 0 0 0 2px #fff, 0 0 0 3px rgba(230,57,70,0.7); }
-                        70%  { box-shadow: 0 0 0 2px #fff, 0 0 0 8px rgba(230,57,70,0); }
-                        100% { box-shadow: 0 0 0 2px #fff, 0 0 0 3px rgba(230,57,70,0); }
+                        0% {
+                            box-shadow:
+                                0 0 0 2px #fff,
+                                0 0 0 3px rgba(230, 57, 70, 0.7);
+                        }
+                        70% {
+                            box-shadow:
+                                0 0 0 2px #fff,
+                                0 0 0 8px rgba(230, 57, 70, 0);
+                        }
+                        100% {
+                            box-shadow:
+                                0 0 0 2px #fff,
+                                0 0 0 3px rgba(230, 57, 70, 0);
+                        }
                     }
                 `}</style>
             </div>
 
-            {/* Sliding Panel */}
             <div
                 className="fixed top-0 right-0 h-full z-999 flex flex-col"
                 style={{
@@ -117,7 +138,6 @@ export default function WhatsNewPanel() {
                     transition: "transform 0.35s cubic-bezier(0.4,0,0.2,1)",
                 }}
             >
-                {/* Panel Header */}
                 <div
                     className="flex items-center justify-between px-5 py-4"
                     style={{ background: "#0a2a5e" }}
@@ -149,11 +169,19 @@ export default function WhatsNewPanel() {
                     </button>
                 </div>
 
-                {/* News Items */}
                 <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
-                    {items.length === 0 && (
+                    {birthdayCards.length > 0 ? (
+                        <div className="flex flex-col gap-3">
+                            {birthdayCards.map((card) => (
+                                <BirthdayWishCard key={card.id} {...card} compact />
+                            ))}
+                        </div>
+                    ) : null}
+
+                    {items.length === 0 && birthdayCards.length === 0 && (
                         <p className="text-center text-gray-400 text-sm mt-8">No updates yet.</p>
                     )}
+
                     {items.map((item) => (
                         <div
                             key={item.id}
@@ -163,7 +191,6 @@ export default function WhatsNewPanel() {
                                 boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
                             }}
                         >
-                            {/* Card top bar */}
                             <div
                                 className="flex items-center justify-between px-4 py-2"
                                 style={{ background: item.tag_color }}
@@ -181,7 +208,6 @@ export default function WhatsNewPanel() {
                                 ) : null}
                             </div>
 
-                            {/* Card body */}
                             <div className="p-4 bg-white">
                                 <p className="font-semibold text-gray-800 text-sm mb-1 leading-snug">
                                     {item.title}
@@ -202,7 +228,6 @@ export default function WhatsNewPanel() {
                     ))}
                 </div>
 
-                {/* Panel Footer */}
                 <div
                     className="px-5 py-3 text-center"
                     style={{ borderTop: "1px solid #e5e7eb" }}

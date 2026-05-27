@@ -2,44 +2,16 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Cake, ChevronLeft, ChevronRight, Gift, Sparkles } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
-import type { DashboardHeroSlide, DashboardHeroSlideVariant } from "@/lib/employeeDashboard";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import type { DashboardHeroSlide } from "@/lib/employeeDashboard";
+import BirthdayWishCard from "@/components/employee-dashboard/BirthdayWishCard";
 
 const HERO_GRADIENT = "linear-gradient(135deg, #06124f 0%, #0a2a5e 55%, #0d3a7a 100%)";
 
-/** Same layout for all birthday slides — only theme colors differ */
-const BIRTHDAY_THEMES: Record<
-    "birthday-today" | "birthday-soon",
-    {
-        gradient: string;
-        accent: string;
-        ring: string;
-        dotActive: string;
-        dotIdle: string;
-        BadgeIcon: LucideIcon;
-        decorEmoji: string;
-    }
-> = {
-    "birthday-today": {
-        gradient: "linear-gradient(145deg, #831843 0%, #be185d 35%, #ea580c 100%)",
-        accent: "from-amber-200/30 to-orange-300/10",
-        ring: "ring-amber-200/40",
-        decorEmoji: "🎂",
-        dotActive: "bg-rose-300",
-        dotIdle: "bg-rose-300/40",
-        BadgeIcon: Cake,
-    },
-    "birthday-soon": {
-        gradient: "linear-gradient(145deg, #4c1d95 0%, #7c3aed 40%, #db2777 100%)",
-        accent: "from-violet-200/25 to-fuchsia-300/10",
-        ring: "ring-violet-200/35",
-        decorEmoji: "🎁",
-        dotActive: "bg-violet-300",
-        dotIdle: "bg-violet-300/40",
-        BadgeIcon: Gift,
-    },
-};
+const BIRTHDAY_DOT = {
+    "birthday-today": { active: "bg-rose-300", idle: "bg-rose-300/40" },
+    "birthday-soon": { active: "bg-violet-300", idle: "bg-violet-300/40" },
+} as const;
 
 const BADGE_STYLES = {
     emerald: "border-emerald-400/30 bg-emerald-500/20 text-emerald-200",
@@ -54,105 +26,19 @@ const DOT_IDLE = "w-2 bg-white/35";
 const HERO_SECTION_CLASS =
     "relative flex h-full min-h-[11.5rem] flex-col overflow-hidden rounded-2xl border border-white/10 shadow-md sm:min-h-[12.75rem] sm:rounded-3xl";
 
-const BIRTHDAY_SECTION_CLASS =
-    "relative flex h-full min-h-[10.25rem] flex-col overflow-hidden rounded-2xl border border-white/25 shadow-lg shadow-black/10 sm:min-h-[11rem] sm:rounded-3xl";
-
-function getBirthdayTheme(variant: DashboardHeroSlideVariant | undefined) {
-    if (variant === "birthday-today") return BIRTHDAY_THEMES["birthday-today"];
-    return BIRTHDAY_THEMES["birthday-soon"];
-}
-
-function BirthdayConfetti() {
-    const dots = [
-        "left-[8%] top-[18%] h-1.5 w-1.5",
-        "left-[22%] top-[72%] h-1 w-1",
-        "right-[28%] top-[12%] h-1.5 w-1.5",
-        "right-[12%] top-[55%] h-1 w-1",
-        "left-[45%] top-[8%] h-1 w-1",
-    ];
-    return (
-        <>
-            {dots.map((pos, i) => (
-                <span
-                    key={i}
-                    className={`pointer-events-none absolute rounded-full bg-white/50 ${pos}`}
-                    aria-hidden
-                />
-            ))}
-        </>
-    );
-}
-
 function BirthdaySlideLayout({ slide }: { slide: DashboardHeroSlide }) {
-    const theme = getBirthdayTheme(slide.variant);
-    const initials = slide.birthdayInitials ?? "?";
-    const BadgeIcon = theme.BadgeIcon;
-    const hint = slide.birthdayHint ?? "";
-
     return (
-        <section className={BIRTHDAY_SECTION_CLASS} style={{ background: theme.gradient }}>
-            <div
-                className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${theme.accent}`}
-                aria-hidden
-            />
-            <div
-                className="pointer-events-none absolute -left-12 top-0 h-40 w-40 rounded-full bg-white/15 blur-3xl"
-                aria-hidden
-            />
-            <div
-                className="pointer-events-none absolute -bottom-10 -right-8 h-36 w-36 rounded-full bg-white/10 blur-3xl"
-                aria-hidden
-            />
-            <BirthdayConfetti />
-
-            <div className="relative flex flex-1 items-center gap-4 px-4 py-4 sm:gap-5 sm:px-6 sm:py-5">
-                <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                        <span className="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-md sm:text-[11px]">
-                            <Sparkles className="h-3 w-3 shrink-0" aria-hidden />
-                            {slide.eyebrow}
-                        </span>
-                        {slide.badge ? (
-                            <span className="inline-flex items-center gap-1 rounded-full border border-white/30 bg-white/20 px-2.5 py-1 text-[10px] font-bold text-white backdrop-blur-md sm:text-[11px]">
-                                <BadgeIcon className="h-3 w-3" aria-hidden />
-                                {slide.badge.text}
-                            </span>
-                        ) : null}
-                    </div>
-
-                    <h2 className="mt-3 line-clamp-2 text-xl font-black leading-[1.15] tracking-tight text-white drop-shadow-sm sm:text-[1.65rem]">
-                        {slide.title}
-                    </h2>
-
-                    <p className="mt-1.5 line-clamp-2 text-sm font-medium text-white/90 sm:text-[0.9375rem]">
-                        {slide.subtitle}
-                    </p>
-
-                    {hint ? (
-                        <p className="mt-2.5 line-clamp-2 text-xs leading-relaxed text-white/70">{hint}</p>
-                    ) : null}
-                </div>
-
-                <div className="relative shrink-0">
-                    <div
-                        className="absolute -inset-1 rounded-full bg-white/25 blur-md"
-                        aria-hidden
-                    />
-                    <div
-                        className={`relative flex h-14 w-14 items-center justify-center rounded-full border-[2.5px] border-white/60 bg-white/20 text-lg font-black text-white shadow-xl backdrop-blur-sm ring-4 sm:h-16 sm:w-16 sm:text-xl ${theme.ring}`}
-                        aria-hidden
-                    >
-                        {initials}
-                    </div>
-                    <span
-                        className="absolute -bottom-0.5 -right-0.5 flex h-7 w-7 items-center justify-center rounded-full border-2 border-white/50 bg-white text-sm shadow-md sm:h-8 sm:w-8 sm:text-base"
-                        aria-hidden
-                    >
-                        {theme.decorEmoji}
-                    </span>
-                </div>
-            </div>
-        </section>
+        <BirthdayWishCard
+            id={slide.id}
+            variant={slide.variant === "birthday-today" ? "birthday-today" : "birthday-soon"}
+            eyebrow={slide.eyebrow}
+            title={slide.title}
+            subtitle={slide.subtitle}
+            badgeText={slide.badge?.text ?? ""}
+            hint={slide.birthdayHint}
+            initials={slide.birthdayInitials ?? "?"}
+            className="h-full rounded-2xl sm:rounded-3xl"
+        />
     );
 }
 
@@ -222,11 +108,15 @@ function HeroSlideCard({ slide }: { slide: DashboardHeroSlide }) {
 }
 
 function birthdayDotClass(slide: DashboardHeroSlide, isActive: boolean) {
-    if (slide.variant !== "birthday-today" && slide.variant !== "birthday-soon") {
-        return isActive ? DOT_ACTIVE : DOT_IDLE;
+    if (slide.variant === "birthday-today") {
+        const d = BIRTHDAY_DOT["birthday-today"];
+        return isActive ? `w-6 ${d.active}` : `w-2 ${d.idle}`;
     }
-    const theme = getBirthdayTheme(slide.variant);
-    return isActive ? `w-6 ${theme.dotActive}` : `w-2 ${theme.dotIdle}`;
+    if (slide.variant === "birthday-soon") {
+        const d = BIRTHDAY_DOT["birthday-soon"];
+        return isActive ? `w-6 ${d.active}` : `w-2 ${d.idle}`;
+    }
+    return isActive ? DOT_ACTIVE : DOT_IDLE;
 }
 
 type DashboardHeroSliderProps = {

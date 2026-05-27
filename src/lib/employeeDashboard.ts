@@ -31,10 +31,8 @@ import {
 } from "@/lib/employeeExpenses";
 import { formatCurrency, formatExpenseDateTime } from "@/lib/employeeExpenseUi";
 import type { EmployeeSession } from "@/lib/employeeSession";
-import {
-    fetchEmployeeBirthdayAlerts,
-    type EmployeeBirthdayAlert,
-} from "@/lib/employeeBirthdays";
+import { buildBirthdayWishCards } from "@/lib/employeeBirthdayCards";
+import { fetchEmployeeBirthdayAlerts } from "@/lib/employeeBirthdays";
 
 export type DashboardActivityType = "success" | "info" | "warning";
 
@@ -109,61 +107,23 @@ export type EmployeeDashboardPayload = {
     heroSlides: DashboardHeroSlide[];
 };
 
-function firstName(fullName: string) {
-    const trimmed = fullName.trim();
-    if (!trimmed) return "Team member";
-    return trimmed.split(/\s+/)[0] ?? trimmed;
-}
-
-function birthdayWhenLabel(daysUntil: number) {
-    if (daysUntil === 1) return "Tomorrow";
-    if (daysUntil === 2) return "In 2 days";
-    return `In ${daysUntil} days`;
-}
-
-function initialsFromName(fullName: string) {
-    const parts = fullName.trim().split(/\s+/).filter(Boolean);
-    if (parts.length === 0) return "?";
-    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-    return `${parts[0][0] ?? ""}${parts[parts.length - 1][0] ?? ""}`.toUpperCase();
-}
-
-function birthdayAlertsToSlides(alerts: EmployeeBirthdayAlert[]): DashboardHeroSlide[] {
-    return alerts.map((a) => {
-        const name = firstName(a.fullName);
-        const when = birthdayWhenLabel(a.daysUntil);
-        const initials = initialsFromName(a.fullName);
-
-        if (a.kind === "today") {
-            return {
-                id: `birthday-today-${a.employeeId}`,
-                variant: "birthday-today" as const,
-                eyebrow: a.isSelf ? "Your special day" : "Birthday today",
-                title: a.isSelf ? `Happy Birthday, ${name}!` : a.fullName,
-                subtitle: a.isSelf
-                    ? "Wishing you a wonderful year from the VIROS family"
-                    : `Send your best wishes · ${a.displayDate}`,
-                badge: { text: "Today", variant: "rose" as const },
-                metrics: [],
-                birthdayInitials: initials,
-                birthdayHint: "Celebrate with the team today",
-            };
-        }
-
-        return {
-            id: `birthday-soon-${a.employeeId}`,
-            variant: "birthday-soon" as const,
-            eyebrow: a.isSelf ? "Your birthday" : "Upcoming birthday",
-            title: a.isSelf ? `${name}, get ready!` : a.fullName,
-            subtitle: a.isSelf
-                ? `Your birthday is on ${a.displayDate}`
-                : `Birthday on ${a.displayDate}`,
-            badge: { text: when, variant: "cyan" as const },
-            metrics: [],
-            birthdayInitials: initials,
-            birthdayHint: "Plan a wish or surprise for your colleague",
-        };
-    });
+function birthdayCardsToHeroSlides(
+    cards: ReturnType<typeof buildBirthdayWishCards>,
+): DashboardHeroSlide[] {
+    return cards.map((card) => ({
+        id: card.id,
+        variant: card.variant,
+        eyebrow: card.eyebrow,
+        title: card.title,
+        subtitle: card.subtitle,
+        badge: {
+            text: card.badgeText,
+            variant: card.variant === "birthday-today" ? ("rose" as const) : ("cyan" as const),
+        },
+        metrics: [],
+        birthdayInitials: card.initials,
+        birthdayHint: card.hint,
+    }));
 }
 
 function currentMonthKey() {
@@ -512,7 +472,7 @@ export async function buildEmployeeDashboard(
     ];
 
     const expenseTotalCompact = formatCurrencyCompact(expenseSummary.totalAmount);
-    const birthdaySlides = birthdayAlertsToSlides(birthdayAlerts);
+    const birthdaySlides = birthdayCardsToHeroSlides(buildBirthdayWishCards(birthdayAlerts));
     const summarySlides: DashboardHeroSlide[] = [
         {
             id: "dashboard",
