@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import ExcelJS from 'exceljs';
+import { warrantyExpiryLabel } from "@/lib/warrantyStatus";
 
 export default function WarrantyManagementPage() {
     const [warranties, setWarranties] = useState<any[]>([]);
@@ -480,7 +481,14 @@ export default function WarrantyManagementPage() {
                                             {warranty.warranty_type}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                            {new Date(warranty.expiry_date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                                            <div>
+                                                {new Date(warranty.expiry_date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                                            </div>
+                                            {warrantyExpiryLabel(warranty.expiry_date) ? (
+                                                <div className={`text-xs mt-0.5 ${warranty.status === 'expired' ? 'text-orange-600 font-medium' : 'text-gray-500'}`}>
+                                                    {warrantyExpiryLabel(warranty.expiry_date)}
+                                                </div>
+                                            ) : null}
                                         </td>
                                         <td className="px-6 py-4 text-sm text-gray-600">
                                             {warranty.customer_name || '-'}
@@ -702,6 +710,11 @@ export default function WarrantyManagementPage() {
                                                     year: 'numeric'
                                                 })}
                                             </p>
+                                            {warrantyExpiryLabel(viewingWarranty.expiry_date) ? (
+                                                <p className={`text-sm mt-1 ${viewingWarranty.status === 'expired' ? 'text-orange-600 font-medium' : 'text-gray-500'}`}>
+                                                    {warrantyExpiryLabel(viewingWarranty.expiry_date)}
+                                                </p>
+                                            ) : null}
                                         </div>
                                     </div>
 

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
+import { computeWarrantyStatus } from '@/lib/warrantyStatus';
 
 // PUT - Update warranty
 export async function PUT(
@@ -44,12 +45,8 @@ export async function PUT(
             updates.push('expiry_date = ?');
             values.push(expiry_date);
 
-            // Auto-calculate status based on expiry date
-            const expiryDate = new Date(expiry_date);
-            const today = new Date();
-            const status = expiryDate >= today ? 'active' : 'expired';
             updates.push('status = ?');
-            values.push(status);
+            values.push(computeWarrantyStatus(expiry_date));
         }
         if (purchase_date !== undefined) { updates.push('purchase_date = ?'); values.push(purchase_date); }
         if (customer_name !== undefined) { updates.push('customer_name = ?'); values.push(customer_name); }

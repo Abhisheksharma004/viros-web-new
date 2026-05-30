@@ -1,9 +1,14 @@
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
+import { computeWarrantyStatus } from '@/lib/warrantyStatus';
+import { syncAllWarrantyStatuses } from '@/lib/warrantyStatusSync';
 
 // GET - Fetch all warranties
 export async function GET(request: Request) {
     try {
+        // Auto-expire / re-activate based on today's date before returning data
+        await syncAllWarrantyStatuses();
+
         const { searchParams } = new URL(request.url);
         const status = searchParams.get('status');
         const serial = searchParams.get('serial');
@@ -57,10 +62,7 @@ export async function POST(request: Request) {
             );
         }
 
-        // Auto-calculate status based on expiry date
-        const expiryDate = new Date(expiry_date);
-        const today = new Date();
-        const status = expiryDate >= today ? 'active' : 'expired';
+        const status = computeWarrantyStatus(expiry_date);
 
         const [result]: any = await pool.query(
             'INSERT INTO warranties (serial_number, product_name, status, warranty_type, expiry_date, purchase_date, customer_name, customer_email, customer_phone) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
