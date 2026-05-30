@@ -380,7 +380,7 @@ export default function AdminTasksPage() {
                 <button
                     type="button"
                     onClick={openAddModal}
-                    className="inline-flex cursor-pointer items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-[#06124f] to-[#0a2a5e] hover:opacity-90 transition-opacity shadow-sm"
+                    className="inline-flex cursor-pointer items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-semibold text-white bg-gradient-to-r from-[#06124f] to-[#0a2a5e] hover:opacity-90 transition-opacity shadow-sm"
                 >
                     <Plus className="w-4 h-4" aria-hidden />
                     Add Task
@@ -389,7 +389,7 @@ export default function AdminTasksPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
                 {stats.map((item) => (
-                    <div key={item.label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                    <div key={item.label} className="bg-white rounded-md border border-gray-100 shadow-sm p-5">
                         <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{item.label}</p>
                         <p className={`text-3xl font-black mt-2 ${item.tone}`}>{item.value}</p>
                     </div>
@@ -461,12 +461,12 @@ export default function AdminTasksPage() {
             </div>
 
             {tasksError && (
-                <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                     {tasksError}
                 </div>
             )}
 
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="bg-white rounded-md border border-gray-100 shadow-sm overflow-hidden">
                 <div className="px-6 py-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <h2 className="text-base font-bold text-gray-900">Task directory</h2>
                     <div className="text-xs text-gray-500">
@@ -562,7 +562,7 @@ export default function AdminTasksPage() {
                                                 <button
                                                     type="button"
                                                     onClick={() => openViewModal(task)}
-                                                    className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 shadow-sm transition hover:bg-gray-50"
+                                                    className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-gray-200 bg-white text-gray-600 shadow-sm transition hover:bg-gray-50"
                                                     title="View task"
                                                     aria-label="View task"
                                                 >
@@ -571,7 +571,7 @@ export default function AdminTasksPage() {
                                                 <button
                                                     type="button"
                                                     onClick={() => openRemarksModal(task)}
-                                                    className="relative inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-gray-200 bg-white text-[#0a2a5e] shadow-sm transition hover:bg-slate-50"
+                                                    className="relative inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-gray-200 bg-white text-[#0a2a5e] shadow-sm transition hover:bg-slate-50"
                                                     title="View remarks"
                                                     aria-label="View remarks"
                                                 >
@@ -585,7 +585,7 @@ export default function AdminTasksPage() {
                                                 <button
                                                     type="button"
                                                     onClick={() => openEditModal(task)}
-                                                    className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-gray-200 bg-white text-[#0a2a5e] shadow-sm transition hover:bg-slate-50"
+                                                    className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-gray-200 bg-white text-[#0a2a5e] shadow-sm transition hover:bg-slate-50"
                                                     title="Edit task"
                                                     aria-label="Edit task"
                                                 >
@@ -595,7 +595,7 @@ export default function AdminTasksPage() {
                                                     type="button"
                                                     onClick={() => void handleDeleteTask(task)}
                                                     disabled={deletingId === task.recordId}
-                                                    className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-red-200 bg-red-50 text-red-700 shadow-sm transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+                                                    className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-red-200 bg-red-50 text-red-700 shadow-sm transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
                                                     title="Delete task"
                                                     aria-label="Delete task"
                                                 >
@@ -626,7 +626,7 @@ export default function AdminTasksPage() {
                         role="dialog"
                         aria-modal="true"
                         aria-labelledby="task-remarks-title"
-                        className="relative flex max-h-[min(85vh,560px)] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl"
+                        className="relative flex max-h-[min(85vh,560px)] w-full max-w-lg flex-col overflow-hidden rounded-md border border-gray-200 bg-white shadow-2xl"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="flex shrink-0 items-center justify-between gap-4 border-b border-gray-100 bg-gradient-to-r from-[#06124f] to-[#0a2a5e] px-6 py-4">
@@ -641,7 +641,7 @@ export default function AdminTasksPage() {
                             <button
                                 type="button"
                                 onClick={closeModal}
-                                className="shrink-0 cursor-pointer rounded-lg p-2 text-white/80 transition hover:bg-white/10 hover:text-white"
+                                className="shrink-0 cursor-pointer rounded-md p-2 text-white/80 transition hover:bg-white/10 hover:text-white"
                                 aria-label="Close"
                             >
                                 <X className="h-5 w-5" strokeWidth={2} />
@@ -653,7 +653,7 @@ export default function AdminTasksPage() {
                                     {viewTask.remarks.map((r) => (
                                         <li
                                             key={r.id}
-                                            className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3"
+                                            className="rounded-md border border-gray-100 bg-gray-50 px-4 py-3"
                                         >
                                             <p className="whitespace-pre-wrap break-words text-sm text-gray-800">
                                                 {r.remark}
@@ -692,7 +692,7 @@ export default function AdminTasksPage() {
                             <button
                                 type="button"
                                 onClick={closeModal}
-                                className="cursor-pointer rounded-lg bg-[#001540] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90"
+                                className="cursor-pointer rounded-md bg-[#001540] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90"
                             >
                                 Close
                             </button>
@@ -708,7 +708,7 @@ export default function AdminTasksPage() {
                         role="dialog"
                         aria-modal="true"
                         aria-labelledby="task-view-title"
-                        className="relative flex max-h-[min(90vh,640px)] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl"
+                        className="relative flex max-h-[min(90vh,640px)] w-full max-w-lg flex-col overflow-hidden rounded-md border border-gray-200 bg-white shadow-2xl"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="flex shrink-0 items-center justify-between gap-4 border-b border-gray-100 px-6 py-5">
@@ -718,7 +718,7 @@ export default function AdminTasksPage() {
                             <button
                                 type="button"
                                 onClick={closeModal}
-                                className="shrink-0 cursor-pointer rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+                                className="shrink-0 cursor-pointer rounded-md p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
                                 aria-label="Close"
                             >
                                 <X className="h-5 w-5" strokeWidth={2} />
@@ -811,7 +811,7 @@ export default function AdminTasksPage() {
                                     closeModal();
                                     if (task) openEditModal(task);
                                 }}
-                                className="cursor-pointer rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
+                                className="cursor-pointer rounded-md border border-gray-300 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
                             >
                                 Edit
                             </button>
@@ -819,14 +819,14 @@ export default function AdminTasksPage() {
                                 type="button"
                                 onClick={() => void handleDeleteTask(viewTask)}
                                 disabled={deletingId === viewTask.recordId}
-                                className="cursor-pointer rounded-lg border border-red-200 bg-red-50 px-5 py-2.5 text-sm font-semibold text-red-700 shadow-sm hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+                                className="cursor-pointer rounded-md border border-red-200 bg-red-50 px-5 py-2.5 text-sm font-semibold text-red-700 shadow-sm hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
                             >
                                 Delete
                             </button>
                             <button
                                 type="button"
                                 onClick={closeModal}
-                                className="cursor-pointer rounded-lg bg-[#001540] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90"
+                                className="cursor-pointer rounded-md bg-[#001540] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90"
                             >
                                 Close
                             </button>
@@ -842,7 +842,7 @@ export default function AdminTasksPage() {
                         role="dialog"
                         aria-modal="true"
                         aria-labelledby="task-form-title"
-                        className="relative flex max-h-[min(90vh,720px)] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-2xl"
+                        className="relative flex max-h-[min(90vh,720px)] w-full max-w-lg flex-col overflow-hidden rounded-md border border-gray-100 bg-white shadow-2xl"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="flex shrink-0 items-start justify-between gap-4 border-b border-gray-100 bg-gradient-to-r from-[#06124f] to-[#0a2a5e] px-6 py-4">
@@ -859,7 +859,7 @@ export default function AdminTasksPage() {
                             <button
                                 type="button"
                                 onClick={closeModal}
-                                className="shrink-0 cursor-pointer rounded-lg p-1.5 text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+                                className="shrink-0 cursor-pointer rounded-md p-1.5 text-white/70 transition-colors hover:bg-white/10 hover:text-white"
                                 aria-label="Close"
                             >
                                 <X className="h-5 w-5" />
@@ -874,7 +874,7 @@ export default function AdminTasksPage() {
                             }}
                         >
                             {saveError && (
-                                <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                                <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
                                     {saveError}
                                 </p>
                             )}
@@ -883,7 +883,7 @@ export default function AdminTasksPage() {
                                     Assignees
                                 </label>
                                 <div
-                                    className={`relative flex min-h-11 flex-wrap items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-2 py-1.5 shadow-sm focus-within:border-[#0a2a5e] focus-within:ring-2 focus-within:ring-[#0a2a5e]/20 ${
+                                    className={`relative flex min-h-11 flex-wrap items-center gap-1.5 rounded-md border border-gray-300 bg-white px-2 py-1.5 shadow-sm focus-within:border-[#0a2a5e] focus-within:ring-2 focus-within:ring-[#0a2a5e]/20 ${
                                         selectedAssignees.length === 0 ? "pr-10" : "pr-2"
                                     }`}
                                 >
@@ -947,7 +947,7 @@ export default function AdminTasksPage() {
                                     <ul
                                         id="task-assignee-listbox"
                                         role="listbox"
-                                        className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-gray-200 bg-white py-1 shadow-lg"
+                                        className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-md border border-gray-200 bg-white py-1 shadow-lg"
                                     >
                                         {assigneeSuggestions.map((employee) => (
                                             <li key={employee.employee_id} role="option">
@@ -973,7 +973,7 @@ export default function AdminTasksPage() {
                                     !employeesLoading &&
                                     assigneeQuery.trim() &&
                                     assigneeSuggestions.length === 0 && (
-                                        <p className="absolute z-10 mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs text-gray-500 shadow-lg">
+                                        <p className="absolute z-10 mt-1 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-xs text-gray-500 shadow-lg">
                                             No employee found. Check name or ID.
                                         </p>
                                     )}
@@ -1067,14 +1067,14 @@ export default function AdminTasksPage() {
                                 <button
                                     type="button"
                                     onClick={closeModal}
-                                    className="cursor-pointer rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
+                                    className="cursor-pointer rounded-md border border-gray-300 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={isSaving}
-                                    className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-[#001540] px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                                    className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-md bg-[#001540] px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                                 >
                                     {isSaving && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
                                     {isSaving

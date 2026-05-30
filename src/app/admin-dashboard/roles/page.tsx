@@ -303,7 +303,7 @@ export default function AdminRolesPage() {
                     type="button"
                     onClick={openAddModal}
                     disabled={isLoading}
-                    className="inline-flex items-center justify-center rounded-xl bg-[#0a2a5e] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex items-center justify-center rounded-md bg-[#0a2a5e] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                     Add Role
                 </button>
@@ -311,14 +311,14 @@ export default function AdminRolesPage() {
 
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                 {roleStats.map((item) => (
-                    <div key={item.label} className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+                    <div key={item.label} className="rounded-md border border-gray-100 bg-white p-5 shadow-sm">
                         <p className="text-sm text-gray-500">{item.label}</p>
                         <p className={`mt-3 text-3xl font-semibold ${item.tone}`}>{item.value}</p>
                     </div>
                 ))}
             </div>
 
-            <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+            <div className="overflow-hidden rounded-md border border-gray-100 bg-white shadow-sm">
                 <div className="border-b border-gray-100 p-6">
                     <p className="text-sm font-semibold text-gray-900">Role roster</p>
                     <p className="mt-1 text-sm text-gray-500">
@@ -378,7 +378,7 @@ export default function AdminRolesPage() {
                                                     type="button"
                                                     onClick={() => openViewRole(role)}
                                                     disabled={actionBusy !== null || isSubmitting}
-                                                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                                    className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-600 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                                                     title="View role"
                                                     aria-label="View role"
                                                 >
@@ -392,7 +392,7 @@ export default function AdminRolesPage() {
                                                     type="button"
                                                     onClick={() => openEditRole(role)}
                                                     disabled={actionBusy !== null || isSubmitting}
-                                                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-[#0a2a5e] shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                                    className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-gray-200 bg-white text-[#0a2a5e] shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
                                                     title="Edit role"
                                                     aria-label="Edit role"
                                                 >
@@ -406,7 +406,7 @@ export default function AdminRolesPage() {
                                                     type="button"
                                                     onClick={() => void handleDeleteRole(role)}
                                                     disabled={actionBusy !== null || isSubmitting}
-                                                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-red-200 bg-red-50 text-red-700 shadow-sm transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+                                                    className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-red-200 bg-red-50 text-red-700 shadow-sm transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
                                                     title="Delete role"
                                                     aria-label="Delete role"
                                                 >
@@ -432,7 +432,7 @@ export default function AdminRolesPage() {
                         role="dialog"
                         aria-modal="true"
                         aria-labelledby="role-view-title"
-                        className="relative flex max-h-[min(90vh,560px)] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl"
+                        className="relative flex max-h-[min(90vh,560px)] w-full max-w-lg flex-col overflow-hidden rounded-md border border-gray-200 bg-white shadow-2xl"
                     >
                         <div className="flex shrink-0 items-center justify-between gap-4 border-b border-gray-100 px-6 py-5">
                             <h3 id="role-view-title" className="text-lg font-bold tracking-tight text-[#001540]">
@@ -441,7 +441,7 @@ export default function AdminRolesPage() {
                             <button
                                 type="button"
                                 onClick={closeRoleModal}
-                                className="shrink-0 rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+                                className="shrink-0 rounded-md p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
                                 aria-label="Close"
                             >
                                 <X className="h-5 w-5" strokeWidth={2} />
@@ -475,7 +475,7 @@ export default function AdminRolesPage() {
                             <button
                                 type="button"
                                 onClick={closeRoleModal}
-                                className="rounded-lg bg-[#001540] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90"
+                                className="rounded-md bg-[#001540] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90"
                             >
                                 Close
                             </button>
@@ -497,7 +497,7 @@ export default function AdminRolesPage() {
                         role="dialog"
                         aria-modal="true"
                         aria-labelledby="add-role-title"
-                        className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden max-h-[min(90vh,720px)] flex flex-col"
+                        className="relative w-full max-w-lg bg-white rounded-md shadow-2xl border border-gray-100 overflow-hidden max-h-[min(90vh,720px)] flex flex-col"
                     >
                         <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-[#06124f] to-[#0a2a5e] flex items-start justify-between gap-4 shrink-0">
                             <div className="min-w-0">
@@ -515,7 +515,7 @@ export default function AdminRolesPage() {
                                 onClick={() => {
                                     if (!isSubmitting) closeRoleModal();
                                 }}
-                                className="shrink-0 text-white/70 hover:text-white rounded-lg p-1.5 hover:bg-white/10 transition-colors"
+                                className="shrink-0 text-white/70 hover:text-white rounded-md p-1.5 hover:bg-white/10 transition-colors"
                                 aria-label="Close"
                             >
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -536,7 +536,7 @@ export default function AdminRolesPage() {
                                     onChange={handleInputChange}
                                     required
                                     disabled={isDepartmentsLoading || isSubmitting}
-                                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e] bg-white"
+                                    className="w-full px-4 py-2.5 rounded-md border border-gray-200 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e] bg-white"
                                 >
                                     <option value="">
                                         {isDepartmentsLoading ? "Loading departments..." : "Select department"}
@@ -559,7 +559,7 @@ export default function AdminRolesPage() {
                                     value={formValues.name}
                                     onChange={handleInputChange}
                                     required
-                                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e]"
+                                    className="w-full px-4 py-2.5 rounded-md border border-gray-200 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e]"
                                     placeholder="e.g. Account Manager"
                                 />
                             </div>
@@ -573,7 +573,7 @@ export default function AdminRolesPage() {
                                     name="status"
                                     value={formValues.status}
                                     onChange={handleInputChange}
-                                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e] bg-white"
+                                    className="w-full px-4 py-2.5 rounded-md border border-gray-200 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e] bg-white"
                                 >
                                     <option value="Active">Active</option>
                                     <option value="Growing">Growing</option>
@@ -593,7 +593,7 @@ export default function AdminRolesPage() {
                                     rows={3}
                                     value={formValues.description}
                                     onChange={handleInputChange}
-                                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e] resize-none"
+                                    className="w-full px-4 py-2.5 rounded-md border border-gray-200 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e] resize-none"
                                     placeholder="Role scope, permissions, and special instructions…"
                                 />
                             </div>
@@ -605,14 +605,14 @@ export default function AdminRolesPage() {
                                         if (!isSubmitting) closeRoleModal();
                                     }}
                                     disabled={isSubmitting}
-                                    className="px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+                                    className="px-4 py-2.5 rounded-md border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={isSubmitting}
-                                    className="px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-[#06124f] to-[#0a2a5e] hover:opacity-90 transition-opacity shadow-sm"
+                                    className="px-4 py-2.5 rounded-md text-sm font-semibold text-white bg-gradient-to-r from-[#06124f] to-[#0a2a5e] hover:opacity-90 transition-opacity shadow-sm"
                                 >
                                     {isSubmitting
                                         ? "Saving..."

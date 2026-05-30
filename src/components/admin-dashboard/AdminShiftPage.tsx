@@ -187,7 +187,7 @@ function EmployeeDetailsBlock({
     employeeStatus: string;
 }) {
     return (
-        <div className="rounded-xl border border-[#0a2a5e]/15 bg-[#0a2a5e]/5 p-4">
+        <div className="rounded-md border border-[#0a2a5e]/15 bg-[#0a2a5e]/5 p-4">
             <p className="mb-3 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-[#0a2a5e]">
                 <User className="h-3.5 w-3.5" aria-hidden />
                 Employee details
@@ -466,7 +466,7 @@ export default function AdminShiftPage() {
     };
 
     const inputClass =
-        "w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-[#06b6d4] focus:ring-2 focus:ring-[#06b6d4]/20 disabled:bg-gray-50 disabled:text-gray-500";
+        "w-full rounded-md border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-[#06b6d4] focus:ring-2 focus:ring-[#06b6d4]/20 disabled:bg-gray-50 disabled:text-gray-500";
     const labelClass = "mb-1.5 block text-sm font-semibold text-gray-700";
 
     return (
@@ -476,7 +476,7 @@ export default function AdminShiftPage() {
                 <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
                     <Link
                         href="/admin-dashboard/attendance"
-                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#0a2a5e]/20 bg-white px-4 py-3 text-sm font-semibold text-[#0a2a5e] shadow-sm transition hover:bg-[#0a2a5e]/5"
+                        className="inline-flex items-center justify-center gap-2 rounded-md border border-[#0a2a5e]/20 bg-white px-4 py-3 text-sm font-semibold text-[#0a2a5e] shadow-sm transition hover:bg-[#0a2a5e]/5"
                     >
                         <CalendarCheck className="h-4 w-4" aria-hidden />
                         Attendance
@@ -485,7 +485,7 @@ export default function AdminShiftPage() {
                         type="button"
                         onClick={openAdd}
                         disabled={isLoading}
-                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0a2a5e] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
+                        className="inline-flex items-center justify-center gap-2 rounded-md bg-[#0a2a5e] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
                     >
                         <Plus className="h-4 w-4" aria-hidden />
                         Add shift
@@ -494,15 +494,15 @@ export default function AdminShiftPage() {
             </div>
 
             <div className="grid gap-4 sm:grid-cols-3">
-                <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+                <div className="rounded-md border border-gray-100 bg-white p-5 shadow-sm">
                     <p className="text-sm text-gray-500">Total shifts</p>
                     <p className="mt-2 text-3xl font-semibold text-gray-900">{stats.total}</p>
                 </div>
-                <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+                <div className="rounded-md border border-gray-100 bg-white p-5 shadow-sm">
                     <p className="text-sm text-gray-500">Active shifts</p>
                     <p className="mt-2 text-3xl font-semibold text-emerald-600">{stats.active}</p>
                 </div>
-                <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+                <div className="rounded-md border border-gray-100 bg-white p-5 shadow-sm">
                     <p className="text-sm text-gray-500">Inactive shifts</p>
                     <p className="mt-2 text-3xl font-semibold text-gray-600">
                         {stats.total - stats.active}
@@ -510,7 +510,7 @@ export default function AdminShiftPage() {
                 </div>
             </div>
 
-            <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:p-5">
+            <div className="rounded-md border border-gray-100 bg-white p-4 shadow-sm sm:p-5">
                 <input
                     type="search"
                     value={search}
@@ -520,7 +520,7 @@ export default function AdminShiftPage() {
                 />
             </div>
 
-            <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+            <div className="overflow-hidden rounded-md border border-gray-100 bg-white shadow-sm">
                 <div className="border-b border-gray-100 px-4 py-4 sm:px-6">
                     <p className="text-sm font-semibold text-gray-900">Shift records</p>
                     <p className="mt-1 text-sm text-gray-500">
@@ -602,9 +602,9 @@ export default function AdminShiftPage() {
                                         </td>
                                         <td className="px-4 py-4 text-right sm:px-6">
                                             <div className="inline-flex gap-1">
-                                                <button type="button" onClick={() => openView(shift)} className="rounded-lg p-2 text-gray-500 hover:bg-gray-100" aria-label="View shift"><Eye className="h-4 w-4" /></button>
-                                                <button type="button" onClick={() => openEdit(shift)} className="rounded-lg p-2 text-gray-500 hover:bg-gray-100" aria-label="Edit shift"><Pencil className="h-4 w-4" /></button>
-                                                <button type="button" onClick={() => void handleDelete(shift.id)} className="rounded-lg p-2 text-red-500 hover:bg-red-50" aria-label="Delete shift"><Trash2 className="h-4 w-4" /></button>
+                                                <button type="button" onClick={() => openView(shift)} className="rounded-md p-2 text-gray-500 hover:bg-gray-100" aria-label="View shift"><Eye className="h-4 w-4" /></button>
+                                                <button type="button" onClick={() => openEdit(shift)} className="rounded-md p-2 text-gray-500 hover:bg-gray-100" aria-label="Edit shift"><Pencil className="h-4 w-4" /></button>
+                                                <button type="button" onClick={() => void handleDelete(shift.id)} className="rounded-md p-2 text-red-500 hover:bg-red-50" aria-label="Delete shift"><Trash2 className="h-4 w-4" /></button>
                                             </div>
                                         </td>
                                     </tr>
@@ -628,7 +628,7 @@ export default function AdminShiftPage() {
                         role="dialog"
                         aria-modal="true"
                         aria-labelledby="shift-view-title"
-                        className="relative flex max-h-[min(90vh,640px)] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl"
+                        className="relative flex max-h-[min(90vh,640px)] w-full max-w-lg flex-col overflow-hidden rounded-md border border-gray-200 bg-white shadow-2xl"
                     >
                         <div className="flex shrink-0 items-center justify-between gap-4 border-b border-gray-100 px-6 py-5">
                             <h3 id="shift-view-title" className="text-lg font-bold tracking-tight text-[#001540]">
@@ -637,7 +637,7 @@ export default function AdminShiftPage() {
                             <button
                                 type="button"
                                 onClick={closeViewModal}
-                                className="shrink-0 rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+                                className="shrink-0 rounded-md p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
                                 aria-label="Close"
                             >
                                 <X className="h-5 w-5" strokeWidth={2} />
@@ -705,7 +705,7 @@ export default function AdminShiftPage() {
                                         href={adminAttendanceForEmployee(viewDetail.employeeId, {
                                             month: currentMonthParam(),
                                         })}
-                                        className="mt-3 inline-flex items-center gap-2 rounded-lg bg-[#06b6d4]/15 px-4 py-2.5 text-sm font-bold text-[#0a2a5e] hover:bg-[#06b6d4]/25"
+                                        className="mt-3 inline-flex items-center gap-2 rounded-md bg-[#06b6d4]/15 px-4 py-2.5 text-sm font-bold text-[#0a2a5e] hover:bg-[#06b6d4]/25"
                                     >
                                         <CalendarCheck className="h-4 w-4" aria-hidden />
                                         Manage attendance for this schedule
@@ -731,7 +731,7 @@ export default function AdminShiftPage() {
                             <button
                                 type="button"
                                 onClick={closeViewModal}
-                                className="rounded-lg bg-[#001540] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90"
+                                className="rounded-md bg-[#001540] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90"
                             >
                                 Close
                             </button>
@@ -753,7 +753,7 @@ export default function AdminShiftPage() {
                         role="dialog"
                         aria-modal="true"
                         aria-labelledby="shift-form-title"
-                        className="relative flex max-h-[min(90vh,720px)] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-2xl"
+                        className="relative flex max-h-[min(90vh,720px)] w-full max-w-lg flex-col overflow-hidden rounded-md border border-gray-100 bg-white shadow-2xl"
                     >
                         <div className="flex shrink-0 items-start justify-between gap-4 border-b border-gray-100 bg-gradient-to-r from-[#06124f] to-[#0a2a5e] px-6 py-4">
                             <div className="min-w-0">
@@ -769,7 +769,7 @@ export default function AdminShiftPage() {
                             <button
                                 type="button"
                                 onClick={closeModal}
-                                className="shrink-0 rounded-lg p-1.5 text-white/80 transition-colors hover:bg-white/10"
+                                className="shrink-0 rounded-md p-1.5 text-white/80 transition-colors hover:bg-white/10"
                                 aria-label="Close"
                             >
                                 <X className="h-5 w-5" />
@@ -929,7 +929,7 @@ export default function AdminShiftPage() {
                                                     key={d.value}
                                                     type="button"
                                                     onClick={() => toggleDay(d.value)}
-                                                    className={`h-10 min-w-[3rem] rounded-xl px-3 text-sm font-semibold transition-colors ${
+                                                    className={`h-10 min-w-[3rem] rounded-md px-3 text-sm font-semibold transition-colors ${
                                                         selected
                                                             ? "bg-[#0a2a5e] text-white"
                                                             : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
@@ -960,7 +960,7 @@ export default function AdminShiftPage() {
                                 <button
                                     type="button"
                                     onClick={closeModal}
-                                    className="rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-700 hover:bg-white"
+                                    className="rounded-md border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-700 hover:bg-white"
                                 >
                                     Cancel
                                 </button>
@@ -973,7 +973,7 @@ export default function AdminShiftPage() {
                                             !showEmployeeDetails ||
                                             !form.employeeName.trim()
                                         }
-                                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0a2a5e] px-5 py-2.5 text-sm font-semibold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                                        className="inline-flex items-center justify-center gap-2 rounded-md bg-[#0a2a5e] px-5 py-2.5 text-sm font-semibold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                                     >
                                         {isSubmitting ? (
                                             <>

@@ -295,7 +295,7 @@ function EmployeeDetailsBlock({
     employeeStatus: string;
 }) {
     return (
-        <div className="rounded-xl border border-[#0a2a5e]/15 bg-[#0a2a5e]/5 p-4">
+        <div className="rounded-md border border-[#0a2a5e]/15 bg-[#0a2a5e]/5 p-4">
             <p className="mb-3 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-[#0a2a5e]">
                 <User className="h-3.5 w-3.5" aria-hidden />
                 Employee details
@@ -444,7 +444,7 @@ function SalaryBreakdownPanel({
     };
 
     return (
-        <div className="overflow-hidden rounded-xl border border-gray-300 bg-white shadow-sm">
+        <div className="overflow-hidden rounded-md border border-gray-300 bg-white shadow-sm">
             <div className="border-b border-gray-300 bg-[#0a2a5e]/8 px-4 py-3 text-center">
                 <h3 className="text-base font-bold text-[#0a2a5e] sm:text-lg">Salary Details</h3>
             </div>
@@ -907,7 +907,7 @@ export default function Page() {
     };
 
     const inputClass =
-        "w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-[#06b6d4] focus:ring-2 focus:ring-[#06b6d4]/20 disabled:bg-gray-50 disabled:text-gray-500";
+        "w-full rounded-md border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-[#06b6d4] focus:ring-2 focus:ring-[#06b6d4]/20 disabled:bg-gray-50 disabled:text-gray-500";
     const labelClass = "mb-1.5 block text-sm font-semibold text-gray-700";
 
     return (
@@ -918,7 +918,7 @@ export default function Page() {
                     type="button"
                     onClick={openAdd}
                     disabled={isLoading}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0a2a5e] px-5 py-3 text-sm font-semibold text-white shadow-sm hover:opacity-90 disabled:opacity-60"
+                    className="inline-flex items-center justify-center gap-2 rounded-md bg-[#0a2a5e] px-5 py-3 text-sm font-semibold text-white shadow-sm hover:opacity-90 disabled:opacity-60"
                 >
                     <Plus className="h-4 w-4" aria-hidden />
                     Setup salary
@@ -926,21 +926,21 @@ export default function Page() {
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+                <div className="rounded-md border border-gray-100 bg-white p-5 shadow-sm">
                     <p className="text-sm text-gray-500">Employees on payroll</p>
                     <p className="mt-2 text-3xl font-semibold text-gray-900">{stats.total}</p>
                 </div>
-                <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+                <div className="rounded-md border border-gray-100 bg-white p-5 shadow-sm">
                     <p className="text-sm text-gray-500">Active setups</p>
                     <p className="mt-2 text-3xl font-semibold text-[#06b6d4]">{stats.active}</p>
                 </div>
-                <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+                <div className="rounded-md border border-gray-100 bg-white p-5 shadow-sm">
                     <p className="text-sm text-gray-500">Total monthly payout</p>
                     <p className="mt-2 text-2xl font-semibold text-gray-900 sm:text-3xl">
                         {formatINR(stats.totalNet)}
                     </p>
                 </div>
-                <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+                <div className="rounded-md border border-gray-100 bg-white p-5 shadow-sm">
                     <p className="text-sm text-gray-500">Average net salary</p>
                     <p className="mt-2 text-2xl font-semibold text-emerald-600 sm:text-3xl">
                         {formatINR(stats.avg)}
@@ -948,7 +948,7 @@ export default function Page() {
                 </div>
             </div>
 
-            <div className="relative rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:p-5">
+            <div className="relative rounded-md border border-gray-100 bg-white p-4 shadow-sm sm:p-5">
                 <Search className="pointer-events-none absolute left-7 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 sm:left-8" />
                 <input
                     type="search"
@@ -959,7 +959,7 @@ export default function Page() {
                 />
             </div>
 
-            <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+            <div className="overflow-hidden rounded-md border border-gray-100 bg-white shadow-sm">
                 <div className="border-b border-gray-100 px-4 py-4 sm:px-6">
                     <p className="text-sm font-semibold text-gray-900">Salary records</p>
                     <p className="mt-1 text-sm text-gray-500">
@@ -1052,7 +1052,7 @@ export default function Page() {
                                             <button
                                                 type="button"
                                                 onClick={() => openView(row)}
-                                                className="rounded-lg p-2 text-gray-500 hover:bg-gray-100"
+                                                className="rounded-md p-2 text-gray-500 hover:bg-gray-100"
                                                 title="View"
                                             >
                                                 <Eye className="h-4 w-4" />
@@ -1060,7 +1060,7 @@ export default function Page() {
                                             <button
                                                 type="button"
                                                 onClick={() => openEdit(row)}
-                                                className="rounded-lg p-2 text-gray-500 hover:bg-gray-100"
+                                                className="rounded-md p-2 text-gray-500 hover:bg-gray-100"
                                                 title="Edit"
                                             >
                                                 <Pencil className="h-4 w-4" />
@@ -1068,14 +1068,14 @@ export default function Page() {
                                             <button
                                                 type="button"
                                                 onClick={() => toggleActive(row)}
-                                                className="rounded-lg px-2 py-2 text-xs font-semibold text-[#06b6d4] hover:bg-[#06b6d4]/10"
+                                                className="rounded-md px-2 py-2 text-xs font-semibold text-[#06b6d4] hover:bg-[#06b6d4]/10"
                                             >
                                                 {row.active ? "Off" : "On"}
                                             </button>
                                             <button
                                                 type="button"
                                                 onClick={() => handleDelete(row)}
-                                                className="rounded-lg p-2 text-red-500 hover:bg-red-50"
+                                                className="rounded-md p-2 text-red-500 hover:bg-red-50"
                                                 title="Delete"
                                             >
                                                 <Trash2 className="h-4 w-4" />
@@ -1100,11 +1100,11 @@ export default function Page() {
                     <div
                         role="dialog"
                         aria-modal="true"
-                        className="relative max-h-[min(90vh,820px)] w-full max-w-3xl overflow-y-auto rounded-2xl border border-gray-200 bg-white shadow-2xl"
+                        className="relative max-h-[min(90vh,820px)] w-full max-w-3xl overflow-y-auto rounded-md border border-gray-200 bg-white shadow-2xl"
                     >
                         <div className="flex items-center justify-between border-b border-gray-100 px-6 py-5">
                             <h3 className="text-lg font-bold text-[#0a2a5e]">Salary details</h3>
-                            <button type="button" onClick={closeViewModal} className="rounded-lg p-2 hover:bg-gray-100">
+                            <button type="button" onClick={closeViewModal} className="rounded-md p-2 hover:bg-gray-100">
                                 <X className="h-5 w-5" />
                             </button>
                         </div>
@@ -1129,7 +1129,7 @@ export default function Page() {
                                 inputClass={inputClass}
                             />
                             {viewDetail.notes && (
-                                <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
+                                <div className="rounded-md border border-gray-100 bg-gray-50 px-4 py-3">
                                     <p className="text-xs font-semibold text-gray-500">Notes</p>
                                     <p className="mt-1 text-sm text-gray-700">{viewDetail.notes}</p>
                                 </div>
@@ -1139,7 +1139,7 @@ export default function Page() {
                             <button
                                 type="button"
                                 onClick={closeViewModal}
-                                className="rounded-xl bg-[#0a2a5e] px-5 py-2.5 text-sm font-semibold text-white"
+                                className="rounded-md bg-[#0a2a5e] px-5 py-2.5 text-sm font-semibold text-white"
                             >
                                 Close
                             </button>
@@ -1154,7 +1154,7 @@ export default function Page() {
                     <div
                         role="dialog"
                         aria-modal="true"
-                        className="relative flex max-h-[min(92vh,900px)] w-full max-w-3xl flex-col overflow-hidden rounded-t-2xl border border-gray-200 bg-white shadow-2xl sm:rounded-2xl"
+                        className="relative flex max-h-[min(92vh,900px)] w-full max-w-3xl flex-col overflow-hidden rounded-t-lg border border-gray-200 bg-white shadow-2xl sm:rounded-md"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div
@@ -1186,7 +1186,7 @@ export default function Page() {
                         <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col overflow-y-auto">
                             <div className="space-y-5 p-5 sm:p-6">
                                 {formError && (
-                                    <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                                    <p className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                                         {formError}
                                     </p>
                                 )}
@@ -1283,14 +1283,14 @@ export default function Page() {
                                 <button
                                     type="button"
                                     onClick={closeModal}
-                                    className="rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-800 hover:bg-gray-50"
+                                    className="rounded-md border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-800 hover:bg-gray-50"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={isSubmitting}
-                                    className="inline-flex items-center gap-2 rounded-xl bg-[#06b6d4] px-5 py-2.5 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
+                                    className="inline-flex items-center gap-2 rounded-md bg-[#06b6d4] px-5 py-2.5 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
                                 >
                                     {isSubmitting ? (
                                         <Loader2 className="h-4 w-4 animate-spin" aria-hidden />

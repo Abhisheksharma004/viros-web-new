@@ -410,7 +410,7 @@ export default function WorkRecordsReportPage({ variant }: { variant: WorkRecord
                         type="button"
                         onClick={() => void runExportExcel(exportRows)}
                         disabled={!canExport || exportBusy !== null}
-                        className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-800 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="inline-flex items-center justify-center gap-2 rounded-md border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-800 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
                         title={canExport ? "Export all data to Excel" : "No data to export"}
                     >
                         {exportBusy === "excel" ? (
@@ -424,7 +424,7 @@ export default function WorkRecordsReportPage({ variant }: { variant: WorkRecord
                         type="button"
                         onClick={() => void runExportPdf(exportRows)}
                         disabled={!canExport || exportBusy !== null}
-                        className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-800 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="inline-flex items-center justify-center gap-2 rounded-md border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-800 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
                         title={canExport ? "Download all data as PDF" : "No data to export"}
                     >
                         {exportBusy === "pdf" ? (
@@ -438,7 +438,7 @@ export default function WorkRecordsReportPage({ variant }: { variant: WorkRecord
                         type="button"
                         onClick={() => void loadRecords()}
                         disabled={isLoading || exportBusy !== null}
-                        className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-800 shadow-sm transition hover:bg-gray-50 disabled:opacity-60"
+                        className="inline-flex items-center justify-center gap-2 rounded-md border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-800 shadow-sm transition hover:bg-gray-50 disabled:opacity-60"
                     >
                         {isLoading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
                         Refresh
@@ -450,7 +450,7 @@ export default function WorkRecordsReportPage({ variant }: { variant: WorkRecord
                 {stats.map((s) => (
                     <div
                         key={s.label}
-                        className="rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm"
+                        className="rounded-md border border-gray-200 bg-white px-4 py-3 shadow-sm"
                     >
                         <p className="text-xs font-medium text-gray-500">{s.label}</p>
                         <p className={`mt-1 text-xl font-bold ${s.tone}`}>{s.value}</p>
@@ -458,12 +458,12 @@ export default function WorkRecordsReportPage({ variant }: { variant: WorkRecord
                 ))}
             </div>
 
-            <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+            <div className="rounded-md border border-gray-200 bg-white shadow-sm overflow-hidden">
                 <div className="flex flex-wrap items-center justify-between gap-2 p-4">
                     <button
                         type="button"
                         onClick={() => setFiltersOpen((open) => !open)}
-                        className="inline-flex items-center gap-2 text-sm font-semibold text-gray-900 rounded-lg hover:bg-gray-50 px-1 py-0.5 -ml-1 transition"
+                        className="inline-flex items-center gap-2 text-sm font-semibold text-gray-900 rounded-md hover:bg-gray-50 px-1 py-0.5 -ml-1 transition"
                         aria-expanded={filtersOpen}
                         aria-controls={config.filtersId}
                     >
@@ -489,7 +489,7 @@ export default function WorkRecordsReportPage({ variant }: { variant: WorkRecord
                         <button
                             type="button"
                             onClick={() => setFiltersOpen((open) => !open)}
-                            className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50"
+                            className="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50"
                         >
                             {filtersOpen ? "Hide" : "Show"}
                         </button>
@@ -514,7 +514,7 @@ export default function WorkRecordsReportPage({ variant }: { variant: WorkRecord
                         value={filters.search}
                         onChange={(e) => updateFilter("search", e.target.value)}
                         placeholder="Search engineer, company, asset, tag, issue, remarks…"
-                        className="w-full rounded-lg border border-gray-200 py-2.5 pl-10 pr-3 text-sm text-gray-800 outline-none transition focus:border-[#06124f]/40 focus:ring-2 focus:ring-[#06124f]/10"
+                        className="w-full rounded-md border border-gray-200 py-2.5 pl-10 pr-3 text-sm text-gray-800 outline-none transition focus:border-[#06124f]/40 focus:ring-2 focus:ring-[#06124f]/10"
                     />
                             </div>
 
@@ -565,7 +565,7 @@ export default function WorkRecordsReportPage({ variant }: { variant: WorkRecord
                                     type="button"
                                     onClick={() => void runExportExcel(filteredExportRows)}
                                     disabled={!canExportFiltered || exportBusy !== null}
-                                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#06124f]/20 bg-[#06124f]/5 px-4 py-2 text-sm font-semibold text-[#06124f] shadow-sm transition hover:bg-[#06124f]/10 disabled:cursor-not-allowed disabled:opacity-50"
+                                    className="inline-flex items-center justify-center gap-2 rounded-md border border-[#06124f]/20 bg-[#06124f]/5 px-4 py-2 text-sm font-semibold text-[#06124f] shadow-sm transition hover:bg-[#06124f]/10 disabled:cursor-not-allowed disabled:opacity-50"
                                     title={
                                         canExportFiltered
                                             ? `Export ${filteredRecords.length} filtered record(s) to Excel`
@@ -583,7 +583,7 @@ export default function WorkRecordsReportPage({ variant }: { variant: WorkRecord
                                     type="button"
                                     onClick={() => void runExportPdf(filteredExportRows)}
                                     disabled={!canExportFiltered || exportBusy !== null}
-                                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#06124f]/20 bg-[#06124f]/5 px-4 py-2 text-sm font-semibold text-[#06124f] shadow-sm transition hover:bg-[#06124f]/10 disabled:cursor-not-allowed disabled:opacity-50"
+                                    className="inline-flex items-center justify-center gap-2 rounded-md border border-[#06124f]/20 bg-[#06124f]/5 px-4 py-2 text-sm font-semibold text-[#06124f] shadow-sm transition hover:bg-[#06124f]/10 disabled:cursor-not-allowed disabled:opacity-50"
                                     title={
                                         canExportFiltered
                                             ? `Export ${filteredRecords.length} filtered record(s) as PDF`
@@ -601,7 +601,7 @@ export default function WorkRecordsReportPage({ variant }: { variant: WorkRecord
                                     type="button"
                                     onClick={() => setFilters(emptyFilters())}
                                     disabled={!filtersActive}
-                                    className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                    className="rounded-md border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                     Clear filters
                                 </button>
@@ -611,7 +611,7 @@ export default function WorkRecordsReportPage({ variant }: { variant: WorkRecord
                 </div>
             </div>
 
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+            <div className="bg-white rounded-md border border-gray-200 shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="min-w-[1100px] w-full">
                         <thead className="bg-gray-50 border-b border-gray-100">
@@ -730,7 +730,7 @@ export default function WorkRecordsReportPage({ variant }: { variant: WorkRecord
                                             <button
                                                 type="button"
                                                 onClick={() => setViewDetail(r)}
-                                                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 shadow-sm transition hover:bg-gray-50"
+                                                className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-600 shadow-sm transition hover:bg-gray-50"
                                                 title="View full record"
                                                 aria-label="View full record"
                                             >
@@ -755,7 +755,7 @@ export default function WorkRecordsReportPage({ variant }: { variant: WorkRecord
                         role="dialog"
                         aria-modal="true"
                         aria-labelledby="work-record-view-title"
-                        className="relative flex max-h-[min(90vh,720px)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl"
+                        className="relative flex max-h-[min(90vh,720px)] w-full max-w-2xl flex-col overflow-hidden rounded-md border border-gray-200 bg-white shadow-2xl"
                     >
                         <div className="flex shrink-0 items-center justify-between gap-4 border-b border-gray-100 px-6 py-5">
                             <h3 id="work-record-view-title" className="text-lg font-bold tracking-tight text-[#001540]">
@@ -764,7 +764,7 @@ export default function WorkRecordsReportPage({ variant }: { variant: WorkRecord
                             <button
                                 type="button"
                                 onClick={() => setViewDetail(null)}
-                                className="shrink-0 rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+                                className="shrink-0 rounded-md p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
                                 aria-label="Close"
                             >
                                 <X className="h-5 w-5" strokeWidth={2} />
@@ -807,7 +807,7 @@ export default function WorkRecordsReportPage({ variant }: { variant: WorkRecord
                             <button
                                 type="button"
                                 onClick={() => setViewDetail(null)}
-                                className="rounded-lg bg-[#001540] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90"
+                                className="rounded-md bg-[#001540] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90"
                             >
                                 Close
                             </button>
@@ -838,7 +838,7 @@ function FilterSelect({
             <select
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
-                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none transition focus:border-[#06124f]/40 focus:ring-2 focus:ring-[#06124f]/10"
+                className="w-full rounded-md border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none transition focus:border-[#06124f]/40 focus:ring-2 focus:ring-[#06124f]/10"
             >
                 <option value="">All</option>
                 {options.map((opt) => (
@@ -867,7 +867,7 @@ function FilterDate({
                 type="date"
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
-                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none transition focus:border-[#06124f]/40 focus:ring-2 focus:ring-[#06124f]/10"
+                className="w-full rounded-md border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none transition focus:border-[#06124f]/40 focus:ring-2 focus:ring-[#06124f]/10"
             />
         </div>
     );

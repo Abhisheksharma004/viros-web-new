@@ -143,7 +143,7 @@ function ApprovalStageBadges({ status }: { status: LeaveStatus }) {
 }
 
 const inputClass =
-    "h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm font-medium text-gray-900 shadow-sm outline-none focus:border-[#0a2a5e] focus:ring-2 focus:ring-[#0a2a5e]/20";
+    "h-11 w-full rounded-md border border-gray-300 bg-white px-3 text-sm font-medium text-gray-900 shadow-sm outline-none focus:border-[#0a2a5e] focus:ring-2 focus:ring-[#0a2a5e]/20";
 const labelClass = "mb-1.5 block text-xs font-bold uppercase tracking-wide text-gray-700";
 
 function formatDisplayDate(value: string) {
@@ -338,14 +338,14 @@ export default function AdminLeaveRequestPage() {
     return (
         <div className="mx-auto w-full max-w-7xl space-y-5 pb-8 sm:space-y-6">
             {loadError && (
-                <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+                <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
                     {loadError}
                 </div>
             )}
 
             {toast && (
                 <div
-                    className={`rounded-xl border px-4 py-3 text-sm font-medium ${
+                    className={`rounded-md border px-4 py-3 text-sm font-medium ${
                         toast.includes("Failed") || toast.includes("Cannot")
                             ? "border-red-200 bg-red-50 text-red-800"
                             : "border-emerald-200 bg-emerald-50 text-emerald-800"
@@ -361,7 +361,7 @@ export default function AdminLeaveRequestPage() {
                         key={card.label}
                         type="button"
                         onClick={() => setStatusFilter(card.filter)}
-                        className={`rounded-2xl border bg-white p-4 text-left shadow-sm transition hover:shadow-md ${
+                        className={`rounded-md border bg-white p-4 text-left shadow-sm transition hover:shadow-md ${
                             statusFilter === card.filter
                                 ? "border-[#06b6d4] ring-2 ring-[#06b6d4]/25"
                                 : "border-gray-100"
@@ -384,7 +384,7 @@ export default function AdminLeaveRequestPage() {
                             key={f.id}
                             type="button"
                             onClick={() => setStatusFilter(f.id)}
-                            className={`rounded-lg px-3 py-2 text-xs font-bold transition ${
+                            className={`rounded-md px-3 py-2 text-xs font-bold transition ${
                                 statusFilter === f.id
                                     ? "bg-[#0a2a5e] text-white"
                                     : "bg-white text-[#0a2a5e] ring-1 ring-gray-200 hover:bg-gray-50"
@@ -406,7 +406,7 @@ export default function AdminLeaveRequestPage() {
                 </div>
             </div>
 
-            <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+            <div className="overflow-hidden rounded-md border border-gray-100 bg-white shadow-sm">
                 <div className="border-b border-gray-100 px-4 py-4 sm:px-6">
                     <p className="text-sm font-semibold text-gray-900">Requested leave</p>
                     <p className="mt-1 text-sm text-gray-500">
@@ -517,7 +517,7 @@ export default function AdminLeaveRequestPage() {
                                                         type="button"
                                                         title="View details"
                                                         onClick={() => setViewRow(row)}
-                                                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-[#0a2a5e] hover:bg-gray-50"
+                                                        className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 text-[#0a2a5e] hover:bg-gray-50"
                                                     >
                                                         <Eye className="h-4 w-4" />
                                                     </button>
@@ -529,7 +529,7 @@ export default function AdminLeaveRequestPage() {
                                                                 onClick={() =>
                                                                     void updateStatus(row.id, "l1_approved")
                                                                 }
-                                                                className="inline-flex h-8 items-center gap-1 rounded-lg bg-sky-600 px-2.5 text-xs font-bold text-white hover:bg-sky-700 disabled:opacity-60"
+                                                                className="inline-flex h-8 items-center gap-1 rounded-md bg-sky-600 px-2.5 text-xs font-bold text-white hover:bg-sky-700 disabled:opacity-60"
                                                             >
                                                                 {busy ? (
                                                                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -542,7 +542,7 @@ export default function AdminLeaveRequestPage() {
                                                                 type="button"
                                                                 disabled={busy}
                                                                 onClick={() => openRejectModal(row)}
-                                                                className="inline-flex h-8 items-center gap-1 rounded-lg bg-red-600 px-2.5 text-xs font-bold text-white hover:bg-red-700 disabled:opacity-60"
+                                                                className="inline-flex h-8 items-center gap-1 rounded-md bg-red-600 px-2.5 text-xs font-bold text-white hover:bg-red-700 disabled:opacity-60"
                                                             >
                                                                 <XCircle className="h-3.5 w-3.5" />
                                                                 Reject L1
@@ -557,7 +557,7 @@ export default function AdminLeaveRequestPage() {
                                                                 onClick={() =>
                                                                     void updateStatus(row.id, "approved")
                                                                 }
-                                                                className="inline-flex h-8 items-center gap-1 rounded-lg bg-emerald-600 px-2.5 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-60"
+                                                                className="inline-flex h-8 items-center gap-1 rounded-md bg-emerald-600 px-2.5 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-60"
                                                             >
                                                                 {busy ? (
                                                                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -570,7 +570,7 @@ export default function AdminLeaveRequestPage() {
                                                                 type="button"
                                                                 disabled={busy}
                                                                 onClick={() => openRejectModal(row)}
-                                                                className="inline-flex h-8 items-center gap-1 rounded-lg bg-red-600 px-2.5 text-xs font-bold text-white hover:bg-red-700 disabled:opacity-60"
+                                                                className="inline-flex h-8 items-center gap-1 rounded-md bg-red-600 px-2.5 text-xs font-bold text-white hover:bg-red-700 disabled:opacity-60"
                                                             >
                                                                 <XCircle className="h-3.5 w-3.5" />
                                                                 Reject L2
@@ -584,7 +584,7 @@ export default function AdminLeaveRequestPage() {
                                                             onClick={() =>
                                                                 void updateStatus(row.id, "cancelled")
                                                             }
-                                                            className="inline-flex h-8 items-center rounded-lg border border-gray-300 px-2.5 text-xs font-bold text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+                                                            className="inline-flex h-8 items-center rounded-md border border-gray-300 px-2.5 text-xs font-bold text-gray-700 hover:bg-gray-50 disabled:opacity-60"
                                                         >
                                                             Cancel
                                                         </button>
@@ -609,7 +609,7 @@ export default function AdminLeaveRequestPage() {
                 >
                     <div className="absolute inset-0 bg-black/50" aria-hidden />
                     <div
-                        className="relative max-h-[min(90vh,720px)] w-full max-w-lg overflow-y-auto rounded-t-2xl border border-gray-200 bg-white shadow-2xl sm:rounded-2xl"
+                        className="relative max-h-[min(90vh,720px)] w-full max-w-lg overflow-y-auto rounded-t-lg border border-gray-200 bg-white shadow-2xl sm:rounded-md"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div
@@ -620,7 +620,7 @@ export default function AdminLeaveRequestPage() {
                             }}
                         >
                             <div className="flex items-center gap-3">
-                                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15">
+                                <span className="flex h-10 w-10 items-center justify-center rounded-md bg-white/15">
                                     <FileText className="h-5 w-5" />
                                 </span>
                                 <div>
@@ -639,7 +639,7 @@ export default function AdminLeaveRequestPage() {
                         </div>
 
                         <div className="space-y-4 p-5 sm:p-6">
-                            <div className="flex items-center gap-3 rounded-xl border border-gray-100 bg-gray-50 p-4">
+                            <div className="flex items-center gap-3 rounded-md border border-gray-100 bg-gray-50 p-4">
                                 <User className="h-8 w-8 text-[#0a2a5e]" />
                                 <div>
                                     <p className="font-bold text-gray-900">{viewRow.employee_name}</p>
@@ -686,7 +686,7 @@ export default function AdminLeaveRequestPage() {
                                         <dt className="text-xs font-bold uppercase text-gray-500">
                                             Rejection reason
                                         </dt>
-                                        <dd className="mt-1 rounded-lg border border-red-100 bg-red-50/50 p-3 text-sm text-red-900">
+                                        <dd className="mt-1 rounded-md border border-red-100 bg-red-50/50 p-3 text-sm text-red-900">
                                             {viewRow.rejection_reason}
                                         </dd>
                                     </div>
@@ -717,7 +717,7 @@ export default function AdminLeaveRequestPage() {
                                 </div>
                                 <div className="col-span-2">
                                     <dt className="text-xs font-bold uppercase text-gray-500">Reason</dt>
-                                    <dd className="mt-1 rounded-lg border border-gray-100 bg-gray-50 p-3 text-gray-800">
+                                    <dd className="mt-1 rounded-md border border-gray-100 bg-gray-50 p-3 text-gray-800">
                                         {viewRow.reason || "—"}
                                     </dd>
                                 </div>
@@ -729,7 +729,7 @@ export default function AdminLeaveRequestPage() {
                                         type="button"
                                         disabled={actionBusyId === viewRow.id}
                                         onClick={() => void updateStatus(viewRow.id, "l1_approved")}
-                                        className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-sky-600 text-sm font-bold text-white hover:bg-sky-700 disabled:opacity-60"
+                                        className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-md bg-sky-600 text-sm font-bold text-white hover:bg-sky-700 disabled:opacity-60"
                                     >
                                         {actionBusyId === viewRow.id ? (
                                             <Loader2 className="h-4 w-4 animate-spin" />
@@ -742,7 +742,7 @@ export default function AdminLeaveRequestPage() {
                                         type="button"
                                         disabled={actionBusyId === viewRow.id}
                                         onClick={() => openRejectModal(viewRow)}
-                                        className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-red-600 text-sm font-bold text-white hover:bg-red-700 disabled:opacity-60"
+                                        className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-md bg-red-600 text-sm font-bold text-white hover:bg-red-700 disabled:opacity-60"
                                     >
                                         <XCircle className="h-4 w-4" />
                                         Reject L1
@@ -755,7 +755,7 @@ export default function AdminLeaveRequestPage() {
                                         type="button"
                                         disabled={actionBusyId === viewRow.id}
                                         onClick={() => void updateStatus(viewRow.id, "approved")}
-                                        className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-emerald-600 text-sm font-bold text-white hover:bg-emerald-700 disabled:opacity-60"
+                                        className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-md bg-emerald-600 text-sm font-bold text-white hover:bg-emerald-700 disabled:opacity-60"
                                     >
                                         {actionBusyId === viewRow.id ? (
                                             <Loader2 className="h-4 w-4 animate-spin" />
@@ -768,7 +768,7 @@ export default function AdminLeaveRequestPage() {
                                         type="button"
                                         disabled={actionBusyId === viewRow.id}
                                         onClick={() => openRejectModal(viewRow)}
-                                        className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-red-600 text-sm font-bold text-white hover:bg-red-700 disabled:opacity-60"
+                                        className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-md bg-red-600 text-sm font-bold text-white hover:bg-red-700 disabled:opacity-60"
                                     >
                                         <XCircle className="h-4 w-4" />
                                         Reject L2
@@ -790,7 +790,7 @@ export default function AdminLeaveRequestPage() {
                 >
                     <div className="absolute inset-0 bg-black/50" aria-hidden />
                     <div
-                        className="relative w-full max-w-md overflow-hidden rounded-t-2xl border border-gray-200 bg-white shadow-2xl sm:rounded-2xl"
+                        className="relative w-full max-w-md overflow-hidden rounded-t-lg border border-gray-200 bg-white shadow-2xl sm:rounded-md"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div
@@ -826,11 +826,11 @@ export default function AdminLeaveRequestPage() {
                                     }}
                                     rows={4}
                                     placeholder={`Reason for ${rejectModal.stage === "l2" ? "L2" : "L1"} rejection…`}
-                                    className="w-full resize-none rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm font-medium text-gray-900 shadow-sm outline-none focus:border-[#0a2a5e] focus:ring-2 focus:ring-[#0a2a5e]/20"
+                                    className="w-full resize-none rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm font-medium text-gray-900 shadow-sm outline-none focus:border-[#0a2a5e] focus:ring-2 focus:ring-[#0a2a5e]/20"
                                 />
                             </div>
                             {rejectError && (
-                                <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+                                <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
                                     {rejectError}
                                 </p>
                             )}
@@ -839,7 +839,7 @@ export default function AdminLeaveRequestPage() {
                                     type="button"
                                     onClick={closeRejectModal}
                                     disabled={actionBusyId === rejectModal.id}
-                                    className="inline-flex h-11 items-center justify-center rounded-lg border border-gray-300 px-5 text-sm font-bold text-gray-800 hover:bg-gray-50 disabled:opacity-60"
+                                    className="inline-flex h-11 items-center justify-center rounded-md border border-gray-300 px-5 text-sm font-bold text-gray-800 hover:bg-gray-50 disabled:opacity-60"
                                 >
                                     Cancel
                                 </button>
@@ -847,7 +847,7 @@ export default function AdminLeaveRequestPage() {
                                     type="button"
                                     onClick={confirmReject}
                                     disabled={actionBusyId === rejectModal.id}
-                                    className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-red-600 px-6 text-sm font-bold text-white hover:bg-red-700 disabled:opacity-60"
+                                    className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-red-600 px-6 text-sm font-bold text-white hover:bg-red-700 disabled:opacity-60"
                                 >
                                     {actionBusyId === rejectModal.id ? (
                                         <Loader2 className="h-4 w-4 animate-spin" />

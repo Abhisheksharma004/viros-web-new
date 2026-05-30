@@ -534,7 +534,7 @@ export default function AdminEmployeesPage() {
     };
 
     const inputClassName =
-        "w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e] disabled:cursor-not-allowed disabled:bg-gray-50 placeholder:text-gray-400";
+        "w-full px-4 py-2.5 rounded-md border border-gray-200 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e] disabled:cursor-not-allowed disabled:bg-gray-50 placeholder:text-gray-400";
     const selectClassName = `${inputClassName} bg-white`;
 
     const renderField = (field: FormField) => {
@@ -647,7 +647,7 @@ export default function AdminEmployeesPage() {
                     type="button"
                     onClick={openAddModal}
                     disabled={isEmployeesLoading}
-                    className="inline-flex items-center justify-center rounded-xl bg-[#0a2a5e] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex items-center justify-center rounded-md bg-[#0a2a5e] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                     Add Employee
                 </button>
@@ -655,14 +655,14 @@ export default function AdminEmployeesPage() {
 
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                 {employeeStats.map((stat) => (
-                    <div key={stat.label} className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+                    <div key={stat.label} className="rounded-md border border-gray-100 bg-white p-5 shadow-sm">
                         <p className="text-sm text-gray-500">{stat.label}</p>
                         <p className={`mt-3 text-3xl font-semibold ${stat.tone}`}>{stat.value}</p>
                     </div>
                 ))}
             </div>
 
-            <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+            <div className="overflow-hidden rounded-md border border-gray-100 bg-white shadow-sm">
                 <div className="border-b border-gray-100 p-6">
                     <p className="text-sm font-semibold text-gray-900">Employee roster</p>
                     <p className="mt-1 text-sm text-gray-500">
@@ -743,7 +743,7 @@ export default function AdminEmployeesPage() {
                                                     type="button"
                                                     onClick={() => openViewEmployee(employee)}
                                                     disabled={actionBusy !== null || isSubmitting}
-                                                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                                    className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-600 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                                                     title="View employee"
                                                     aria-label="View employee"
                                                 >
@@ -758,7 +758,7 @@ export default function AdminEmployeesPage() {
                                                     type="button"
                                                     onClick={() => openEditEmployee(employee)}
                                                     disabled={actionBusy !== null || isSubmitting}
-                                                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-[#0a2a5e] shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                                    className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-gray-200 bg-white text-[#0a2a5e] shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
                                                     title="Edit employee"
                                                     aria-label="Edit employee"
                                                 >
@@ -773,7 +773,7 @@ export default function AdminEmployeesPage() {
                                                     type="button"
                                                     onClick={() => void handleDeleteEmployee(employee)}
                                                     disabled={actionBusy !== null || isSubmitting}
-                                                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-red-200 bg-red-50 text-red-700 shadow-sm transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+                                                    className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-red-200 bg-red-50 text-red-700 shadow-sm transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
                                                     title="Delete employee"
                                                     aria-label="Delete employee"
                                                 >
@@ -804,7 +804,7 @@ export default function AdminEmployeesPage() {
                         role="dialog"
                         aria-modal="true"
                         aria-labelledby="employee-view-title"
-                        className="relative flex max-h-[min(90vh,800px)] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl"
+                        className="relative flex max-h-[min(90vh,800px)] w-full max-w-3xl flex-col overflow-hidden rounded-md border border-gray-200 bg-white shadow-2xl"
                     >
                         <div className="flex shrink-0 items-center justify-between gap-4 border-b border-gray-100 px-6 py-5">
                             <h3
@@ -816,7 +816,7 @@ export default function AdminEmployeesPage() {
                             <button
                                 type="button"
                                 onClick={closeModal}
-                                className="shrink-0 rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+                                className="shrink-0 rounded-md p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
                                 aria-label="Close"
                             >
                                 <X className="h-5 w-5" strokeWidth={2} />
@@ -868,7 +868,7 @@ export default function AdminEmployeesPage() {
                             <button
                                 type="button"
                                 onClick={closeModal}
-                                className="rounded-lg bg-[#001540] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90"
+                                className="rounded-md bg-[#001540] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90"
                             >
                                 Close
                             </button>
@@ -890,7 +890,7 @@ export default function AdminEmployeesPage() {
                         role="dialog"
                         aria-modal="true"
                         aria-labelledby="add-employee-title"
-                        className="relative flex max-h-[min(94vh,920px)] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-2xl"
+                        className="relative flex max-h-[min(94vh,920px)] w-full max-w-5xl flex-col overflow-hidden rounded-md border border-gray-100 bg-white shadow-2xl"
                     >
                         <div className="flex shrink-0 items-start justify-between gap-4 border-b border-gray-100 bg-gradient-to-r from-[#06124f] to-[#0a2a5e] px-6 py-4">
                             <div className="min-w-0">
@@ -909,7 +909,7 @@ export default function AdminEmployeesPage() {
                                     if (!isSubmitting) closeModal();
                                 }}
                                 disabled={isSubmitting}
-                                className="shrink-0 rounded-lg p-1.5 text-white/70 transition-colors hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                                className="shrink-0 rounded-md p-1.5 text-white/70 transition-colors hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                                 aria-label="Close"
                             >
                                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -943,14 +943,14 @@ export default function AdminEmployeesPage() {
                                     type="button"
                                     onClick={closeModal}
                                     disabled={isSubmitting}
-                                    className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                    className="rounded-md border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={isSubmitting}
-                                    className="rounded-xl bg-gradient-to-r from-[#06124f] to-[#0a2a5e] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                                    className="rounded-md bg-gradient-to-r from-[#06124f] to-[#0a2a5e] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                                 >
                                     {isSubmitting
                                         ? "Saving…"

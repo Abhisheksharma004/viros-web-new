@@ -412,7 +412,7 @@ export default function AdminSidebar({
                                     href={item.href!}
                                     onClick={onClose}
                                     className={`
-                                        flex items-center space-x-3 px-4 py-3 rounded-lg
+                                        flex items-center space-x-3 px-4 py-3 rounded-md
                                         transition-all duration-200
                                         ${isItemActive
                                             ? "bg-[#06b6d4] text-white shadow-lg"
@@ -432,7 +432,7 @@ export default function AdminSidebar({
                                 <button
                                     onClick={() => toggleSection(item.title)}
                                     className={`
-                                        w-full flex items-center justify-between px-4 py-3 rounded-lg
+                                        w-full flex items-center justify-between px-4 py-3 rounded-md
                                         transition-all duration-200
                                         ${isItemActive
                                             ? "bg-[#06b6d4] text-white shadow-lg"
@@ -468,7 +468,7 @@ export default function AdminSidebar({
                                                     href={sub.href}
                                                     onClick={onClose}
                                                     className={`
-                                                        flex items-center space-x-3 px-4 py-2 rounded-lg
+                                                        flex items-center space-x-3 px-4 py-2 rounded-md
                                                         transition-colors duration-200
                                                         ${subActive
                                                             ? "bg-[#06b6d4] text-white shadow-lg"

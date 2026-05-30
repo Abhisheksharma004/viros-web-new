@@ -730,7 +730,7 @@ export default function Page() {
     };
 
     const inputClass =
-        "w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-[#06b6d4] focus:ring-2 focus:ring-[#06b6d4]/20 disabled:bg-gray-50 disabled:text-gray-500";
+        "w-full rounded-md border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-[#06b6d4] focus:ring-2 focus:ring-[#06b6d4]/20 disabled:bg-gray-50 disabled:text-gray-500";
     const labelClass = "mb-1.5 block text-sm font-semibold text-gray-700";
     const readOnly = modalMode === "view";
 
@@ -742,7 +742,7 @@ export default function Page() {
                     type="button"
                     onClick={openAdd}
                     disabled={isLoading}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0a2a5e] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60"
+                    className="inline-flex items-center justify-center gap-2 rounded-md bg-[#0a2a5e] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60"
                 >
                     <Plus className="h-4 w-4" aria-hidden />
                     Add policy
@@ -750,25 +750,25 @@ export default function Page() {
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+                <div className="rounded-md border border-gray-100 bg-white p-5 shadow-sm">
                     <p className="text-sm text-gray-500">Total policies</p>
                     <p className="mt-2 text-3xl font-semibold text-gray-900">{stats.total}</p>
                 </div>
-                <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+                <div className="rounded-md border border-gray-100 bg-white p-5 shadow-sm">
                     <p className="text-sm text-gray-500">Active policies</p>
                     <p className="mt-2 text-3xl font-semibold text-[#06b6d4]">{stats.active}</p>
                 </div>
-                <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+                <div className="rounded-md border border-gray-100 bg-white p-5 shadow-sm">
                     <p className="text-sm text-gray-500">Annual days (quota)</p>
                     <p className="mt-2 text-3xl font-semibold text-gray-900">{stats.totalDays}</p>
                 </div>
-                <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+                <div className="rounded-md border border-gray-100 bg-white p-5 shadow-sm">
                     <p className="text-sm text-gray-500">Paid leave types</p>
                     <p className="mt-2 text-3xl font-semibold text-emerald-600">{stats.paid}</p>
                 </div>
             </div>
 
-            <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+            <div className="rounded-md border border-gray-100 bg-white p-5 shadow-sm">
                 <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-2 text-[#0a2a5e]">
                         <Settings2 className="h-5 w-5" aria-hidden />
@@ -777,7 +777,7 @@ export default function Page() {
                     <button
                         type="button"
                         onClick={openEmailModal}
-                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#0a2a5e]/20 bg-[#0a2a5e]/5 px-4 py-2.5 text-sm font-semibold text-[#0a2a5e] transition hover:bg-[#0a2a5e]/10"
+                        className="inline-flex items-center justify-center gap-2 rounded-md border border-[#0a2a5e]/20 bg-[#0a2a5e]/5 px-4 py-2.5 text-sm font-semibold text-[#0a2a5e] transition hover:bg-[#0a2a5e]/10"
                     >
                         <Mail className="h-4 w-4" aria-hidden />
                         Notification emails
@@ -878,7 +878,7 @@ export default function Page() {
                         type="button"
                         onClick={() => void saveGlobalSettings()}
                         disabled={isSavingSettings}
-                        className="inline-flex items-center gap-2 rounded-xl bg-[#06b6d4] px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
+                        className="inline-flex items-center gap-2 rounded-md bg-[#06b6d4] px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
                     >
                         {isSavingSettings ? (
                             <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
@@ -899,7 +899,7 @@ export default function Page() {
                 </div>
             </div>
 
-            <div className="relative rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:p-5">
+            <div className="relative rounded-md border border-gray-100 bg-white p-4 shadow-sm sm:p-5">
                 <Search className="pointer-events-none absolute left-7 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 sm:left-8" />
                 <input
                     type="search"
@@ -910,7 +910,7 @@ export default function Page() {
                 />
             </div>
 
-            <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+            <div className="overflow-hidden rounded-md border border-gray-100 bg-white shadow-sm">
                 <div className="border-b border-gray-100 px-4 py-4 sm:px-6">
                     <p className="text-sm font-semibold text-gray-900">Leave types & quotas</p>
                     <p className="mt-1 text-sm text-gray-500">
@@ -965,7 +965,7 @@ export default function Page() {
                                 >
                                     <td className="px-4 py-4 sm:px-6">
                                         <div className="flex items-center gap-3">
-                                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#0a2a5e] text-xs font-bold text-white">
+                                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[#0a2a5e] text-xs font-bold text-white">
                                                 {row.code}
                                             </span>
                                             <div>
@@ -1016,7 +1016,7 @@ export default function Page() {
                                             <button
                                                 type="button"
                                                 onClick={() => openView(row)}
-                                                className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-[#0a2a5e]"
+                                                className="rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-[#0a2a5e]"
                                                 title="View"
                                             >
                                                 <Eye className="h-4 w-4" />
@@ -1024,7 +1024,7 @@ export default function Page() {
                                             <button
                                                 type="button"
                                                 onClick={() => openEdit(row)}
-                                                className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-[#0a2a5e]"
+                                                className="rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-[#0a2a5e]"
                                                 title="Edit"
                                             >
                                                 <Pencil className="h-4 w-4" />
@@ -1032,7 +1032,7 @@ export default function Page() {
                                             <button
                                                 type="button"
                                                 onClick={() => toggleActive(row)}
-                                                className="rounded-lg px-2 py-2 text-xs font-semibold text-[#06b6d4] hover:bg-[#06b6d4]/10"
+                                                className="rounded-md px-2 py-2 text-xs font-semibold text-[#06b6d4] hover:bg-[#06b6d4]/10"
                                                 title={row.active ? "Deactivate" : "Activate"}
                                             >
                                                 {row.active ? "Off" : "On"}
@@ -1040,7 +1040,7 @@ export default function Page() {
                                             <button
                                                 type="button"
                                                 onClick={() => handleDelete(row)}
-                                                className="rounded-lg p-2 text-gray-500 hover:bg-red-50 hover:text-red-600"
+                                                className="rounded-md p-2 text-gray-500 hover:bg-red-50 hover:text-red-600"
                                                 title="Delete"
                                             >
                                                 <Trash2 className="h-4 w-4" />
@@ -1064,7 +1064,7 @@ export default function Page() {
                 >
                     <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px]" aria-hidden />
                     <div
-                        className="relative flex max-h-[min(92vh,900px)] w-full max-w-3xl flex-col overflow-hidden rounded-t-2xl border border-gray-200 bg-white shadow-2xl sm:rounded-2xl"
+                        className="relative flex max-h-[min(92vh,900px)] w-full max-w-3xl flex-col overflow-hidden rounded-t-lg border border-gray-200 bg-white shadow-2xl sm:rounded-md"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div
@@ -1106,7 +1106,7 @@ export default function Page() {
                         >
                             <div className="space-y-4 p-5 sm:p-6">
                                 {formError && (
-                                    <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                                    <p className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                                         {formError}
                                     </p>
                                 )}
@@ -1266,7 +1266,7 @@ export default function Page() {
                                     </div>
                                 </div>
 
-                                <div className="rounded-xl border border-[#0a2a5e]/15 bg-[#0a2a5e]/5 p-4 sm:p-5">
+                                <div className="rounded-md border border-[#0a2a5e]/15 bg-[#0a2a5e]/5 p-4 sm:p-5">
                                     <p className="mb-1 text-xs font-bold uppercase tracking-wide text-[#0a2a5e]">
                                         Leave conditions
                                     </p>
@@ -1311,7 +1311,7 @@ export default function Page() {
                                                                     ),
                                                                 }))
                                                             }
-                                                            className={`rounded-lg border px-2 py-2 text-xs font-semibold transition ${
+                                                            className={`rounded-md border px-2 py-2 text-xs font-semibold transition ${
                                                                 selected
                                                                     ? "border-[#06b6d4] bg-[#06b6d4]/15 text-[#0a2a5e]"
                                                                     : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
@@ -1325,7 +1325,7 @@ export default function Page() {
                                         )}
                                     </div>
 
-                                    <div className="mb-4 rounded-xl border border-gray-200/80 bg-white p-4">
+                                    <div className="mb-4 rounded-md border border-gray-200/80 bg-white p-4">
                                         <label className="flex cursor-pointer items-start gap-2 text-sm font-medium text-gray-700">
                                             <input
                                                 type="checkbox"
@@ -1501,7 +1501,7 @@ export default function Page() {
                                         </div>
                                     </div>
 
-                                    <div className="flex flex-wrap gap-4 rounded-xl border border-gray-200/80 bg-white p-4">
+                                    <div className="flex flex-wrap gap-4 rounded-md border border-gray-200/80 bg-white p-4">
                                         <label className="flex cursor-pointer items-start gap-2 text-sm font-medium text-gray-700">
                                             <input
                                                 type="checkbox"
@@ -1598,7 +1598,7 @@ export default function Page() {
                                     </div>
                                 </div>
 
-                                <div className="flex flex-wrap gap-4 rounded-xl border border-gray-100 bg-gray-50 p-4">
+                                <div className="flex flex-wrap gap-4 rounded-md border border-gray-100 bg-gray-50 p-4">
                                     <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-gray-700">
                                         <input
                                             type="checkbox"
@@ -1690,7 +1690,7 @@ export default function Page() {
                                 <button
                                     type="button"
                                     onClick={closeModal}
-                                    className="rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-800 hover:bg-gray-50"
+                                    className="rounded-md border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-800 hover:bg-gray-50"
                                 >
                                     {readOnly ? "Close" : "Cancel"}
                                 </button>
@@ -1698,7 +1698,7 @@ export default function Page() {
                                     <button
                                         type="submit"
                                         disabled={isSubmitting}
-                                        className="inline-flex items-center gap-2 rounded-xl bg-[#06b6d4] px-5 py-2.5 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
+                                        className="inline-flex items-center gap-2 rounded-md bg-[#06b6d4] px-5 py-2.5 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
                                     >
                                         {isSubmitting ? (
                                             <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
@@ -1725,7 +1725,7 @@ export default function Page() {
                         role="dialog"
                         aria-modal="true"
                         aria-labelledby="leave-notification-emails-title"
-                        className="relative flex max-h-[min(90vh,640px)] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl"
+                        className="relative flex max-h-[min(90vh,640px)] w-full max-w-lg flex-col overflow-hidden rounded-md border border-gray-200 bg-white shadow-2xl"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div
@@ -1761,7 +1761,7 @@ export default function Page() {
 
                         <div className="min-h-0 flex-1 overflow-y-auto p-5 sm:p-6">
                             {emailError && (
-                                <p className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                                <p className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                                     {emailError}
                                 </p>
                             )}
@@ -1784,7 +1784,7 @@ export default function Page() {
                                 <button
                                     type="button"
                                     onClick={addEmailToDraft}
-                                    className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-[#0a2a5e] px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90"
+                                    className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-[#0a2a5e] px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90"
                                 >
                                     <Plus className="h-4 w-4" aria-hidden />
                                     Add
@@ -1793,7 +1793,7 @@ export default function Page() {
 
                             <div className="mt-4">
                                 {emailDraft.length === 0 ? (
-                                    <p className="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-4 py-8 text-center text-sm text-gray-500">
+                                    <p className="rounded-md border border-dashed border-gray-200 bg-gray-50 px-4 py-8 text-center text-sm text-gray-500">
                                         No emails saved yet. Add at least one address.
                                     </p>
                                 ) : (
@@ -1801,7 +1801,7 @@ export default function Page() {
                                         {emailDraft.map((email) => (
                                             <li
                                                 key={email}
-                                                className="flex items-center justify-between gap-3 rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5"
+                                                className="flex items-center justify-between gap-3 rounded-md border border-gray-100 bg-gray-50 px-3 py-2.5"
                                             >
                                                 <span className="flex min-w-0 items-center gap-2 text-sm font-medium text-gray-900">
                                                     <Mail className="h-4 w-4 shrink-0 text-[#06b6d4]" aria-hidden />
@@ -1810,7 +1810,7 @@ export default function Page() {
                                                 <button
                                                     type="button"
                                                     onClick={() => removeEmailFromDraft(email)}
-                                                    className="rounded-lg p-2 text-red-500 hover:bg-red-50"
+                                                    className="rounded-md p-2 text-red-500 hover:bg-red-50"
                                                     aria-label={`Remove ${email}`}
                                                 >
                                                     <Trash2 className="h-4 w-4" />
@@ -1832,7 +1832,7 @@ export default function Page() {
                             <button
                                 type="button"
                                 onClick={closeEmailModal}
-                                className="rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-800 hover:bg-gray-50"
+                                className="rounded-md border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-800 hover:bg-gray-50"
                             >
                                 Close
                             </button>
@@ -1840,7 +1840,7 @@ export default function Page() {
                                 type="button"
                                 onClick={() => void saveNotificationEmails()}
                                 disabled={isSavingEmails}
-                                className="inline-flex items-center gap-2 rounded-xl bg-[#06b6d4] px-5 py-2.5 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
+                                className="inline-flex items-center gap-2 rounded-md bg-[#06b6d4] px-5 py-2.5 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
                             >
                                 {isSavingEmails ? (
                                     <Loader2 className="h-4 w-4 animate-spin" aria-hidden />

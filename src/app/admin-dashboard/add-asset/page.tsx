@@ -411,7 +411,7 @@ export default function AddAssetPage() {
                         type="button"
                         onClick={openCsvImportModal}
                         disabled={isLoading || csvImportBusy}
-                        className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-[#0a2a5e] border border-gray-200 bg-white hover:bg-gray-50 transition-colors shadow-sm disabled:opacity-60"
+                        className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-semibold text-[#0a2a5e] border border-gray-200 bg-white hover:bg-gray-50 transition-colors shadow-sm disabled:opacity-60"
                     >
                         <Upload className="w-4 h-4 shrink-0" aria-hidden />
                         Import CSV
@@ -420,7 +420,7 @@ export default function AddAssetPage() {
                         type="button"
                         onClick={openAddModal}
                         disabled={isLoading}
-                        className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-[#06124f] to-[#0a2a5e] hover:opacity-90 transition-opacity shadow-sm disabled:opacity-60"
+                        className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-semibold text-white bg-gradient-to-r from-[#06124f] to-[#0a2a5e] hover:opacity-90 transition-opacity shadow-sm disabled:opacity-60"
                     >
                         <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -432,14 +432,14 @@ export default function AddAssetPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                 {assetStats.map((item) => (
-                    <div key={item.label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                    <div key={item.label} className="bg-white rounded-md border border-gray-100 shadow-sm p-5">
                         <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{item.label}</p>
                         <p className={`text-3xl font-black mt-2 ${item.tone}`}>{item.value}</p>
                     </div>
                 ))}
             </div>
 
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="bg-white rounded-md border border-gray-100 shadow-sm overflow-hidden">
                 <div className="px-6 py-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <h2 className="text-base font-bold text-gray-900">Asset Registry</h2>
                     <div className="text-xs text-gray-500">Showing {assets.length} assets</div>
@@ -526,7 +526,7 @@ export default function AddAssetPage() {
                                                     type="button"
                                                     onClick={() => openViewAsset(a)}
                                                     disabled={isSubmitting}
-                                                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                                    className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-600 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                                                     title="View asset"
                                                     aria-label="View asset"
                                                 >
@@ -536,7 +536,7 @@ export default function AddAssetPage() {
                                                     type="button"
                                                     onClick={() => openEditAsset(a)}
                                                     disabled={isSubmitting}
-                                                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-[#0a2a5e] shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                                    className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-gray-200 bg-white text-[#0a2a5e] shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
                                                     title="Edit asset"
                                                     aria-label="Edit asset"
                                                 >
@@ -546,7 +546,7 @@ export default function AddAssetPage() {
                                                     type="button"
                                                     onClick={() => void handleDeleteAsset(a)}
                                                     disabled={isSubmitting}
-                                                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-red-200 bg-red-50 text-red-700 shadow-sm transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+                                                    className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-red-200 bg-red-50 text-red-700 shadow-sm transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
                                                     title="Delete asset"
                                                     aria-label="Delete asset"
                                                 >
@@ -568,7 +568,7 @@ export default function AddAssetPage() {
                         role="dialog"
                         aria-modal="true"
                         aria-labelledby="asset-view-title"
-                        className="relative flex max-h-[min(90vh,680px)] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl"
+                        className="relative flex max-h-[min(90vh,680px)] w-full max-w-lg flex-col overflow-hidden rounded-md border border-gray-200 bg-white shadow-2xl"
                     >
                         <div className="flex shrink-0 items-center justify-between gap-4 border-b border-gray-100 px-6 py-5">
                             <h3 id="asset-view-title" className="text-lg font-bold tracking-tight text-[#001540]">
@@ -577,7 +577,7 @@ export default function AddAssetPage() {
                             <button
                                 type="button"
                                 onClick={closeModal}
-                                className="shrink-0 rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+                                className="shrink-0 rounded-md p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
                                 aria-label="Close"
                             >
                                 <X className="h-5 w-5" strokeWidth={2} />
@@ -625,7 +625,7 @@ export default function AddAssetPage() {
                             <button
                                 type="button"
                                 onClick={closeModal}
-                                className="rounded-lg bg-[#001540] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90"
+                                className="rounded-md bg-[#001540] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90"
                             >
                                 Close
                             </button>
@@ -647,7 +647,7 @@ export default function AddAssetPage() {
                         role="dialog"
                         aria-modal="true"
                         aria-labelledby="import-csv-title"
-                        className="relative flex max-h-[min(90vh,640px)] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl"
+                        className="relative flex max-h-[min(90vh,640px)] w-full max-w-lg flex-col overflow-hidden rounded-md border border-gray-200 bg-white shadow-2xl"
                     >
                         <div className="flex shrink-0 items-center justify-between gap-4 border-b border-gray-100 px-6 py-5">
                             <h3 id="import-csv-title" className="text-lg font-bold tracking-tight text-[#001540]">
@@ -658,7 +658,7 @@ export default function AddAssetPage() {
                                 onClick={() => {
                                     if (!csvImportBusy) closeModal();
                                 }}
-                                className="shrink-0 rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+                                className="shrink-0 rounded-md p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
                                 aria-label="Close"
                             >
                                 <X className="h-5 w-5" strokeWidth={2} />
@@ -684,7 +684,7 @@ export default function AddAssetPage() {
                                     type="button"
                                     onClick={downloadAssetCsvTemplate}
                                     disabled={csvImportBusy}
-                                    className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-800 shadow-sm transition hover:bg-gray-50 disabled:opacity-60"
+                                    className="inline-flex items-center gap-2 rounded-md border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-800 shadow-sm transition hover:bg-gray-50 disabled:opacity-60"
                                 >
                                     <Download className="h-4 w-4 shrink-0" aria-hidden />
                                     Download template
@@ -693,7 +693,7 @@ export default function AddAssetPage() {
                                     type="button"
                                     onClick={() => csvFileInputRef.current?.click()}
                                     disabled={csvImportBusy}
-                                    className="inline-flex items-center gap-2 rounded-xl bg-[#001540] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-60"
+                                    className="inline-flex items-center gap-2 rounded-md bg-[#001540] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-60"
                                 >
                                     {csvImportBusy ? (
                                         <Loader2 className="h-4 w-4 shrink-0 animate-spin" aria-hidden />
@@ -705,7 +705,7 @@ export default function AddAssetPage() {
                             </div>
                             {csvImportLastResult && (
                                 <div
-                                    className={`rounded-xl border px-4 py-3 text-sm ${
+                                    className={`rounded-md border px-4 py-3 text-sm ${
                                         csvImportLastResult.created > 0
                                             ? "border-green-200 bg-green-50 text-green-900"
                                             : "border-amber-200 bg-amber-50 text-amber-950"
@@ -734,7 +734,7 @@ export default function AddAssetPage() {
                                 onClick={() => {
                                     if (!csvImportBusy) closeModal();
                                 }}
-                                className="rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:opacity-60"
+                                className="rounded-md border border-gray-200 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:opacity-60"
                             >
                                 Close
                             </button>
@@ -756,7 +756,7 @@ export default function AddAssetPage() {
                         role="dialog"
                         aria-modal="true"
                         aria-labelledby="add-asset-title"
-                        className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden max-h-[min(90vh,720px)] flex flex-col"
+                        className="relative w-full max-w-lg bg-white rounded-md shadow-2xl border border-gray-100 overflow-hidden max-h-[min(90vh,720px)] flex flex-col"
                     >
                         <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-[#06124f] to-[#0a2a5e] flex items-start justify-between gap-4 shrink-0">
                             <div className="min-w-0">
@@ -774,7 +774,7 @@ export default function AddAssetPage() {
                                 onClick={() => {
                                     if (!isSubmitting) closeModal();
                                 }}
-                                className="shrink-0 text-white/70 hover:text-white rounded-lg p-1.5 hover:bg-white/10 transition-colors"
+                                className="shrink-0 text-white/70 hover:text-white rounded-md p-1.5 hover:bg-white/10 transition-colors"
                                 aria-label="Close"
                             >
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -794,7 +794,7 @@ export default function AddAssetPage() {
                                         name="tagCode"
                                         value={formValues.tagCode}
                                         onChange={handleInputChange}
-                                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e]"
+                                        className="w-full px-4 py-2.5 rounded-md border border-gray-200 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e]"
                                         placeholder="RFID / S/N"
                                     />
                                 </div>
@@ -807,7 +807,7 @@ export default function AddAssetPage() {
                                         name="category"
                                         value={formValues.category}
                                         onChange={handleInputChange}
-                                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e]"
+                                        className="w-full px-4 py-2.5 rounded-md border border-gray-200 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e]"
                                         placeholder="e.g. Reader, Tag"
                                     />
                                 </div>
@@ -823,7 +823,7 @@ export default function AddAssetPage() {
                                     value={formValues.assetName}
                                     onChange={handleInputChange}
                                     required
-                                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e]"
+                                    className="w-full px-4 py-2.5 rounded-md border border-gray-200 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e]"
                                     placeholder="e.g. UHF Reader PR-902"
                                 />
                             </div>
@@ -839,7 +839,7 @@ export default function AddAssetPage() {
                                     rows={3}
                                     value={formValues.assetDescription}
                                     onChange={handleInputChange}
-                                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e] resize-none"
+                                    className="w-full px-4 py-2.5 rounded-md border border-gray-200 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e] resize-none"
                                     placeholder="Specs, location, commissioning notes…"
                                 />
                             </div>
@@ -854,7 +854,7 @@ export default function AddAssetPage() {
                                     name="companyId"
                                     value={formValues.companyId}
                                     onChange={handleInputChange}
-                                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e] bg-white"
+                                    className="w-full px-4 py-2.5 rounded-md border border-gray-200 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e] bg-white"
                                 >
                                     <option value="">— None —</option>
                                     {companyOptions.map((c) => (
@@ -874,7 +874,7 @@ export default function AddAssetPage() {
                                     name="status"
                                     value={formValues.status}
                                     onChange={handleInputChange}
-                                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e] bg-white"
+                                    className="w-full px-4 py-2.5 rounded-md border border-gray-200 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e] bg-white"
                                 >
                                     <option value="Active">Active</option>
                                     <option value="Maintenance">Maintenance</option>
@@ -889,14 +889,14 @@ export default function AddAssetPage() {
                                         if (!isSubmitting) closeModal();
                                     }}
                                     disabled={isSubmitting}
-                                    className="px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+                                    className="px-4 py-2.5 rounded-md border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={isSubmitting}
-                                    className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-[#06124f] to-[#0a2a5e] hover:opacity-90 transition-opacity shadow-sm disabled:opacity-60"
+                                    className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-semibold text-white bg-gradient-to-r from-[#06124f] to-[#0a2a5e] hover:opacity-90 transition-opacity shadow-sm disabled:opacity-60"
                                 >
                                     {isSubmitting ? (
                                         <>

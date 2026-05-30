@@ -1,8 +1,8 @@
 export const inputClass =
-    "h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm font-medium text-gray-900 shadow-sm outline-none focus:border-[#0a2a5e] focus:ring-2 focus:ring-[#0a2a5e]/20";
+    "h-11 w-full rounded-md border border-gray-300 bg-white px-3 text-sm font-medium text-gray-900 shadow-sm outline-none focus:border-[#0a2a5e] focus:ring-2 focus:ring-[#0a2a5e]/20";
 export const labelClass = "mb-1.5 block text-xs font-bold uppercase tracking-wide text-gray-700";
 export const selectClass =
-    "h-11 w-full cursor-pointer rounded-lg border border-gray-300 bg-white px-3 text-sm font-medium text-gray-900 shadow-sm outline-none focus:border-[#0a2a5e] focus:ring-2 focus:ring-[#0a2a5e]/20";
+    "h-11 w-full cursor-pointer rounded-md border border-gray-300 bg-white px-3 text-sm font-medium text-gray-900 shadow-sm outline-none focus:border-[#0a2a5e] focus:ring-2 focus:ring-[#0a2a5e]/20";
 
 export type TaskStatus = "pending" | "in-progress" | "completed" | "overdue";
 export type TaskPriority = "high" | "medium" | "low";

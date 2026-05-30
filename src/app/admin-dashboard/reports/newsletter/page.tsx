@@ -123,12 +123,12 @@ export default function AdminNewsletterPage() {
     return (
         <div className="space-y-5">
             {error ? (
-                <div className="flex items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                <div className="flex items-center justify-between gap-3 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                     <span className="min-w-0 break-words">{error}</span>
                     <button
                         type="button"
                         onClick={() => void load()}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-red-100 px-3 py-2 text-xs font-semibold text-red-800"
+                        className="inline-flex items-center gap-1.5 rounded-md bg-red-100 px-3 py-2 text-xs font-semibold text-red-800"
                     >
                         <RefreshCw className="h-4 w-4" aria-hidden />
                         Retry
@@ -142,7 +142,7 @@ export default function AdminNewsletterPage() {
                     return (
                         <div
                             key={card.label}
-                            className={`rounded-2xl border p-4 shadow-sm ${card.className}`}
+                            className={`rounded-md border p-4 shadow-sm ${card.className}`}
                         >
                             <div className="flex items-start justify-between gap-2">
                                 <div>
@@ -158,7 +158,7 @@ export default function AdminNewsletterPage() {
                 })}
             </div>
 
-            <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+            <div className="rounded-md border border-gray-100 bg-white p-4 shadow-sm">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
                     <div className="grid flex-1 grid-cols-1 gap-3 sm:grid-cols-2">
                         <div>
@@ -168,7 +168,7 @@ export default function AdminNewsletterPage() {
                             <select
                                 value={status}
                                 onChange={(e) => setStatus(e.target.value as StatusFilter)}
-                                className="h-11 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm font-medium text-gray-900 outline-none focus:border-[#0a2a5e] focus:ring-2 focus:ring-[#0a2a5e]/20"
+                                className="h-11 w-full rounded-md border border-gray-200 bg-white px-3 text-sm font-medium text-gray-900 outline-none focus:border-[#0a2a5e] focus:ring-2 focus:ring-[#0a2a5e]/20"
                             >
                                 <option value="all">All</option>
                                 <option value="active">Active</option>
@@ -186,7 +186,7 @@ export default function AdminNewsletterPage() {
                                     value={query}
                                     onChange={(e) => setQuery(e.target.value)}
                                     placeholder="Search by email…"
-                                    className="h-11 w-full rounded-xl border border-gray-200 bg-white pl-9 pr-3 text-sm font-medium text-gray-900 outline-none focus:border-[#0a2a5e] focus:ring-2 focus:ring-[#0a2a5e]/20"
+                                    className="h-11 w-full rounded-md border border-gray-200 bg-white pl-9 pr-3 text-sm font-medium text-gray-900 outline-none focus:border-[#0a2a5e] focus:ring-2 focus:ring-[#0a2a5e]/20"
                                 />
                             </div>
                         </div>
@@ -195,7 +195,7 @@ export default function AdminNewsletterPage() {
                         type="button"
                         onClick={() => void load()}
                         disabled={loading}
-                        className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-800 shadow-sm transition hover:bg-gray-50 disabled:opacity-60"
+                        className="inline-flex items-center justify-center gap-2 rounded-md border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-800 shadow-sm transition hover:bg-gray-50 disabled:opacity-60"
                     >
                         {loading ? (
                             <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
@@ -207,7 +207,7 @@ export default function AdminNewsletterPage() {
                 </div>
             </div>
 
-            <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+            <div className="overflow-hidden rounded-md border border-gray-100 bg-white shadow-sm">
                 <div className="flex items-center justify-between gap-2 border-b border-gray-100 px-4 py-3.5 sm:px-6 sm:py-4">
                     <h2 className="text-sm font-bold text-gray-900 sm:text-base">Subscriptions</h2>
                     <p className="shrink-0 text-xs text-gray-500">{filteredCount} records</p>

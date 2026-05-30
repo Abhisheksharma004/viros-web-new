@@ -105,7 +105,7 @@ export default function AdminHeader({ onMenuClick }: { onMenuClick: () => void }
                         {showNotifications && (
                             <>
                                 <div className="fixed inset-0 z-10" onClick={() => setShowNotifications(false)} />
-                                <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-20 overflow-hidden">
+                                <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg border border-gray-200 z-20 overflow-hidden">
                                     <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
                                         <p className="text-sm font-bold text-gray-900">Notifications</p>
                                         <span className="text-xs text-[#0a2a5e] font-semibold cursor-pointer hover:underline">Mark all read</span>
@@ -144,7 +144,7 @@ export default function AdminHeader({ onMenuClick }: { onMenuClick: () => void }
                         {showProfileMenu && (
                             <>
                                 <div className="fixed inset-0 z-10" onClick={() => setShowProfileMenu(false)} />
-                                <div className="absolute right-0 mt-2 w-52 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
+                                <div className="absolute right-0 mt-2 w-52 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-20">
                                     <div className="px-4 py-2.5 border-b border-gray-200">
                                         <p className="text-sm font-bold text-gray-900">Administrator</p>
                                         <p className="text-xs text-gray-400 truncate">{adminEmail || "Super Admin"}</p>

@@ -423,12 +423,12 @@ export default function ExpenseManagementPage() {
     return (
         <div className="space-y-5">
             {error ? (
-                <div className="flex items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                <div className="flex items-center justify-between gap-3 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                     <span className="min-w-0 break-words">{error}</span>
                     <button
                         type="button"
                         onClick={refreshCurrentTab}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-red-100 px-3 py-2 text-xs font-semibold text-red-800"
+                        className="inline-flex items-center gap-1.5 rounded-md bg-red-100 px-3 py-2 text-xs font-semibold text-red-800"
                     >
                         <RefreshCw className="h-4 w-4" aria-hidden />
                         Retry
@@ -458,7 +458,7 @@ export default function ExpenseManagementPage() {
                 })}
             </div>
 
-            <div className="flex items-start gap-3 rounded-2xl border border-[#0a2a5e]/15 bg-[#0a2a5e]/5 px-4 py-3.5">
+            <div className="flex items-start gap-3 rounded-md border border-[#0a2a5e]/15 bg-[#0a2a5e]/5 px-4 py-3.5">
                 <Inbox className="mt-0.5 h-5 w-5 shrink-0 text-[#0a2a5e]" aria-hidden />
                 <div>
                     <p className="text-sm font-bold text-[#0a2a5e]">Monthly batch submissions</p>
@@ -470,11 +470,11 @@ export default function ExpenseManagementPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-                <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+                <div className="rounded-md border border-gray-100 bg-white p-4 shadow-sm">
                     <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Month</p>
                     <p className="mt-1 text-base font-bold text-gray-900">{monthLabel}</p>
                 </div>
-                <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+                <div className="rounded-md border border-gray-100 bg-white p-4 shadow-sm">
                     <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
                         {tab === "batches" ? "Batches" : "Expense lines"}
                     </p>
@@ -482,21 +482,21 @@ export default function ExpenseManagementPage() {
                         {tab === "batches" ? batchSummaries.length : stats.total}
                     </p>
                 </div>
-                <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
+                <div className="rounded-md border border-amber-200 bg-amber-50 p-4 shadow-sm">
                     <p className="text-xs font-semibold uppercase tracking-wide text-amber-800/80">Pending</p>
                     <p className="mt-1 text-xl font-bold text-amber-900">{stats.pending}</p>
                 </div>
-                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm">
+                <div className="rounded-md border border-emerald-200 bg-emerald-50 p-4 shadow-sm">
                     <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800/80">Approved</p>
                     <p className="mt-1 text-xl font-bold text-emerald-900">{stats.approved}</p>
                 </div>
-                <div className="rounded-2xl border border-red-200 bg-red-50 p-4 shadow-sm">
+                <div className="rounded-md border border-red-200 bg-red-50 p-4 shadow-sm">
                     <p className="text-xs font-semibold uppercase tracking-wide text-red-800/80">Rejected</p>
                     <p className="mt-1 text-xl font-bold text-red-900">{stats.rejected}</p>
                 </div>
             </div>
 
-            <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+            <div className="rounded-md border border-gray-100 bg-white p-4 shadow-sm">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
                     <div className="grid flex-1 grid-cols-1 gap-3 sm:grid-cols-3">
                         <div>
@@ -506,7 +506,7 @@ export default function ExpenseManagementPage() {
                             <select
                                 value={status}
                                 onChange={(e) => setStatus(e.target.value as StatusFilter)}
-                                className="h-11 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm font-medium text-gray-900 outline-none focus:border-[#0a2a5e] focus:ring-2 focus:ring-[#0a2a5e]/20"
+                                className="h-11 w-full rounded-md border border-gray-200 bg-white px-3 text-sm font-medium text-gray-900 outline-none focus:border-[#0a2a5e] focus:ring-2 focus:ring-[#0a2a5e]/20"
                             >
                                 <option value="all">All</option>
                                 <option value="pending">Pending</option>
@@ -522,7 +522,7 @@ export default function ExpenseManagementPage() {
                                 type="month"
                                 value={month}
                                 onChange={(e) => setMonth(e.target.value)}
-                                className="h-11 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm font-medium text-gray-900 outline-none focus:border-[#0a2a5e] focus:ring-2 focus:ring-[#0a2a5e]/20"
+                                className="h-11 w-full rounded-md border border-gray-200 bg-white px-3 text-sm font-medium text-gray-900 outline-none focus:border-[#0a2a5e] focus:ring-2 focus:ring-[#0a2a5e]/20"
                             />
                         </div>
                         <div>
@@ -536,7 +536,7 @@ export default function ExpenseManagementPage() {
                                     value={query}
                                     onChange={(e) => setQuery(e.target.value)}
                                     placeholder={tab === "batches" ? "Employee name or ID…" : "Expense ID, employee, title…"}
-                                    className="h-11 w-full rounded-xl border border-gray-200 bg-white pl-9 pr-3 text-sm font-medium text-gray-900 outline-none focus:border-[#0a2a5e] focus:ring-2 focus:ring-[#0a2a5e]/20"
+                                    className="h-11 w-full rounded-md border border-gray-200 bg-white pl-9 pr-3 text-sm font-medium text-gray-900 outline-none focus:border-[#0a2a5e] focus:ring-2 focus:ring-[#0a2a5e]/20"
                                 />
                             </div>
                         </div>
@@ -546,7 +546,7 @@ export default function ExpenseManagementPage() {
                             type="button"
                             onClick={() => void runExportExcel()}
                             disabled={!canExport || exportBusy !== null}
-                            className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-800 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="inline-flex items-center justify-center gap-2 rounded-md border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-800 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
                             title={
                                 canExport
                                     ? `Export ${exportCount} row(s) from current tab to Excel`
@@ -564,7 +564,7 @@ export default function ExpenseManagementPage() {
                             type="button"
                             onClick={() => void runExportPdf()}
                             disabled={!canExport || exportBusy !== null}
-                            className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-800 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="inline-flex items-center justify-center gap-2 rounded-md border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-800 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
                             title={
                                 canExport
                                     ? `Export ${exportCount} row(s) from current tab to PDF`
@@ -582,7 +582,7 @@ export default function ExpenseManagementPage() {
                             type="button"
                             onClick={refreshCurrentTab}
                             disabled={loading || exportBusy !== null}
-                            className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-800 shadow-sm transition hover:bg-gray-50 disabled:opacity-60"
+                            className="inline-flex items-center justify-center gap-2 rounded-md border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-800 shadow-sm transition hover:bg-gray-50 disabled:opacity-60"
                         >
                             {loading ? (
                                 <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
@@ -595,14 +595,14 @@ export default function ExpenseManagementPage() {
                 </div>
 
                 {tab === "lines" && employeeFilter ? (
-                    <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl border border-[#0a2a5e]/15 bg-[#0a2a5e]/5 px-3 py-2">
+                    <div className="mt-3 flex flex-wrap items-center gap-2 rounded-md border border-[#0a2a5e]/15 bg-[#0a2a5e]/5 px-3 py-2">
                         <span className="text-xs font-semibold text-[#0a2a5e]">
                             Filtered by employee: {selectedEmployeeLabel}
                         </span>
                         <button
                             type="button"
                             onClick={clearEmployeeFilter}
-                            className="rounded-lg bg-white px-2.5 py-1 text-xs font-bold text-[#0a2a5e] shadow-sm hover:bg-gray-50"
+                            className="rounded-md bg-white px-2.5 py-1 text-xs font-bold text-[#0a2a5e] shadow-sm hover:bg-gray-50"
                         >
                             Clear
                         </button>
@@ -611,7 +611,7 @@ export default function ExpenseManagementPage() {
             </div>
 
             {tab === "lines" ? (
-                <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+                <div className="overflow-hidden rounded-md border border-gray-100 bg-white shadow-sm">
                     <div className="flex items-center justify-between gap-2 border-b border-gray-100 px-4 py-3.5 sm:px-6 sm:py-4">
                         <h2 className="text-sm font-bold text-gray-900 sm:text-base">Expense lines</h2>
                         <p className="shrink-0 text-xs text-gray-500">{expenses.length} submitted records</p>
@@ -695,7 +695,7 @@ export default function ExpenseManagementPage() {
                                                     <button
                                                         type="button"
                                                         onClick={() => setViewExpense(row)}
-                                                        className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-[#0a2a5e]/15 bg-white text-[#0a2a5e] shadow-sm transition hover:bg-[#06b6d4]/5"
+                                                        className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-[#0a2a5e]/15 bg-white text-[#0a2a5e] shadow-sm transition hover:bg-[#06b6d4]/5"
                                                         title="View"
                                                         aria-label="View"
                                                     >
@@ -707,7 +707,7 @@ export default function ExpenseManagementPage() {
                                                                 type="button"
                                                                 disabled={updatingId === row.id}
                                                                 onClick={() => openApproveModal(row)}
-                                                                className="inline-flex h-10 items-center justify-center rounded-lg bg-emerald-600 px-3 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-60"
+                                                                className="inline-flex h-10 items-center justify-center rounded-md bg-emerald-600 px-3 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-60"
                                                             >
                                                                 Approve
                                                             </button>
@@ -715,7 +715,7 @@ export default function ExpenseManagementPage() {
                                                                 type="button"
                                                                 disabled={updatingId === row.id}
                                                                 onClick={() => openRejectModal(row)}
-                                                                className="inline-flex h-10 items-center justify-center rounded-lg bg-red-600 px-3 text-xs font-bold text-white shadow-sm hover:bg-red-700 disabled:opacity-60"
+                                                                className="inline-flex h-10 items-center justify-center rounded-md bg-red-600 px-3 text-xs font-bold text-white shadow-sm hover:bg-red-700 disabled:opacity-60"
                                                             >
                                                                 Reject
                                                             </button>
@@ -731,7 +731,7 @@ export default function ExpenseManagementPage() {
                     )}
                 </div>
             ) : (
-                <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+                <div className="overflow-hidden rounded-md border border-gray-100 bg-white shadow-sm">
                     <div className="flex items-center justify-between gap-2 border-b border-gray-100 px-4 py-3.5 sm:px-6 sm:py-4">
                         <h2 className="text-sm font-bold text-gray-900 sm:text-base">Monthly batches</h2>
                         <p className="shrink-0 text-xs text-gray-500">{batchSummaries.length} employees</p>
@@ -797,7 +797,7 @@ export default function ExpenseManagementPage() {
                                                         <button
                                                             type="button"
                                                             onClick={() => openEmployeeExpenses(row.employeeId)}
-                                                            className="inline-flex h-10 items-center justify-center gap-1.5 rounded-lg border border-[#0a2a5e]/15 bg-white px-3 text-xs font-semibold text-[#0a2a5e] shadow-sm transition hover:bg-[#06b6d4]/5"
+                                                            className="inline-flex h-10 items-center justify-center gap-1.5 rounded-md border border-[#0a2a5e]/15 bg-white px-3 text-xs font-semibold text-[#0a2a5e] shadow-sm transition hover:bg-[#06b6d4]/5"
                                                         >
                                                             <Eye className="h-4 w-4" aria-hidden />
                                                             View lines
@@ -808,7 +808,7 @@ export default function ExpenseManagementPage() {
                                                                     type="button"
                                                                     disabled={isUpdating}
                                                                     onClick={() => void reviewBatch(row, "approve")}
-                                                                    className="inline-flex h-10 items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-3 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-60"
+                                                                    className="inline-flex h-10 items-center justify-center gap-1.5 rounded-md bg-emerald-600 px-3 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-60"
                                                                 >
                                                                     {isUpdating ? (
                                                                         <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
@@ -821,7 +821,7 @@ export default function ExpenseManagementPage() {
                                                                     type="button"
                                                                     disabled={isUpdating}
                                                                     onClick={() => openBatchRejectModal(row)}
-                                                                    className="inline-flex h-10 items-center justify-center rounded-lg bg-red-600 px-3 text-xs font-bold text-white shadow-sm hover:bg-red-700 disabled:opacity-60"
+                                                                    className="inline-flex h-10 items-center justify-center rounded-md bg-red-600 px-3 text-xs font-bold text-white shadow-sm hover:bg-red-700 disabled:opacity-60"
                                                                 >
                                                                     Reject all
                                                                 </button>
@@ -851,7 +851,7 @@ export default function ExpenseManagementPage() {
                     <div
                         role="dialog"
                         aria-modal="true"
-                        className="relative flex max-h-[92dvh] w-full max-w-2xl flex-col overflow-hidden rounded-t-3xl border border-gray-200 bg-white shadow-2xl sm:max-h-[min(90vh,720px)] sm:rounded-2xl"
+                        className="relative flex max-h-[92dvh] w-full max-w-2xl flex-col overflow-hidden rounded-t-lg border border-gray-200 bg-white shadow-2xl sm:max-h-[min(90vh,720px)] sm:rounded-md"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="flex items-start justify-between gap-4 border-b border-gray-100 bg-gradient-to-r from-[#06124f] to-[#0a2a5e] px-5 py-4 sm:px-6">
@@ -862,7 +862,7 @@ export default function ExpenseManagementPage() {
                             <button
                                 type="button"
                                 onClick={() => setViewExpense(null)}
-                                className="flex h-10 w-10 items-center justify-center rounded-lg text-white/80 transition hover:bg-white/10 hover:text-white"
+                                className="flex h-10 w-10 items-center justify-center rounded-md text-white/80 transition hover:bg-white/10 hover:text-white"
                                 aria-label="Close"
                             >
                                 ✕
@@ -870,12 +870,12 @@ export default function ExpenseManagementPage() {
                         </div>
                         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6 sm:py-6">
                             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                                <div className="rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5">
+                                <div className="rounded-md border border-gray-100 bg-gray-50 px-3 py-2.5">
                                     <p className="text-[11px] font-bold uppercase tracking-wide text-gray-500">Employee</p>
                                     <p className="mt-1 text-sm font-semibold text-gray-900">{viewExpense.employee_name || "—"}</p>
                                     <p className="text-xs text-gray-500">{viewExpense.employee_id}</p>
                                 </div>
-                                <div className="rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5">
+                                <div className="rounded-md border border-gray-100 bg-gray-50 px-3 py-2.5">
                                     <p className="text-[11px] font-bold uppercase tracking-wide text-gray-500">Status</p>
                                     <p className="mt-1">
                                         <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${getExpenseStatusStyles(viewExpense.status)}`}>
@@ -883,45 +883,45 @@ export default function ExpenseManagementPage() {
                                         </span>
                                     </p>
                                 </div>
-                                <div className="rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5">
+                                <div className="rounded-md border border-gray-100 bg-gray-50 px-3 py-2.5">
                                     <p className="text-[11px] font-bold uppercase tracking-wide text-gray-500">Date</p>
                                     <p className="mt-1 text-sm font-semibold text-gray-900">{formatExpenseDate(viewExpense.expense_date)}</p>
                                 </div>
-                                <div className="rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5">
+                                <div className="rounded-md border border-gray-100 bg-gray-50 px-3 py-2.5">
                                     <p className="text-[11px] font-bold uppercase tracking-wide text-gray-500">Claimed amount</p>
                                     <p className="mt-1 text-sm font-semibold text-gray-900">{formatCurrency(viewExpense.amount)}</p>
                                 </div>
                                 {viewExpense.status === "approved" ? (
-                                    <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5">
+                                    <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2.5">
                                         <p className="text-[11px] font-bold uppercase tracking-wide text-emerald-800">Approved amount</p>
                                         <p className="mt-1 text-sm font-semibold text-emerald-900">
                                             {formatCurrency(resolveExpenseApprovedAmount(viewExpense) ?? viewExpense.amount)}
                                         </p>
                                     </div>
                                 ) : (
-                                    <div className="rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5">
+                                    <div className="rounded-md border border-gray-100 bg-gray-50 px-3 py-2.5">
                                         <p className="text-[11px] font-bold uppercase tracking-wide text-gray-500">Approved amount</p>
                                         <p className="mt-1 text-sm font-semibold text-gray-400">—</p>
                                     </div>
                                 )}
-                                <div className="rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5 sm:col-span-2">
+                                <div className="rounded-md border border-gray-100 bg-gray-50 px-3 py-2.5 sm:col-span-2">
                                     <p className="text-[11px] font-bold uppercase tracking-wide text-gray-500">Title</p>
                                     <p className="mt-1 text-sm font-semibold text-gray-900">{viewExpense.title}</p>
                                 </div>
                                 {viewExpense.from_address?.trim() ? (
-                                    <div className="rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5 sm:col-span-2">
+                                    <div className="rounded-md border border-gray-100 bg-gray-50 px-3 py-2.5 sm:col-span-2">
                                         <p className="text-[11px] font-bold uppercase tracking-wide text-gray-500">From address</p>
                                         <p className="mt-1 text-sm font-semibold text-gray-900 whitespace-pre-wrap break-words">{viewExpense.from_address}</p>
                                     </div>
                                 ) : null}
                                 {viewExpense.to_address?.trim() ? (
-                                    <div className="rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5 sm:col-span-2">
+                                    <div className="rounded-md border border-gray-100 bg-gray-50 px-3 py-2.5 sm:col-span-2">
                                         <p className="text-[11px] font-bold uppercase tracking-wide text-gray-500">To address</p>
                                         <p className="mt-1 text-sm font-semibold text-gray-900 whitespace-pre-wrap break-words">{viewExpense.to_address}</p>
                                     </div>
                                 ) : null}
                                 {viewExpense.status === "rejected" && viewExpense.reject_reason?.trim() ? (
-                                    <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 sm:col-span-2">
+                                    <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2.5 sm:col-span-2">
                                         <p className="text-[11px] font-bold uppercase tracking-wide text-red-800">Rejection reason</p>
                                         <p className="mt-1 text-sm font-semibold text-red-900 whitespace-pre-wrap break-words">
                                             {viewExpense.reject_reason}
@@ -937,7 +937,7 @@ export default function ExpenseManagementPage() {
                                         type="button"
                                         disabled={updatingId === viewExpense.id}
                                         onClick={() => openApproveModal(viewExpense)}
-                                        className="h-11 w-full rounded-xl bg-emerald-600 px-5 text-sm font-bold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-60 sm:w-auto"
+                                        className="h-11 w-full rounded-md bg-emerald-600 px-5 text-sm font-bold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-60 sm:w-auto"
                                     >
                                         Approve
                                     </button>
@@ -945,7 +945,7 @@ export default function ExpenseManagementPage() {
                                         type="button"
                                         disabled={updatingId === viewExpense.id}
                                         onClick={() => openRejectModal(viewExpense)}
-                                        className="h-11 w-full rounded-xl bg-red-600 px-5 text-sm font-bold text-white shadow-sm hover:bg-red-700 disabled:opacity-60 sm:w-auto"
+                                        className="h-11 w-full rounded-md bg-red-600 px-5 text-sm font-bold text-white shadow-sm hover:bg-red-700 disabled:opacity-60 sm:w-auto"
                                     >
                                         Reject
                                     </button>
@@ -954,7 +954,7 @@ export default function ExpenseManagementPage() {
                             <button
                                 type="button"
                                 onClick={() => setViewExpense(null)}
-                                className="h-11 w-full rounded-xl border border-gray-200 bg-white px-5 text-sm font-semibold text-gray-700 hover:bg-gray-50 sm:w-auto"
+                                className="h-11 w-full rounded-md border border-gray-200 bg-white px-5 text-sm font-semibold text-gray-700 hover:bg-gray-50 sm:w-auto"
                             >
                                 Close
                             </button>
@@ -973,7 +973,7 @@ export default function ExpenseManagementPage() {
                 >
                     <div className="absolute inset-0 bg-black/50" aria-hidden />
                     <div
-                        className="relative w-full max-w-md overflow-hidden rounded-t-2xl border border-gray-200 bg-white shadow-2xl sm:rounded-2xl"
+                        className="relative w-full max-w-md overflow-hidden rounded-t-lg border border-gray-200 bg-white shadow-2xl sm:rounded-md"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="border-b border-white/10 bg-gradient-to-r from-emerald-700 to-emerald-600 px-5 py-4 text-white">
@@ -1014,7 +1014,7 @@ export default function ExpenseManagementPage() {
                                             setApproveAmount(e.target.value);
                                             setApproveError("");
                                         }}
-                                        className="h-11 w-full rounded-xl border border-gray-200 bg-white pl-9 pr-3 text-sm font-medium text-gray-900 outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20"
+                                        className="h-11 w-full rounded-md border border-gray-200 bg-white pl-9 pr-3 text-sm font-medium text-gray-900 outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20"
                                     />
                                 </div>
                                 <p className="mt-1.5 text-xs text-gray-500">
@@ -1022,7 +1022,7 @@ export default function ExpenseManagementPage() {
                                 </p>
                             </div>
                             {approveError ? (
-                                <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+                                <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
                                     {approveError}
                                 </p>
                             ) : null}
@@ -1031,7 +1031,7 @@ export default function ExpenseManagementPage() {
                                     type="button"
                                     onClick={closeApproveModal}
                                     disabled={updatingId === approveModal.id}
-                                    className="inline-flex h-11 items-center justify-center rounded-xl border border-gray-200 px-5 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+                                    className="inline-flex h-11 items-center justify-center rounded-md border border-gray-200 px-5 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-60"
                                 >
                                     Cancel
                                 </button>
@@ -1039,7 +1039,7 @@ export default function ExpenseManagementPage() {
                                     type="button"
                                     onClick={confirmApprove}
                                     disabled={updatingId === approveModal.id}
-                                    className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-6 text-sm font-bold text-white hover:bg-emerald-700 disabled:opacity-60"
+                                    className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-emerald-600 px-6 text-sm font-bold text-white hover:bg-emerald-700 disabled:opacity-60"
                                 >
                                     {updatingId === approveModal.id ? (
                                         <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
@@ -1064,7 +1064,7 @@ export default function ExpenseManagementPage() {
                 >
                     <div className="absolute inset-0 bg-black/50" aria-hidden />
                     <div
-                        className="relative w-full max-w-md overflow-hidden rounded-t-2xl border border-gray-200 bg-white shadow-2xl sm:rounded-2xl"
+                        className="relative w-full max-w-md overflow-hidden rounded-t-lg border border-gray-200 bg-white shadow-2xl sm:rounded-md"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="border-b border-white/10 bg-gradient-to-r from-[#06124f] to-[#0a2a5e] px-5 py-4 text-white">
@@ -1093,11 +1093,11 @@ export default function ExpenseManagementPage() {
                                     }}
                                     rows={4}
                                     placeholder="Reason for rejection…"
-                                    className="w-full resize-none rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-medium text-gray-900 outline-none focus:border-[#0a2a5e] focus:ring-2 focus:ring-[#0a2a5e]/20"
+                                    className="w-full resize-none rounded-md border border-gray-200 bg-white px-3 py-2.5 text-sm font-medium text-gray-900 outline-none focus:border-[#0a2a5e] focus:ring-2 focus:ring-[#0a2a5e]/20"
                                 />
                             </div>
                             {rejectError ? (
-                                <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+                                <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
                                     {rejectError}
                                 </p>
                             ) : null}
@@ -1106,7 +1106,7 @@ export default function ExpenseManagementPage() {
                                     type="button"
                                     onClick={closeRejectModal}
                                     disabled={updatingId === rejectModal.id}
-                                    className="inline-flex h-11 items-center justify-center rounded-xl border border-gray-200 px-5 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+                                    className="inline-flex h-11 items-center justify-center rounded-md border border-gray-200 px-5 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-60"
                                 >
                                     Cancel
                                 </button>
@@ -1114,7 +1114,7 @@ export default function ExpenseManagementPage() {
                                     type="button"
                                     onClick={confirmReject}
                                     disabled={updatingId === rejectModal.id}
-                                    className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-red-600 px-6 text-sm font-bold text-white hover:bg-red-700 disabled:opacity-60"
+                                    className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-red-600 px-6 text-sm font-bold text-white hover:bg-red-700 disabled:opacity-60"
                                 >
                                     {updatingId === rejectModal.id ? (
                                         <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
@@ -1139,7 +1139,7 @@ export default function ExpenseManagementPage() {
                 >
                     <div className="absolute inset-0 bg-black/50" aria-hidden />
                     <div
-                        className="relative w-full max-w-md overflow-hidden rounded-t-2xl border border-gray-200 bg-white shadow-2xl sm:rounded-2xl"
+                        className="relative w-full max-w-md overflow-hidden rounded-t-lg border border-gray-200 bg-white shadow-2xl sm:rounded-md"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="border-b border-white/10 bg-gradient-to-r from-[#06124f] to-[#0a2a5e] px-5 py-4 text-white">
@@ -1175,11 +1175,11 @@ export default function ExpenseManagementPage() {
                                     }}
                                     rows={4}
                                     placeholder="Reason for rejection…"
-                                    className="w-full resize-none rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-medium text-gray-900 outline-none focus:border-[#0a2a5e] focus:ring-2 focus:ring-[#0a2a5e]/20"
+                                    className="w-full resize-none rounded-md border border-gray-200 bg-white px-3 py-2.5 text-sm font-medium text-gray-900 outline-none focus:border-[#0a2a5e] focus:ring-2 focus:ring-[#0a2a5e]/20"
                                 />
                             </div>
                             {rejectError ? (
-                                <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+                                <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
                                     {rejectError}
                                 </p>
                             ) : null}
@@ -1188,7 +1188,7 @@ export default function ExpenseManagementPage() {
                                     type="button"
                                     onClick={closeBatchRejectModal}
                                     disabled={Boolean(batchUpdatingId)}
-                                    className="inline-flex h-11 items-center justify-center rounded-xl border border-gray-200 px-5 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+                                    className="inline-flex h-11 items-center justify-center rounded-md border border-gray-200 px-5 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-60"
                                 >
                                     Cancel
                                 </button>
@@ -1196,7 +1196,7 @@ export default function ExpenseManagementPage() {
                                     type="button"
                                     onClick={confirmBatchReject}
                                     disabled={Boolean(batchUpdatingId)}
-                                    className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-red-600 px-6 text-sm font-bold text-white hover:bg-red-700 disabled:opacity-60"
+                                    className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-red-600 px-6 text-sm font-bold text-white hover:bg-red-700 disabled:opacity-60"
                                 >
                                     {batchUpdatingId ? (
                                         <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
