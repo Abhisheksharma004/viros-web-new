@@ -6,6 +6,7 @@ import {
     createEmployeeExpense,
     getEmployeeExpenseSummary,
     getEmployeeExpenseSummaryByStatus,
+    getEmployeeMonthClaimInfo,
     listEmployeeExpenses,
 } from "@/lib/employeeExpenses";
 import type { ExpenseStatus } from "@/lib/employeeExpenses";
@@ -29,19 +30,33 @@ export async function GET(request: Request) {
         const statusParam = searchParams.get("status")?.trim() as ExpenseStatus | undefined;
         const status =
             statusParam && EXPENSE_STATUSES.includes(statusParam) ? statusParam : undefined;
+        const excludeApproved =
+            searchParams.get("excludeApproved") === "true" ||
+            searchParams.get("excludeApproved") === "1";
 
-        const [expenses, summary] = await Promise.all([
-            listEmployeeExpenses(session.employeeId, { month, limit, status }),
+        const listOptions = {
+            month,
+            limit,
+            status,
+            excludeApproved: excludeApproved && !status,
+        };
+
+        const [expenses, summary, monthClaim] = await Promise.all([
+            listEmployeeExpenses(session.employeeId, listOptions),
             status
                 ? getEmployeeExpenseSummaryByStatus(session.employeeId, month, status)
-                : getEmployeeExpenseSummary(session.employeeId, month),
+                : getEmployeeExpenseSummary(session.employeeId, month, {
+                      excludeApproved,
+                  }),
+            getEmployeeMonthClaimInfo(session.employeeId, month),
         ]);
 
         return NextResponse.json({
             expenses,
             summary: status
-                ? { ...summary, pendingCount: 0 }
+                ? { ...summary, pendingCount: 0, draftCount: 0, draftAmount: 0 }
                 : summary,
+            monthClaim,
             month,
             status: status ?? null,
             categories: EXPENSE_CATEGORIES,
@@ -94,6 +109,18 @@ export async function POST(request: Request) {
             return NextResponse.json({ message: "Select a valid payment mode" }, { status: 400 });
         }
 
+        const expenseMonth = expenseDate.slice(0, 7);
+        const monthClaim = await getEmployeeMonthClaimInfo(session.employeeId, expenseMonth);
+        if (!monthClaim.canAdd) {
+            return NextResponse.json(
+                {
+                    message:
+                        "This month has already been submitted for approval. You cannot add more expenses.",
+                },
+                { status: 400 },
+            );
+        }
+
         const fromAddress =
             typeof body.from_address === "string" ? body.from_address.trim() : "";
         const toAddress = typeof body.to_address === "string" ? body.to_address.trim() : "";
@@ -117,7 +144,7 @@ export async function POST(request: Request) {
 
         return NextResponse.json(
             {
-                message: `Expense submitted successfully (${expense.expense_id})`,
+                message: `Expense saved as draft (${expense.expense_id})`,
                 expense,
                 summary,
             },

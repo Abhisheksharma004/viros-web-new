@@ -3,6 +3,7 @@ import {
     formatExpenseDate,
     formatExpenseDateTime,
     getExpenseStatusLabel,
+    resolveExpenseApprovedAmount,
 } from "@/lib/employeeExpenseUi";
 import { todayDateOnly } from "@/lib/dateOnly";
 
@@ -14,7 +15,8 @@ export type AdminExpenseExportRow = {
     expenseDate: string;
     category: string;
     title: string;
-    amount: number;
+    claimedAmount: number;
+    approvedAmount: number;
     paymentMode: string;
     status: string;
     rejectReason: string;
@@ -50,7 +52,8 @@ const EXPENSE_COLUMNS: {
     { header: "Date", key: "expenseDate", width: 14 },
     { header: "Category", key: "category", width: 14 },
     { header: "Title", key: "title", width: 28 },
-    { header: "Amount", key: "amount", width: 12 },
+    { header: "Claimed Amount", key: "claimedAmount", width: 14 },
+    { header: "Approved Amount", key: "approvedAmount", width: 14 },
     { header: "Payment Mode", key: "paymentMode", width: 14 },
     { header: "Status", key: "status", width: 12 },
     { header: "Reject Reason", key: "rejectReason", width: 24 },
@@ -212,7 +215,8 @@ export function mapExpensesToExportRows(expenses: EmployeeExpenseRow[]): AdminEx
         expenseDate: formatExpenseDate(row.expense_date),
         category: row.category,
         title: row.title,
-        amount: Number(row.amount) || 0,
+        claimedAmount: Number(row.amount) || 0,
+        approvedAmount: resolveExpenseApprovedAmount(row) ?? 0,
         paymentMode: row.payment_mode,
         status: getExpenseStatusLabel(row.status),
         rejectReason: row.reject_reason?.trim() || "",

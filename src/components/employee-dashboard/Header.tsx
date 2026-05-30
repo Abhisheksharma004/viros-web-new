@@ -37,12 +37,16 @@ const PAGE_HEADERS: Record<string, { title: string; subtitle?: string }> = {
         subtitle: "Completed tasks assigned to you",
     },
     "/employee-dashboard/add-expense": {
-        title: "Add Expense",
-        subtitle: "Submit a new expense claim",
+        title: "Monthly Expenses",
+        subtitle: "Add expenses for the month and submit in one batch for approval",
+    },
+    "/employee-dashboard/approved-expense": {
+        title: "Approved Expense",
+        subtitle: "Claimed and approved amounts for admin-approved expenses",
     },
     "/employee-dashboard/expense-history": {
-        title: "Expense History",
-        subtitle: "Approved expense records",
+        title: "Approved Expense",
+        subtitle: "Claimed and approved amounts for admin-approved expenses",
     },
     "/employee-dashboard/monthly-history": {
         title: "Monthly History",

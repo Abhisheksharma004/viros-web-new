@@ -204,15 +204,6 @@ const menuItems = [
                 ),
                 href: "/admin-dashboard/shift",
             },
-            {
-                title: "Birthdays",
-                icon: (
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 15.546c-.523 0-1.046.151-1.5.454a2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.701 2.701 0 00-1.5-.454M9 6l3-3 3 3M12 3v12" />
-                    </svg>
-                ),
-                href: "/admin-dashboard/employees/birthdays",
-            },
         ],
     },
     {

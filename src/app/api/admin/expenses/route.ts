@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import {
-    EXPENSE_STATUSES,
+    EXPENSE_ADMIN_STATUSES,
+    listAdminExpenseBatchSummaries,
     listAdminExpenseEmployeeSummaries,
     listAllExpensesForAdmin,
 } from "@/lib/employeeExpenses";
@@ -10,7 +11,7 @@ type StatusFilter = ExpenseStatus | "all";
 
 function parseStatusFilter(param: string | undefined): StatusFilter {
     if (!param || param === "all") return "all";
-    if ((EXPENSE_STATUSES as readonly string[]).includes(param)) {
+    if ((EXPENSE_ADMIN_STATUSES as readonly string[]).includes(param)) {
         return param as ExpenseStatus;
     }
     return "all";
@@ -39,10 +40,11 @@ export async function GET(request: Request) {
             limit,
         };
 
-        if (view === "employee-wise") {
+        if (view === "employee-wise" || view === "monthly-batches") {
             const employees = await listAdminExpenseEmployeeSummaries(filters);
+            const batches = await listAdminExpenseBatchSummaries(filters);
             return NextResponse.json(
-                { employees },
+                { employees, batches, month: month ?? null },
                 { headers: { "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0" } },
             );
         }

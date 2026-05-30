@@ -31,7 +31,10 @@ export const EXPENSE_CATEGORIES = [
 
 export const EXPENSE_PAYMENT_MODES = ["Cash", "UPI", "Card", "Bank Transfer"] as const;
 
-export const EXPENSE_STATUSES = ["pending", "approved", "rejected"] as const;
+export const EXPENSE_STATUSES = ["draft", "pending", "approved", "rejected"] as const;
+
+/** Statuses visible to admin after an employee submits their monthly batch. */
+export const EXPENSE_ADMIN_STATUSES = ["pending", "approved", "rejected"] as const;
 
 export type ExpenseStatus = (typeof EXPENSE_STATUSES)[number];
 export type ExpenseCategory = (typeof EXPENSE_CATEGORIES)[number];
@@ -63,6 +66,7 @@ export type EmployeeExpenseRow = {
     to_address: string | null;
     title: string;
     amount: number;
+    approved_amount: number | null;
     payment_mode: string;
     receipt_reference: string | null;
     status: ExpenseStatus;
@@ -81,6 +85,7 @@ type DbRow = RowDataPacket & {
     to_address: string | null;
     title: string;
     amount: string | number;
+    approved_amount: string | number | null;
     payment_mode: string;
     receipt_reference: string | null;
     status: string;
@@ -91,7 +96,7 @@ type DbRow = RowDataPacket & {
 type ColumnNameRow = RowDataPacket & { COLUMN_NAME: string };
 
 const EXPENSE_ROW_SELECT = `id, expense_id, employee_id, employee_name, expense_date, category, from_address, to_address,
-                title, amount, payment_mode, receipt_reference, status, reject_reason, created_at`;
+                title, amount, approved_amount, payment_mode, receipt_reference, status, reject_reason, created_at`;
 
 let ensureTablePromise: Promise<void> | null = null;
 
@@ -131,7 +136,7 @@ async function runEnsure() {
             amount DECIMAL(12, 2) NOT NULL,
             payment_mode VARCHAR(32) NOT NULL,
             receipt_reference VARCHAR(128) NULL,
-            status ENUM('pending', 'approved', 'rejected') NOT NULL DEFAULT 'pending',
+            status ENUM('draft', 'pending', 'approved', 'rejected') NOT NULL DEFAULT 'draft',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             UNIQUE KEY uk_employee_expenses_expense_id (expense_id),
@@ -159,6 +164,10 @@ async function runEnsure() {
             column: "reject_reason",
             sql: `ALTER TABLE ${TABLE} ADD COLUMN reject_reason TEXT NULL AFTER status`,
         },
+        {
+            column: "approved_amount",
+            sql: `ALTER TABLE ${TABLE} ADD COLUMN approved_amount DECIMAL(12, 2) NULL AFTER amount`,
+        },
     ];
 
     for (const migration of migrations) {
@@ -172,12 +181,20 @@ async function runEnsure() {
         `ALTER TABLE ${TABLE} MODIFY COLUMN category ENUM(${sqlCategoryEnumDefinition()}) NOT NULL`,
     );
 
+    await pool.query(
+        `ALTER TABLE ${TABLE} MODIFY COLUMN status ENUM('draft', 'pending', 'approved', 'rejected') NOT NULL DEFAULT 'draft'`,
+    );
+
     if (columns.has("notes")) {
         await pool.query(`ALTER TABLE ${TABLE} DROP COLUMN notes`);
         columns.delete("notes");
     }
 
     await backfillMissingExpenseIds();
+
+    await pool.query(
+        `UPDATE ${TABLE} SET approved_amount = amount WHERE status = 'approved' AND approved_amount IS NULL`,
+    );
 
     columns = await getExpenseTableColumns();
     if (columns.has("expense_id")) {
@@ -291,11 +308,15 @@ export function mapExpenseRow(row: DbRow): EmployeeExpenseRow {
         to_address: row.to_address ?? null,
         title: row.title,
         amount: Number(row.amount) || 0,
+        approved_amount:
+            row.approved_amount === null || row.approved_amount === undefined
+                ? null
+                : Number(row.approved_amount) || 0,
         payment_mode: row.payment_mode,
         receipt_reference: row.receipt_reference,
         status: (EXPENSE_STATUSES.includes(row.status as ExpenseStatus)
             ? row.status
-            : "pending") as ExpenseStatus,
+            : "draft") as ExpenseStatus,
         reject_reason: row.reject_reason?.trim() || null,
         created_at: toIsoDateTime(row.created_at),
     };
@@ -303,7 +324,7 @@ export function mapExpenseRow(row: DbRow): EmployeeExpenseRow {
 
 export async function listEmployeeExpenses(
     employeeId: string,
-    options?: { limit?: number; month?: string; status?: ExpenseStatus },
+    options?: { limit?: number; month?: string; status?: ExpenseStatus; excludeApproved?: boolean },
 ): Promise<EmployeeExpenseRow[]> {
     await ensureEmployeeExpensesTable();
 
@@ -319,6 +340,10 @@ export async function listEmployeeExpenses(
     if (options?.status && EXPENSE_STATUSES.includes(options.status)) {
         extraFilters += " AND status = ?";
         params.push(options.status);
+    }
+
+    if (options?.excludeApproved) {
+        extraFilters += " AND status != 'approved'";
     }
 
     params.push(limit);
@@ -342,9 +367,14 @@ export async function getEmployeeExpenseSummaryByStatus(
 ) {
     await ensureEmployeeExpensesTable();
 
+    const amountSql =
+        status === "approved"
+            ? "COALESCE(SUM(COALESCE(approved_amount, amount)), 0)"
+            : "COALESCE(SUM(amount), 0)";
+
     const [rows] = await pool.query<RowDataPacket[]>(
         `SELECT
-            COALESCE(SUM(amount), 0) AS total_amount,
+            ${amountSql} AS total_amount,
             COUNT(*) AS expense_count
          FROM ${TABLE}
          WHERE employee_id = ? AND DATE_FORMAT(expense_date, '%Y-%m') = ? AND status = ?`,
@@ -385,7 +415,7 @@ export async function createEmployeeExpense(input: CreateExpenseInput): Promise<
         const [result] = await conn.query<ResultSetHeader>(
             `INSERT INTO ${TABLE}
                 (expense_id, employee_id, employee_name, expense_date, category, from_address, to_address, title, amount, payment_mode, receipt_reference, status)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft')`,
             [
                 expenseId,
                 input.employeeId,
@@ -421,27 +451,272 @@ export async function createEmployeeExpense(input: CreateExpenseInput): Promise<
     }
 }
 
-export async function getEmployeeExpenseSummary(employeeId: string, month: string) {
+export async function getEmployeeExpenseSummary(
+    employeeId: string,
+    month: string,
+    options?: { excludeApproved?: boolean },
+) {
     await ensureEmployeeExpensesTable();
+
+    const approvedFilter = options?.excludeApproved ? " AND status != 'approved'" : "";
 
     const [rows] = await pool.query<RowDataPacket[]>(
         `SELECT
             COALESCE(SUM(amount), 0) AS total_amount,
             COUNT(*) AS expense_count,
-            SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) AS pending_count
+            SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) AS pending_count,
+            SUM(CASE WHEN status = 'draft' THEN 1 ELSE 0 END) AS draft_count,
+            COALESCE(SUM(CASE WHEN status = 'draft' THEN amount ELSE 0 END), 0) AS draft_amount
+         FROM ${TABLE}
+         WHERE employee_id = ? AND DATE_FORMAT(expense_date, '%Y-%m') = ?${approvedFilter}`,
+        [employeeId, month],
+    );
+
+    const row = rows[0] as
+        | (RowDataPacket & {
+              total_amount: string | number;
+              expense_count: number;
+              pending_count: number;
+              draft_count: number;
+              draft_amount: string | number;
+          })
+        | undefined;
+    return {
+        totalAmount: Number(row?.total_amount) || 0,
+        expenseCount: Number(row?.expense_count) || 0,
+        pendingCount: Number(row?.pending_count) || 0,
+        draftCount: Number(row?.draft_count) || 0,
+        draftAmount: Number(row?.draft_amount) || 0,
+    };
+}
+
+export type MonthClaimStatus = "empty" | "draft" | "submitted";
+
+export type EmployeeMonthClaimInfo = {
+    status: MonthClaimStatus;
+    draftCount: number;
+    draftAmount: number;
+    submittedCount: number;
+    pendingCount: number;
+    approvedCount: number;
+    rejectedCount: number;
+    canAdd: boolean;
+    canSubmit: boolean;
+    canEdit: boolean;
+};
+
+export async function getEmployeeMonthClaimInfo(
+    employeeId: string,
+    month: string,
+): Promise<EmployeeMonthClaimInfo> {
+    await ensureEmployeeExpensesTable();
+
+    const [rows] = await pool.query<RowDataPacket[]>(
+        `SELECT
+            SUM(CASE WHEN status = 'draft' THEN 1 ELSE 0 END) AS draft_count,
+            COALESCE(SUM(CASE WHEN status = 'draft' THEN amount ELSE 0 END), 0) AS draft_amount,
+            SUM(CASE WHEN status IN ('pending', 'approved', 'rejected') THEN 1 ELSE 0 END) AS submitted_count,
+            SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) AS pending_count,
+            SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) AS approved_count,
+            SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) AS rejected_count
          FROM ${TABLE}
          WHERE employee_id = ? AND DATE_FORMAT(expense_date, '%Y-%m') = ?`,
         [employeeId, month],
     );
 
     const row = rows[0] as
-        | (RowDataPacket & { total_amount: string | number; expense_count: number; pending_count: number })
+        | (RowDataPacket & {
+              draft_count: number;
+              draft_amount: string | number;
+              submitted_count: number;
+              pending_count: number;
+              approved_count: number;
+              rejected_count: number;
+          })
         | undefined;
+
+    const draftCount = Number(row?.draft_count) || 0;
+    const draftAmount = Number(row?.draft_amount) || 0;
+    const submittedCount = Number(row?.submitted_count) || 0;
+    const pendingCount = Number(row?.pending_count) || 0;
+    const approvedCount = Number(row?.approved_count) || 0;
+    const rejectedCount = Number(row?.rejected_count) || 0;
+
+    let status: MonthClaimStatus = "empty";
+    if (draftCount > 0 && submittedCount === 0) status = "draft";
+    else if (submittedCount > 0) status = "submitted";
+
+    const isDraftOnly = status === "draft" || status === "empty";
+
     return {
-        totalAmount: Number(row?.total_amount) || 0,
-        expenseCount: Number(row?.expense_count) || 0,
-        pendingCount: Number(row?.pending_count) || 0,
+        status,
+        draftCount,
+        draftAmount,
+        submittedCount,
+        pendingCount,
+        approvedCount,
+        rejectedCount,
+        canAdd: isDraftOnly,
+        canSubmit: draftCount > 0 && submittedCount === 0,
+        canEdit: isDraftOnly,
     };
+}
+
+export async function submitEmployeeExpenseMonth(
+    employeeId: string,
+    month: string,
+): Promise<{ submittedCount: number; totalAmount: number }> {
+    await ensureEmployeeExpensesTable();
+
+    if (!/^\d{4}-\d{2}$/.test(month)) {
+        throw new Error("Valid month (YYYY-MM) is required");
+    }
+
+    const claimInfo = await getEmployeeMonthClaimInfo(employeeId, month);
+    if (!claimInfo.canSubmit) {
+        if (claimInfo.submittedCount > 0) {
+            throw new Error("This month's expenses have already been submitted for approval");
+        }
+        throw new Error("Add at least one expense before submitting");
+    }
+
+    const conn = await pool.getConnection();
+    try {
+        await conn.beginTransaction();
+
+        const [result] = await conn.query<ResultSetHeader>(
+            `UPDATE ${TABLE}
+             SET status = 'pending', updated_at = CURRENT_TIMESTAMP
+             WHERE employee_id = ?
+               AND DATE_FORMAT(expense_date, '%Y-%m') = ?
+               AND status = 'draft'`,
+            [employeeId, month],
+        );
+
+        const [sumRows] = await conn.query<RowDataPacket[]>(
+            `SELECT COALESCE(SUM(amount), 0) AS total_amount
+             FROM ${TABLE}
+             WHERE employee_id = ?
+               AND DATE_FORMAT(expense_date, '%Y-%m') = ?
+               AND status = 'pending'`,
+            [employeeId, month],
+        );
+
+        await conn.commit();
+
+        const totalAmount = Number((sumRows[0] as RowDataPacket & { total_amount: string | number })?.total_amount) || 0;
+
+        return {
+            submittedCount: result.affectedRows,
+            totalAmount,
+        };
+    } catch (error) {
+        await conn.rollback();
+        throw error;
+    } finally {
+        conn.release();
+    }
+}
+
+export async function getEmployeeExpenseById(
+    employeeId: string,
+    recordId: number,
+): Promise<EmployeeExpenseRow | null> {
+    await ensureEmployeeExpensesTable();
+    if (!Number.isFinite(recordId) || recordId <= 0) return null;
+
+    const [rows] = await pool.query<DbRow[]>(
+        `SELECT ${EXPENSE_ROW_SELECT}
+         FROM ${TABLE}
+         WHERE id = ? AND employee_id = ?
+         LIMIT 1`,
+        [recordId, employeeId],
+    );
+
+    const row = rows[0];
+    if (!row) return null;
+    return mapExpenseRow(row);
+}
+
+export type UpdateExpenseInput = {
+    expenseDate: string;
+    category: string;
+    fromAddress?: string | null;
+    toAddress?: string | null;
+    title: string;
+    amount: number;
+    paymentMode: string;
+    receiptReference?: string | null;
+};
+
+export async function updateEmployeeExpense(
+    employeeId: string,
+    recordId: number,
+    input: UpdateExpenseInput,
+): Promise<EmployeeExpenseRow | null> {
+    await ensureEmployeeExpensesTable();
+    if (!Number.isFinite(recordId) || recordId <= 0) return null;
+
+    const existing = await getEmployeeExpenseById(employeeId, recordId);
+    if (!existing) return null;
+    if (existing.status !== "draft") {
+        throw new Error("Only draft expenses can be edited");
+    }
+
+    const month = input.expenseDate.slice(0, 7);
+    const claimInfo = await getEmployeeMonthClaimInfo(employeeId, month);
+    if (!claimInfo.canAdd) {
+        throw new Error("This month has already been submitted and cannot be edited");
+    }
+
+    await pool.query(
+        `UPDATE ${TABLE}
+         SET expense_date = ?, category = ?, from_address = ?, to_address = ?,
+             title = ?, amount = ?, payment_mode = ?, receipt_reference = ?,
+             updated_at = CURRENT_TIMESTAMP
+         WHERE id = ? AND employee_id = ? AND status = 'draft'`,
+        [
+            input.expenseDate,
+            input.category,
+            input.fromAddress?.trim() || null,
+            input.toAddress?.trim() || null,
+            input.title,
+            input.amount,
+            input.paymentMode,
+            input.receiptReference?.trim() || null,
+            recordId,
+            employeeId,
+        ],
+    );
+
+    return getEmployeeExpenseById(employeeId, recordId);
+}
+
+export async function deleteEmployeeExpense(
+    employeeId: string,
+    recordId: number,
+): Promise<boolean> {
+    await ensureEmployeeExpensesTable();
+    if (!Number.isFinite(recordId) || recordId <= 0) return false;
+
+    const existing = await getEmployeeExpenseById(employeeId, recordId);
+    if (!existing) return false;
+    if (existing.status !== "draft") {
+        throw new Error("Only draft expenses can be deleted");
+    }
+
+    const month = existing.expense_date.slice(0, 7);
+    const claimInfo = await getEmployeeMonthClaimInfo(employeeId, month);
+    if (!claimInfo.canEdit) {
+        throw new Error("This month has already been submitted and cannot be modified");
+    }
+
+    const [result] = await pool.query<ResultSetHeader>(
+        `DELETE FROM ${TABLE} WHERE id = ? AND employee_id = ? AND status = 'draft'`,
+        [recordId, employeeId],
+    );
+
+    return result.affectedRows > 0;
 }
 
 export type AdminExpenseFilters = {
@@ -459,7 +734,7 @@ export async function listAllExpensesForAdmin(filters?: AdminExpenseFilters): Pr
 
     const limit = Math.min(Math.max(filters?.limit ?? 200, 1), 500);
     const params: unknown[] = [];
-    const where: string[] = [];
+    const where: string[] = ["status != 'draft'"];
 
     const month = filters?.month?.trim();
     if (month && /^\d{4}-\d{2}$/.test(month)) {
@@ -486,7 +761,11 @@ export async function listAllExpensesForAdmin(filters?: AdminExpenseFilters): Pr
     }
 
     const status = filters?.status;
-    if (status && status !== "all" && EXPENSE_STATUSES.includes(status as ExpenseStatus)) {
+    if (
+        status &&
+        status !== "all" &&
+        (EXPENSE_ADMIN_STATUSES as readonly string[]).includes(status)
+    ) {
         where.push("status = ?");
         params.push(status);
     }
@@ -535,7 +814,7 @@ export async function listAdminExpenseEmployeeSummaries(
     await ensureEmployeeExpensesTable();
 
     const params: unknown[] = [];
-    const where: string[] = [];
+    const where: string[] = ["status != 'draft'"];
 
     const month = filters?.month?.trim();
     if (month && /^\d{4}-\d{2}$/.test(month)) {
@@ -556,7 +835,11 @@ export async function listAdminExpenseEmployeeSummaries(
     }
 
     const status = filters?.status;
-    if (status && status !== "all" && EXPENSE_STATUSES.includes(status as ExpenseStatus)) {
+    if (
+        status &&
+        status !== "all" &&
+        (EXPENSE_ADMIN_STATUSES as readonly string[]).includes(status)
+    ) {
         where.push("status = ?");
         params.push(status);
     }
@@ -592,7 +875,7 @@ export async function listAdminExpenseEmployeeSummaries(
             SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) AS pending_count,
             COALESCE(SUM(CASE WHEN status = 'pending' THEN amount ELSE 0 END), 0) AS pending_amount,
             SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) AS approved_count,
-            COALESCE(SUM(CASE WHEN status = 'approved' THEN amount ELSE 0 END), 0) AS approved_amount,
+            COALESCE(SUM(CASE WHEN status = 'approved' THEN COALESCE(approved_amount, amount) ELSE 0 END), 0) AS approved_amount,
             SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) AS rejected_count,
             COALESCE(SUM(CASE WHEN status = 'rejected' THEN amount ELSE 0 END), 0) AS rejected_amount
          FROM ${TABLE}
@@ -616,30 +899,165 @@ export async function listAdminExpenseEmployeeSummaries(
     }));
 }
 
+export type AdminBatchReviewStatus =
+    | "pending_review"
+    | "partial"
+    | "all_approved"
+    | "all_rejected"
+    | "mixed";
+
+export function deriveAdminBatchReviewStatus(summary: {
+    pendingCount: number;
+    approvedCount: number;
+    rejectedCount: number;
+}): AdminBatchReviewStatus {
+    const { pendingCount, approvedCount, rejectedCount } = summary;
+    if (pendingCount > 0 && approvedCount === 0 && rejectedCount === 0) return "pending_review";
+    if (pendingCount > 0) return "partial";
+    if (approvedCount > 0 && rejectedCount === 0) return "all_approved";
+    if (rejectedCount > 0 && approvedCount === 0) return "all_rejected";
+    return "mixed";
+}
+
+export type AdminExpenseBatchSummary = AdminExpenseEmployeeSummary & {
+    month: string;
+    batchStatus: AdminBatchReviewStatus;
+};
+
+export function mapEmployeeSummaryToBatch(
+    summary: AdminExpenseEmployeeSummary,
+    month: string,
+): AdminExpenseBatchSummary {
+    return {
+        ...summary,
+        month,
+        batchStatus: deriveAdminBatchReviewStatus(summary),
+    };
+}
+
+export async function listAdminExpenseBatchSummaries(
+    filters?: AdminExpenseFilters,
+): Promise<AdminExpenseBatchSummary[]> {
+    const month = filters?.month?.trim() || "";
+    const summaries = await listAdminExpenseEmployeeSummaries(filters);
+    return summaries.map((summary) => mapEmployeeSummaryToBatch(summary, month));
+}
+
+export async function reviewEmployeeExpenseBatch(
+    employeeId: string,
+    month: string,
+    action: "approve" | "reject",
+    options?: { rejectReason?: string },
+): Promise<{ updatedCount: number; totalApprovedAmount?: number }> {
+    await ensureEmployeeExpensesTable();
+
+    if (!employeeId.trim()) throw new Error("Employee id is required");
+    if (!/^\d{4}-\d{2}$/.test(month)) throw new Error("Valid month (YYYY-MM) is required");
+
+    if (action === "reject") {
+        const rejectReason = options?.rejectReason?.trim() ?? "";
+        if (!rejectReason) throw new Error("Rejection reason is required");
+    }
+
+    const conn = await pool.getConnection();
+    try {
+        await conn.beginTransaction();
+
+        const params: unknown[] =
+            action === "reject"
+                ? [options!.rejectReason!.trim(), employeeId, month]
+                : [employeeId, month];
+
+        const [result] = await conn.query<ResultSetHeader>(
+            action === "approve"
+                ? `UPDATE ${TABLE}
+                   SET status = 'approved', approved_amount = amount, reject_reason = NULL, updated_at = CURRENT_TIMESTAMP
+                   WHERE employee_id = ?
+                     AND DATE_FORMAT(expense_date, '%Y-%m') = ?
+                     AND status = 'pending'`
+                : `UPDATE ${TABLE}
+                   SET status = 'rejected', approved_amount = NULL, reject_reason = ?, updated_at = CURRENT_TIMESTAMP
+                   WHERE employee_id = ?
+                     AND DATE_FORMAT(expense_date, '%Y-%m') = ?
+                     AND status = 'pending'`,
+            params,
+        );
+
+        if (result.affectedRows === 0) {
+            throw new Error("No pending expenses found in this batch");
+        }
+
+        let totalApprovedAmount: number | undefined;
+        if (action === "approve") {
+            const [sumRows] = await conn.query<RowDataPacket[]>(
+                `SELECT COALESCE(SUM(COALESCE(approved_amount, amount)), 0) AS total_amount
+                 FROM ${TABLE}
+                 WHERE employee_id = ?
+                   AND DATE_FORMAT(expense_date, '%Y-%m') = ?
+                   AND status = 'approved'`,
+                [employeeId, month],
+            );
+            totalApprovedAmount =
+                Number((sumRows[0] as RowDataPacket & { total_amount: string | number })?.total_amount) || 0;
+        }
+
+        await conn.commit();
+        return { updatedCount: result.affectedRows, totalApprovedAmount };
+    } catch (error) {
+        await conn.rollback();
+        throw error;
+    } finally {
+        conn.release();
+    }
+}
+
 export async function updateExpenseStatusForAdmin(
     recordId: number,
     status: ExpenseStatus,
-    options?: { rejectReason?: string },
+    options?: { rejectReason?: string; approvedAmount?: number },
 ): Promise<EmployeeExpenseRow | null> {
     await ensureEmployeeExpensesTable();
     if (!Number.isFinite(recordId) || recordId <= 0) return null;
     if (!EXPENSE_STATUSES.includes(status)) return null;
+    if (status === "draft") return null;
+
+    const [existingRows] = await pool.query<DbRow[]>(
+        `SELECT ${EXPENSE_ROW_SELECT} FROM ${TABLE} WHERE id = ? LIMIT 1`,
+        [recordId],
+    );
+    const existing = existingRows[0];
+    if (!existing) return null;
+
+    const claimedAmount = Number(existing.amount) || 0;
 
     if (status === "rejected") {
         const rejectReason = options?.rejectReason?.trim() ?? "";
         if (!rejectReason) {
             throw new Error("Rejection reason is required");
         }
-        await pool.query(`UPDATE ${TABLE} SET status = ?, reject_reason = ? WHERE id = ?`, [
-            status,
-            rejectReason,
-            recordId,
-        ]);
+        await pool.query(
+            `UPDATE ${TABLE} SET status = ?, reject_reason = ?, approved_amount = NULL WHERE id = ?`,
+            [status, rejectReason, recordId],
+        );
+    } else if (status === "approved") {
+        const approvedAmount =
+            options?.approvedAmount !== undefined ? options.approvedAmount : claimedAmount;
+        if (!Number.isFinite(approvedAmount) || approvedAmount <= 0) {
+            throw new Error("Enter a valid approved amount greater than zero");
+        }
+        if (approvedAmount > claimedAmount) {
+            throw new Error("Approved amount cannot exceed the claimed amount");
+        }
+        const rounded = Math.round(approvedAmount * 100) / 100;
+        await pool.query(
+            `UPDATE ${TABLE} SET status = ?, reject_reason = NULL, approved_amount = ? WHERE id = ?`,
+            [status, rounded, recordId],
+        );
     } else {
-        await pool.query(`UPDATE ${TABLE} SET status = ?, reject_reason = NULL WHERE id = ?`, [
-            status,
-            recordId,
-        ]);
+        await pool.query(
+            `UPDATE ${TABLE} SET status = ?, reject_reason = NULL, approved_amount = NULL WHERE id = ?`,
+            [status, recordId],
+        );
     }
 
     const [rows] = await pool.query<DbRow[]>(
@@ -690,7 +1108,7 @@ export async function listEmployeeExpenseMonthlySummaries(
             COUNT(*) AS total_count,
             COALESCE(SUM(amount), 0) AS total_amount,
             SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) AS approved_count,
-            COALESCE(SUM(CASE WHEN status = 'approved' THEN amount ELSE 0 END), 0) AS approved_amount,
+            COALESCE(SUM(CASE WHEN status = 'approved' THEN COALESCE(approved_amount, amount) ELSE 0 END), 0) AS approved_amount,
             SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) AS rejected_count,
             COALESCE(SUM(CASE WHEN status = 'rejected' THEN amount ELSE 0 END), 0) AS rejected_amount,
             SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) AS pending_count,

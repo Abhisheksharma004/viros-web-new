@@ -27,7 +27,43 @@ type AddExpenseFormModalProps = {
     paymentModes: string[];
     onClose: () => void;
     onSubmit: (form: AddExpenseFormValues) => Promise<void>;
+    /** When set, the modal opens in edit mode with pre-filled values. */
+    initialValues?: AddExpenseFormValues | null;
+    /** Restrict expense date to this calendar month (YYYY-MM). */
+    month?: string;
 };
+
+export function expenseRowToFormValues(
+    expense: {
+        expense_date: string;
+        category: string;
+        from_address: string | null;
+        to_address: string | null;
+        title: string;
+        amount: number;
+        payment_mode: string;
+        receipt_reference: string | null;
+    },
+): AddExpenseFormValues {
+    return {
+        expense_date: expense.expense_date,
+        category: expense.category,
+        from_address: expense.from_address ?? "",
+        to_address: expense.to_address ?? "",
+        title: expense.title,
+        amount: String(expense.amount),
+        payment_mode: expense.payment_mode,
+        receipt_reference: expense.receipt_reference ?? "",
+    };
+}
+
+function getMonthDateBounds(month: string) {
+    const [y, m] = month.split("-").map(Number);
+    const start = `${month}-01`;
+    const lastDay = new Date(y, m, 0).getDate();
+    const end = `${month}-${String(lastDay).padStart(2, "0")}`;
+    return { min: start, max: end };
+}
 
 export function emptyExpenseForm(todayIso: string): AddExpenseFormValues {
     return {
@@ -48,7 +84,12 @@ export default function AddExpenseFormModal({
     paymentModes,
     onClose,
     onSubmit,
+    initialValues = null,
+    month,
 }: AddExpenseFormModalProps) {
+    const isEdit = Boolean(initialValues);
+    const dateBounds = month ? getMonthDateBounds(month) : null;
+
     const [form, setForm] = useState<AddExpenseFormValues>(() =>
         emptyExpenseForm(todayDateOnly()),
     );
@@ -57,13 +98,21 @@ export default function AddExpenseFormModal({
 
     useEffect(() => {
         if (open) {
-            const d = new Date();
-            const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-            setForm(emptyExpenseForm(today));
+            if (initialValues) {
+                setForm(initialValues);
+            } else {
+                const d = new Date();
+                const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+                const defaultDate =
+                    dateBounds && today >= dateBounds.min && today <= dateBounds.max
+                        ? today
+                        : dateBounds?.max ?? today;
+                setForm(emptyExpenseForm(defaultDate));
+            }
             setError("");
             setIsSubmitting(false);
         }
-    }, [open]);
+    }, [open, initialValues, dateBounds?.min, dateBounds?.max]);
 
     if (!open) return null;
 
@@ -102,7 +151,7 @@ export default function AddExpenseFormModal({
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="add-expense-title"
-                className="relative flex max-h-[92dvh] w-full max-w-2xl flex-col overflow-hidden rounded-t-3xl border border-gray-200 bg-white shadow-2xl sm:max-h-[min(90vh,720px)] sm:rounded-2xl"
+                className="relative flex max-h-[92dvh] w-full max-w-2xl flex-col overflow-hidden rounded-t-lg border border-gray-200 bg-white shadow-2xl sm:max-h-[min(90vh,720px)] sm:rounded-md"
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="flex shrink-0 flex-col items-center pt-2 sm:hidden">
@@ -121,9 +170,13 @@ export default function AddExpenseFormModal({
                             className="flex items-center gap-2 text-lg font-bold text-white"
                         >
                             <Plus className="h-5 w-5 shrink-0" aria-hidden />
-                            Add expense
+                            {isEdit ? "Edit expense" : "Add expense"}
                         </h3>
-                        <p className="mt-0.5 text-xs text-cyan-100/90">Submit a new claim for approval</p>
+                        <p className="mt-0.5 text-xs text-cyan-100/90">
+                            {isEdit
+                                ? "Update this draft entry before submitting the month"
+                                : "Save as draft — submit the full month when ready"}
+                        </p>
                     </div>
                     <button
                         type="button"
@@ -131,7 +184,7 @@ export default function AddExpenseFormModal({
                             if (!isSubmitting) onClose();
                         }}
                         disabled={isSubmitting}
-                        className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-lg text-white/80 transition touch-manipulation hover:bg-white/10 hover:text-white disabled:opacity-50"
+                        className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-md text-white/80 transition touch-manipulation hover:bg-white/10 hover:text-white disabled:opacity-50"
                         aria-label="Close"
                     >
                         <X className="h-5 w-5" />
@@ -141,7 +194,7 @@ export default function AddExpenseFormModal({
                 <form onSubmit={(e) => void handleSubmit(e)} className="flex min-h-0 flex-1 flex-col">
                     <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-5 sm:px-6 sm:py-6">
                         {error ? (
-                            <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">
+                            <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">
                                 {error}
                             </p>
                         ) : null}
@@ -156,9 +209,11 @@ export default function AddExpenseFormModal({
                                     name="expense_date"
                                     type="date"
                                     required
+                                    min={dateBounds?.min}
+                                    max={dateBounds?.max}
                                     value={form.expense_date}
                                     onChange={handleChange}
-                                    className={expenseInputClass}
+                                    className={`${expenseInputClass} !rounded-md`}
                                 />
                             </div>
                             <div>
@@ -171,7 +226,7 @@ export default function AddExpenseFormModal({
                                     required
                                     value={form.category}
                                     onChange={handleChange}
-                                    className={expenseInputClass}
+                                    className={`${expenseInputClass} !rounded-md`}
                                 >
                                     <option value="">Select category</option>
                                     {categories.map((c) => (
@@ -195,7 +250,7 @@ export default function AddExpenseFormModal({
                                     placeholder="Starting location"
                                     value={form.from_address}
                                     onChange={handleChange}
-                                    className={expenseInputClass}
+                                    className={`${expenseInputClass} !rounded-md`}
                                 />
                             </div>
                             <div>
@@ -209,7 +264,7 @@ export default function AddExpenseFormModal({
                                     placeholder="Destination"
                                     value={form.to_address}
                                     onChange={handleChange}
-                                    className={expenseInputClass}
+                                    className={`${expenseInputClass} !rounded-md`}
                                 />
                             </div>
                         </div>
@@ -226,7 +281,7 @@ export default function AddExpenseFormModal({
                                 placeholder="e.g. Client visit cab fare"
                                 value={form.title}
                                 onChange={handleChange}
-                                className={expenseInputClass}
+                                className={`${expenseInputClass} !rounded-md`}
                             />
                         </div>
 
@@ -250,7 +305,7 @@ export default function AddExpenseFormModal({
                                         placeholder="0.00"
                                         value={form.amount}
                                         onChange={handleChange}
-                                        className={`${expenseInputClass} pl-9`}
+                                        className={`${expenseInputClass} !rounded-md pl-9`}
                                     />
                                 </div>
                             </div>
@@ -264,7 +319,7 @@ export default function AddExpenseFormModal({
                                     required
                                     value={form.payment_mode}
                                     onChange={handleChange}
-                                    className={expenseInputClass}
+                                    className={`${expenseInputClass} !rounded-md`}
                                 >
                                     <option value="">Select mode</option>
                                     {paymentModes.map((m) => (
@@ -287,7 +342,7 @@ export default function AddExpenseFormModal({
                                 placeholder="Optional reference number"
                                 value={form.receipt_reference}
                                 onChange={handleChange}
-                                className={expenseInputClass}
+                                className={`${expenseInputClass} !rounded-md`}
                             />
                         </div>
                     </div>
@@ -297,21 +352,21 @@ export default function AddExpenseFormModal({
                             type="button"
                             onClick={onClose}
                             disabled={isSubmitting}
-                            className={expenseSecondaryButtonClass}
+                            className={`${expenseSecondaryButtonClass} !rounded-md`}
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={isSubmitting}
-                            className={expensePrimaryButtonClass}
+                            className={`${expensePrimaryButtonClass} !rounded-md`}
                         >
                             {isSubmitting ? (
                                 <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
                             ) : (
                                 <Send className="h-4 w-4" aria-hidden />
                             )}
-                            {isSubmitting ? "Submitting…" : "Submit expense"}
+                            {isSubmitting ? "Saving…" : isEdit ? "Save changes" : "Save draft"}
                         </button>
                     </div>
                 </form>

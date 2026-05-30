@@ -28,7 +28,7 @@ const ADMIN_PAGE_META_ENTRIES: { path: string; title: string; subtitle?: string 
     {
         path: "/admin-dashboard/expense-management",
         title: "Expense Management",
-        subtitle: "Manage employee expenses.",
+        subtitle: "Review employee monthly expense batches and approve or reject claims.",
     },
     {
         path: "/admin-dashboard/employee-access",

@@ -365,7 +365,7 @@ export default function AdminDashboardPage() {
                         </Link>
                         <Link href="/admin-dashboard/expense-management" className="text-center hover:opacity-90">
                             <p className="text-lg font-black text-white">{data.stats.pendingExpenseCount}</p>
-                            <p className="text-xs text-white/40">Pending expenses</p>
+                            <p className="text-xs text-white/40">Pending expense batches</p>
                         </Link>
                         <Link href="/admin-dashboard/reports/newsletter" className="text-center hover:opacity-90">
                             <p className="text-lg font-black text-white">{data.stats.newsletterSubscribers}</p>

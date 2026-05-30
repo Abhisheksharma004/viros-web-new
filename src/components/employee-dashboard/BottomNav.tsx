@@ -32,6 +32,7 @@ const navItems = [
         href: "/employee-dashboard/add-expense",
         match: (path: string) =>
             path.startsWith("/employee-dashboard/add-expense") ||
+            path.startsWith("/employee-dashboard/approved-expense") ||
             path.startsWith("/employee-dashboard/expense-history") ||
             path.startsWith("/employee-dashboard/monthly-history") ||
             path.startsWith("/employee-dashboard/reject-expense"),

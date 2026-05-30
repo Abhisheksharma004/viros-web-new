@@ -3,13 +3,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
     Calendar,
+    CheckCircle2,
     ChevronLeft,
     ChevronRight,
     Eye,
     Loader2,
     RefreshCw,
     Wallet,
-    XCircle,
 } from "lucide-react";
 import ExpenseViewModal from "@/components/employee-dashboard/ExpenseViewModal";
 import type { EmployeeExpenseRow } from "@/lib/employeeExpenses";
@@ -18,17 +18,20 @@ import {
     formatExpenseDate,
     getExpenseStatusLabel,
     getExpenseStatusStyles,
+    isPartialExpenseApproval,
+    resolveExpenseApprovedAmount,
 } from "@/lib/employeeExpenseUi";
 
-type RejectedSummary = {
+type ApprovedSummary = {
     totalAmount: number;
     expenseCount: number;
 };
 
 type ExpensesPayload = {
     expenses: EmployeeExpenseRow[];
-    summary: RejectedSummary & { pendingCount?: number };
+    summary: ApprovedSummary & { pendingCount?: number };
     month: string;
+    status?: string | null;
 };
 
 function getTodayIso() {
@@ -54,20 +57,54 @@ function formatMonthShort(month: string) {
     return d.toLocaleDateString("en-IN", { month: "short", year: "numeric" });
 }
 
-export default function RejectExpensePage() {
+function getApprovedAmount(exp: EmployeeExpenseRow) {
+    return resolveExpenseApprovedAmount(exp) ?? exp.amount;
+}
+
+function filterApprovedExpenses(expenses: EmployeeExpenseRow[]) {
+    return expenses.filter((exp) => exp.status === "approved");
+}
+
+function ApprovedAmountBlock({
+    exp,
+    align = "right",
+}: {
+    exp: EmployeeExpenseRow;
+    align?: "left" | "right";
+}) {
+    const approved = getApprovedAmount(exp);
+    const partial = isPartialExpenseApproval(exp);
+    const alignClass = align === "right" ? "text-right" : "text-left";
+
+    return (
+        <div className={alignClass}>
+            <p className="text-[10px] font-bold uppercase tracking-wide text-emerald-700">Approved</p>
+            <p className="text-sm font-bold tabular-nums text-emerald-900 sm:text-base">
+                {formatCurrencyWhole(approved)}
+            </p>
+            {partial ? (
+                <p className="mt-0.5 text-[11px] tabular-nums text-gray-500">
+                    Claimed {formatCurrencyWhole(exp.amount)}
+                </p>
+            ) : null}
+        </div>
+    );
+}
+
+export default function ApprovedExpensePage() {
     const [month, setMonth] = useState(() => getTodayIso().slice(0, 7));
     const [expenses, setExpenses] = useState<EmployeeExpenseRow[]>([]);
-    const [summary, setSummary] = useState<RejectedSummary>({ totalAmount: 0, expenseCount: 0 });
+    const [summary, setSummary] = useState<ApprovedSummary>({ totalAmount: 0, expenseCount: 0 });
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState("");
     const [viewExpense, setViewExpense] = useState<EmployeeExpenseRow | null>(null);
 
-    const loadRejected = useCallback(async () => {
+    const loadApproved = useCallback(async () => {
         setIsLoading(true);
         setLoadError("");
         try {
             const response = await fetch(
-                `/api/employee/expenses?month=${encodeURIComponent(month)}&status=rejected&limit=100`,
+                `/api/employee/expenses?month=${encodeURIComponent(month)}&status=approved&limit=100`,
                 { cache: "no-store" },
             );
             const data = (await response.json().catch(() => ({}))) as ExpensesPayload & {
@@ -76,38 +113,44 @@ export default function RejectExpensePage() {
             if (!response.ok) {
                 throw new Error(typeof data.message === "string" ? data.message : "Failed to load expenses");
             }
-            setExpenses(Array.isArray(data.expenses) ? data.expenses : []);
+
+            const approvedExpenses = filterApprovedExpenses(
+                Array.isArray(data.expenses) ? data.expenses : [],
+            );
+
+            setExpenses(approvedExpenses);
             setSummary({
                 totalAmount: Number(data.summary?.totalAmount) || 0,
-                expenseCount: Number(data.summary?.expenseCount) || 0,
+                expenseCount: Number(data.summary?.expenseCount) || approvedExpenses.length,
             });
         } catch (error) {
-            setLoadError(error instanceof Error ? error.message : "Failed to load rejected expenses");
+            setLoadError(error instanceof Error ? error.message : "Failed to load approved expenses");
             setExpenses([]);
+            setSummary({ totalAmount: 0, expenseCount: 0 });
         } finally {
             setIsLoading(false);
         }
     }, [month]);
 
     useEffect(() => {
-        void loadRejected();
-    }, [loadRejected]);
+        void loadApproved();
+    }, [loadApproved]);
 
     const monthLabel = useMemo(() => formatMonthLabel(month), [month]);
     const monthShortLabel = useMemo(() => formatMonthShort(month), [month]);
 
     const stats = [
         {
-            label: "Rejected total",
+            label: "Approved total",
             value: formatCurrencyWhole(summary.totalAmount),
-            tone: "text-red-700",
-            ring: "ring-red-200",
-        },
-        {
-            label: "Rejected entries",
-            value: String(summary.expenseCount),
             tone: "text-[#0a2a5e]",
             ring: "ring-[#0a2a5e]/15",
+        },
+        {
+            label: "Approved entries",
+            value: String(summary.expenseCount),
+            tone: "text-emerald-800",
+            ring: "ring-emerald-200",
         },
     ];
 
@@ -118,7 +161,7 @@ export default function RejectExpensePage() {
                     <span>{loadError}</span>
                     <button
                         type="button"
-                        onClick={() => void loadRejected()}
+                        onClick={() => void loadApproved()}
                         className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-md bg-red-100 px-4 py-2 text-xs font-semibold text-red-800 touch-manipulation active:scale-[0.98]"
                     >
                         <RefreshCw className="h-3.5 w-3.5" aria-hidden />
@@ -150,17 +193,17 @@ export default function RejectExpensePage() {
                     <div className="flex flex-col gap-3">
                         <div className="flex items-start justify-between gap-3">
                             <div className="flex min-w-0 items-center gap-2">
-                                <XCircle className="h-5 w-5 shrink-0 text-red-600" aria-hidden />
+                                <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600" aria-hidden />
                                 <div className="min-w-0">
                                     <h2 className="text-sm font-bold text-gray-900 sm:text-base">
-                                        Reject expense
+                                        Approved expense
                                     </h2>
                                     <p className="truncate text-[11px] text-gray-500 sm:text-xs">
-                                        Rejected expenses for each month
+                                        Claimed vs approved amount for each expense
                                     </p>
                                 </div>
                             </div>
-                            <p className="shrink-0 rounded-full bg-gray-100 px-2.5 py-1 text-[11px] font-semibold text-gray-600">
+                            <p className="shrink-0 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
                                 {expenses.length}
                             </p>
                         </div>
@@ -195,16 +238,16 @@ export default function RejectExpensePage() {
                     {isLoading ? (
                         <div className="flex min-h-[12rem] flex-col items-center justify-center gap-2 py-10 text-sm text-gray-500">
                             <Loader2 className="h-8 w-8 animate-spin text-[#0a2a5e]" aria-hidden />
-                            Loading rejected expenses…
+                            Loading approved expenses…
                         </div>
                     ) : expenses.length === 0 ? (
                         <div className="flex flex-col items-center justify-center gap-3 px-2 py-12 text-center">
                             <Wallet className="h-10 w-10 text-gray-300" aria-hidden />
                             <p className="text-sm font-medium text-gray-600">
-                                No rejected expenses for {monthLabel}
+                                No approved expenses for {monthLabel}
                             </p>
                             <p className="max-w-sm text-xs text-gray-500">
-                                Expenses declined by admin will appear here.
+                                Once admin approves your submitted expenses, they will show up here.
                             </p>
                         </div>
                     ) : (
@@ -238,15 +281,13 @@ export default function RejectExpensePage() {
                                                 <ChevronRight className="mt-1 h-5 w-5 shrink-0 text-gray-400" aria-hidden />
                                             </div>
                                         </button>
-                                        <div className="flex items-center justify-between gap-2 border-t border-gray-100 px-4 pb-4 pt-3">
+                                        <div className="flex items-end justify-between gap-2 border-t border-gray-100 px-4 pb-4 pt-3">
                                             <span
                                                 className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${getExpenseStatusStyles(exp.status)}`}
                                             >
                                                 {getExpenseStatusLabel(exp.status)}
                                             </span>
-                                            <p className="text-sm font-bold tabular-nums text-gray-900">
-                                                {formatCurrencyWhole(exp.amount)}
-                                            </p>
+                                            <ApprovedAmountBlock exp={exp} />
                                         </div>
                                     </div>
                                 ))}
@@ -260,7 +301,8 @@ export default function RejectExpensePage() {
                                             <th className="px-3 py-2">Date</th>
                                             <th className="px-3 py-2">Category</th>
                                             <th className="px-3 py-2">Description</th>
-                                            <th className="px-3 py-2">Amount</th>
+                                            <th className="px-3 py-2">Claimed</th>
+                                            <th className="px-3 py-2">Approved</th>
                                             <th className="px-3 py-2">Status</th>
                                             <th className="px-3 py-2 text-right">Action</th>
                                         </tr>
@@ -278,8 +320,18 @@ export default function RejectExpensePage() {
                                                 <td className="max-w-[240px] truncate px-3 py-3 font-medium text-gray-900">
                                                     {exp.title}
                                                 </td>
-                                                <td className="whitespace-nowrap px-3 py-3 font-semibold tabular-nums text-gray-900">
+                                                <td className="whitespace-nowrap px-3 py-3 tabular-nums text-gray-600">
                                                     {formatCurrencyWhole(exp.amount)}
+                                                </td>
+                                                <td className="whitespace-nowrap px-3 py-3">
+                                                    <p className="font-semibold tabular-nums text-emerald-800">
+                                                        {formatCurrencyWhole(getApprovedAmount(exp))}
+                                                    </p>
+                                                    {isPartialExpenseApproval(exp) ? (
+                                                        <p className="text-[11px] font-medium text-amber-700">
+                                                            Partial approval
+                                                        </p>
+                                                    ) : null}
                                                 </td>
                                                 <td className="px-3 py-3">
                                                     <span

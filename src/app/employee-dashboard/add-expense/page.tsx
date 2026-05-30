@@ -8,25 +8,24 @@ import {
     ChevronLeft,
     ChevronRight,
     Eye,
-    Filter,
     Loader2,
+    Pencil,
     Plus,
     Receipt,
     RefreshCw,
-    Search,
+    Send,
+    Trash2,
     Wallet,
 } from "lucide-react";
 import AddExpenseFormModal, {
     type AddExpenseFormValues,
+    expenseRowToFormValues,
 } from "@/components/employee-dashboard/AddExpenseFormModal";
 import ExpenseViewModal from "@/components/employee-dashboard/ExpenseViewModal";
-import type { EmployeeExpenseRow } from "@/lib/employeeExpenses";
+import type { EmployeeExpenseRow, EmployeeMonthClaimInfo } from "@/lib/employeeExpenses";
 import {
-    expenseInputClass,
-    expenseLabelClass,
     expensePrimaryButtonClass,
-    expenseSecondaryButtonClass,
-    formatCurrency,
+    formatCurrencyWhole,
     formatExpenseDate,
     getExpenseStatusLabel,
     getExpenseStatusStyles,
@@ -36,14 +35,30 @@ type ExpenseSummary = {
     totalAmount: number;
     expenseCount: number;
     pendingCount: number;
+    draftCount: number;
+    draftAmount: number;
 };
 
 type ExpensesPayload = {
     expenses: EmployeeExpenseRow[];
     summary: ExpenseSummary;
+    monthClaim: EmployeeMonthClaimInfo;
     month: string;
     categories: string[];
     paymentModes: string[];
+};
+
+const EMPTY_MONTH_CLAIM: EmployeeMonthClaimInfo = {
+    status: "empty",
+    draftCount: 0,
+    draftAmount: 0,
+    submittedCount: 0,
+    pendingCount: 0,
+    approvedCount: 0,
+    rejectedCount: 0,
+    canAdd: true,
+    canSubmit: false,
+    canEdit: true,
 };
 
 function getTodayIso() {
@@ -69,57 +84,22 @@ function formatMonthShort(month: string) {
     return d.toLocaleDateString("en-IN", { month: "short", year: "numeric" });
 }
 
-function getMonthDateRange(month: string) {
-    const [y, m] = month.split("-").map(Number);
-    const start = `${month}-01`;
-    const lastDay = new Date(y, m, 0).getDate();
-    const end = `${month}-${String(lastDay).padStart(2, "0")}`;
-    return { from: start, to: end };
-}
-
-function matchesExpenseSearch(exp: EmployeeExpenseRow, query: string) {
-    const q = query.trim().toLowerCase();
-    if (!q) return true;
-
-    const haystack = [
-        exp.expense_id,
-        exp.title,
-        exp.category,
-        exp.from_address,
-        exp.to_address,
-        exp.payment_mode,
-        exp.receipt_reference,
-        getExpenseStatusLabel(exp.status),
-        String(exp.amount),
-        formatExpenseDate(exp.expense_date),
-    ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-
-    return haystack.includes(q);
-}
-
-type ExpenseStatusFilter = "all" | "approved" | "rejected" | "pending";
+type ExpenseStatusFilter = "all" | "rejected" | "pending" | "draft";
 
 function parseStatusFilter(value: string | null): ExpenseStatusFilter {
-    if (value === "approved" || value === "rejected" || value === "pending") return value;
+    if (value === "rejected" || value === "pending" || value === "draft") {
+        return value;
+    }
     return "all";
 }
 
-function filterExpenses(
-    expenses: EmployeeExpenseRow[],
-    fromDate: string,
-    toDate: string,
-    search: string,
-    status: ExpenseStatusFilter,
-) {
-    return expenses.filter((exp) => {
-        if (fromDate && exp.expense_date < fromDate) return false;
-        if (toDate && exp.expense_date > toDate) return false;
-        if (status !== "all" && exp.status !== status) return false;
-        return matchesExpenseSearch(exp, search);
-    });
+function getStatusFilterLabel(filter: ExpenseStatusFilter): string {
+    if (filter === "all") return "matching";
+    return getExpenseStatusLabel(filter).toLowerCase();
+}
+
+function excludeApprovedExpenses(expenses: EmployeeExpenseRow[]) {
+    return expenses.filter((exp) => exp.status !== "approved");
 }
 
 function AddExpensePageInner() {
@@ -132,7 +112,10 @@ function AddExpensePageInner() {
         totalAmount: 0,
         expenseCount: 0,
         pendingCount: 0,
+        draftCount: 0,
+        draftAmount: 0,
     });
+    const [monthClaim, setMonthClaim] = useState<EmployeeMonthClaimInfo>(EMPTY_MONTH_CLAIM);
     const [categories, setCategories] = useState<string[]>([]);
     const [paymentModes, setPaymentModes] = useState<string[]>([]);
 
@@ -144,12 +127,11 @@ function AddExpensePageInner() {
     });
 
     const [addModalOpen, setAddModalOpen] = useState(false);
+    const [editingExpense, setEditingExpense] = useState<EmployeeExpenseRow | null>(null);
     const [viewExpense, setViewExpense] = useState<EmployeeExpenseRow | null>(null);
-    const [filterFrom, setFilterFrom] = useState(() => getMonthDateRange(getTodayIso().slice(0, 7)).from);
-    const [filterTo, setFilterTo] = useState(() => getMonthDateRange(getTodayIso().slice(0, 7)).to);
-    const [search, setSearch] = useState("");
+    const [isSubmittingBatch, setIsSubmittingBatch] = useState(false);
+    const [submitError, setSubmitError] = useState("");
     const [statusFilter, setStatusFilter] = useState<ExpenseStatusFilter>(initialStatus);
-    const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
     const loadExpenses = useCallback(async () => {
         setIsLoading(true);
@@ -157,7 +139,7 @@ function AddExpensePageInner() {
 
         try {
             const response = await fetch(
-                `/api/employee/expenses?month=${encodeURIComponent(month)}&limit=50`,
+                `/api/employee/expenses?month=${encodeURIComponent(month)}&limit=50&excludeApproved=true`,
                 { cache: "no-store" },
             );
             const data = (await response.json().catch(() => ({}))) as ExpensesPayload & {
@@ -168,8 +150,17 @@ function AddExpensePageInner() {
                 throw new Error(typeof data.message === "string" ? data.message : "Failed to load expenses");
             }
 
-            setExpenses(Array.isArray(data.expenses) ? data.expenses : []);
-            setSummary(data.summary ?? { totalAmount: 0, expenseCount: 0, pendingCount: 0 });
+            setExpenses(excludeApprovedExpenses(Array.isArray(data.expenses) ? data.expenses : []));
+            setSummary(
+                data.summary ?? {
+                    totalAmount: 0,
+                    expenseCount: 0,
+                    pendingCount: 0,
+                    draftCount: 0,
+                    draftAmount: 0,
+                },
+            );
+            setMonthClaim(data.monthClaim ?? EMPTY_MONTH_CLAIM);
             if (Array.isArray(data.categories)) setCategories(data.categories);
             if (Array.isArray(data.paymentModes)) setPaymentModes(data.paymentModes);
         } catch (error) {
@@ -185,42 +176,29 @@ function AddExpensePageInner() {
     }, [loadExpenses]);
 
     useEffect(() => {
-        const { from, to } = getMonthDateRange(month);
-        setFilterFrom(from);
-        setFilterTo(to);
-        setSearch("");
-        setMobileFiltersOpen(false);
-    }, [month]);
-
-    useEffect(() => {
         setStatusFilter(parseStatusFilter(searchParams.get("status")));
     }, [searchParams]);
 
     const monthLabel = useMemo(() => formatMonthLabel(month), [month]);
     const monthShortLabel = useMemo(() => formatMonthShort(month), [month]);
-    const monthRange = useMemo(() => getMonthDateRange(month), [month]);
 
-    const filteredExpenses = useMemo(
-        () => filterExpenses(expenses, filterFrom, filterTo, search, statusFilter),
-        [expenses, filterFrom, filterTo, search, statusFilter],
-    );
-
-    const hasActiveFilters =
-        search.trim().length > 0 ||
-        filterFrom !== monthRange.from ||
-        filterTo !== monthRange.to ||
-        statusFilter !== "all";
-
-    const clearFilters = () => {
-        setFilterFrom(monthRange.from);
-        setFilterTo(monthRange.to);
-        setSearch("");
-        setStatusFilter("all");
-    };
+    const filteredExpenses = useMemo(() => {
+        if (statusFilter === "all") return expenses;
+        return expenses.filter((exp) => exp.status === statusFilter);
+    }, [expenses, statusFilter]);
 
     const handleAddExpense = async (form: AddExpenseFormValues) => {
-        const response = await fetch("/api/employee/expenses", {
-            method: "POST",
+        const expenseMonth = form.expense_date.slice(0, 7);
+        if (expenseMonth !== month) {
+            throw new Error(`Expense date must fall within ${formatMonthLabel(month)}`);
+        }
+
+        const isEdit = Boolean(editingExpense);
+        const url = isEdit
+            ? `/api/employee/expenses/${editingExpense!.id}`
+            : "/api/employee/expenses";
+        const response = await fetch(url, {
+            method: isEdit ? "PATCH" : "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 expense_date: form.expense_date,
@@ -237,16 +215,21 @@ function AddExpensePageInner() {
         const data = await response.json().catch(() => ({}));
 
         if (!response.ok) {
-            throw new Error(typeof data.message === "string" ? data.message : "Failed to submit expense");
+            throw new Error(typeof data.message === "string" ? data.message : "Failed to save expense");
         }
 
         setSuccessAlert({
             open: true,
             message:
-                typeof data.message === "string" ? data.message : "Expense submitted successfully",
+                typeof data.message === "string"
+                    ? data.message
+                    : isEdit
+                      ? "Expense updated"
+                      : "Expense saved as draft",
         });
 
-        const expenseMonth = form.expense_date.slice(0, 7);
+        setEditingExpense(null);
+
         if (expenseMonth !== month) {
             setMonth(expenseMonth);
         } else {
@@ -254,40 +237,98 @@ function AddExpensePageInner() {
         }
     };
 
+    const handleDeleteExpense = async (expense: EmployeeExpenseRow) => {
+        if (!window.confirm("Remove this draft expense?")) return;
+        const response = await fetch(`/api/employee/expenses/${expense.id}`, {
+            method: "DELETE",
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            throw new Error(typeof data.message === "string" ? data.message : "Failed to delete expense");
+        }
+        await loadExpenses();
+    };
+
+    const handleSubmitBatch = async () => {
+        if (!monthClaim.canSubmit) return;
+        if (
+            !window.confirm(
+                `Submit ${monthClaim.draftCount} expense${monthClaim.draftCount === 1 ? "" : "s"} (${formatCurrencyWhole(monthClaim.draftAmount)}) for admin approval?\n\nYou won't be able to add or edit expenses for ${monthLabel} after this.`,
+            )
+        ) {
+            return;
+        }
+
+        setIsSubmittingBatch(true);
+        setSubmitError("");
+        try {
+            const response = await fetch("/api/employee/expenses/submit", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ month }),
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                throw new Error(typeof data.message === "string" ? data.message : "Failed to submit batch");
+            }
+            setSuccessAlert({
+                open: true,
+                message: typeof data.message === "string" ? data.message : "Monthly expenses submitted",
+            });
+            await loadExpenses();
+        } catch (error) {
+            setSubmitError(error instanceof Error ? error.message : "Failed to submit batch");
+        } finally {
+            setIsSubmittingBatch(false);
+        }
+    };
+
     const openAddModal = () => {
+        setEditingExpense(null);
+        setAddModalOpen(true);
+    };
+
+    const openEditModal = (expense: EmployeeExpenseRow) => {
+        setEditingExpense(expense);
         setAddModalOpen(true);
     };
 
     const stats = [
         {
-            label: "This month",
-            value: formatCurrency(summary.totalAmount),
+            label: "Draft total",
+            value: formatCurrencyWhole(summary.draftAmount),
+            tone: "text-slate-800",
+            ring: "ring-slate-200",
+            hidden: monthClaim.status === "submitted",
+        },
+        {
+            label: "Month total",
+            value: formatCurrencyWhole(summary.totalAmount),
             tone: "text-[#0a2a5e]",
             ring: "ring-[#0a2a5e]/15",
+            hidden: false,
         },
         {
-            label: "Entries",
-            value: String(summary.expenseCount),
-            tone: "text-gray-900",
-            ring: "ring-gray-200",
+            label: monthClaim.status === "submitted" ? "Pending" : "Draft entries",
+            value:
+                monthClaim.status === "submitted"
+                    ? String(monthClaim.pendingCount)
+                    : String(summary.draftCount),
+            tone: monthClaim.status === "submitted" ? "text-amber-900" : "text-slate-700",
+            ring: monthClaim.status === "submitted" ? "ring-amber-200" : "ring-slate-200",
+            hidden: false,
         },
-        {
-            label: "Pending",
-            value: String(summary.pendingCount),
-            tone: "text-amber-900",
-            ring: "ring-amber-200",
-        },
-    ];
+    ].filter((item) => !item.hidden);
 
     return (
         <div className="mx-auto w-full min-w-0 max-w-6xl space-y-3 pb-2 sm:space-y-6 sm:pb-6">
             {loadError ? (
-                <div className="flex flex-col gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-col gap-3 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 sm:flex-row sm:items-center sm:justify-between">
                     <span>{loadError}</span>
                     <button
                         type="button"
                         onClick={() => void loadExpenses()}
-                        className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-red-100 px-4 py-2 text-xs font-semibold text-red-800 touch-manipulation active:scale-[0.98]"
+                        className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-md bg-red-100 px-4 py-2 text-xs font-semibold text-red-800 touch-manipulation active:scale-[0.98]"
                     >
                         <RefreshCw className="h-3.5 w-3.5" aria-hidden />
                         Retry
@@ -295,17 +336,17 @@ function AddExpensePageInner() {
                 </div>
             ) : null}
 
-            <div className="grid grid-cols-3 gap-2 sm:gap-3">
+            <div className={`grid gap-2 sm:gap-3 ${stats.length === 2 ? "grid-cols-2" : "grid-cols-3"}`}>
                 {stats.map((item) => (
                     <div
                         key={item.label}
-                        className={`min-w-0 rounded-2xl border bg-white p-2.5 shadow-sm ring-1 sm:p-4 ${item.ring}`}
+                        className={`min-w-0 rounded-md border bg-white p-2 shadow-sm ring-1 sm:p-4 ${item.ring}`}
                     >
-                        <p className="truncate text-[9px] font-bold uppercase tracking-wide text-gray-500 sm:text-xs">
+                        <p className="text-[10px] font-bold uppercase leading-tight tracking-wide text-gray-500 sm:text-xs">
                             {item.label}
                         </p>
                         <p
-                            className={`mt-1 truncate text-base font-black leading-none sm:mt-2 sm:text-2xl ${item.tone}`}
+                            className={`mt-1 max-w-full text-[clamp(0.6875rem,2.75vw,1.875rem)] font-black leading-tight tabular-nums sm:mt-2 sm:text-2xl ${item.tone}`}
                         >
                             {item.value}
                         </p>
@@ -313,7 +354,13 @@ function AddExpensePageInner() {
                 ))}
             </div>
 
-            <section className="overflow-hidden rounded-2xl border border-[#0a2a5e]/10 bg-white shadow-sm">
+            {submitError ? (
+                <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                    {submitError}
+                </div>
+            ) : null}
+
+            <section className="overflow-hidden rounded-md border border-[#0a2a5e]/10 bg-white shadow-sm">
                 <div className="border-b border-gray-100 px-3 py-3 sm:px-6 sm:py-4">
                     <div className="flex flex-col gap-3">
                         <div className="flex items-start justify-between gap-3">
@@ -321,10 +368,10 @@ function AddExpensePageInner() {
                                 <Receipt className="h-5 w-5 shrink-0 text-[#0a2a5e]" aria-hidden />
                                 <div className="min-w-0">
                                     <h2 className="text-sm font-bold text-gray-900 sm:text-base">
-                                        Your expenses
+                                        Monthly expenses
                                     </h2>
                                     <p className="truncate text-[11px] text-gray-500 sm:text-xs">
-                                        {monthLabel}
+                                        Add entries throughout the month, then submit in one batch
                                     </p>
                                 </div>
                             </div>
@@ -333,11 +380,11 @@ function AddExpensePageInner() {
                             </p>
                         </div>
 
-                        <div className="flex w-full items-center gap-1 rounded-xl border border-gray-200 bg-gray-50 p-1">
+                        <div className="flex w-full items-center gap-1 rounded-md border border-gray-200 bg-gray-50 p-1">
                             <button
                                 type="button"
                                 onClick={() => setMonth((m) => shiftMonth(m, -1))}
-                                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-gray-600 touch-manipulation transition active:scale-95 hover:bg-white"
+                                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-gray-600 touch-manipulation transition active:scale-95 hover:bg-white"
                                 aria-label="Previous month"
                             >
                                 <ChevronLeft className="h-5 w-5" />
@@ -350,7 +397,7 @@ function AddExpensePageInner() {
                             <button
                                 type="button"
                                 onClick={() => setMonth((m) => shiftMonth(m, 1))}
-                                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-gray-600 touch-manipulation transition active:scale-95 hover:bg-white"
+                                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-gray-600 touch-manipulation transition active:scale-95 hover:bg-white"
                                 aria-label="Next month"
                             >
                                 <ChevronRight className="h-5 w-5" />
@@ -360,87 +407,12 @@ function AddExpensePageInner() {
                         <button
                             type="button"
                             onClick={openAddModal}
-                            className={`${expensePrimaryButtonClass} hidden sm:inline-flex`}
+                            disabled={!monthClaim.canAdd}
+                            className={`${expensePrimaryButtonClass} !rounded-md !hidden sm:!inline-flex`}
                         >
                             <Plus className="h-4 w-4" aria-hidden />
                             Add expense
                         </button>
-                    </div>
-
-                    <div className="mt-3 space-y-2 border-t border-gray-100 pt-3 sm:mt-4 sm:space-y-3 sm:pt-4">
-                        <div className="relative">
-                            <Search
-                                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
-                                aria-hidden
-                            />
-                            <input
-                                id="expense_filter_search"
-                                type="search"
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                placeholder="Search ID, category, description…"
-                                className={`${expenseInputClass} pl-9`}
-                            />
-                        </div>
-
-                        <button
-                            type="button"
-                            onClick={() => setMobileFiltersOpen((open) => !open)}
-                            className={`inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-xl border px-3 text-xs font-semibold touch-manipulation active:scale-[0.98] sm:hidden ${
-                                hasActiveFilters
-                                    ? "border-[#0a2a5e]/20 bg-[#0a2a5e]/5 text-[#0a2a5e]"
-                                    : "border-gray-200 bg-white text-gray-700"
-                            }`}
-                        >
-                            <Filter className="h-4 w-4" aria-hidden />
-                            {mobileFiltersOpen ? "Hide date filters" : "Date filters"}
-                            {hasActiveFilters ? (
-                                <span className="rounded-full bg-[#0a2a5e] px-1.5 py-0.5 text-[10px] font-bold text-white">
-                                    On
-                                </span>
-                            ) : null}
-                        </button>
-
-                        <div
-                            className={`grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] lg:items-end ${
-                                mobileFiltersOpen ? "grid" : "hidden sm:grid"
-                            }`}
-                        >
-                            <div>
-                                <label htmlFor="expense_filter_from" className={expenseLabelClass}>
-                                    From date
-                                </label>
-                                <input
-                                    id="expense_filter_from"
-                                    type="date"
-                                    value={filterFrom}
-                                    max={filterTo || undefined}
-                                    onChange={(e) => setFilterFrom(e.target.value)}
-                                    className={expenseInputClass}
-                                />
-                            </div>
-                            <div>
-                                <label htmlFor="expense_filter_to" className={expenseLabelClass}>
-                                    To date
-                                </label>
-                                <input
-                                    id="expense_filter_to"
-                                    type="date"
-                                    value={filterTo}
-                                    min={filterFrom || undefined}
-                                    onChange={(e) => setFilterTo(e.target.value)}
-                                    className={expenseInputClass}
-                                />
-                            </div>
-                            <button
-                                type="button"
-                                onClick={clearFilters}
-                                disabled={!hasActiveFilters}
-                                className={`${expenseSecondaryButtonClass} lg:min-w-[7rem]`}
-                            >
-                                Clear
-                            </button>
-                        </div>
                     </div>
                 </div>
 
@@ -453,66 +425,94 @@ function AddExpensePageInner() {
                     ) : expenses.length === 0 ? (
                         <div className="flex flex-col items-center justify-center gap-3 px-2 py-12 text-center">
                             <Wallet className="h-10 w-10 text-gray-300" aria-hidden />
-                            <p className="text-sm font-medium text-gray-600">No expenses this month</p>
-                            <button
-                                type="button"
-                                onClick={openAddModal}
-                                className="inline-flex min-h-11 w-full max-w-xs items-center justify-center gap-2 rounded-xl border border-[#0a2a5e]/20 bg-[#0a2a5e]/5 px-4 py-2.5 text-sm font-semibold text-[#0a2a5e] touch-manipulation active:scale-[0.98] hover:bg-[#0a2a5e]/10"
-                            >
-                                <Plus className="h-4 w-4" aria-hidden />
-                                Add your first expense
-                            </button>
+                            <p className="text-sm font-medium text-gray-600">
+                                No expenses for {monthLabel}
+                            </p>
+                            <p className="max-w-sm text-xs text-gray-500">
+                                Add each expense as a draft, then submit the full month for admin approval.
+                            </p>
+                            {monthClaim.canAdd ? (
+                                <button
+                                    type="button"
+                                    onClick={openAddModal}
+                                    className="inline-flex min-h-11 w-full max-w-xs items-center justify-center gap-2 rounded-md border border-[#0a2a5e]/20 bg-[#0a2a5e]/5 px-4 py-2.5 text-sm font-semibold text-[#0a2a5e] touch-manipulation active:scale-[0.98] hover:bg-[#0a2a5e]/10"
+                                >
+                                    <Plus className="h-4 w-4" aria-hidden />
+                                    Add your first expense
+                                </button>
+                            ) : null}
                         </div>
                     ) : filteredExpenses.length === 0 ? (
                         <div className="flex flex-col items-center justify-center gap-3 px-2 py-12 text-center">
-                            <Search className="h-10 w-10 text-gray-300" aria-hidden />
-                            <p className="text-sm font-medium text-gray-600">No expenses match your filters</p>
-                            <button
-                                type="button"
-                                onClick={clearFilters}
-                                className={`${expenseSecondaryButtonClass} max-w-xs`}
-                            >
-                                Clear filters
-                            </button>
+                            <Wallet className="h-10 w-10 text-gray-300" aria-hidden />
+                            <p className="text-sm font-medium text-gray-600">
+                                No {getStatusFilterLabel(statusFilter)} expenses for {monthLabel}
+                            </p>
                         </div>
                     ) : (
                         <>
                             <div className="space-y-3 lg:hidden">
                                 {filteredExpenses.map((exp) => (
-                                    <button
+                                    <div
                                         key={exp.id}
-                                        type="button"
-                                        onClick={() => setViewExpense(exp)}
-                                        className="flex w-full cursor-pointer flex-col gap-3 rounded-2xl border border-[#0a2a5e]/10 bg-white p-4 text-left shadow-sm touch-manipulation active:scale-[0.99]"
+                                        className="flex flex-col rounded-md border border-[#0a2a5e]/10 bg-white shadow-sm"
                                     >
-                                        <div className="flex items-start justify-between gap-3">
-                                            <div className="min-w-0 flex-1">
-                                                <p className="truncate text-xs font-semibold uppercase tracking-wide text-[#0a2a5e]">
-                                                    {exp.expense_id}
-                                                </p>
-                                                <p className="mt-0.5 text-[11px] text-gray-500">
-                                                    {formatExpenseDate(exp.expense_date)} · {exp.payment_mode}
-                                                </p>
-                                                <p className="mt-2 line-clamp-2 text-base font-bold leading-snug text-gray-900">
-                                                    {exp.title}
-                                                </p>
-                                                <p className="mt-1 truncate text-sm font-medium text-[#0a2a5e]">
-                                                    {exp.category}
-                                                </p>
+                                        <button
+                                            type="button"
+                                            onClick={() => setViewExpense(exp)}
+                                            className="flex w-full cursor-pointer flex-col gap-3 p-4 pb-3 text-left touch-manipulation active:scale-[0.99]"
+                                        >
+                                            <div className="flex items-start justify-between gap-3">
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="truncate text-xs font-semibold uppercase tracking-wide text-[#0a2a5e]">
+                                                        {exp.expense_id}
+                                                    </p>
+                                                    <p className="mt-0.5 text-[11px] text-gray-500">
+                                                        {formatExpenseDate(exp.expense_date)} · {exp.payment_mode}
+                                                    </p>
+                                                    <p className="mt-2 line-clamp-2 text-base font-bold leading-snug text-gray-900">
+                                                        {exp.title}
+                                                    </p>
+                                                    <p className="mt-1 truncate text-sm font-medium text-[#0a2a5e]">
+                                                        {exp.category}
+                                                    </p>
+                                                </div>
+                                                <ChevronRight className="mt-1 h-5 w-5 shrink-0 text-gray-400" aria-hidden />
                                             </div>
-                                            <ChevronRight className="mt-1 h-5 w-5 shrink-0 text-gray-400" aria-hidden />
-                                        </div>
-                                        <div className="flex items-center justify-between gap-2 border-t border-gray-100 pt-3">
+                                        </button>
+                                        <div className="flex items-center justify-between gap-2 border-t border-gray-100 px-4 pb-4 pt-3">
                                             <span
                                                 className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${getExpenseStatusStyles(exp.status)}`}
                                             >
                                                 {getExpenseStatusLabel(exp.status)}
                                             </span>
-                                            <p className="text-sm font-bold text-gray-900">
-                                                {formatCurrency(exp.amount)}
-                                            </p>
+                                            <div className="flex items-center gap-2">
+                                                {exp.status === "draft" && monthClaim.canEdit ? (
+                                                    <>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => openEditModal(exp)}
+                                                            className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-[#0a2a5e]/15 text-[#0a2a5e] touch-manipulation"
+                                                            aria-label="Edit expense"
+                                                        >
+                                                            <Pencil className="h-4 w-4" />
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => void handleDeleteExpense(exp)}
+                                                            className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-red-200 text-red-600 touch-manipulation"
+                                                            aria-label="Delete expense"
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </button>
+                                                    </>
+                                                ) : null}
+                                                <p className="text-sm font-bold text-gray-900">
+                                                    {formatCurrencyWhole(exp.amount)}
+                                                </p>
+                                            </div>
                                         </div>
-                                    </button>
+                                    </div>
                                 ))}
                             </div>
 
@@ -543,7 +543,7 @@ function AddExpensePageInner() {
                                                     {exp.title}
                                                 </td>
                                                 <td className="whitespace-nowrap px-3 py-3 font-semibold text-gray-900">
-                                                    {formatCurrency(exp.amount)}
+                                                    {formatCurrencyWhole(exp.amount)}
                                                 </td>
                                                 <td className="px-3 py-3">
                                                     <span
@@ -553,15 +553,39 @@ function AddExpensePageInner() {
                                                     </span>
                                                 </td>
                                                 <td className="px-3 py-3 text-right">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setViewExpense(exp)}
-                                                        className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg border border-[#0a2a5e]/15 bg-white text-[#0a2a5e] shadow-sm transition touch-manipulation hover:bg-[#06b6d4]/5 active:scale-95"
-                                                        title="View expense"
-                                                        aria-label="View expense"
-                                                    >
-                                                        <Eye className="h-4 w-4" aria-hidden />
-                                                    </button>
+                                                    <div className="inline-flex items-center gap-1.5">
+                                                        {exp.status === "draft" && monthClaim.canEdit ? (
+                                                            <>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => openEditModal(exp)}
+                                                                    className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-md border border-[#0a2a5e]/15 bg-white text-[#0a2a5e] shadow-sm transition touch-manipulation hover:bg-[#06b6d4]/5 active:scale-95"
+                                                                    title="Edit expense"
+                                                                    aria-label="Edit expense"
+                                                                >
+                                                                    <Pencil className="h-4 w-4" aria-hidden />
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => void handleDeleteExpense(exp)}
+                                                                    className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-md border border-red-200 bg-red-50 text-red-600 shadow-sm transition touch-manipulation hover:bg-red-100 active:scale-95"
+                                                                    title="Delete expense"
+                                                                    aria-label="Delete expense"
+                                                                >
+                                                                    <Trash2 className="h-4 w-4" aria-hidden />
+                                                                </button>
+                                                            </>
+                                                        ) : null}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setViewExpense(exp)}
+                                                            className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-md border border-[#0a2a5e]/15 bg-white text-[#0a2a5e] shadow-sm transition touch-manipulation hover:bg-[#06b6d4]/5 active:scale-95"
+                                                            title="View expense"
+                                                            aria-label="View expense"
+                                                        >
+                                                            <Eye className="h-4 w-4" aria-hidden />
+                                                        </button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))}
@@ -571,26 +595,66 @@ function AddExpensePageInner() {
                         </>
                     )}
                 </div>
+
+                {monthClaim.canSubmit ? (
+                    <div className="border-t border-[#0a2a5e]/10 bg-gradient-to-r from-[#06124f]/5 to-[#0a2a5e]/5 px-3 py-4 sm:px-6">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="min-w-0">
+                                <p className="text-sm font-bold text-[#0a2a5e]">Ready to submit?</p>
+                                <p className="mt-0.5 text-xs text-gray-600">
+                                    {monthClaim.draftCount} draft expense
+                                    {monthClaim.draftCount === 1 ? "" : "s"} ·{" "}
+                                    {formatCurrencyWhole(monthClaim.draftAmount)} will be sent to admin for approval
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => void handleSubmitBatch()}
+                                disabled={isSubmittingBatch}
+                                className={`${expensePrimaryButtonClass} !rounded-md sm:min-w-[12rem]`}
+                            >
+                                {isSubmittingBatch ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                                ) : (
+                                    <Send className="h-4 w-4" aria-hidden />
+                                )}
+                                {isSubmittingBatch ? "Submitting…" : "Submit for approval"}
+                            </button>
+                        </div>
+                    </div>
+                ) : null}
             </section>
 
-            <button
-                type="button"
-                onClick={openAddModal}
-                className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] right-4 z-40 inline-flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-[#06124f] to-[#0a2a5e] text-white shadow-lg touch-manipulation transition active:scale-95 sm:hidden"
-                aria-label="Add expense"
-            >
-                <Plus className="h-6 w-6" aria-hidden />
-            </button>
+            {monthClaim.canAdd ? (
+                <button
+                    type="button"
+                    onClick={openAddModal}
+                    className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] right-4 z-40 inline-flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-[#06124f] to-[#0a2a5e] text-white shadow-lg touch-manipulation transition active:scale-95 sm:hidden"
+                    aria-label="Add expense"
+                >
+                    <Plus className="h-6 w-6" aria-hidden />
+                </button>
+            ) : null}
 
             <AddExpenseFormModal
                 open={addModalOpen}
                 categories={categories}
                 paymentModes={paymentModes}
-                onClose={() => setAddModalOpen(false)}
+                month={month}
+                initialValues={editingExpense ? expenseRowToFormValues(editingExpense) : null}
+                onClose={() => {
+                    setAddModalOpen(false);
+                    setEditingExpense(null);
+                }}
                 onSubmit={handleAddExpense}
             />
 
-            <ExpenseViewModal expense={viewExpense} onClose={() => setViewExpense(null)} />
+            <ExpenseViewModal
+                expense={viewExpense}
+                onClose={() => setViewExpense(null)}
+                onEdit={monthClaim.canEdit ? openEditModal : undefined}
+                onDelete={monthClaim.canEdit ? handleDeleteExpense : undefined}
+            />
 
             <ExpenseSuccessAlert
                 open={successAlert.open}
@@ -649,14 +713,14 @@ function ExpenseSuccessAlert({
         >
             <div className="absolute inset-0 bg-black/40" aria-hidden />
             <div
-                className="relative w-full max-w-md overflow-hidden rounded-t-3xl border border-gray-200 bg-white shadow-2xl sm:rounded-2xl"
+                className="relative w-full max-w-md overflow-hidden rounded-t-lg border border-gray-200 bg-white shadow-2xl sm:rounded-md"
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="flex shrink-0 flex-col items-center pt-2 sm:hidden">
                     <span className="h-1 w-10 rounded-full bg-gray-300" aria-hidden />
                 </div>
                 <div className="p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:p-6">
-                    <div className="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3.5 text-sm text-emerald-800">
+                    <div className="flex items-start gap-3 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3.5 text-sm text-emerald-800">
                         <CheckCircle2
                             className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600"
                             aria-hidden
@@ -675,7 +739,7 @@ function ExpenseSuccessAlert({
                     <button
                         type="button"
                         onClick={onClose}
-                        className="mt-4 flex min-h-11 w-full items-center justify-center rounded-xl bg-emerald-600 text-sm font-bold text-white shadow-sm touch-manipulation active:scale-[0.98] hover:bg-emerald-700"
+                        className="mt-4 flex min-h-11 w-full items-center justify-center rounded-md bg-emerald-600 text-sm font-bold text-white shadow-sm touch-manipulation active:scale-[0.98] hover:bg-emerald-700"
                     >
                         OK
                     </button>

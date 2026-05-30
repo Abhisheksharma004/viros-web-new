@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
-import { X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Loader2, Pencil, Trash2, X } from "lucide-react";
 import type { EmployeeExpenseRow } from "@/lib/employeeExpenses";
 import {
     formatCurrency,
@@ -9,11 +9,14 @@ import {
     formatExpenseDateTime,
     getExpenseStatusLabel,
     getExpenseStatusStyles,
+    resolveExpenseApprovedAmount,
 } from "@/lib/employeeExpenseUi";
 
 type ExpenseViewModalProps = {
     expense: EmployeeExpenseRow | null;
     onClose: () => void;
+    onEdit?: (expense: EmployeeExpenseRow) => void;
+    onDelete?: (expense: EmployeeExpenseRow) => Promise<void>;
 };
 
 function ViewField({
@@ -39,7 +42,9 @@ function ViewField({
     );
 }
 
-export default function ExpenseViewModal({ expense, onClose }: ExpenseViewModalProps) {
+export default function ExpenseViewModal({ expense, onClose, onEdit, onDelete }: ExpenseViewModalProps) {
+    const [isDeleting, setIsDeleting] = useState(false);
+
     useEffect(() => {
         if (!expense) return;
         const onKeyDown = (e: KeyboardEvent) => {
@@ -51,6 +56,20 @@ export default function ExpenseViewModal({ expense, onClose }: ExpenseViewModalP
 
     if (!expense) return null;
 
+    const isDraft = expense.status === "draft";
+    const canModify = isDraft && onEdit && onDelete;
+
+    const handleDelete = async () => {
+        if (!onDelete || !window.confirm("Remove this draft expense?")) return;
+        setIsDeleting(true);
+        try {
+            await onDelete(expense);
+            onClose();
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
     return (
         <div className="fixed inset-0 z-[60] flex items-end justify-center sm:items-center sm:px-4 sm:py-6">
             <div className="absolute inset-0 bg-black/40" aria-hidden onClick={onClose} />
@@ -58,7 +77,7 @@ export default function ExpenseViewModal({ expense, onClose }: ExpenseViewModalP
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="expense-view-title"
-                className="relative flex max-h-[92dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl border border-gray-200 bg-white shadow-2xl sm:max-h-[min(90vh,640px)] sm:rounded-2xl"
+                className="relative flex max-h-[92dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-lg border border-gray-200 bg-white shadow-2xl sm:max-h-[min(90vh,640px)] sm:rounded-md"
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="flex shrink-0 flex-col items-center pt-2 sm:hidden">
@@ -77,7 +96,7 @@ export default function ExpenseViewModal({ expense, onClose }: ExpenseViewModalP
                     <button
                         type="button"
                         onClick={onClose}
-                        className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg text-white/80 transition hover:bg-white/10 hover:text-white"
+                        className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-md text-white/80 transition hover:bg-white/10 hover:text-white"
                         aria-label="Close"
                     >
                         <X className="h-5 w-5" />
@@ -85,7 +104,7 @@ export default function ExpenseViewModal({ expense, onClose }: ExpenseViewModalP
                 </div>
 
                 <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-5 sm:px-6 sm:py-6">
-                    <div className="mb-5 flex items-center justify-between gap-3 rounded-xl border border-[#0a2a5e]/10 bg-[#0a2a5e]/5 px-4 py-3">
+                    <div className="mb-5 flex items-center justify-between gap-3 rounded-md border border-[#0a2a5e]/10 bg-[#0a2a5e]/5 px-4 py-3">
                         <span
                             className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${getExpenseStatusStyles(expense.status)}`}
                         >
@@ -93,6 +112,20 @@ export default function ExpenseViewModal({ expense, onClose }: ExpenseViewModalP
                         </span>
                         <p className="text-xl font-bold text-[#0a2a5e]">{formatCurrency(expense.amount)}</p>
                     </div>
+
+                    {expense.status === "approved" ? (
+                        <div className="mb-5 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3">
+                            <p className="text-xs font-medium text-emerald-800">Approved amount</p>
+                            <p className="mt-1 text-lg font-bold text-emerald-900">
+                                {formatCurrency(resolveExpenseApprovedAmount(expense) ?? expense.amount)}
+                            </p>
+                            {(resolveExpenseApprovedAmount(expense) ?? expense.amount) < expense.amount ? (
+                                <p className="mt-1 text-xs text-amber-800">
+                                    Partial approval (claimed {formatCurrency(expense.amount)})
+                                </p>
+                            ) : null}
+                        </div>
+                    ) : null}
 
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5">
                         <ViewField
@@ -135,7 +168,7 @@ export default function ExpenseViewModal({ expense, onClose }: ExpenseViewModalP
                             className="sm:col-span-2"
                         />
                         {expense.status === "rejected" && expense.reject_reason?.trim() ? (
-                            <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 sm:col-span-2">
+                            <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2.5 sm:col-span-2">
                                 <p className="text-xs font-medium text-red-800">Rejection reason</p>
                                 <p className="mt-1 text-sm font-semibold text-red-900 whitespace-pre-wrap break-words">
                                     {expense.reject_reason}
@@ -146,10 +179,40 @@ export default function ExpenseViewModal({ expense, onClose }: ExpenseViewModalP
                 </div>
 
                 <div className="flex shrink-0 flex-col gap-2 border-t border-gray-100 px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:flex-row sm:justify-end sm:px-6">
+                    {canModify ? (
+                        <>
+                            <button
+                                type="button"
+                                onClick={() => void handleDelete()}
+                                disabled={isDeleting}
+                                className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700 transition touch-manipulation hover:bg-red-100 disabled:opacity-60 sm:w-auto"
+                            >
+                                {isDeleting ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                                ) : (
+                                    <Trash2 className="h-4 w-4" aria-hidden />
+                                )}
+                                Delete
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    onEdit(expense);
+                                    onClose();
+                                }}
+                                disabled={isDeleting}
+                                className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md border border-[#0a2a5e]/20 bg-[#0a2a5e]/5 px-4 py-2.5 text-sm font-semibold text-[#0a2a5e] transition touch-manipulation hover:bg-[#0a2a5e]/10 disabled:opacity-60 sm:w-auto"
+                            >
+                                <Pencil className="h-4 w-4" aria-hidden />
+                                Edit
+                            </button>
+                        </>
+                    ) : null}
                     <button
                         type="button"
                         onClick={onClose}
-                        className="min-h-11 w-full cursor-pointer rounded-xl bg-[#06b6d4] px-6 py-2.5 text-sm font-bold text-white shadow-md hover:bg-[#05a8b8] sm:w-auto"
+                        disabled={isDeleting}
+                        className="min-h-11 w-full cursor-pointer rounded-md bg-[#06b6d4] px-6 py-2.5 text-sm font-bold text-white shadow-md hover:bg-[#05a8b8] disabled:opacity-60 sm:w-auto"
                     >
                         Close
                     </button>

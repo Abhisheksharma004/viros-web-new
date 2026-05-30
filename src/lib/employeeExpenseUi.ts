@@ -1,4 +1,4 @@
-import type { ExpenseStatus } from "@/lib/employeeExpenses";
+import type { AdminBatchReviewStatus, ExpenseStatus } from "@/lib/employeeExpenses";
 
 export function formatExpenseDate(iso: string) {
     const d = new Date(iso + "T12:00:00");
@@ -34,12 +34,34 @@ export function formatCurrencyWhole(amount: number) {
     }).format(amount);
 }
 
+/** Payable amount after approval; null when not approved. Client-safe (no DB imports). */
+export function resolveExpenseApprovedAmount(row: {
+    status: ExpenseStatus;
+    amount: number;
+    approved_amount: number | null;
+}): number | null {
+    if (row.status !== "approved") return null;
+    return row.approved_amount ?? row.amount;
+}
+
+export function isPartialExpenseApproval(row: {
+    status: ExpenseStatus;
+    amount: number;
+    approved_amount: number | null;
+}) {
+    if (row.status !== "approved") return false;
+    const approved = resolveExpenseApprovedAmount(row) ?? row.amount;
+    return Math.abs(approved - row.amount) > 0.001;
+}
+
 export function getExpenseStatusStyles(status: ExpenseStatus) {
     switch (status) {
         case "approved":
             return "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-600/15";
         case "rejected":
             return "bg-red-50 text-red-800 ring-1 ring-red-600/15";
+        case "draft":
+            return "bg-slate-100 text-slate-700 ring-1 ring-slate-300/50";
         default:
             return "bg-amber-50 text-amber-800 ring-1 ring-amber-600/15";
     }
@@ -51,8 +73,40 @@ export function getExpenseStatusLabel(status: ExpenseStatus) {
             return "Approved";
         case "rejected":
             return "Rejected";
+        case "draft":
+            return "Draft";
         default:
             return "Pending";
+    }
+}
+
+export function getAdminBatchReviewStatusLabel(status: AdminBatchReviewStatus) {
+    switch (status) {
+        case "pending_review":
+            return "Awaiting review";
+        case "partial":
+            return "Partially reviewed";
+        case "all_approved":
+            return "All approved";
+        case "all_rejected":
+            return "All rejected";
+        default:
+            return "Mixed";
+    }
+}
+
+export function getAdminBatchReviewStatusStyles(status: AdminBatchReviewStatus) {
+    switch (status) {
+        case "pending_review":
+            return "bg-amber-50 text-amber-800 ring-1 ring-amber-600/15";
+        case "partial":
+            return "bg-sky-50 text-sky-800 ring-1 ring-sky-600/15";
+        case "all_approved":
+            return "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-600/15";
+        case "all_rejected":
+            return "bg-red-50 text-red-800 ring-1 ring-red-600/15";
+        default:
+            return "bg-violet-50 text-violet-800 ring-1 ring-violet-600/15";
     }
 }
 

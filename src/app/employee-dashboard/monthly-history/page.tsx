@@ -1,9 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CalendarDays, Loader2 } from "lucide-react";
+import { CalendarDays, Loader2, RefreshCw } from "lucide-react";
 import type { EmployeeExpenseMonthlySummary } from "@/lib/employeeExpenses";
-import { formatCurrency } from "@/lib/employeeExpenseUi";
+import { formatCurrencyWhole } from "@/lib/employeeExpenseUi";
 
 type MonthlyPayload = {
     months: EmployeeExpenseMonthlySummary[];
@@ -73,49 +73,76 @@ export default function MonthlyHistoryPage() {
         [months],
     );
 
+    const stats = [
+        {
+            label: "Total expenses",
+            value: String(totals.totalCount),
+            tone: "text-[#0a2a5e]",
+            ring: "ring-[#0a2a5e]/15",
+        },
+        {
+            label: "Approved",
+            value: String(totals.approvedCount),
+            tone: "text-emerald-800",
+            ring: "ring-emerald-200",
+        },
+        {
+            label: "Rejected",
+            value: String(totals.rejectedCount),
+            tone: "text-red-700",
+            ring: "ring-red-200",
+        },
+    ];
+
     return (
         <div className="mx-auto w-full min-w-0 max-w-6xl space-y-3 pb-2 sm:space-y-6 sm:pb-6">
             {loadError ? (
-                <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                    {loadError}
+                <div className="flex flex-col gap-3 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 sm:flex-row sm:items-center sm:justify-between">
+                    <span>{loadError}</span>
+                    <button
+                        type="button"
+                        onClick={() => void loadMonthlyHistory()}
+                        className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-md bg-red-100 px-4 py-2 text-xs font-semibold text-red-800 touch-manipulation active:scale-[0.98]"
+                    >
+                        <RefreshCw className="h-3.5 w-3.5" aria-hidden />
+                        Retry
+                    </button>
                 </div>
             ) : null}
 
             <div className="grid grid-cols-3 gap-2 sm:gap-3">
-                <div className="min-w-0 rounded-2xl border bg-white p-2.5 shadow-sm ring-1 ring-[#0a2a5e]/15 sm:p-4">
-                    <p className="truncate text-[9px] font-bold uppercase tracking-wide text-gray-500 sm:text-xs">
-                        Total
-                    </p>
-                    <p className="mt-1 text-base font-black leading-none text-[#0a2a5e] sm:mt-2 sm:text-2xl">
-                        {totals.totalCount}
-                    </p>
-                </div>
-                <div className="min-w-0 rounded-2xl border bg-white p-2.5 shadow-sm ring-1 ring-emerald-200 sm:p-4">
-                    <p className="truncate text-[9px] font-bold uppercase tracking-wide text-gray-500 sm:text-xs">
-                        Approved
-                    </p>
-                    <p className="mt-1 text-base font-black leading-none text-emerald-700 sm:mt-2 sm:text-2xl">
-                        {totals.approvedCount}
-                    </p>
-                </div>
-                <div className="min-w-0 rounded-2xl border bg-white p-2.5 shadow-sm ring-1 ring-red-200 sm:p-4">
-                    <p className="truncate text-[9px] font-bold uppercase tracking-wide text-gray-500 sm:text-xs">
-                        Rejected
-                    </p>
-                    <p className="mt-1 text-base font-black leading-none text-red-700 sm:mt-2 sm:text-2xl">
-                        {totals.rejectedCount}
-                    </p>
-                </div>
+                {stats.map((item) => (
+                    <div
+                        key={item.label}
+                        className={`min-w-0 rounded-md border bg-white p-2 shadow-sm ring-1 sm:p-4 ${item.ring}`}
+                    >
+                        <p className="text-[10px] font-bold uppercase leading-tight tracking-wide text-gray-500 sm:text-xs">
+                            {item.label}
+                        </p>
+                        <p
+                            className={`mt-1 max-w-full text-[clamp(0.6875rem,2.75vw,1.875rem)] font-black leading-tight tabular-nums sm:mt-2 sm:text-2xl ${item.tone}`}
+                        >
+                            {item.value}
+                        </p>
+                    </div>
+                ))}
             </div>
 
-            <section className="overflow-hidden rounded-2xl border border-[#0a2a5e]/10 bg-white shadow-sm">
+            <section className="overflow-hidden rounded-md border border-[#0a2a5e]/10 bg-white shadow-sm">
                 <div className="border-b border-gray-100 px-3 py-3 sm:px-6 sm:py-4">
-                    <div className="flex items-center gap-2">
-                        <CalendarDays className="h-5 w-5 shrink-0 text-[#0a2a5e]" aria-hidden />
-                        <div>
-                            <h2 className="text-sm font-bold text-gray-900 sm:text-base">Monthly expense summary</h2>
-                            <p className="text-[11px] text-gray-500 sm:text-xs">Month-wise total, approved & rejected</p>
+                    <div className="flex items-start justify-between gap-3">
+                        <div className="flex min-w-0 items-center gap-2">
+                            <CalendarDays className="h-5 w-5 shrink-0 text-[#0a2a5e]" aria-hidden />
+                            <div className="min-w-0">
+                                <h2 className="text-sm font-bold text-gray-900 sm:text-base">Monthly history</h2>
+                                <p className="truncate text-[11px] text-gray-500 sm:text-xs">
+                                    Month-wise total, approved & rejected
+                                </p>
+                            </div>
                         </div>
+                        <p className="shrink-0 rounded-full bg-gray-100 px-2.5 py-1 text-[11px] font-semibold text-gray-600">
+                            {months.length}
+                        </p>
                     </div>
                 </div>
 
@@ -129,6 +156,9 @@ export default function MonthlyHistoryPage() {
                         <div className="flex flex-col items-center justify-center gap-3 px-2 py-12 text-center">
                             <CalendarDays className="h-10 w-10 text-gray-300" aria-hidden />
                             <p className="text-sm font-medium text-gray-600">No expense records yet</p>
+                            <p className="max-w-sm text-xs text-gray-500">
+                                Your submitted monthly batches will appear here.
+                            </p>
                         </div>
                     ) : (
                         <>
@@ -136,10 +166,10 @@ export default function MonthlyHistoryPage() {
                                 {months.map((row) => (
                                     <div
                                         key={row.month}
-                                        className="rounded-2xl border border-[#0a2a5e]/10 bg-white p-4 shadow-sm"
+                                        className="rounded-md border border-[#0a2a5e]/10 bg-white p-4 shadow-sm"
                                     >
                                         <div className="flex items-start justify-between gap-3 border-b border-gray-100 pb-3">
-                                            <div>
+                                            <div className="min-w-0">
                                                 <p className="text-sm font-bold text-gray-900">
                                                     {formatMonthLabel(row.month)}
                                                 </p>
@@ -147,42 +177,42 @@ export default function MonthlyHistoryPage() {
                                                     {row.totalCount} expense{row.totalCount === 1 ? "" : "s"}
                                                 </p>
                                             </div>
-                                            <p className="text-base font-bold text-[#0a2a5e]">
-                                                {formatCurrency(row.totalAmount)}
+                                            <p className="shrink-0 text-sm font-bold tabular-nums text-[#0a2a5e]">
+                                                {formatCurrencyWhole(row.totalAmount)}
                                             </p>
                                         </div>
                                         <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-                                            <div className="rounded-xl bg-emerald-50 px-2 py-2">
+                                            <div className="rounded-md bg-emerald-50 px-2 py-2">
                                                 <p className="text-[10px] font-bold uppercase text-emerald-800">
                                                     Approved
                                                 </p>
-                                                <p className="mt-1 text-sm font-bold text-emerald-900">
+                                                <p className="mt-1 text-sm font-bold tabular-nums text-emerald-900">
                                                     {row.approvedCount}
                                                 </p>
-                                                <p className="text-[11px] font-medium text-emerald-700">
-                                                    {formatCurrency(row.approvedAmount)}
+                                                <p className="text-[11px] font-medium tabular-nums text-emerald-700">
+                                                    {formatCurrencyWhole(row.approvedAmount)}
                                                 </p>
                                             </div>
-                                            <div className="rounded-xl bg-red-50 px-2 py-2">
+                                            <div className="rounded-md bg-red-50 px-2 py-2">
                                                 <p className="text-[10px] font-bold uppercase text-red-800">
                                                     Rejected
                                                 </p>
-                                                <p className="mt-1 text-sm font-bold text-red-900">
+                                                <p className="mt-1 text-sm font-bold tabular-nums text-red-900">
                                                     {row.rejectedCount}
                                                 </p>
-                                                <p className="text-[11px] font-medium text-red-700">
-                                                    {formatCurrency(row.rejectedAmount)}
+                                                <p className="text-[11px] font-medium tabular-nums text-red-700">
+                                                    {formatCurrencyWhole(row.rejectedAmount)}
                                                 </p>
                                             </div>
-                                            <div className="rounded-xl bg-amber-50 px-2 py-2">
+                                            <div className="rounded-md bg-amber-50 px-2 py-2">
                                                 <p className="text-[10px] font-bold uppercase text-amber-800">
                                                     Pending
                                                 </p>
-                                                <p className="mt-1 text-sm font-bold text-amber-900">
+                                                <p className="mt-1 text-sm font-bold tabular-nums text-amber-900">
                                                     {row.pendingCount}
                                                 </p>
-                                                <p className="text-[11px] font-medium text-amber-700">
-                                                    {formatCurrency(row.pendingAmount)}
+                                                <p className="text-[11px] font-medium tabular-nums text-amber-700">
+                                                    {formatCurrencyWhole(row.pendingAmount)}
                                                 </p>
                                             </div>
                                         </div>
@@ -213,20 +243,20 @@ export default function MonthlyHistoryPage() {
                                                 <td className="whitespace-nowrap px-3 py-3 text-gray-700">
                                                     {row.totalCount}
                                                 </td>
-                                                <td className="whitespace-nowrap px-3 py-3 font-semibold text-[#0a2a5e]">
-                                                    {formatCurrency(row.totalAmount)}
+                                                <td className="whitespace-nowrap px-3 py-3 font-semibold tabular-nums text-[#0a2a5e]">
+                                                    {formatCurrencyWhole(row.totalAmount)}
                                                 </td>
                                                 <td className="whitespace-nowrap px-3 py-3 text-emerald-700">
                                                     {row.approvedCount}
                                                 </td>
-                                                <td className="whitespace-nowrap px-3 py-3 font-medium text-emerald-700">
-                                                    {formatCurrency(row.approvedAmount)}
+                                                <td className="whitespace-nowrap px-3 py-3 font-medium tabular-nums text-emerald-700">
+                                                    {formatCurrencyWhole(row.approvedAmount)}
                                                 </td>
                                                 <td className="whitespace-nowrap px-3 py-3 text-red-700">
                                                     {row.rejectedCount}
                                                 </td>
-                                                <td className="whitespace-nowrap px-3 py-3 font-medium text-red-700">
-                                                    {formatCurrency(row.rejectedAmount)}
+                                                <td className="whitespace-nowrap px-3 py-3 font-medium tabular-nums text-red-700">
+                                                    {formatCurrencyWhole(row.rejectedAmount)}
                                                 </td>
                                                 <td className="whitespace-nowrap px-3 py-3 text-amber-700">
                                                     {row.pendingCount}
