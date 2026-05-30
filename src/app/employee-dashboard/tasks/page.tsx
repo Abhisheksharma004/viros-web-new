@@ -58,7 +58,7 @@ function TaskCard({
     onUpdate: (task: TaskRow) => void;
 }) {
     return (
-        <div className="flex w-full flex-col gap-3 rounded-2xl border border-[#0a2a5e]/10 bg-white p-4 shadow-sm sm:p-5">
+        <div className="flex w-full flex-col gap-3 rounded-md border border-[#0a2a5e]/10 bg-white p-4 shadow-sm sm:p-5">
             <button
                 type="button"
                 onClick={() => onView(task)}
@@ -133,7 +133,7 @@ function TaskCard({
                 <button
                     type="button"
                     onClick={() => onUpdate(task)}
-                    className="inline-flex min-h-10 w-full cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-[#06b6d4] text-sm font-bold text-white shadow-md transition hover:bg-[#05a8b8] active:scale-[0.98]"
+                    className="inline-flex min-h-10 w-full cursor-pointer items-center justify-center gap-1.5 rounded-md bg-[#06b6d4] text-sm font-bold text-white shadow-md transition hover:bg-[#05a8b8] active:scale-[0.98]"
                 >
                     <Pencil className="h-4 w-4" aria-hidden />
                     Update
@@ -374,7 +374,7 @@ export function EmployeeTasksPageContent({ variant = "my" }: { variant?: TasksPa
                 {stats.map((item) => (
                     <div
                         key={item.label}
-                        className={`min-w-0 rounded-2xl border bg-white p-2.5 shadow-sm ring-1 sm:p-4 ${item.ring}`}
+                        className={`min-w-0 rounded-md border bg-white p-2.5 shadow-sm ring-1 sm:p-4 ${item.ring}`}
                     >
                         <p className="truncate text-[9px] font-bold uppercase tracking-wide text-gray-500 sm:text-xs">
                             {item.label}
@@ -433,12 +433,12 @@ export function EmployeeTasksPageContent({ variant = "my" }: { variant?: TasksPa
             </div>
 
             {error && (
-                <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                     {error}
                 </div>
             )}
 
-            <div className="overflow-hidden rounded-2xl border border-[#0a2a5e]/10 bg-white shadow-sm">
+            <div className="overflow-hidden rounded-md border border-[#0a2a5e]/10 bg-white shadow-sm">
                 <div className="flex items-center justify-between gap-2 border-b border-gray-100 px-4 py-3.5 sm:px-6 sm:py-4">
                     <h2 className="text-sm font-bold text-gray-900 sm:text-base">
                         {isHistory ? "Completed tasks" : "Assigned tasks"}
@@ -546,7 +546,7 @@ export function EmployeeTasksPageContent({ variant = "my" }: { variant?: TasksPa
                                                     <button
                                                         type="button"
                                                         onClick={() => openViewModal(task)}
-                                                        className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg border border-[#0a2a5e]/15 bg-white text-[#0a2a5e] shadow-sm transition hover:bg-[#06b6d4]/5"
+                                                        className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-md border border-[#0a2a5e]/15 bg-white text-[#0a2a5e] shadow-sm transition hover:bg-[#06b6d4]/5"
                                                         title="View task"
                                                         aria-label="View task"
                                                     >
@@ -556,7 +556,7 @@ export function EmployeeTasksPageContent({ variant = "my" }: { variant?: TasksPa
                                                         <button
                                                             type="button"
                                                             onClick={() => openUpdateModal(task)}
-                                                            className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg bg-[#06b6d4] text-white shadow-md transition hover:bg-[#05a8b8]"
+                                                            className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-md bg-[#06b6d4] text-white shadow-md transition hover:bg-[#05a8b8]"
                                                             title="Update task"
                                                             aria-label="Update task"
                                                         >
@@ -585,7 +585,7 @@ export function EmployeeTasksPageContent({ variant = "my" }: { variant?: TasksPa
                     <div
                         role="dialog"
                         aria-modal="true"
-                        className="relative flex max-h-[92dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl border border-gray-200 bg-white shadow-2xl sm:max-h-[min(90vh,640px)] sm:rounded-2xl"
+                        className="relative flex max-h-[92dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-lg border border-gray-200 bg-white shadow-2xl sm:max-h-[min(90vh,640px)] sm:rounded-md"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="flex shrink-0 flex-col items-center pt-2 sm:hidden">
@@ -602,7 +602,7 @@ export function EmployeeTasksPageContent({ variant = "my" }: { variant?: TasksPa
                             <button
                                 type="button"
                                 onClick={closeModal}
-                                className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg text-white/80 transition hover:bg-white/10 hover:text-white"
+                                className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-md text-white/80 transition hover:bg-white/10 hover:text-white"
                                 aria-label="Close"
                             >
                                 <X className="h-5 w-5" />
@@ -671,7 +671,7 @@ export function EmployeeTasksPageContent({ variant = "my" }: { variant?: TasksPa
                                             {viewTask.assignees.map((a) => (
                                                 <li
                                                     key={a.employee_id}
-                                                    className="rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5 text-sm text-gray-800"
+                                                    className="rounded-md border border-gray-100 bg-gray-50 px-3 py-2.5 text-sm text-gray-800"
                                                 >
                                                     <span className="font-semibold">{a.full_name}</span>
                                                     <span className="mt-0.5 block text-xs text-gray-500">
@@ -694,7 +694,7 @@ export function EmployeeTasksPageContent({ variant = "my" }: { variant?: TasksPa
                                             {viewTask.remarks.map((r) => (
                                                 <li
                                                     key={r.id}
-                                                    className="rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5"
+                                                    className="rounded-md border border-gray-100 bg-gray-50 px-3 py-2.5"
                                                 >
                                                     <p className="text-sm text-gray-800 whitespace-pre-wrap break-words">
                                                         {r.remark}
@@ -716,7 +716,7 @@ export function EmployeeTasksPageContent({ variant = "my" }: { variant?: TasksPa
                                 <button
                                     type="button"
                                     onClick={() => openUpdateModal(viewTask)}
-                                    className="min-h-11 w-full cursor-pointer rounded-xl border border-[#0a2a5e]/20 bg-white px-6 py-2.5 text-sm font-semibold text-[#0a2a5e] shadow-sm hover:bg-[#06b6d4]/5 sm:w-auto"
+                                    className="min-h-11 w-full cursor-pointer rounded-md border border-[#0a2a5e]/20 bg-white px-6 py-2.5 text-sm font-semibold text-[#0a2a5e] shadow-sm hover:bg-[#06b6d4]/5 sm:w-auto"
                                 >
                                     Update task
                                 </button>
@@ -724,7 +724,7 @@ export function EmployeeTasksPageContent({ variant = "my" }: { variant?: TasksPa
                             <button
                                 type="button"
                                 onClick={closeModal}
-                                className="min-h-11 w-full cursor-pointer rounded-xl bg-[#06b6d4] px-6 py-2.5 text-sm font-bold text-white shadow-md hover:bg-[#05a8b8] sm:w-auto"
+                                className="min-h-11 w-full cursor-pointer rounded-md bg-[#06b6d4] px-6 py-2.5 text-sm font-bold text-white shadow-md hover:bg-[#05a8b8] sm:w-auto"
                             >
                                 Close
                             </button>
@@ -743,7 +743,7 @@ export function EmployeeTasksPageContent({ variant = "my" }: { variant?: TasksPa
                     <div
                         role="dialog"
                         aria-modal="true"
-                        className="relative flex max-h-[92dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl border border-gray-200 bg-white shadow-2xl sm:max-h-[min(90vh,640px)] sm:rounded-2xl"
+                        className="relative flex max-h-[92dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-lg border border-gray-200 bg-white shadow-2xl sm:max-h-[min(90vh,640px)] sm:rounded-md"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="flex shrink-0 flex-col items-center pt-2 sm:hidden">
@@ -763,7 +763,7 @@ export function EmployeeTasksPageContent({ variant = "my" }: { variant?: TasksPa
                             <button
                                 type="button"
                                 onClick={closeModal}
-                                className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-lg text-white/80 transition hover:bg-white/10 hover:text-white"
+                                className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-md text-white/80 transition hover:bg-white/10 hover:text-white"
                                 aria-label="Close"
                             >
                                 <X className="h-5 w-5" />
@@ -814,7 +814,7 @@ export function EmployeeTasksPageContent({ variant = "my" }: { variant?: TasksPa
                                             {viewTask.remarks.map((r) => (
                                                 <li
                                                     key={r.id}
-                                                    className="rounded-xl border border-gray-100 bg-gray-50 px-3 py-2 text-sm text-gray-700"
+                                                    className="rounded-md border border-gray-100 bg-gray-50 px-3 py-2 text-sm text-gray-700"
                                                 >
                                                     <p className="whitespace-pre-wrap break-words">
                                                         {r.remark}
@@ -831,7 +831,7 @@ export function EmployeeTasksPageContent({ variant = "my" }: { variant?: TasksPa
                             </div>
 
                             {saveError ? (
-                                <p className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                                <p className="mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
                                     {saveError}
                                 </p>
                             ) : null}
@@ -841,7 +841,7 @@ export function EmployeeTasksPageContent({ variant = "my" }: { variant?: TasksPa
                                 type="button"
                                 onClick={closeModal}
                                 disabled={saveLoading}
-                                className="min-h-11 w-full cursor-pointer rounded-xl border border-gray-300 bg-white px-6 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 sm:w-auto"
+                                className="min-h-11 w-full cursor-pointer rounded-md border border-gray-300 bg-white px-6 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 sm:w-auto"
                             >
                                 Cancel
                             </button>
@@ -849,7 +849,7 @@ export function EmployeeTasksPageContent({ variant = "my" }: { variant?: TasksPa
                                 type="button"
                                 onClick={() => void handleSaveUpdate()}
                                 disabled={saveLoading}
-                                className="inline-flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#06b6d4] px-6 py-2.5 text-sm font-bold text-white shadow-md hover:bg-[#05a8b8] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                                className="inline-flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-md bg-[#06b6d4] px-6 py-2.5 text-sm font-bold text-white shadow-md hover:bg-[#05a8b8] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                             >
                                 {saveLoading ? (
                                     <>

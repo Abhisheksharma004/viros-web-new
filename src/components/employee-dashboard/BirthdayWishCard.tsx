@@ -72,7 +72,7 @@ export default function BirthdayWishCard({
 
     return (
         <article
-            className={`relative overflow-hidden rounded-xl border border-white/25 shadow-lg shadow-black/10 ${compact ? "min-h-0" : "min-h-[10.25rem] sm:min-h-[11rem]"} ${className}`}
+            className={`relative overflow-hidden rounded-md border border-white/25 shadow-lg shadow-black/10 ${compact ? "min-h-0" : "min-h-[10.25rem] sm:min-h-[11rem]"} ${className}`}
             style={{ background: theme.gradient }}
         >
             <div

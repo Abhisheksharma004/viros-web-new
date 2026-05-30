@@ -82,7 +82,7 @@ export default function EmployeeLeaveHistoryPage() {
                 <button
                     type="button"
                     onClick={() => void fetchLeaveHistory()}
-                    className="flex w-full items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-left text-sm text-amber-900 hover:bg-amber-100/80"
+                    className="flex w-full items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-left text-sm text-amber-900 hover:bg-amber-100/80"
                 >
                     <AlertCircle className="h-5 w-5 shrink-0" />
                     <span>

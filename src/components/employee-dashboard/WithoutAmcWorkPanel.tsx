@@ -69,13 +69,13 @@ const emptyManualAsset = (serial: string): ManualAssetForm => ({
 });
 
 const btnPrimary =
-    "inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#0d4f3c] to-[#0a7c5c] px-4 py-3.5 min-h-[3rem] text-base font-semibold text-white shadow-sm transition active:scale-[0.98] touch-manipulation hover:opacity-90 disabled:opacity-60 disabled:active:scale-100 sm:py-3 sm:text-sm";
+    "inline-flex w-full items-center justify-center gap-2 rounded-md bg-gradient-to-r from-[#0d4f3c] to-[#0a7c5c] px-4 py-3.5 min-h-[3rem] text-base font-semibold text-white shadow-sm transition active:scale-[0.98] touch-manipulation hover:opacity-90 disabled:opacity-60 disabled:active:scale-100 sm:py-3 sm:text-sm";
 const btnSecondary =
-    "inline-flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3.5 min-h-[3rem] text-base font-semibold text-gray-800 shadow-sm transition active:scale-[0.98] touch-manipulation hover:bg-gray-50 disabled:opacity-60 disabled:active:scale-100 sm:py-2.5 sm:text-sm";
+    "inline-flex w-full items-center justify-center gap-2 rounded-md border border-gray-200 bg-white px-4 py-3.5 min-h-[3rem] text-base font-semibold text-gray-800 shadow-sm transition active:scale-[0.98] touch-manipulation hover:bg-gray-50 disabled:opacity-60 disabled:active:scale-100 sm:py-2.5 sm:text-sm";
 const inputField =
-    "w-full min-h-[3rem] rounded-xl border border-gray-200 bg-white px-4 py-3 text-base text-gray-800 outline-none transition focus:ring-2 focus:ring-[#0d4f3c]/20 focus:border-[#0d4f3c] sm:py-2.5 sm:text-sm";
+    "w-full min-h-[3rem] rounded-md border border-gray-200 bg-white px-4 py-3 text-base text-gray-800 outline-none transition focus:ring-2 focus:ring-[#0d4f3c]/20 focus:border-[#0d4f3c] sm:py-2.5 sm:text-sm";
 const textareaField =
-    "w-full min-h-[6.5rem] rounded-xl border border-gray-200 bg-white px-4 py-3 text-base text-gray-800 outline-none transition resize-y focus:ring-2 focus:ring-[#0d4f3c]/20 focus:border-[#0d4f3c] sm:min-h-[5.5rem] sm:py-2.5 sm:text-sm";
+    "w-full min-h-[6.5rem] rounded-md border border-gray-200 bg-white px-4 py-3 text-base text-gray-800 outline-none transition resize-y focus:ring-2 focus:ring-[#0d4f3c]/20 focus:border-[#0d4f3c] sm:min-h-[5.5rem] sm:py-2.5 sm:text-sm";
 
 function formatDisplayDateTime(raw: unknown): string {
     if (raw === null || raw === undefined) return "";
@@ -157,7 +157,7 @@ function StatusBadge({ status }: { status: AssetStatus }) {
 
 function DetailField({ label, value }: { label: string; value: string }) {
     return (
-        <div className="min-w-0 rounded-lg bg-white/80 p-3 sm:bg-transparent sm:p-0">
+        <div className="min-w-0 rounded-md bg-white/80 p-3 sm:bg-transparent sm:p-0">
             <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 sm:text-xs sm:font-medium sm:normal-case sm:tracking-normal">
                 {label}
             </p>
@@ -374,7 +374,7 @@ export default function WithoutAmcWorkPanel() {
                 </p>
             </header>
 
-            <section className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <section className="bg-white rounded-md border border-gray-100 shadow-sm overflow-hidden">
                 <div className="p-4 space-y-4 sm:p-6 sm:space-y-5">
                     <div className="flex flex-col gap-3">
                         <button
@@ -415,7 +415,7 @@ export default function WithoutAmcWorkPanel() {
 
                     {lookupBusy ? (
                         <div
-                            className="flex items-center justify-center gap-2 rounded-xl bg-gray-50 py-4 text-sm text-gray-600"
+                            className="flex items-center justify-center gap-2 rounded-md bg-gray-50 py-4 text-sm text-gray-600"
                             role="status"
                             aria-live="polite"
                         >
@@ -426,7 +426,7 @@ export default function WithoutAmcWorkPanel() {
 
                     {lookupError ? (
                         <div
-                            className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+                            className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
                             role="alert"
                         >
                             {lookupError}
@@ -434,7 +434,7 @@ export default function WithoutAmcWorkPanel() {
                     ) : null}
 
                     {lookupMode === "found" && existingRecord ? (
-                        <div className="rounded-xl border border-gray-100 bg-gray-50/80 p-4 space-y-4 sm:p-5">
+                        <div className="rounded-md border border-gray-100 bg-gray-50/80 p-4 space-y-4 sm:p-5">
                             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                                 <div className="min-w-0">
                                     <p className="text-[11px] font-bold uppercase tracking-wide text-[#0d4f3c]">
@@ -464,7 +464,7 @@ export default function WithoutAmcWorkPanel() {
 
                             <div className="border-t border-gray-200 pt-4 space-y-5">
                                 {previousRecord ? (
-                                    <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-3">
+                                    <div className="rounded-md border border-gray-200 bg-white p-4 space-y-3">
                                         <p className="text-xs font-bold uppercase tracking-wide text-gray-500">
                                             Previous record
                                         </p>
@@ -515,7 +515,7 @@ export default function WithoutAmcWorkPanel() {
                     ) : null}
 
                     {lookupMode === "manual_new" ? (
-                        <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-4 space-y-4 sm:p-5">
+                        <div className="rounded-md border border-amber-200 bg-amber-50/50 p-4 space-y-4 sm:p-5">
                             <div>
                                 <p className="text-[11px] font-bold uppercase tracking-wide text-amber-800">
                                     New serial number

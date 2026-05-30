@@ -5,7 +5,7 @@ import { useState } from "react";
 import { ArrowLeft, Eye, EyeOff, KeyRound, Loader2, Shield } from "lucide-react";
 
 const inputClassName =
-    "w-full px-4 py-2.5 pr-11 rounded-xl border border-gray-200 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e] bg-white";
+    "w-full px-4 py-2.5 pr-11 rounded-md border border-gray-200 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e] bg-white";
 
 function PasswordField({
     id,
@@ -110,10 +110,10 @@ export default function EmployeeChangePasswordPage() {
 
     return (
         <div className="space-y-4 sm:space-y-6 relative pb-6">
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="bg-white rounded-md border border-gray-100 shadow-sm overflow-hidden">
                 <div className="bg-gradient-to-r from-[#06124f] to-[#0a2a5e] px-4 sm:px-6 pt-5 pb-6 sm:pt-6 sm:pb-8">
                     <div className="flex items-start sm:items-center gap-3 sm:gap-5">
-                        <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-[#06b6d4] to-[#06124f] flex items-center justify-center text-white shadow-lg ring-4 ring-white/90 shrink-0">
+                        <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-md bg-gradient-to-br from-[#06b6d4] to-[#06124f] flex items-center justify-center text-white shadow-lg ring-4 ring-white/90 shrink-0">
                             <KeyRound className="h-8 w-8 sm:h-9 sm:w-9" strokeWidth={2} aria-hidden />
                         </div>
                         <div className="min-w-0 flex-1">
@@ -130,7 +130,7 @@ export default function EmployeeChangePasswordPage() {
                 <form onSubmit={handleSubmit} className="px-4 sm:px-6 py-4 sm:py-6 space-y-5">
                     {message && (
                         <div
-                            className={`rounded-xl px-4 py-3 text-sm font-medium ${
+                            className={`rounded-md px-4 py-3 text-sm font-medium ${
                                 message.type === "success"
                                     ? "bg-green-50 text-green-800 border border-green-200"
                                     : "bg-red-50 text-red-700 border border-red-200"
@@ -140,7 +140,7 @@ export default function EmployeeChangePasswordPage() {
                         </div>
                     )}
 
-                    <div className="rounded-xl border border-gray-100 bg-gray-50/80 px-4 py-3 flex items-start gap-3">
+                    <div className="rounded-md border border-gray-100 bg-gray-50/80 px-4 py-3 flex items-start gap-3">
                         <Shield className="h-5 w-5 text-[#0a2a5e] shrink-0 mt-0.5" aria-hidden />
                         <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
                             Your new password must be at least 6 characters. After updating, use it the next time you
@@ -197,7 +197,7 @@ export default function EmployeeChangePasswordPage() {
                     <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3 pt-2 sm:max-w-xl">
                         <Link
                             href="/employee-dashboard/profile"
-                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 transition-colors"
+                            className="inline-flex items-center justify-center gap-2 rounded-md border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 transition-colors"
                         >
                             <ArrowLeft className="h-4 w-4" aria-hidden />
                             Back to profile
@@ -205,7 +205,7 @@ export default function EmployeeChangePasswordPage() {
                         <button
                             type="submit"
                             disabled={isSubmitting}
-                            className="inline-flex items-center justify-center gap-2 rounded-xl px-6 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-[#06124f] to-[#0a2a5e] hover:opacity-90 transition-opacity shadow-sm disabled:opacity-60 sm:min-w-[180px]"
+                            className="inline-flex items-center justify-center gap-2 rounded-md px-6 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-[#06124f] to-[#0a2a5e] hover:opacity-90 transition-opacity shadow-sm disabled:opacity-60 sm:min-w-[180px]"
                         >
                             {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
                             {isSubmitting ? "Updating…" : "Update password"}

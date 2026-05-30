@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -231,7 +231,7 @@ export default function AttendancePunchModal({
                     role="dialog"
                     aria-modal="true"
                     aria-labelledby="punch-modal-title"
-                    className="relative flex max-h-[min(92dvh,100%)] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl border border-[#0a2a5e]/10 bg-white shadow-2xl sm:max-h-[90vh] sm:rounded-2xl"
+                    className="relative flex max-h-[min(92dvh,100%)] w-full max-w-lg flex-col overflow-hidden rounded-t-lg border border-[#0a2a5e]/10 bg-white shadow-2xl sm:max-h-[90vh] sm:rounded-md"
                 >
                     {/* Header */}
                     <div
@@ -244,7 +244,7 @@ export default function AttendancePunchModal({
                             type="button"
                             onClick={onClose}
                             disabled={busy}
-                            className="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-white transition hover:bg-white/20 disabled:opacity-50 sm:right-4 sm:top-4"
+                            className="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-md bg-white/10 text-white transition hover:bg-white/20 disabled:opacity-50 sm:right-4 sm:top-4"
                             aria-label="Close"
                         >
                             <X className="h-5 w-5" />
@@ -263,7 +263,7 @@ export default function AttendancePunchModal({
                     <div className="flex-1 overflow-y-auto overscroll-contain bg-[#f8fafc] p-4 sm:p-5">
                         <div className="flex flex-col gap-4 md:grid md:grid-cols-2 md:gap-5">
                             {/* Live selfie */}
-                            <section className="overflow-hidden rounded-2xl border border-[#0a2a5e]/10 bg-white shadow-sm">
+                            <section className="overflow-hidden rounded-md border border-[#0a2a5e]/10 bg-white shadow-sm">
                                 <div className="flex items-center gap-2 border-b border-[#0a2a5e]/10 bg-[#0a2a5e]/5 px-4 py-3">
                                     <Camera className="h-4 w-4 shrink-0 text-[#0a2a5e]" aria-hidden />
                                     <span className="text-sm font-bold text-[#0a2a5e]">Live selfie</span>
@@ -291,7 +291,7 @@ export default function AttendancePunchModal({
                                             )}
                                             {cameraError && (
                                                 <div className="absolute inset-0 flex items-center justify-center p-4">
-                                                    <p className="rounded-lg bg-red-500/90 px-3 py-2 text-center text-sm text-white">
+                                                    <p className="rounded-md bg-red-500/90 px-3 py-2 text-center text-sm text-white">
                                                         {cameraError}
                                                     </p>
                                                 </div>
@@ -320,7 +320,7 @@ export default function AttendancePunchModal({
                             </section>
 
                             {/* Live location */}
-                            <section className="flex flex-col overflow-hidden rounded-2xl border border-[#0a2a5e]/10 bg-white shadow-sm">
+                            <section className="flex flex-col overflow-hidden rounded-md border border-[#0a2a5e]/10 bg-white shadow-sm">
                                 <div className="flex items-center justify-between gap-2 border-b border-[#0a2a5e]/10 bg-[#0a2a5e]/5 px-4 py-3">
                                     <div className="flex items-center gap-2 text-sm font-bold text-[#0a2a5e]">
                                         <MapPin className="h-4 w-4 shrink-0" aria-hidden />
@@ -330,7 +330,7 @@ export default function AttendancePunchModal({
                                         type="button"
                                         onClick={() => void fetchLocation()}
                                         disabled={locationLoading}
-                                        className="inline-flex min-h-[36px] shrink-0 items-center gap-1.5 rounded-lg border border-[#0a2a5e]/15 bg-white px-3 text-xs font-semibold text-[#0a2a5e] transition hover:bg-[#0a2a5e]/5 disabled:opacity-50"
+                                        className="inline-flex min-h-[36px] shrink-0 items-center gap-1.5 rounded-md border border-[#0a2a5e]/15 bg-white px-3 text-xs font-semibold text-[#0a2a5e] transition hover:bg-[#0a2a5e]/5 disabled:opacity-50"
                                     >
                                         <RefreshCw
                                             className={`h-3.5 w-3.5 ${locationLoading ? "animate-spin" : ""}`}
@@ -346,7 +346,7 @@ export default function AttendancePunchModal({
                                         </div>
                                     )}
                                     {locationError && (
-                                        <p className="rounded-lg border border-red-100 bg-red-50 px-3 py-2.5 text-sm text-red-700">
+                                        <p className="rounded-md border border-red-100 bg-red-50 px-3 py-2.5 text-sm text-red-700">
                                             {locationError}
                                         </p>
                                     )}
@@ -385,7 +385,7 @@ export default function AttendancePunchModal({
                                 type="button"
                                 onClick={capturePhoto}
                                 disabled={!cameraReady}
-                                className="inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-[#06b6d4] text-base font-bold text-white shadow-lg shadow-[#06b6d4]/25 transition active:scale-[0.98] hover:bg-[#05a8b8] disabled:cursor-not-allowed disabled:opacity-50 sm:min-h-[48px] sm:text-sm"
+                                className="inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-md bg-[#06b6d4] text-base font-bold text-white shadow-lg shadow-[#06b6d4]/25 transition active:scale-[0.98] hover:bg-[#05a8b8] disabled:cursor-not-allowed disabled:opacity-50 sm:min-h-[48px] sm:text-sm"
                             >
                                 <Camera className="h-5 w-5" aria-hidden />
                                 Capture photo
@@ -396,7 +396,7 @@ export default function AttendancePunchModal({
                                     type="button"
                                     onClick={retakePhoto}
                                     disabled={busy}
-                                    className="min-h-[52px] flex-1 rounded-xl border border-[#0a2a5e]/20 bg-white text-base font-bold text-[#0a2a5e] transition active:bg-[#0a2a5e]/5 disabled:opacity-50 sm:min-h-[48px] sm:text-sm"
+                                    className="min-h-[52px] flex-1 rounded-md border border-[#0a2a5e]/20 bg-white text-base font-bold text-[#0a2a5e] transition active:bg-[#0a2a5e]/5 disabled:opacity-50 sm:min-h-[48px] sm:text-sm"
                                 >
                                     Retake
                                 </button>
@@ -404,7 +404,7 @@ export default function AttendancePunchModal({
                                     type="button"
                                     onClick={() => void handleConfirm()}
                                     disabled={!canSubmit}
-                                    className="inline-flex min-h-[52px] flex-1 items-center justify-center gap-2 rounded-xl bg-[#06124f] text-base font-bold text-white shadow-lg shadow-[#06124f]/20 transition active:scale-[0.98] hover:bg-[#0a2a5e] disabled:cursor-not-allowed disabled:opacity-50 sm:min-h-[48px] sm:text-sm"
+                                    className="inline-flex min-h-[52px] flex-1 items-center justify-center gap-2 rounded-md bg-[#06124f] text-base font-bold text-white shadow-lg shadow-[#06124f]/20 transition active:scale-[0.98] hover:bg-[#0a2a5e] disabled:cursor-not-allowed disabled:opacity-50 sm:min-h-[48px] sm:text-sm"
                                 >
                                     {busy ? (
                                         <>

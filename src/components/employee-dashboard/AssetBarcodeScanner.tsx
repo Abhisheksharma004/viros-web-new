@@ -277,7 +277,7 @@ export default function AssetBarcodeScanner({
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="barcode-scanner-title"
-                className="relative flex h-full w-full flex-col overflow-hidden bg-white sm:h-auto sm:max-h-[min(100dvh,640px)] sm:max-w-md sm:rounded-2xl sm:border sm:border-gray-200 sm:shadow-2xl"
+                className="relative flex h-full w-full flex-col overflow-hidden bg-white sm:h-auto sm:max-h-[min(100dvh,640px)] sm:max-w-md sm:rounded-md sm:border sm:border-gray-200 sm:shadow-2xl"
             >
                 <div className="flex shrink-0 items-center justify-between gap-3 border-b border-gray-100 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] sm:pt-3">
                     <h3 id="barcode-scanner-title" className="text-base font-bold text-gray-900 flex items-center gap-2">
@@ -287,7 +287,7 @@ export default function AssetBarcodeScanner({
                     <button
                         type="button"
                         onClick={onClose}
-                        className="flex min-h-[2.75rem] min-w-[2.75rem] items-center justify-center rounded-xl p-2.5 text-gray-500 touch-manipulation transition hover:bg-gray-100 hover:text-gray-700 active:scale-95"
+                        className="flex min-h-[2.75rem] min-w-[2.75rem] items-center justify-center rounded-md p-2.5 text-gray-500 touch-manipulation transition hover:bg-gray-100 hover:text-gray-700 active:scale-95"
                         aria-label="Close scanner"
                     >
                         <X className="h-6 w-6" />
@@ -298,10 +298,10 @@ export default function AssetBarcodeScanner({
                     <div className="relative aspect-square w-full max-w-[min(100%,400px)]">
                         <div
                             id={containerId}
-                            className={`absolute inset-0 overflow-hidden rounded-lg [&>div]:!size-full [&_video]:!size-full [&_video]:!object-cover ${busy ? "invisible" : ""}`}
+                            className={`absolute inset-0 overflow-hidden rounded-md [&>div]:!size-full [&_video]:!size-full [&_video]:!object-cover ${busy ? "invisible" : ""}`}
                         />
                         {busy && !cameraError ? (
-                            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-lg bg-gray-900 text-white">
+                            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-md bg-gray-900 text-white">
                                 <Loader2 className="h-8 w-8 animate-spin" aria-hidden />
                                 <p className="text-sm">
                                     {isSwitching ? "Switching camera…" : "Starting camera…"}
@@ -309,7 +309,7 @@ export default function AssetBarcodeScanner({
                             </div>
                         ) : null}
                         {cameraError ? (
-                            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-lg bg-gray-900/90 px-4 text-center text-white">
+                            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-md bg-gray-900/90 px-4 text-center text-white">
                                 <Camera className="h-10 w-10 text-white/70" aria-hidden />
                                 <p className="max-w-xs text-sm">{cameraError}</p>
                             </div>
@@ -317,7 +317,7 @@ export default function AssetBarcodeScanner({
 
                         {showViewfinder && !busy ? (
                             <div
-                                className="pointer-events-none absolute inset-0 z-[5] overflow-hidden rounded-lg"
+                                className="pointer-events-none absolute inset-0 z-[5] overflow-hidden rounded-md"
                                 aria-hidden
                             >
                                 <div className="absolute left-[7%] right-[7%] animate-barcode-scan-sweep">

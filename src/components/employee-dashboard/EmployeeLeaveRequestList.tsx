@@ -243,14 +243,14 @@ function LeaveRequestMobileCard({
             </div>
 
             <div className="mt-3 grid grid-cols-2 gap-2.5">
-                <div className="rounded-xl border border-gray-100 bg-gray-50/90 px-3 py-2.5">
+                <div className="rounded-md border border-gray-100 bg-gray-50/90 px-3 py-2.5">
                     <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
                         Period
                     </p>
                     <p className="mt-0.5 text-sm font-semibold text-gray-900">{period}</p>
                     <p className="text-xs text-gray-500">{leaveDayTypeLabel(row.day_type)}</p>
                 </div>
-                <div className="rounded-xl border border-gray-100 bg-gray-50/90 px-3 py-2.5">
+                <div className="rounded-md border border-gray-100 bg-gray-50/90 px-3 py-2.5">
                     <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
                         Days
                     </p>
@@ -281,7 +281,7 @@ function LeaveRequestMobileCard({
                     type="button"
                     disabled={withdrawBusyId === row.id}
                     onClick={() => onWithdraw(row)}
-                    className="mt-3 flex h-11 w-full touch-manipulation items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white text-sm font-bold text-gray-800 shadow-sm active:bg-gray-50 disabled:opacity-60"
+                    className="mt-3 flex h-11 w-full touch-manipulation items-center justify-center gap-2 rounded-md border border-gray-300 bg-white text-sm font-bold text-gray-800 shadow-sm active:bg-gray-50 disabled:opacity-60"
                 >
                     {withdrawBusyId === row.id ? (
                         <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
@@ -357,7 +357,7 @@ export function LeaveRequestsSection({
     toolbar?: ReactNode;
 }) {
     return (
-        <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+        <div className="overflow-hidden rounded-md border border-gray-200 bg-white shadow-sm">
             <div className="border-b border-gray-100 px-4 py-4 sm:px-6">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
@@ -369,7 +369,7 @@ export function LeaveRequestsSection({
                             type="button"
                             onClick={onNewRequest}
                             disabled={!policiesAvailable}
-                            className="hidden h-9 w-full touch-manipulation items-center justify-center gap-1.5 rounded-xl border border-gray-200 px-3 text-xs font-bold text-[#0a2a5e] active:bg-gray-50 disabled:opacity-60 sm:inline-flex sm:w-auto sm:rounded-lg md:inline-flex"
+                            className="hidden h-9 w-full touch-manipulation items-center justify-center gap-1.5 rounded-md border border-gray-200 px-3 text-xs font-bold text-[#0a2a5e] active:bg-gray-50 disabled:opacity-60 sm:inline-flex sm:w-auto sm:rounded-md md:inline-flex"
                         >
                             <Plus className="h-3.5 w-3.5" />
                             New request
@@ -503,7 +503,7 @@ export function LeaveRequestsSection({
                                                         type="button"
                                                         disabled={withdrawBusyId === row.id}
                                                         onClick={() => void onWithdraw(row)}
-                                                        className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg border border-gray-300 bg-white px-2.5 text-xs font-bold text-gray-800 shadow-sm hover:bg-gray-50 disabled:opacity-60"
+                                                        className="inline-flex h-8 items-center justify-center gap-1.5 rounded-md border border-gray-300 bg-white px-2.5 text-xs font-bold text-gray-800 shadow-sm hover:bg-gray-50 disabled:opacity-60"
                                                     >
                                                         {withdrawBusyId === row.id ? (
                                                             <Loader2 className="h-3.5 w-3.5 animate-spin" />

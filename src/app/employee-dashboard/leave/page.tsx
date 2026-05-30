@@ -88,7 +88,7 @@ const CARD_COLORS = [
 ];
 
 const INPUT =
-    "h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-base font-semibold text-gray-900 shadow-sm outline-none focus:border-[#0a2a5e] focus:ring-2 focus:ring-[#0a2a5e]/20 sm:text-sm";
+    "h-11 w-full rounded-md border border-gray-300 bg-white px-3 text-base font-semibold text-gray-900 shadow-sm outline-none focus:border-[#0a2a5e] focus:ring-2 focus:ring-[#0a2a5e]/20 sm:text-sm";
 const LABEL = "mb-1.5 block text-xs font-bold uppercase tracking-wide text-gray-700";
 
 function addDays(iso: string, days: number) {
@@ -163,12 +163,12 @@ function LeaveAlertPopup({
         >
             <div className="absolute inset-0 bg-black/45 backdrop-blur-[1px]" aria-hidden />
             <div
-                className="relative max-h-[min(85dvh,520px)] w-full max-w-md overflow-y-auto rounded-t-2xl border border-gray-200 bg-white shadow-2xl sm:max-h-none sm:rounded-2xl"
+                className="relative max-h-[min(85dvh,520px)] w-full max-w-md overflow-y-auto rounded-t-lg border border-gray-200 bg-white shadow-2xl sm:max-h-none sm:rounded-md"
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="p-4 sm:p-6">
                     <div
-                        className={`flex items-start gap-3 rounded-xl border px-4 py-3.5 text-sm ${
+                        className={`flex items-start gap-3 rounded-md border px-4 py-3.5 text-sm ${
                             isSuccess
                                 ? "border-emerald-200 bg-emerald-50 text-emerald-800"
                                 : "border-red-200 bg-red-50 text-red-800"
@@ -229,7 +229,7 @@ function LeaveAlertPopup({
                     <button
                         type="button"
                         onClick={onClose}
-                        className={`mt-4 flex h-11 w-full items-center justify-center rounded-lg text-sm font-bold text-white shadow-sm ${
+                        className={`mt-4 flex h-11 w-full items-center justify-center rounded-md text-sm font-bold text-white shadow-sm ${
                             isSuccess
                                 ? "bg-emerald-600 hover:bg-emerald-700"
                                 : "bg-[#0a2a5e] hover:bg-[#06124f]"
@@ -452,7 +452,7 @@ function LeaveApplyModal({
             <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px]" aria-hidden />
 
             <div
-                className="relative flex max-h-[min(100dvh,920px)] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl border border-gray-200 bg-white shadow-2xl sm:max-h-[min(92vh,880px)] sm:rounded-2xl"
+                className="relative flex max-h-[min(100dvh,920px)] w-full max-w-lg flex-col overflow-hidden rounded-t-lg border border-gray-200 bg-white shadow-2xl sm:max-h-[min(92vh,880px)] sm:rounded-md"
                 onClick={(e) => e.stopPropagation()}
             >
                 <div
@@ -467,7 +467,7 @@ function LeaveApplyModal({
                 >
                     <div className="flex items-start justify-between gap-3">
                         <div className="flex items-center gap-3 text-white">
-                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/15">
+                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-white/15">
                                 <FileText className="h-5 w-5" aria-hidden />
                             </span>
                             <div>
@@ -583,7 +583,7 @@ function LeaveApplyModal({
                                                         key={opt.value}
                                                         type="button"
                                                         onClick={() => setDayType(opt.value)}
-                                                        className={`rounded-lg border py-2.5 text-xs font-bold transition sm:text-sm ${
+                                                        className={`rounded-md border py-2.5 text-xs font-bold transition sm:text-sm ${
                                                             active
                                                                 ? "border-[#06b6d4] bg-[#06b6d4]/10 text-[#0a2a5e]"
                                                                 : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
@@ -598,7 +598,7 @@ function LeaveApplyModal({
                                 )}
 
                                 {startDate && endDate && endDate >= startDate && (
-                                    <div className="flex items-center gap-3 rounded-xl border border-[#06b6d4]/25 bg-[#06b6d4]/8 px-4 py-3">
+                                    <div className="flex items-center gap-3 rounded-md border border-[#06b6d4]/25 bg-[#06b6d4]/8 px-4 py-3">
                                         <CalendarDays className="h-5 w-5 shrink-0 text-[#06b6d4]" />
                                         <div className="min-w-0 text-sm">
                                             <p className="font-bold text-[#0a2a5e]">
@@ -625,7 +625,7 @@ function LeaveApplyModal({
                                     </div>
                                 )}
 
-                                <div className="rounded-xl border border-[#0a2a5e]/15 bg-[#0a2a5e]/5 p-4">
+                                <div className="rounded-md border border-[#0a2a5e]/15 bg-[#0a2a5e]/5 p-4">
                                     <p className="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-[#0a2a5e]">
                                         <Info className="h-3.5 w-3.5" aria-hidden />
                                         Policy conditions
@@ -650,7 +650,7 @@ function LeaveApplyModal({
                                         onChange={(e) => setReason(e.target.value)}
                                         rows={3}
                                         placeholder="Why do you need this leave?"
-                                        className="w-full resize-none rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm font-medium text-gray-900 shadow-sm outline-none placeholder:text-gray-500 focus:border-[#0a2a5e] focus:ring-2 focus:ring-[#0a2a5e]/20"
+                                        className="w-full resize-none rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm font-medium text-gray-900 shadow-sm outline-none placeholder:text-gray-500 focus:border-[#0a2a5e] focus:ring-2 focus:ring-[#0a2a5e]/20"
                                     />
                                 </div>
 
@@ -667,7 +667,7 @@ function LeaveApplyModal({
                                     </label>
                                     <label
                                         htmlFor="modal-attachment"
-                                        className="flex min-h-[3rem] cursor-pointer touch-manipulation items-center gap-3 rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-3 transition active:border-[#06b6d4] active:bg-[#06b6d4]/5 sm:hover:border-[#06b6d4] sm:hover:bg-[#06b6d4]/5"
+                                        className="flex min-h-[3rem] cursor-pointer touch-manipulation items-center gap-3 rounded-md border border-dashed border-gray-300 bg-gray-50 px-4 py-3 transition active:border-[#06b6d4] active:bg-[#06b6d4]/5 sm:hover:border-[#06b6d4] sm:hover:bg-[#06b6d4]/5"
                                     >
                                         <Paperclip className="h-5 w-5 shrink-0 text-gray-500" />
                                         <span className="truncate text-sm font-medium text-gray-700">
@@ -692,7 +692,7 @@ function LeaveApplyModal({
                         <button
                             type="submit"
                             disabled={isSubmitting || policies.length === 0}
-                            className="inline-flex h-12 w-full touch-manipulation items-center justify-center gap-2 rounded-xl bg-[#06b6d4] px-6 text-sm font-bold text-white shadow-sm active:bg-[#05a8b8] disabled:opacity-60 sm:h-11 sm:w-auto sm:rounded-lg"
+                            className="inline-flex h-12 w-full touch-manipulation items-center justify-center gap-2 rounded-md bg-[#06b6d4] px-6 text-sm font-bold text-white shadow-sm active:bg-[#05a8b8] disabled:opacity-60 sm:h-11 sm:w-auto sm:rounded-md"
                         >
                             {isSubmitting ? (
                                 <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
@@ -706,7 +706,7 @@ function LeaveApplyModal({
                                 type="button"
                                 onClick={() => resetForm()}
                                 disabled={isSubmitting}
-                                className="inline-flex h-11 w-full touch-manipulation items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-4 text-sm font-bold text-gray-800 active:bg-gray-50 disabled:opacity-60 sm:w-auto sm:rounded-lg"
+                                className="inline-flex h-11 w-full touch-manipulation items-center justify-center gap-2 rounded-md border border-gray-300 bg-white px-4 text-sm font-bold text-gray-800 active:bg-gray-50 disabled:opacity-60 sm:w-auto sm:rounded-md"
                             >
                                 <RotateCcw className="h-4 w-4" aria-hidden />
                                 Clear
@@ -714,7 +714,7 @@ function LeaveApplyModal({
                             <button
                                 type="button"
                                 onClick={handleClose}
-                                className="inline-flex h-11 w-full touch-manipulation items-center justify-center rounded-xl border border-gray-300 bg-white px-4 text-sm font-bold text-gray-800 active:bg-gray-50 sm:hidden"
+                                className="inline-flex h-11 w-full touch-manipulation items-center justify-center rounded-md border border-gray-300 bg-white px-4 text-sm font-bold text-gray-800 active:bg-gray-50 sm:hidden"
                             >
                                 Cancel
                             </button>
@@ -892,7 +892,7 @@ export default function EmployeeLeaveRequestPage() {
                         setPageAlertMessages([loadError]);
                         setPageAlertOpen(true);
                     }}
-                    className="flex w-full items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-left text-sm text-amber-900 hover:bg-amber-100/80"
+                    className="flex w-full items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-left text-sm text-amber-900 hover:bg-amber-100/80"
                 >
                     <AlertCircle className="h-5 w-5 shrink-0" />
                     <span>
@@ -922,7 +922,7 @@ export default function EmployeeLeaveRequestPage() {
                                         key={b.policy_id}
                                         type="button"
                                         onClick={() => openLeaveApplyModal(b.policy_id)}
-                                        className={`min-h-[7.5rem] touch-manipulation rounded-2xl bg-gradient-to-br ${b.color} p-3.5 text-left text-white shadow-sm transition active:scale-[0.98] sm:p-4 sm:hover:scale-[1.02] sm:hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#06b6d4] focus:ring-offset-2`}
+                                        className={`min-h-[7.5rem] touch-manipulation rounded-md bg-gradient-to-br ${b.color} p-3.5 text-left text-white shadow-sm transition active:scale-[0.98] sm:p-4 sm:hover:scale-[1.02] sm:hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#06b6d4] focus:ring-offset-2`}
                                         aria-label={`Apply for ${b.name}`}
                                     >
                                         <div className="flex items-start justify-between gap-1.5">
@@ -953,15 +953,15 @@ export default function EmployeeLeaveRequestPage() {
                             })}
                         </div>
                     ) : (
-                        <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 px-4 py-8 text-center text-sm text-gray-600 sm:px-6">
+                        <div className="rounded-md border border-dashed border-gray-200 bg-gray-50 px-4 py-8 text-center text-sm text-gray-600 sm:px-6">
                             No quota-based leave policies configured. You can still apply if types
                             are listed in the form.
                         </div>
                     )}
 
                     <div className="grid grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-3">
-                        <div className="order-1 rounded-2xl border border-dashed border-[#06b6d4]/40 bg-[#06b6d4]/5 p-4 text-center sm:p-6 lg:order-none lg:col-span-1">
-                            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#06b6d4]/15 text-[#06b6d4] sm:h-14 sm:w-14">
+                        <div className="order-1 rounded-md border border-dashed border-[#06b6d4]/40 bg-[#06b6d4]/5 p-4 text-center sm:p-6 lg:order-none lg:col-span-1">
+                            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-md bg-[#06b6d4]/15 text-[#06b6d4] sm:h-14 sm:w-14">
                                 <Plus className="h-6 w-6 sm:h-7 sm:w-7" aria-hidden />
                             </div>
                             <h3 className="mt-3 text-base font-bold text-[#0a2a5e] sm:mt-4">
@@ -974,13 +974,13 @@ export default function EmployeeLeaveRequestPage() {
                                 type="button"
                                 onClick={() => openLeaveApplyModal()}
                                 disabled={policies.length === 0}
-                                className="mt-4 inline-flex h-11 w-full touch-manipulation items-center justify-center gap-2 rounded-xl bg-[#0a2a5e] text-sm font-bold text-white active:bg-[#06124f] disabled:opacity-60 sm:h-10 sm:rounded-lg md:hidden"
+                                className="mt-4 inline-flex h-11 w-full touch-manipulation items-center justify-center gap-2 rounded-md bg-[#0a2a5e] text-sm font-bold text-white active:bg-[#06124f] disabled:opacity-60 sm:h-10 sm:rounded-md md:hidden"
                             >
                                 Apply now
                             </button>
                         </div>
 
-                        <div className="order-2 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:p-5 lg:order-none lg:col-span-2">
+                        <div className="order-2 rounded-md border border-gray-100 bg-white p-4 shadow-sm sm:p-5 lg:order-none lg:col-span-2">
                             <h3 className="text-sm font-bold uppercase tracking-wide text-[#0a2a5e]">
                                 Before you apply
                             </h3>
@@ -1004,7 +1004,7 @@ export default function EmployeeLeaveRequestPage() {
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
                         <Link
                             href="/employee-dashboard/history"
-                            className="inline-flex h-11 w-full touch-manipulation items-center justify-center gap-2 rounded-xl border border-[#0a2a5e]/20 bg-[#0a2a5e]/5 px-4 text-sm font-bold text-[#0a2a5e] active:bg-[#0a2a5e]/10 sm:h-10 sm:w-auto sm:rounded-lg"
+                            className="inline-flex h-11 w-full touch-manipulation items-center justify-center gap-2 rounded-md border border-[#0a2a5e]/20 bg-[#0a2a5e]/5 px-4 text-sm font-bold text-[#0a2a5e] active:bg-[#0a2a5e]/10 sm:h-10 sm:w-auto sm:rounded-md"
                         >
                             <Clock className="h-4 w-4" aria-hidden />
                             View leave history

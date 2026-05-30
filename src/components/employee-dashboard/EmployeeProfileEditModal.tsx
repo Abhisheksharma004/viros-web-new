@@ -129,7 +129,7 @@ export default function EmployeeProfileEditModal({
     };
 
     const inputClassName =
-        "w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e] disabled:cursor-not-allowed disabled:bg-gray-50 placeholder:text-gray-400";
+        "w-full px-4 py-2.5 rounded-md border border-gray-200 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e] disabled:cursor-not-allowed disabled:bg-gray-50 placeholder:text-gray-400";
     const selectClassName = `${inputClassName} bg-white`;
 
     const renderField = (field: EmployeeProfileFormField) => {
@@ -237,7 +237,7 @@ export default function EmployeeProfileEditModal({
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="edit-profile-title"
-                className="relative flex max-h-[min(94vh,920px)] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-2xl"
+                className="relative flex max-h-[min(94vh,920px)] w-full max-w-5xl flex-col overflow-hidden rounded-md border border-gray-100 bg-white shadow-2xl"
             >
                 <div className="flex shrink-0 items-start justify-between gap-4 border-b border-gray-100 bg-gradient-to-r from-[#06124f] to-[#0a2a5e] px-6 py-4">
                     <div className="min-w-0">
@@ -254,7 +254,7 @@ export default function EmployeeProfileEditModal({
                             if (!isSubmitting) onClose();
                         }}
                         disabled={isSubmitting}
-                        className="shrink-0 rounded-lg p-1.5 text-white/70 transition-colors hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                        className="shrink-0 rounded-md p-1.5 text-white/70 transition-colors hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                         aria-label="Close"
                     >
                         <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -266,7 +266,7 @@ export default function EmployeeProfileEditModal({
                 <form onSubmit={(e) => void handleSubmit(e)} className="flex min-h-0 flex-1 flex-col">
                     <div className="flex-1 overflow-y-auto p-6">
                         {error ? (
-                            <p className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                            <p className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                                 {error}
                             </p>
                         ) : null}
@@ -292,14 +292,14 @@ export default function EmployeeProfileEditModal({
                             type="button"
                             onClick={onClose}
                             disabled={isSubmitting}
-                            className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="rounded-md border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={isSubmitting}
-                            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#06124f] to-[#0a2a5e] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="inline-flex items-center justify-center gap-2 rounded-md bg-gradient-to-r from-[#06124f] to-[#0a2a5e] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                             {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
                             {isSubmitting ? "Saving…" : "Update profile"}

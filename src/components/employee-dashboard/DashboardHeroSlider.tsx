@@ -24,7 +24,7 @@ const DOT_ACTIVE = "w-6 bg-white";
 const DOT_IDLE = "w-2 bg-white/35";
 
 const HERO_SECTION_CLASS =
-    "relative flex h-full min-h-[11.5rem] flex-col overflow-hidden rounded-2xl border border-white/10 shadow-md sm:min-h-[12.75rem] sm:rounded-3xl";
+    "relative flex h-full min-h-[11.5rem] flex-col overflow-hidden rounded-md border border-white/10 shadow-md sm:min-h-[12.75rem] sm:rounded-md";
 
 function BirthdaySlideLayout({ slide }: { slide: DashboardHeroSlide }) {
     return (
@@ -37,7 +37,7 @@ function BirthdaySlideLayout({ slide }: { slide: DashboardHeroSlide }) {
             badgeText={slide.badge?.text ?? ""}
             hint={slide.birthdayHint}
             initials={slide.birthdayInitials ?? "?"}
-            className="h-full rounded-2xl sm:rounded-3xl"
+            className="h-full rounded-md sm:rounded-md"
         />
     );
 }
@@ -72,7 +72,7 @@ function DefaultSlideCard({ slide }: { slide: DashboardHeroSlide }) {
                         {slide.metrics.map((m) => (
                             <div
                                 key={m.label}
-                                className="rounded-xl border border-white/10 bg-white/10 px-2 py-2.5 text-center backdrop-blur-sm sm:px-3 sm:py-3"
+                                className="rounded-md border border-white/10 bg-white/10 px-2 py-2.5 text-center backdrop-blur-sm sm:px-3 sm:py-3"
                             >
                                 <p className="text-base font-black text-white sm:text-lg">{m.value}</p>
                                 <p className="mt-0.5 text-[9px] font-semibold uppercase tracking-wide text-white/50 sm:text-[10px]">

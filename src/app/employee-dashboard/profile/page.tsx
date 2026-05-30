@@ -67,7 +67,7 @@ function StatusBadge({ status, variant = "employee" }: { status: string; variant
 
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
     return (
-        <section className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <section className="bg-white rounded-md border border-gray-100 shadow-sm overflow-hidden">
             <div className="px-4 py-3 sm:px-6 sm:py-4 border-b border-gray-100 bg-gray-50/80">
                 <h2 className="text-sm font-bold text-gray-900">{title}</h2>
             </div>
@@ -136,12 +136,12 @@ export default function EmployeeProfilePage() {
     if (loadError || !profile || !formInitialValues) {
         return (
             <div className="space-y-6 relative">
-                <div className="rounded-2xl border border-red-200 bg-red-50 px-6 py-10 text-center space-y-4">
+                <div className="rounded-md border border-red-200 bg-red-50 px-6 py-10 text-center space-y-4">
                     <p className="text-sm font-medium text-red-700">{loadError || "Profile not available"}</p>
                     <button
                         type="button"
                         onClick={() => void loadProfile()}
-                        className="inline-flex items-center gap-2 rounded-xl bg-[#0a2a5e] px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90"
+                        className="inline-flex items-center gap-2 rounded-md bg-[#0a2a5e] px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90"
                     >
                         <RefreshCw className="h-4 w-4" aria-hidden />
                         Try again
@@ -226,12 +226,12 @@ export default function EmployeeProfilePage() {
     return (
         <div className="space-y-4 sm:space-y-6 relative pb-6">
             {saveMessage ? (
-                <p className="text-sm text-emerald-800 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+                <p className="text-sm text-emerald-800 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3">
                     {saveMessage}
                 </p>
             ) : null}
 
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="bg-white rounded-md border border-gray-100 shadow-sm overflow-hidden">
                 <div className="relative bg-gradient-to-r from-[#06124f] to-[#0a2a5e] px-4 sm:px-6 pt-5 pb-6 sm:pt-6 sm:pb-8">
                     <button
                         type="button"
@@ -239,7 +239,7 @@ export default function EmployeeProfilePage() {
                             setSaveMessage("");
                             setIsEditModalOpen(true);
                         }}
-                        className="absolute top-4 right-4 z-10 inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/30 bg-white/15 text-white backdrop-blur-sm transition hover:bg-white/25 sm:top-6 sm:right-6 sm:h-auto sm:w-auto sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm sm:font-semibold"
+                        className="absolute top-4 right-4 z-10 inline-flex h-9 w-9 items-center justify-center rounded-md border border-white/30 bg-white/15 text-white backdrop-blur-sm transition hover:bg-white/25 sm:top-6 sm:right-6 sm:h-auto sm:w-auto sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm sm:font-semibold"
                         aria-label="Edit profile"
                     >
                         <Pencil className="h-4 w-4 shrink-0" aria-hidden />
@@ -247,7 +247,7 @@ export default function EmployeeProfilePage() {
                     </button>
 
                     <div className="flex items-start sm:items-center gap-3 sm:gap-5 pr-12 sm:pr-36">
-                        <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-br from-[#06b6d4] to-[#06124f] flex items-center justify-center text-white text-xl sm:text-2xl font-black shadow-lg ring-4 ring-white/90 shrink-0">
+                        <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-md bg-gradient-to-br from-[#06b6d4] to-[#06124f] flex items-center justify-center text-white text-xl sm:text-2xl font-black shadow-lg ring-4 ring-white/90 shrink-0">
                             {initials}
                         </div>
                         <div className="min-w-0 flex-1">
@@ -269,7 +269,7 @@ export default function EmployeeProfilePage() {
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                        <div className="flex items-center gap-3 rounded-xl bg-gray-50 border border-gray-100 px-3 py-3 sm:px-4">
+                        <div className="flex items-center gap-3 rounded-md bg-gray-50 border border-gray-100 px-3 py-3 sm:px-4">
                             <Mail className="h-5 w-5 text-[#0a2a5e] shrink-0" aria-hidden />
                             <div className="min-w-0">
                                 <p className="text-xs text-gray-500">Official email</p>
@@ -278,7 +278,7 @@ export default function EmployeeProfilePage() {
                                 </p>
                             </div>
                         </div>
-                        <div className="flex items-center gap-3 rounded-xl bg-gray-50 border border-gray-100 px-3 py-3 sm:px-4">
+                        <div className="flex items-center gap-3 rounded-md bg-gray-50 border border-gray-100 px-3 py-3 sm:px-4">
                             <Phone className="h-5 w-5 text-[#0a2a5e] shrink-0" aria-hidden />
                             <div className="min-w-0">
                                 <p className="text-xs text-gray-500">Official mobile</p>
@@ -393,7 +393,7 @@ export default function EmployeeProfilePage() {
             )}
 
             {!hasDetailSections && (
-                <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 sm:px-6 py-5 text-sm text-amber-800">
+                <div className="rounded-md border border-amber-200 bg-amber-50 px-4 sm:px-6 py-5 text-sm text-amber-800">
                     Your profile details are not filled yet. Tap <strong>Edit profile</strong> to complete your
                     employee record (all fields available in admin employee form).
                 </div>

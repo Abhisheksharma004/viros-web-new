@@ -117,7 +117,7 @@ function SectionHeader({
             {href ? (
                 <Link
                     href={href}
-                    className="inline-flex min-h-9 shrink-0 items-center gap-0.5 rounded-lg px-2 text-xs font-semibold text-[#0a2a5e] touch-manipulation active:scale-[0.98] hover:underline"
+                    className="inline-flex min-h-9 shrink-0 items-center gap-0.5 rounded-md px-2 text-xs font-semibold text-[#0a2a5e] touch-manipulation active:scale-[0.98] hover:underline"
                 >
                     {linkLabel}
                     <ArrowRight className="h-3.5 w-3.5" aria-hidden />
@@ -132,7 +132,7 @@ function TaskRowCard({ task }: { task: DashboardTaskItem }) {
     return (
         <Link
             href={task.href}
-            className="flex items-start gap-3 rounded-xl border border-gray-100 bg-gray-50/80 p-3 touch-manipulation active:scale-[0.99] lg:items-center lg:px-5 lg:py-3.5 lg:hover:bg-gray-50/80"
+            className="flex items-start gap-3 rounded-md border border-gray-100 bg-gray-50/80 p-3 touch-manipulation active:scale-[0.99] lg:items-center lg:px-5 lg:py-3.5 lg:hover:bg-gray-50/80"
         >
             <div
                 className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 lg:mt-0 ${
@@ -192,13 +192,13 @@ function ActivityItem({ item }: { item: DashboardActivityItem }) {
 function DashboardSkeleton() {
     return (
         <div className="mx-auto w-full min-w-0 max-w-6xl animate-pulse space-y-3 pb-2 sm:space-y-6 sm:pb-6">
-            <div className="h-40 rounded-2xl bg-gray-200 sm:rounded-3xl" />
+            <div className="h-40 rounded-md bg-gray-200 sm:rounded-md" />
             <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
                 {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="h-24 rounded-2xl bg-gray-100" />
+                    <div key={i} className="h-24 rounded-md bg-gray-100" />
                 ))}
             </div>
-            <div className="h-48 rounded-2xl bg-gray-100" />
+            <div className="h-48 rounded-md bg-gray-100" />
         </div>
     );
 }
@@ -282,7 +282,7 @@ export default function EmployeeDashboardPage() {
 
     if (error || !data) {
         return (
-            <div className="mx-auto max-w-lg rounded-2xl border border-red-100 bg-red-50 p-6 text-center">
+            <div className="mx-auto max-w-lg rounded-md border border-red-100 bg-red-50 p-6 text-center">
                 <p className="text-sm font-semibold text-red-800">{error ?? "Unable to load dashboard"}</p>
                 <button
                     type="button"
@@ -290,7 +290,7 @@ export default function EmployeeDashboardPage() {
                         setLoading(true);
                         void load();
                     }}
-                    className="mt-4 rounded-lg bg-[#0a2a5e] px-4 py-2 text-sm font-semibold text-white"
+                    className="mt-4 rounded-md bg-[#0a2a5e] px-4 py-2 text-sm font-semibold text-white"
                 >
                     Try again
                 </button>
@@ -315,7 +315,7 @@ export default function EmployeeDashboardPage() {
                         <Link
                             key={stat.id}
                             href={stat.href}
-                            className="group flex min-h-[5.5rem] flex-col justify-between rounded-2xl border border-gray-100 bg-white p-3 shadow-sm ring-1 ring-gray-100 touch-manipulation transition active:scale-[0.98] sm:min-h-0 sm:p-4 sm:hover:-translate-y-0.5 sm:hover:shadow-md"
+                            className="group flex min-h-[5.5rem] flex-col justify-between rounded-md border border-gray-100 bg-white p-3 shadow-sm ring-1 ring-gray-100 touch-manipulation transition active:scale-[0.98] sm:min-h-0 sm:p-4 sm:hover:-translate-y-0.5 sm:hover:shadow-md"
                         >
                             <div className="flex items-start justify-between gap-2">
                                 <div className="min-w-0 flex-1">
@@ -344,7 +344,7 @@ export default function EmployeeDashboardPage() {
                                     )}
                                 </div>
                                 <div
-                                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${stat.color} text-white shadow sm:h-11 sm:w-11`}
+                                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-gradient-to-br ${stat.color} text-white shadow sm:h-11 sm:w-11`}
                                 >
                                     <Icon className="h-5 w-5" aria-hidden />
                                 </div>
@@ -354,7 +354,7 @@ export default function EmployeeDashboardPage() {
                 })}
             </div>
 
-            <section className="rounded-2xl border border-gray-100 bg-white p-3 shadow-sm sm:p-5">
+            <section className="rounded-md border border-gray-100 bg-white p-3 shadow-sm sm:p-5">
                 <SectionHeader title="Quick actions" />
                 <div className="mt-3 grid grid-cols-3 gap-2 sm:gap-3">
                     {quickActions.map((action) => {
@@ -363,10 +363,10 @@ export default function EmployeeDashboardPage() {
                             <Link
                                 key={action.title}
                                 href={action.href}
-                                className="flex min-h-[5.25rem] flex-col items-center justify-center gap-2 rounded-2xl border border-gray-100 bg-gray-50/80 p-2.5 touch-manipulation transition active:scale-[0.97] sm:min-h-0 sm:p-3 sm:hover:border-[#0a2a5e]/20 sm:hover:bg-[#0a2a5e]/5"
+                                className="flex min-h-[5.25rem] flex-col items-center justify-center gap-2 rounded-md border border-gray-100 bg-gray-50/80 p-2.5 touch-manipulation transition active:scale-[0.97] sm:min-h-0 sm:p-3 sm:hover:border-[#0a2a5e]/20 sm:hover:bg-[#0a2a5e]/5"
                             >
                                 <span
-                                    className={`flex h-11 w-11 items-center justify-center rounded-2xl ring-1 sm:h-12 sm:w-12 ${action.accent}`}
+                                    className={`flex h-11 w-11 items-center justify-center rounded-md ring-1 sm:h-12 sm:w-12 ${action.accent}`}
                                 >
                                     <Icon className="h-5 w-5" aria-hidden />
                                 </span>
@@ -380,7 +380,7 @@ export default function EmployeeDashboardPage() {
             </section>
 
             <div className="grid grid-cols-1 gap-3 lg:grid-cols-3 lg:gap-5">
-                <section className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm lg:col-span-2">
+                <section className="overflow-hidden rounded-md border border-gray-100 bg-white shadow-sm lg:col-span-2">
                     <div className="border-b border-gray-100 px-3 py-3 sm:px-5 sm:py-4">
                         <SectionHeader
                             title="My tasks"
@@ -412,7 +412,7 @@ export default function EmployeeDashboardPage() {
                     )}
                 </section>
 
-                <section className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+                <section className="overflow-hidden rounded-md border border-gray-100 bg-white shadow-sm">
                     <div className="border-b border-gray-100 px-3 py-3 sm:px-5 sm:py-4">
                         <SectionHeader
                             title="This month"
@@ -447,7 +447,7 @@ export default function EmployeeDashboardPage() {
             </div>
 
             {updates.length > 0 ? (
-                <section className="rounded-2xl border border-gray-100 bg-white p-3 shadow-sm sm:p-5">
+                <section className="rounded-md border border-gray-100 bg-white p-3 shadow-sm sm:p-5">
                     <div className="flex items-center gap-2">
                         <Bell className="h-4 w-4 text-[#0a2a5e]" aria-hidden />
                         <SectionHeader title="Updates" />
@@ -457,7 +457,7 @@ export default function EmployeeDashboardPage() {
                             <Link
                                 key={a.id}
                                 href={a.href}
-                                className="flex items-start gap-3 rounded-xl border border-gray-100 bg-gray-50/60 p-3 touch-manipulation active:scale-[0.99] sm:p-3.5"
+                                className="flex items-start gap-3 rounded-md border border-gray-100 bg-gray-50/60 p-3 touch-manipulation active:scale-[0.99] sm:p-3.5"
                             >
                                 <span
                                     className={`mt-0.5 shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ring-1 ${updateTagStyles[a.tagStyle]}`}
@@ -475,7 +475,7 @@ export default function EmployeeDashboardPage() {
             ) : null}
 
             {recentActivity.length > 0 ? (
-                <section className="rounded-2xl border border-gray-100 bg-white p-3 shadow-sm sm:p-5">
+                <section className="rounded-md border border-gray-100 bg-white p-3 shadow-sm sm:p-5">
                     <SectionHeader title="Recent activity" />
                     <div className="mt-3 space-y-3 sm:grid sm:grid-cols-2 sm:gap-4 lg:grid-cols-1 lg:space-y-3 xl:grid-cols-2">
                         {recentActivity.map((item) => (
@@ -487,10 +487,10 @@ export default function EmployeeDashboardPage() {
 
             <Link
                 href="/employee-dashboard/attendance"
-                className="flex items-center justify-between gap-3 rounded-2xl border border-[#0a2a5e]/15 bg-gradient-to-r from-[#0a2a5e]/5 to-[#06b6d4]/10 px-4 py-3.5 touch-manipulation active:scale-[0.99] sm:px-5 sm:py-4"
+                className="flex items-center justify-between gap-3 rounded-md border border-[#0a2a5e]/15 bg-gradient-to-r from-[#0a2a5e]/5 to-[#06b6d4]/10 px-4 py-3.5 touch-manipulation active:scale-[0.99] sm:px-5 sm:py-4"
             >
                 <div className="flex min-w-0 items-center gap-3">
-                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#0a2a5e] text-white shadow">
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-[#0a2a5e] text-white shadow">
                         <MapPin className="h-5 w-5" aria-hidden />
                     </span>
                     <div className="min-w-0">

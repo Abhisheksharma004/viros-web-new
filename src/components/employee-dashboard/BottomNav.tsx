@@ -92,7 +92,7 @@ export default function EmployeeBottomNav() {
                         <Link
                             key={item.href}
                             href={item.href}
-                            className={`flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-lg px-1 py-1 transition-colors ${
+                            className={`flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-md px-1 py-1 transition-colors ${
                                 active ? "text-[#06b6d4]" : "text-gray-500 hover:text-[#06124f]"
                             }`}
                         >
