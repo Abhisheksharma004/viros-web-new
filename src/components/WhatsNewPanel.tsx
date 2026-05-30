@@ -31,7 +31,7 @@ export default function WhatsNewPanel() {
             })
             .catch(() => {});
 
-        fetch("/api/employee/birthdays", { cache: "no-store" })
+        fetch("/api/whats-new/birthdays", { cache: "no-store" })
             .then((r) => {
                 if (!r.ok) return { cards: [] as BirthdayWishCardData[] };
                 return r.json() as Promise<{ cards: BirthdayWishCardData[] }>;
