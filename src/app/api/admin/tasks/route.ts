@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminTask, listAdminTasks, parseTaskPriority } from "@/lib/adminTasks";
+import { sendTaskAssignmentEmails } from "@/lib/taskAssignmentEmail";
 
 export async function GET() {
     try {
@@ -58,6 +59,12 @@ export async function POST(request: Request) {
             dueDate,
             assignees,
         });
+
+        void sendTaskAssignmentEmails(
+            task,
+            assignees.map((a) => a.employee_id),
+            { isNewTask: true },
+        );
 
         return NextResponse.json(task, { status: 201 });
     } catch (error: unknown) {

@@ -532,6 +532,15 @@ export async function updateAdminTask(
     }
 }
 
+export async function getTaskAssigneeEmployeeIds(recordId: number): Promise<string[]> {
+    await ensureAdminTasksTables();
+    const [rows] = await pool.query<RowDataPacket[]>(
+        `SELECT employee_id FROM ${ASSIGNEES_TABLE} WHERE task_id = ?`,
+        [recordId],
+    );
+    return rows.map((r) => String(r.employee_id).trim()).filter(Boolean);
+}
+
 export async function deleteAdminTask(recordId: number): Promise<boolean> {
     await ensureAdminTasksTables();
     const [result] = await pool.query<ResultSetHeader>(

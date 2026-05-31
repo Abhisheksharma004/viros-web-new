@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import {
     deleteAdminTask,
+    getTaskAssigneeEmployeeIds,
     parseTaskPriority,
     parseTaskStatus,
     updateAdminTask,
 } from "@/lib/adminTasks";
+import { sendTaskAssignmentEmails } from "@/lib/taskAssignmentEmail";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -48,6 +50,9 @@ export async function PATCH(request: Request, context: RouteContext) {
             return NextResponse.json({ message: "Select at least one assignee" }, { status: 400 });
         }
 
+        const previousAssigneeIds = await getTaskAssigneeEmployeeIds(recordId);
+        const previousSet = new Set(previousAssigneeIds);
+
         const task = await updateAdminTask(recordId, {
             title,
             description,
@@ -59,6 +64,14 @@ export async function PATCH(request: Request, context: RouteContext) {
 
         if (!task) {
             return NextResponse.json({ message: "Task not found" }, { status: 404 });
+        }
+
+        const newlyAssignedIds = assignees
+            .map((a) => a.employee_id)
+            .filter((id) => !previousSet.has(id));
+
+        if (newlyAssignedIds.length > 0) {
+            void sendTaskAssignmentEmails(task, newlyAssignedIds, { isNewTask: false });
         }
 
         return NextResponse.json(task);
