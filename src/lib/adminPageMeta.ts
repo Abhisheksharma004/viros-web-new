@@ -76,6 +76,11 @@ const ADMIN_PAGE_META_ENTRIES: { path: string; title: string; subtitle?: string 
         subtitle: "Track assigned tasks.",
     },
     {
+        path: "/admin-dashboard/settings",
+        title: "Admin profile",
+        subtitle: "Your display name for task assignments.",
+    },
+    {
         path: "/admin-dashboard/salary",
         title: "Employee salary setup",
         subtitle: "Manage salary structure.",

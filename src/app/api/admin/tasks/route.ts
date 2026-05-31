@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminTask, listAdminTasks, parseTaskPriority } from "@/lib/adminTasks";
+import { getAdminSession } from "@/lib/adminSession";
 import { sendTaskAssignmentEmails } from "@/lib/taskAssignmentEmail";
 
 export async function GET() {
@@ -52,12 +53,16 @@ export async function POST(request: Request) {
             return NextResponse.json({ message: "Select at least one assignee" }, { status: 400 });
         }
 
+        const admin = await getAdminSession();
         const task = await createAdminTask({
             title,
             description,
             priority,
             dueDate,
             assignees,
+            assignedBy: admin
+                ? { id: admin.id, email: admin.email, name: admin.name }
+                : null,
         });
 
         void sendTaskAssignmentEmails(

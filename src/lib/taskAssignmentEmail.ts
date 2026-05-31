@@ -1,6 +1,6 @@
 import pool from "@/lib/db";
 import type { TaskPriority, TaskRow, TaskStatus } from "@/lib/adminTaskUiShared";
-import { getStatusLabel } from "@/lib/adminTaskUiShared";
+import { formatAssignedByLabel, getStatusLabel } from "@/lib/adminTaskUiShared";
 import {
     createMailTransporter,
     isEmailTestMode,
@@ -71,6 +71,10 @@ function buildTeamMembersHtml(assignees: TaskAssigneeNotifyInput[]): string {
               </table>`;
 }
 
+function assignedByTableRow(assignedByLabel: string): string {
+    return `<tr><td style="padding:14px 18px;border-bottom:1px solid #e5e7eb;"><strong style="color:#0a2a5e;">Assigned by</strong><br><span>${escapeHtml(assignedByLabel)}</span></td></tr>`;
+}
+
 function buildTeamTaskAssignmentHtml(options: {
     employeeName: string;
     taskId: string;
@@ -80,6 +84,7 @@ function buildTeamTaskAssignmentHtml(options: {
     status: TaskStatus;
     dueDate: string;
     teamMembers: TaskAssigneeNotifyInput[];
+    assignedByLabel: string;
     isNewAssignment: boolean;
 }): string {
     const {
@@ -91,6 +96,7 @@ function buildTeamTaskAssignmentHtml(options: {
         status,
         dueDate,
         teamMembers,
+        assignedByLabel,
         isNewAssignment,
     } = options;
 
@@ -126,6 +132,7 @@ function buildTeamTaskAssignmentHtml(options: {
               ${buildTeamMembersHtml(teamMembers)}
               <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:12px;">
                 <tr><td style="padding:14px 18px;border-bottom:1px solid #e5e7eb;"><strong style="color:#0a2a5e;">Task ID</strong><br><span>${escapeHtml(taskId)}</span></td></tr>
+                ${assignedByTableRow(assignedByLabel)}
                 <tr><td style="padding:14px 18px;border-bottom:1px solid #e5e7eb;"><strong style="color:#0a2a5e;">Title</strong><br><span>${escapeHtml(title)}</span></td></tr>
                 ${description ? `<tr><td style="padding:14px 18px;border-bottom:1px solid #e5e7eb;"><strong style="color:#0a2a5e;">Description</strong><br><span>${escapeHtml(description)}</span></td></tr>` : ""}
                 <tr><td style="padding:14px 18px;border-bottom:1px solid #e5e7eb;"><strong style="color:#0a2a5e;">Priority</strong><br><span>${escapeHtml(priorityLabel(priority))}</span></td></tr>
@@ -175,6 +182,7 @@ function buildTaskAssignmentHtml(options: {
     status: TaskStatus;
     dueDate: string;
     department: string | null;
+    assignedByLabel: string;
     isNewAssignment: boolean;
 }): string {
     const {
@@ -186,6 +194,7 @@ function buildTaskAssignmentHtml(options: {
         status,
         dueDate,
         department,
+        assignedByLabel,
         isNewAssignment,
     } = options;
 
@@ -219,6 +228,7 @@ function buildTaskAssignmentHtml(options: {
               <p style="margin:0 0 20px;">${escapeHtml(intro)}</p>
               <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:12px;">
                 <tr><td style="padding:14px 18px;border-bottom:1px solid #e5e7eb;"><strong style="color:#0a2a5e;">Task ID</strong><br><span>${escapeHtml(taskId)}</span></td></tr>
+                ${assignedByTableRow(assignedByLabel)}
                 <tr><td style="padding:14px 18px;border-bottom:1px solid #e5e7eb;"><strong style="color:#0a2a5e;">Title</strong><br><span>${escapeHtml(title)}</span></td></tr>
                 ${description ? `<tr><td style="padding:14px 18px;border-bottom:1px solid #e5e7eb;"><strong style="color:#0a2a5e;">Description</strong><br><span>${escapeHtml(description)}</span></td></tr>` : ""}
                 ${department ? `<tr><td style="padding:14px 18px;border-bottom:1px solid #e5e7eb;"><strong style="color:#0a2a5e;">Department</strong><br><span>${escapeHtml(department)}</span></td></tr>` : ""}
@@ -252,6 +262,7 @@ async function sendOneTeamTaskAssignmentEmail(options: {
     isNewAssignment: boolean;
 }): Promise<boolean> {
     const { to, employeeName, task, teamMembers, isNewAssignment } = options;
+    const assignedByLabel = formatAssignedByLabel(task.assignedBy);
     const subject = isNewAssignment
         ? `[Team Task] New assignment — ${task.id}: ${task.title}`
         : `[Team Task] You were added — ${task.id}: ${task.title}`;
@@ -261,6 +272,8 @@ async function sendOneTeamTaskAssignmentEmail(options: {
         isNewAssignment
             ? "You are part of a team assigned to a new task."
             : "You have been added to a team task.",
+        "",
+        `Assigned by: ${assignedByLabel}`,
         "",
         "Team members:",
         formatTeamMembersList(teamMembers),
@@ -284,6 +297,7 @@ async function sendOneTeamTaskAssignmentEmail(options: {
         status: task.status,
         dueDate: task.dueDate,
         teamMembers,
+        assignedByLabel,
         isNewAssignment,
     });
 
@@ -302,6 +316,7 @@ async function sendOneTaskAssignmentEmail(options: {
     isNewAssignment: boolean;
 }): Promise<boolean> {
     const { to, employeeName, task, assignee, isNewAssignment } = options;
+    const assignedByLabel = formatAssignedByLabel(task.assignedBy);
     const subject = isNewAssignment
         ? `[Task] New assignment — ${task.id}: ${task.title}`
         : `[Task] You were assigned — ${task.id}: ${task.title}`;
@@ -311,6 +326,8 @@ async function sendOneTaskAssignmentEmail(options: {
         isNewAssignment
             ? "You have been assigned a new task."
             : "You have been added as an assignee on a task.",
+        "",
+        `Assigned by: ${assignedByLabel}`,
         "",
         `Task ID: ${task.id}`,
         `Title: ${task.title}`,
@@ -332,6 +349,7 @@ async function sendOneTaskAssignmentEmail(options: {
         status: task.status,
         dueDate: task.dueDate,
         department: assignee.department,
+        assignedByLabel,
         isNewAssignment,
     });
 

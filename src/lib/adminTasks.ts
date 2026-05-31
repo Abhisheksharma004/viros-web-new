@@ -3,6 +3,7 @@ import pool from "@/lib/db";
 import { toDateOnlyString } from "@/lib/dateOnly";
 import {
     isTaskOverdue,
+    type TaskAssignedBy,
     type TaskAssignee,
     type TaskPriority,
     type TaskRemark,
@@ -27,7 +28,19 @@ type TaskDbRow = RowDataPacket & {
     status: TaskStatus;
     due_date: Date | string | null;
     created_at: Date | string;
+    assigned_by_id?: number | null;
+    assigned_by_email?: string | null;
+    assigned_by_name?: string | null;
 };
+
+const TASK_SELECT_COLUMNS = `id, task_code, title, description, priority, status, due_date, created_at, assigned_by_id, assigned_by_email, assigned_by_name`;
+
+function taskSelectSql(tableAlias?: string): string {
+    const prefix = tableAlias ? `${tableAlias}.` : "";
+    return TASK_SELECT_COLUMNS.split(",")
+        .map((col) => `${prefix}${col.trim()}`)
+        .join(", ");
+}
 
 type AssigneeDbRow = RowDataPacket & {
     task_id: number;
@@ -58,7 +71,7 @@ declare global {
     var __adminTasksSchemaVersion: number | undefined;
 }
 
-const ADMIN_TASKS_SCHEMA_VERSION = 2;
+const ADMIN_TASKS_SCHEMA_VERSION = 3;
 
 let ensureTablePromise: Promise<void> | null = null;
 let ensureRemarksPromise: Promise<void> | null = null;
@@ -96,6 +109,55 @@ async function runEnsureAdminTasksTables() {
         )
     `);
 
+    await ensureAssignedByColumns();
+}
+
+async function getTaskTableColumns(): Promise<Set<string>> {
+    const [rows] = await pool.query<RowDataPacket[]>(
+        `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?`,
+        [TASKS_TABLE],
+    );
+    return new Set(rows.map((r) => String(r.COLUMN_NAME)));
+}
+
+async function ensureAssignedByColumns() {
+    const columns = await getTaskTableColumns();
+    const migrations: Array<{ column: string; sql: string }> = [
+        {
+            column: "assigned_by_id",
+            sql: `ALTER TABLE ${TASKS_TABLE} ADD COLUMN assigned_by_id INT NULL AFTER due_date`,
+        },
+        {
+            column: "assigned_by_email",
+            sql: `ALTER TABLE ${TASKS_TABLE} ADD COLUMN assigned_by_email VARCHAR(255) NULL AFTER assigned_by_id`,
+        },
+        {
+            column: "assigned_by_name",
+            sql: `ALTER TABLE ${TASKS_TABLE} ADD COLUMN assigned_by_name VARCHAR(255) NULL AFTER assigned_by_email`,
+        },
+    ];
+    for (const migration of migrations) {
+        if (!columns.has(migration.column)) {
+            await pool.query(migration.sql);
+            columns.add(migration.column);
+        }
+    }
+}
+
+function mapAssignedByFromRow(task: TaskDbRow): TaskAssignedBy | null {
+    const name = typeof task.assigned_by_name === "string" ? task.assigned_by_name.trim() : "";
+    const email = typeof task.assigned_by_email === "string" ? task.assigned_by_email.trim() : "";
+    const id =
+        task.assigned_by_id != null && Number.isFinite(Number(task.assigned_by_id))
+            ? Number(task.assigned_by_id)
+            : null;
+    if (!name && !email) return null;
+    return {
+        id,
+        email,
+        name: name || email || "VIROS Admin",
+    };
 }
 
 async function fetchRemarksByTaskIds(taskIds: number[]): Promise<Map<number, TaskRemark[]>> {
@@ -174,6 +236,13 @@ export async function ensureRemarksTable() {
 export async function ensureAdminTasksTables() {
     // Invalidate old dev caches that skipped remarks table (schema v2+)
     if (global.__adminTasksTablesEnsured && !global.__adminTaskRemarksTableEnsured) {
+        global.__adminTasksTablesEnsured = false;
+        ensureTablePromise = null;
+    }
+    if (
+        global.__adminTasksTablesEnsured &&
+        (global.__adminTasksSchemaVersion ?? 0) < ADMIN_TASKS_SCHEMA_VERSION
+    ) {
         global.__adminTasksTablesEnsured = false;
         ensureTablePromise = null;
     }
@@ -267,6 +336,7 @@ function mapTaskRow(task: TaskDbRow, assignees: AssigneeDbRow[]): TaskRow {
         dueDate,
         createdAt: toIsoDateTime(task.created_at),
         assignDate: toIsoDateTime(task.created_at),
+        assignedBy: mapAssignedByFromRow(task),
     };
 }
 
@@ -276,7 +346,7 @@ export async function listTasksForEmployee(employeeId: string): Promise<TaskRow[
     if (!trimmed) return [];
 
     const [taskRows] = await pool.query(
-        `SELECT DISTINCT t.id, t.task_code, t.title, t.description, t.priority, t.status, t.due_date, t.created_at
+        `SELECT DISTINCT ${taskSelectSql("t")}
          FROM ${TASKS_TABLE} t
          INNER JOIN ${ASSIGNEES_TABLE} a ON a.task_id = t.id
          WHERE a.employee_id = ?
@@ -312,7 +382,7 @@ export async function listAdminTasks(): Promise<TaskRow[]> {
     await ensureAdminTasksTables();
 
     const [taskRows] = await pool.query(
-        `SELECT id, task_code, title, description, priority, status, due_date, created_at
+        `SELECT ${TASK_SELECT_COLUMNS}
          FROM ${TASKS_TABLE}
          ORDER BY created_at DESC`,
     );
@@ -393,6 +463,12 @@ export async function employeeUpdateTask(
     return fetchTaskRowById(recordId);
 }
 
+export type TaskAssignedByInput = {
+    id: number;
+    email: string;
+    name: string;
+};
+
 export type CreateAdminTaskInput = {
     title: string;
     description: string;
@@ -403,6 +479,7 @@ export type CreateAdminTaskInput = {
         full_name: string;
         department: string | null;
     }>;
+    assignedBy?: TaskAssignedByInput | null;
 };
 
 export async function createAdminTask(input: CreateAdminTaskInput): Promise<TaskRow> {
@@ -412,10 +489,19 @@ export async function createAdminTask(input: CreateAdminTaskInput): Promise<Task
     try {
         await conn.beginTransaction();
 
+        const assignedBy = input.assignedBy ?? null;
         const [insertResult] = await conn.query<ResultSetHeader>(
-            `INSERT INTO ${TASKS_TABLE} (title, description, priority, status, due_date)
-             VALUES (?, ?, ?, 'pending', ?)`,
-            [input.title, input.description || null, input.priority, input.dueDate || null],
+            `INSERT INTO ${TASKS_TABLE} (title, description, priority, status, due_date, assigned_by_id, assigned_by_email, assigned_by_name)
+             VALUES (?, ?, ?, 'pending', ?, ?, ?, ?)`,
+            [
+                input.title,
+                input.description || null,
+                input.priority,
+                input.dueDate || null,
+                assignedBy?.id ?? null,
+                assignedBy?.email ?? null,
+                assignedBy?.name ?? null,
+            ],
         );
 
         const taskId = insertResult.insertId;
@@ -439,8 +525,7 @@ export async function createAdminTask(input: CreateAdminTaskInput): Promise<Task
         await conn.commit();
 
         const [taskRows] = await pool.query(
-            `SELECT id, task_code, title, description, priority, status, due_date, created_at
-             FROM ${TASKS_TABLE} WHERE id = ?`,
+            `SELECT ${TASK_SELECT_COLUMNS} FROM ${TASKS_TABLE} WHERE id = ?`,
             [taskId],
         );
         const [assigneeRows] = await pool.query(
@@ -465,8 +550,7 @@ export type UpdateAdminTaskInput = CreateAdminTaskInput & {
 
 async function fetchTaskRowById(recordId: number): Promise<TaskRow | null> {
     const [taskRows] = await pool.query(
-        `SELECT id, task_code, title, description, priority, status, due_date, created_at
-         FROM ${TASKS_TABLE} WHERE id = ?`,
+        `SELECT ${TASK_SELECT_COLUMNS} FROM ${TASKS_TABLE} WHERE id = ?`,
         [recordId],
     );
     const task = (taskRows as TaskDbRow[])[0];

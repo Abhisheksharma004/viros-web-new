@@ -6,6 +6,7 @@ import {
     PRIORITY_FILTERS,
     STATUS_FILTERS,
     formatAssignDate,
+    formatAssignedByLabel,
     formatRemarkDateTime,
     formatTaskDate,
     getPriorityStyles,
@@ -735,6 +736,17 @@ export default function AdminTasksPage() {
                                     <p className="mt-1 text-sm font-semibold text-gray-900">
                                         {formatAssignDate(viewTask.assignDate)}
                                     </p>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-medium text-gray-500">Assigned by</p>
+                                    <p className="mt-1 text-sm font-semibold text-gray-900">
+                                        {formatAssignedByLabel(viewTask.assignedBy)}
+                                    </p>
+                                    {viewTask.assignedBy?.email ? (
+                                        <p className="mt-0.5 text-xs text-gray-500">
+                                            {viewTask.assignedBy.email}
+                                        </p>
+                                    ) : null}
                                 </div>
                                 <div>
                                     <p className="text-xs font-medium text-gray-500">Due date</p>

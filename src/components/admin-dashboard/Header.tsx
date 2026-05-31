@@ -9,6 +9,7 @@ export default function AdminHeader({ onMenuClick }: { onMenuClick: () => void }
     const [showProfileMenu, setShowProfileMenu] = useState(false);
     const [showNotifications, setShowNotifications] = useState(false);
     const [adminEmail, setAdminEmail] = useState("");
+    const [adminName, setAdminName] = useState("");
     const router = useRouter();
     const pathname = usePathname();
     const pageMeta = getAdminPageMeta(pathname);
@@ -21,7 +22,7 @@ export default function AdminHeader({ onMenuClick }: { onMenuClick: () => void }
     ];
 
     const unreadCount = notifications.filter((n) => n.unread).length;
-    const avatarLetter = (adminEmail?.[0] || "A").toUpperCase();
+    const avatarLetter = (adminName?.[0] || adminEmail?.[0] || "A").toUpperCase();
 
     useEffect(() => {
         let active = true;
@@ -35,6 +36,7 @@ export default function AdminHeader({ onMenuClick }: { onMenuClick: () => void }
                 const data = await response.json();
                 if (active) {
                     setAdminEmail(data.email || "");
+                    setAdminName(data.name || "");
                 }
             } catch {
                 // Keep fallback label when request fails.
@@ -135,7 +137,9 @@ export default function AdminHeader({ onMenuClick }: { onMenuClick: () => void }
                             <div className="w-8 h-8 bg-linear-to-r from-[#06b6d4] to-[#06124f] rounded-full flex items-center justify-center text-white text-sm font-bold">
                                 {avatarLetter}
                             </div>
-                            <span className="hidden sm:block font-medium">Administrator</span>
+                            <span className="hidden sm:block font-medium">
+                                {adminName || "Administrator"}
+                            </span>
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                             </svg>
@@ -146,7 +150,9 @@ export default function AdminHeader({ onMenuClick }: { onMenuClick: () => void }
                                 <div className="fixed inset-0 z-10" onClick={() => setShowProfileMenu(false)} />
                                 <div className="absolute right-0 mt-2 w-52 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-20">
                                     <div className="px-4 py-2.5 border-b border-gray-200">
-                                        <p className="text-sm font-bold text-gray-900">Administrator</p>
+                                        <p className="text-sm font-bold text-gray-900">
+                                            {adminName || "Administrator"}
+                                        </p>
                                         <p className="text-xs text-gray-400 truncate">{adminEmail || "Super Admin"}</p>
                                     </div>
                                     <Link

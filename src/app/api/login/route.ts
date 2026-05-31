@@ -4,6 +4,7 @@ import { serialize } from "cookie";
 import pool from "@/lib/db";
 import { comparePassword, signToken } from "@/lib/auth";
 import { ensureEmployeeAccessDependencies } from "@/lib/adminEmployeeAccess";
+import { ensureUsersNameColumn, resolveAdminDisplayName } from "@/lib/adminUsers";
 
 type AccessRow = RowDataPacket & {
     id: number;
@@ -19,6 +20,7 @@ type AdminUserRow = RowDataPacket & {
     id: number;
     email: string;
     password: string;
+    name: string | null;
 };
 
 function cookieOptions(rememberMe: boolean, isSecure: boolean) {
@@ -94,13 +96,19 @@ export async function POST(request: Request) {
             }
         }
 
-        const [userRows] = await pool.query<AdminUserRow[]>("SELECT id, email, password FROM users WHERE email = ? LIMIT 1", [
-            identifier,
-        ]);
+        await ensureUsersNameColumn();
+        const [userRows] = await pool.query<AdminUserRow[]>(
+            "SELECT id, email, password, name FROM users WHERE email = ? LIMIT 1",
+            [identifier],
+        );
         const user = userRows[0];
 
         if (user && (await comparePassword(password, user.password))) {
-            const token = signToken({ id: user.id, email: user.email }, tokenExpiry);
+            const displayName = resolveAdminDisplayName(user);
+            const token = signToken(
+                { id: user.id, email: user.email, name: displayName },
+                tokenExpiry,
+            );
             const response = NextResponse.json({ message: "Login successful", role: "admin" }, { status: 200 });
             response.headers.set("Set-Cookie", serialize("auth_token", token, cookieOptions(rememberMe, isSecure)));
             return response;

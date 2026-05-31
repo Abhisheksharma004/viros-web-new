@@ -15,6 +15,12 @@ export type TaskAssignee = {
     department: string | null;
 };
 
+export type TaskAssignedBy = {
+    id: number | null;
+    email: string;
+    name: string;
+};
+
 export type TaskRemark = {
     id: number;
     employeeId: string;
@@ -47,8 +53,15 @@ export type TaskRow = {
     dueDate: string;
     createdAt: string;
     assignDate: string;
+    /** Admin who created / first assigned the task */
+    assignedBy?: TaskAssignedBy | null;
     remarks?: TaskRemark[];
 };
+
+export function formatAssignedByLabel(assignedBy?: TaskAssignedBy | null): string {
+    if (!assignedBy?.name?.trim()) return "VIROS Admin";
+    return assignedBy.name.trim();
+}
 
 export function formatRemarkDateTime(iso: string) {
     if (!iso) return "—";
