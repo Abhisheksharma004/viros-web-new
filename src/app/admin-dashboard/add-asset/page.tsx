@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Check, Download, Eye, Loader2, Pencil, Trash2, Upload, X } from "lucide-react";
+import { Check, Download, Eye, Loader2, Pencil, Search, Trash2, Upload, X } from "lucide-react";
 
 type AssetStatus = "Active" | "Inactive" | "Maintenance";
 
@@ -137,6 +137,68 @@ export default function AddAssetPage() {
     const [csvImportBusy, setCsvImportBusy] = useState(false);
     const [csvImportLastResult, setCsvImportLastResult] = useState<CsvImportResult | null>(null);
     const csvFileInputRef = useRef<HTMLInputElement>(null);
+    const [search, setSearch] = useState("");
+    const [filterCompanyId, setFilterCompanyId] = useState("");
+    const [filterCategory, setFilterCategory] = useState("");
+    const [filterStatus, setFilterStatus] = useState("");
+
+    const filterSelectClass =
+        "w-full px-4 py-2.5 rounded-md border border-gray-200 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e] bg-white";
+
+    const categoryFilterOptions = useMemo(() => {
+        const names = new Set<string>();
+        for (const a of assets) {
+            const c = a.category.trim();
+            if (c) names.add(c);
+        }
+        return Array.from(names).sort((x, y) => x.localeCompare(y));
+    }, [assets]);
+
+    const filteredAssets = useMemo(() => {
+        const q = search.trim().toLowerCase();
+        return assets.filter((a) => {
+            if (filterStatus && a.status !== filterStatus) return false;
+
+            if (filterCompanyId === "none") {
+                if (a.companyId !== null) return false;
+            } else if (filterCompanyId) {
+                if (String(a.companyId ?? "") !== filterCompanyId) return false;
+            }
+
+            if (filterCategory === "__none__") {
+                if (a.category.trim()) return false;
+            } else if (filterCategory && a.category.trim() !== filterCategory) {
+                return false;
+            }
+
+            if (q) {
+                const haystack = [
+                    a.tagCode,
+                    a.category,
+                    a.name,
+                    a.description,
+                    a.companyName,
+                    a.status,
+                ]
+                    .join(" ")
+                    .toLowerCase();
+                if (!haystack.includes(q)) return false;
+            }
+
+            return true;
+        });
+    }, [assets, filterCompanyId, filterCategory, filterStatus, search]);
+
+    const hasActiveFilters = Boolean(
+        search.trim() || filterCompanyId || filterCategory || filterStatus,
+    );
+
+    const clearFilters = () => {
+        setSearch("");
+        setFilterCompanyId("");
+        setFilterCategory("");
+        setFilterStatus("");
+    };
 
     const assetStats = useMemo(() => {
         const total = assets.length;
@@ -439,10 +501,107 @@ export default function AddAssetPage() {
                 ))}
             </div>
 
+            <div className="bg-white rounded-md border border-gray-100 shadow-sm p-4 sm:p-5">
+                <div
+                    className={`grid grid-cols-1 items-end gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(0,2fr)_repeat(3,minmax(0,1fr))] ${hasActiveFilters ? "xl:grid-cols-[minmax(0,2fr)_repeat(3,minmax(0,1fr))_auto]" : ""}`}
+                >
+                    <div className="min-w-0 sm:col-span-2 xl:col-span-1">
+                        <label htmlFor="asset-search" className="mb-1.5 block text-xs font-semibold text-gray-600">
+                            Search
+                        </label>
+                        <div className="relative">
+                            <Search
+                                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+                                aria-hidden
+                            />
+                            <input
+                                id="asset-search"
+                                type="search"
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                disabled={isLoading}
+                                placeholder="Tag, name, category, company…"
+                                className={`${filterSelectClass} pl-10`}
+                            />
+                        </div>
+                    </div>
+                    <div className="min-w-0">
+                        <label htmlFor="asset-filter-company" className="mb-1.5 block text-xs font-semibold text-gray-600">
+                            Company
+                        </label>
+                        <select
+                            id="asset-filter-company"
+                            value={filterCompanyId}
+                            onChange={(e) => setFilterCompanyId(e.target.value)}
+                            disabled={isLoading}
+                            className={filterSelectClass}
+                        >
+                            <option value="">All companies</option>
+                            <option value="none">Unassigned</option>
+                            {companyOptions.map((c) => (
+                                <option key={c.id} value={String(c.id)}>
+                                    {c.name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className="min-w-0">
+                        <label htmlFor="asset-filter-category" className="mb-1.5 block text-xs font-semibold text-gray-600">
+                            Category
+                        </label>
+                        <select
+                            id="asset-filter-category"
+                            value={filterCategory}
+                            onChange={(e) => setFilterCategory(e.target.value)}
+                            disabled={isLoading}
+                            className={filterSelectClass}
+                        >
+                            <option value="">All categories</option>
+                            <option value="__none__">Uncategorized</option>
+                            {categoryFilterOptions.map((cat) => (
+                                <option key={cat} value={cat}>
+                                    {cat}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className="min-w-0">
+                        <label htmlFor="asset-filter-status" className="mb-1.5 block text-xs font-semibold text-gray-600">
+                            Status
+                        </label>
+                        <select
+                            id="asset-filter-status"
+                            value={filterStatus}
+                            onChange={(e) => setFilterStatus(e.target.value)}
+                            disabled={isLoading}
+                            className={filterSelectClass}
+                        >
+                            <option value="">All statuses</option>
+                            <option value="Active">Active</option>
+                            <option value="Maintenance">Maintenance</option>
+                            <option value="Inactive">Inactive</option>
+                        </select>
+                    </div>
+                    {hasActiveFilters ? (
+                        <button
+                            type="button"
+                            onClick={clearFilters}
+                            className="shrink-0 rounded-md border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 sm:col-span-2 xl:col-span-1"
+                        >
+                            Clear
+                        </button>
+                    ) : null}
+                </div>
+            </div>
+
             <div className="bg-white rounded-md border border-gray-100 shadow-sm overflow-hidden">
                 <div className="px-6 py-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <h2 className="text-base font-bold text-gray-900">Asset Registry</h2>
-                    <div className="text-xs text-gray-500">Showing {assets.length} assets</div>
+                    <div className="text-xs text-gray-500">
+                        {hasActiveFilters
+                            ? `Showing ${filteredAssets.length} of ${assets.length} assets`
+                            : `Showing ${assets.length} assets`}
+                    </div>
                 </div>
 
                 <div className="overflow-x-auto">
@@ -487,8 +646,22 @@ export default function AddAssetPage() {
                                     </td>
                                 </tr>
                             )}
+                            {!isLoading && assets.length > 0 && filteredAssets.length === 0 && (
+                                <tr>
+                                    <td className="px-6 py-8 text-sm text-gray-500" colSpan={tableColSpan}>
+                                        No assets match your search or filters.{" "}
+                                        <button
+                                            type="button"
+                                            onClick={clearFilters}
+                                            className="font-semibold text-[#0a2a5e] hover:underline"
+                                        >
+                                            Clear filters
+                                        </button>
+                                    </td>
+                                </tr>
+                            )}
                             {!isLoading &&
-                                assets.map((a) => (
+                                filteredAssets.map((a) => (
                                     <tr key={a.id} className="hover:bg-gray-50 transition-colors">
                                         <td className="px-6 py-4 text-sm text-gray-700 whitespace-nowrap">
                                             {a.tagCode.trim() ? a.tagCode : <span className="text-gray-400">—</span>}
