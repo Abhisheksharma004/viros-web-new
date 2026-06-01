@@ -9,6 +9,7 @@ import {
     employeeExists,
     ensureEmployeeAccessDependencies,
 } from "@/lib/adminEmployeeAccess";
+import { resetPortalAttendanceDisableTracking } from "@/lib/attendancePortalAutoDisable";
 
 const ALLOWED_PORTAL_STATUSES = ["Active", "Disabled", "Inactive"] as const;
 
@@ -84,6 +85,11 @@ export async function POST(request: Request) {
         );
 
         const insertId = (result as ResultSetHeader).insertId;
+
+        if (portalStatus === "Active") {
+            await resetPortalAttendanceDisableTracking(employeeId);
+        }
+
         const [rows] = await pool.query(
             `SELECT ${EMPLOYEE_ACCESS_LIST_SELECT}
              ${EMPLOYEE_ACCESS_LIST_FROM}

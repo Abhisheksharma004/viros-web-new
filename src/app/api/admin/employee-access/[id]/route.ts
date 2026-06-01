@@ -7,6 +7,7 @@ import {
     EMPLOYEE_ACCESS_LIST_SELECT,
     ensureEmployeeAccessDependencies,
 } from "@/lib/adminEmployeeAccess";
+import { resetPortalAttendanceDisableTracking } from "@/lib/attendancePortalAutoDisable";
 
 const ALLOWED_PORTAL_STATUSES = ["Active", "Disabled", "Inactive"] as const;
 
@@ -69,6 +70,19 @@ export async function PUT(request: Request, { params }: Ctx) {
         const portalStatus = pickPortalStatus(body.portal_status);
         const password = str(body.password);
 
+        const [existingRows] = await pool.query<RowDataPacket[]>(
+            `SELECT employee_id, portal_status FROM admin_employee_access WHERE id = ? LIMIT 1`,
+            [id],
+        );
+        const existing = existingRows[0];
+        if (!existing) {
+            return NextResponse.json({ message: "Employee access record not found" }, { status: 404 });
+        }
+        const previousPortalStatus =
+            typeof existing.portal_status === "string" ? existing.portal_status : "";
+        const employeeId =
+            typeof existing.employee_id === "string" ? existing.employee_id.trim() : "";
+
         let updateSql = `UPDATE admin_employee_access SET official_email = ?, portal_status = ?`;
         const updateParams: unknown[] = [officialEmail, portalStatus];
 
@@ -86,6 +100,14 @@ export async function PUT(request: Request, { params }: Ctx) {
         const affected = (result as ResultSetHeader).affectedRows;
         if (!affected) {
             return NextResponse.json({ message: "Employee access record not found" }, { status: 404 });
+        }
+
+        if (
+            portalStatus === "Active" &&
+            previousPortalStatus !== "Active" &&
+            employeeId
+        ) {
+            await resetPortalAttendanceDisableTracking(employeeId);
         }
 
         const [rows] = await pool.query(

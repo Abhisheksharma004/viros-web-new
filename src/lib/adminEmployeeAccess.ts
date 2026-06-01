@@ -14,6 +14,7 @@ const ALLOWED_COLUMNS = new Set([
     "employee_id",
     "official_email",
     "portal_status",
+    "portal_attendance_reset_at",
     "default_password",
     "password_hash",
     "created_at",
@@ -41,6 +42,7 @@ async function runEnsureAdminEmployeeAccessTable() {
             employee_id VARCHAR(64) NOT NULL,
             official_email VARCHAR(255) NOT NULL DEFAULT '',
             portal_status ENUM('Active', 'Disabled', 'Inactive') NOT NULL DEFAULT 'Active',
+            portal_attendance_reset_at DATE NULL,
             default_password VARCHAR(255) NOT NULL DEFAULT '',
             password_hash VARCHAR(255) NOT NULL DEFAULT '',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -56,6 +58,10 @@ async function runEnsureAdminEmployeeAccessTable() {
         {
             column: "portal_status",
             sql: `ALTER TABLE ${TABLE} ADD COLUMN portal_status ENUM('Active', 'Disabled', 'Inactive') NOT NULL DEFAULT 'Active' AFTER official_email`,
+        },
+        {
+            column: "portal_attendance_reset_at",
+            sql: `ALTER TABLE ${TABLE} ADD COLUMN portal_attendance_reset_at DATE NULL AFTER portal_status`,
         },
         {
             column: "default_password",

@@ -58,6 +58,35 @@ async function getPortalStatus(employeeId: string): Promise<PortalAccessStatus |
     return null;
 }
 
+function parseDateOnlyColumn(value: unknown): string | null {
+    if (value == null || value === "") return null;
+    if (value instanceof Date) {
+        return formatDateOnlyInTimeZone(value, IST_TIMEZONE);
+    }
+    const s = String(value).trim();
+    const match = s.match(/^(\d{4}-\d{2}-\d{2})/);
+    return match ? match[1] : null;
+}
+
+/** Days before this date are ignored for auto-disable (set when admin re-activates portal). */
+async function getPortalAttendanceResetDate(employeeId: string): Promise<string | null> {
+    await ensureEmployeeAccessDependencies();
+    const [rows] = await pool.query<RowDataPacket[]>(
+        `SELECT portal_attendance_reset_at FROM ${ACCESS_TABLE} WHERE employee_id = ? LIMIT 1`,
+        [employeeId.trim()],
+    );
+    return parseDateOnlyColumn(rows[0]?.portal_attendance_reset_at);
+}
+
+/** Call when admin sets portal to Active so old missed days do not immediately re-disable login. */
+export async function resetPortalAttendanceDisableTracking(employeeId: string): Promise<void> {
+    await ensureEmployeeAccessDependencies();
+    await pool.query(
+        `UPDATE ${ACCESS_TABLE} SET portal_attendance_reset_at = ? WHERE employee_id = ?`,
+        [todayDateOnly(), employeeId.trim()],
+    );
+}
+
 async function hasCheckInOnDate(employeeId: string, dateIso: string): Promise<boolean> {
     await ensureEmployeeAttendanceTable();
     const [rows] = await pool.query<RowDataPacket[]>(
@@ -80,6 +109,7 @@ export async function countConsecutiveMissedWorkingDays(
     const trimmed = employeeId.trim();
     const through = options?.throughDateIso ?? todayDateOnly();
     const yesterday = addDaysIso(through, -1);
+    const attendanceResetFrom = await getPortalAttendanceResetDate(trimmed);
 
     const shift = await getShiftByEmployeeId(trimmed);
     const activeShift = shift?.is_active ? shift : null;
@@ -100,6 +130,10 @@ export async function countConsecutiveMissedWorkingDays(
     let cursor = yesterday;
 
     for (let i = 0; i < LOOKBACK_CALENDAR_DAYS; i++) {
+        if (attendanceResetFrom && cursor < attendanceResetFrom) {
+            break;
+        }
+
         if (!isDateWorkingDay(cursor, workingDays)) {
             cursor = addDaysIso(cursor, -1);
             continue;
