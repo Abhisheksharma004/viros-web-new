@@ -361,7 +361,7 @@ export default function WithoutAmcWorkPanel() {
 
     return (
         <div
-            className={`mx-auto w-full max-w-lg space-y-4 sm:max-w-2xl sm:space-y-6 ${showMobileStickyBar ? "pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] sm:pb-0" : ""}`}
+            className={`mx-auto w-full max-w-lg space-y-4 sm:max-w-2xl sm:space-y-6 ${showMobileStickyBar ? "pb-[calc(9rem+env(safe-area-inset-bottom,0px))] lg:pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))]" : ""}`}
         >
             <header className="px-0.5">
                 <h1 className="text-xl font-black text-gray-900 flex items-center gap-2 sm:text-2xl">
@@ -504,11 +504,6 @@ export default function WithoutAmcWorkPanel() {
                                 <WorkNotesForm
                                     newWorkNotes={newWorkNotes}
                                     onChange={handleNewWorkNotesChange}
-                                    saveBusy={saveBusy}
-                                    lookupBusy={lookupBusy}
-                                    saveMessage={saveMessage}
-                                    onSave={() => void handleSave()}
-                                    showDesktopSave
                                 />
                             </div>
                         </div>
@@ -589,11 +584,6 @@ export default function WithoutAmcWorkPanel() {
                                 <WorkNotesForm
                                     newWorkNotes={newWorkNotes}
                                     onChange={handleNewWorkNotesChange}
-                                    saveBusy={saveBusy}
-                                    lookupBusy={lookupBusy}
-                                    saveMessage={saveMessage}
-                                    onSave={() => void handleSave()}
-                                    showDesktopSave
                                 />
                             </div>
                         </div>
@@ -610,8 +600,7 @@ export default function WithoutAmcWorkPanel() {
 
             {showMobileStickyBar ? (
                 <div
-                    className="fixed inset-x-0 bottom-0 z-30 border-t border-gray-200 bg-white/95 backdrop-blur-md shadow-[0_-4px_24px_rgba(0,0,0,0.08)] sm:hidden"
-                    style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
+                    className="fixed inset-x-0 bottom-[calc(4.25rem+env(safe-area-inset-bottom,0px))] z-50 border-t border-gray-200 bg-white/95 backdrop-blur-md shadow-[0_-4px_24px_rgba(0,0,0,0.08)] lg:bottom-0"
                 >
                     <div className="mx-auto max-w-lg px-4 pt-3 space-y-2">
                         {saveMessage ? (
@@ -638,7 +627,7 @@ export default function WithoutAmcWorkPanel() {
                                 {saveBusy ? (
                                     <Loader2 className="h-4 w-4 animate-spin shrink-0" aria-hidden />
                                 ) : null}
-                                <span className="truncate">{saveBusy ? "Saving…" : "Save"}</span>
+                                <span className="truncate">{saveBusy ? "Saving…" : "Save notes"}</span>
                             </button>
                         </div>
                     </div>
@@ -681,19 +670,9 @@ function FormField({
 function WorkNotesForm({
     newWorkNotes,
     onChange,
-    saveBusy,
-    lookupBusy,
-    saveMessage,
-    onSave,
-    showDesktopSave,
 }: {
     newWorkNotes: NewWorkNotesForm;
     onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-    saveBusy: boolean;
-    lookupBusy: boolean;
-    saveMessage: string;
-    onSave: () => void;
-    showDesktopSave: boolean;
 }) {
     return (
         <div className="space-y-4">
@@ -753,30 +732,6 @@ function WorkNotesForm({
                     className={textareaField}
                 />
             </div>
-            {showDesktopSave ? (
-                <div className="hidden sm:flex sm:flex-wrap sm:items-center sm:gap-3">
-                    <button
-                        type="button"
-                        onClick={onSave}
-                        disabled={saveBusy || lookupBusy}
-                        className={`${btnPrimary} !w-auto sm:min-w-[10rem]`}
-                    >
-                        {saveBusy ? (
-                            <>
-                                <Loader2 className="h-4 w-4 animate-spin shrink-0" aria-hidden />
-                                Saving…
-                            </>
-                        ) : (
-                            "Save"
-                        )}
-                    </button>
-                    {saveMessage ? (
-                        <p className="text-sm text-red-600" role="status">
-                            {saveMessage}
-                        </p>
-                    ) : null}
-                </div>
-            ) : null}
         </div>
     );
 }
