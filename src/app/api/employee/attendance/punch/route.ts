@@ -5,6 +5,10 @@ import {
     type PunchInput,
 } from "@/lib/employeeAttendance";
 import { getEmployeeSession } from "@/lib/employeeSession";
+import {
+    evaluateMissedPunchPortalAccess,
+    missedPunchPortalBlockMessage,
+} from "@/lib/attendancePortalAutoDisable";
 
 function parsePunchBody(body: Record<string, unknown>): PunchInput | null {
     const type = body.type === "check-out" ? "check-out" : body.type === "check-in" ? "check-in" : null;
@@ -58,6 +62,23 @@ export async function POST(request: Request) {
             return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
         }
 
+        const employeeId = session.employeeId.trim();
+        const portalEval = await evaluateMissedPunchPortalAccess(employeeId);
+        if (portalEval.accessBlocked) {
+            return NextResponse.json(
+                {
+                    message: missedPunchPortalBlockMessage(portalEval.disableThresholdDays),
+                    portalAccess: {
+                        status: portalEval.portalStatus,
+                        blocked: true,
+                        consecutiveMissedWorkingDays: portalEval.consecutiveMissedWorkingDays,
+                        disableThresholdDays: portalEval.disableThresholdDays,
+                    },
+                },
+                { status: 403 },
+            );
+        }
+
         await ensureEmployeeAttendanceTable();
 
         const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
@@ -66,7 +87,7 @@ export async function POST(request: Request) {
             return NextResponse.json({ message: "Invalid punch payload" }, { status: 400 });
         }
 
-        const today = await punchAttendance(session.employeeId.trim(), punch);
+        const today = await punchAttendance(employeeId, punch);
 
         return NextResponse.json({ today });
     } catch (error: unknown) {

@@ -7,6 +7,7 @@ import {
     ensureAdminEmployeeShiftsTable,
     formatTimeHHMM,
     mapShiftRowToApi,
+    normalizeMissedPunchDisableDays,
     serializeWorkingDays,
     type ShiftLocationType,
 } from "@/lib/adminEmployeeShifts";
@@ -31,12 +32,14 @@ function parseBody(body: Record<string, unknown>) {
         ? (body.working_days as unknown[]).map(Number).filter((n) => Number.isFinite(n))
         : [];
     const isActive = body.is_active !== false && body.is_active !== 0 && body.is_active !== "0";
+    const missedPunchDisableDays = normalizeMissedPunchDisableDays(body.missed_punch_disable_days);
 
     return {
         startTime,
         endTime,
         breakMinutes,
         graceMinutes,
+        missedPunchDisableDays,
         locationType,
         locationLabel,
         workingDays,
@@ -63,13 +66,14 @@ export async function PUT(request: Request, { params }: Ctx) {
         const [result] = await pool.query(
             `UPDATE admin_employee_shifts
              SET start_time = ?, end_time = ?, break_minutes = ?, grace_minutes = ?,
-                 location_type = ?, location_label = ?, working_days = ?, is_active = ?
+                 missed_punch_disable_days = ?, location_type = ?, location_label = ?, working_days = ?, is_active = ?
              WHERE id = ?`,
             [
                 parsed.startTime,
                 parsed.endTime,
                 parsed.breakMinutes,
                 parsed.graceMinutes,
+                parsed.missedPunchDisableDays,
                 parsed.locationType,
                 parsed.locationLabel || parsed.locationType,
                 serializeWorkingDays(parsed.workingDays),

@@ -5,6 +5,10 @@ import pool from "@/lib/db";
 import { comparePassword, signToken } from "@/lib/auth";
 import { ensureEmployeeAccessDependencies } from "@/lib/adminEmployeeAccess";
 import { ensureUsersNameColumn, resolveAdminDisplayName } from "@/lib/adminUsers";
+import {
+    evaluateMissedPunchPortalAccess,
+    missedPunchPortalBlockMessage,
+} from "@/lib/attendancePortalAutoDisable";
 
 type AccessRow = RowDataPacket & {
     id: number;
@@ -65,14 +69,29 @@ export async function POST(request: Request) {
 
         const access = accessRows[0];
         if (access) {
-            if (access.portal_status !== "Active") {
-                return NextResponse.json(
-                    { message: "Portal access is not active. Contact your administrator." },
-                    { status: 403 },
-                );
-            }
-
             if (await matchesEmployeePassword(password, access)) {
+                const portalEval = await evaluateMissedPunchPortalAccess(access.employee_id);
+                if (portalEval.accessBlocked) {
+                    const threshold = portalEval.disableThresholdDays;
+                    const attendanceDisabled =
+                        portalEval.portalStatus === "Disabled" &&
+                        threshold > 0 &&
+                        portalEval.consecutiveMissedWorkingDays >= threshold;
+                    return NextResponse.json(
+                        {
+                            message: attendanceDisabled
+                                ? missedPunchPortalBlockMessage(threshold)
+                                : "Portal access is not active. Contact your administrator.",
+                            code: attendanceDisabled
+                                ? "ATTENDANCE_PORTAL_DISABLED"
+                                : "PORTAL_INACTIVE",
+                            portalBlocked: true,
+                            consecutiveMissedWorkingDays:
+                                portalEval.consecutiveMissedWorkingDays,
+                        },
+                        { status: 403 },
+                    );
+                }
                 const token = signToken(
                     {
                         role: "employee",
@@ -85,7 +104,10 @@ export async function POST(request: Request) {
                 );
 
                 const response = NextResponse.json(
-                    { message: "Login successful", role: "employee" },
+                    {
+                        message: "Login successful. Welcome to the employee portal.",
+                        role: "employee",
+                    },
                     { status: 200 },
                 );
                 response.headers.set(
@@ -109,7 +131,13 @@ export async function POST(request: Request) {
                 { id: user.id, email: user.email, name: displayName },
                 tokenExpiry,
             );
-            const response = NextResponse.json({ message: "Login successful", role: "admin" }, { status: 200 });
+            const response = NextResponse.json(
+                {
+                    message: `Login successful. Welcome${displayName ? `, ${displayName}` : ""}.`,
+                    role: "admin",
+                },
+                { status: 200 },
+            );
             response.headers.set("Set-Cookie", serialize("auth_token", token, cookieOptions(rememberMe, isSecure)));
             return response;
         }

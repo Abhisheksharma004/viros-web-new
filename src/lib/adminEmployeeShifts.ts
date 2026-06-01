@@ -14,6 +14,7 @@ export type AdminEmployeeShiftRow = RowDataPacket & {
     end_time: string;
     break_minutes: number;
     grace_minutes: number;
+    missed_punch_disable_days: number;
     location_type: ShiftLocationType;
     location_label: string;
     working_days: string;
@@ -24,7 +25,36 @@ export type AdminEmployeeShiftRow = RowDataPacket & {
     employee_status: string | null;
 };
 
+/** Default when employee has no shift row */
+export const DEFAULT_MISSED_PUNCH_DISABLE_DAYS = 2;
+
 let ensureTablePromise: Promise<void> | null = null;
+
+type ColumnNameRow = RowDataPacket & { COLUMN_NAME: string };
+
+async function getShiftTableColumns(): Promise<Set<string>> {
+    const [rows] = await pool.query<ColumnNameRow[]>(
+        `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?`,
+        [TABLE],
+    );
+    return new Set(rows.map((r) => String(r.COLUMN_NAME)));
+}
+
+async function ensureMissedPunchDisableDaysColumn() {
+    const columns = await getShiftTableColumns();
+    if (!columns.has("missed_punch_disable_days")) {
+        await pool.query(
+            `ALTER TABLE ${TABLE} ADD COLUMN missed_punch_disable_days INT NOT NULL DEFAULT ${DEFAULT_MISSED_PUNCH_DISABLE_DAYS} AFTER grace_minutes`,
+        );
+    }
+}
+
+export function normalizeMissedPunchDisableDays(value: unknown): number {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return DEFAULT_MISSED_PUNCH_DISABLE_DAYS;
+    return Math.min(30, Math.max(0, Math.floor(n)));
+}
 
 async function runEnsureAdminEmployeeShiftsTable() {
     await ensureAdminEmployeesTable();
@@ -36,6 +66,7 @@ async function runEnsureAdminEmployeeShiftsTable() {
             end_time TIME NOT NULL,
             break_minutes INT NOT NULL DEFAULT 0,
             grace_minutes INT NOT NULL DEFAULT 0,
+            missed_punch_disable_days INT NOT NULL DEFAULT 2,
             location_type ENUM('office', 'remote', 'hybrid', 'client') NOT NULL DEFAULT 'office',
             location_label VARCHAR(500) NOT NULL DEFAULT '',
             working_days JSON NOT NULL,
@@ -45,6 +76,7 @@ async function runEnsureAdminEmployeeShiftsTable() {
             UNIQUE KEY uq_admin_employee_shifts_employee_id (employee_id)
         )
     `);
+    await ensureMissedPunchDisableDaysColumn();
 }
 
 export async function ensureAdminEmployeeShiftsTable() {
@@ -55,6 +87,7 @@ export async function ensureAdminEmployeeShiftsTable() {
         });
     }
     await ensureTablePromise;
+    await ensureMissedPunchDisableDaysColumn();
 }
 
 export function formatTimeHHMM(value: unknown): string {
@@ -91,7 +124,7 @@ export function serializeWorkingDays(days: number[]): string {
 
 export const SHIFT_SELECT_JOIN = `
     SELECT s.id, s.employee_id, s.start_time, s.end_time, s.break_minutes, s.grace_minutes,
-           s.location_type, s.location_label, s.working_days, s.is_active,
+           s.missed_punch_disable_days, s.location_type, s.location_label, s.working_days, s.is_active,
            e.full_name, e.department, e.designation, e.employee_status
     FROM ${TABLE} s
     INNER JOIN admin_employees e ON e.employee_id = s.employee_id
@@ -109,6 +142,7 @@ export function mapShiftRowToApi(row: AdminEmployeeShiftRow) {
         end_time: formatTimeHHMM(row.end_time),
         break_minutes: Number(row.break_minutes) || 0,
         grace_minutes: Number(row.grace_minutes) || 0,
+        missed_punch_disable_days: normalizeMissedPunchDisableDays(row.missed_punch_disable_days),
         location_type: row.location_type,
         location_label: row.location_label ?? "",
         working_days: parseWorkingDaysJson(row.working_days),
@@ -123,6 +157,15 @@ export async function getShiftByEmployeeId(employeeId: string) {
     ]);
     const row = (rows as AdminEmployeeShiftRow[])[0];
     return row ? mapShiftRowToApi(row) : null;
+}
+
+/** Consecutive working days without check-in before portal auto-disable (0 = off). */
+export async function getMissedPunchDisableDaysForEmployee(
+    employeeId: string,
+): Promise<number> {
+    const shift = await getShiftByEmployeeId(employeeId);
+    if (!shift?.is_active) return DEFAULT_MISSED_PUNCH_DISABLE_DAYS;
+    return normalizeMissedPunchDisableDays(shift.missed_punch_disable_days);
 }
 
 export async function getActiveShiftWorkingDaysMap(): Promise<Map<string, number[]>> {

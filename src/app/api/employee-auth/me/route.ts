@@ -3,6 +3,11 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { verifyToken } from "@/lib/auth";
 import pool from "@/lib/db";
+import {
+    getEmployeePortalAccessStatus,
+    missedPunchPortalBlockMessage,
+} from "@/lib/attendancePortalAutoDisable";
+import { getMissedPunchDisableDaysForEmployee } from "@/lib/adminEmployeeShifts";
 
 type EmployeeTokenPayload = {
     role?: string;
@@ -23,6 +28,25 @@ export async function GET() {
     const decoded = verifyToken(token) as EmployeeTokenPayload | null;
     if (!decoded || decoded.role !== "employee" || !decoded.employeeId) {
         return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+
+    const portalStatus = await getEmployeePortalAccessStatus(decoded.employeeId);
+    if (portalStatus !== "Active") {
+        const threshold = await getMissedPunchDisableDaysForEmployee(decoded.employeeId);
+        return NextResponse.json(
+            {
+                message:
+                    portalStatus === "Disabled"
+                        ? missedPunchPortalBlockMessage(threshold)
+                        : "Portal access is not active. Contact your administrator.",
+                portalBlocked: true,
+                code:
+                    portalStatus === "Disabled"
+                        ? "ATTENDANCE_PORTAL_DISABLED"
+                        : "PORTAL_INACTIVE",
+            },
+            { status: 403 },
+        );
     }
 
     let name = (decoded.name ?? "").trim();

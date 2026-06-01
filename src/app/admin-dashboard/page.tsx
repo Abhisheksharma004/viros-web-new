@@ -32,6 +32,7 @@ const statIcons = {
 const quickActions = [
     { title: "Add Employee", href: "/admin-dashboard/employees", icon: "👤" },
     { title: "Employee Access", href: "/admin-dashboard/employee-access", icon: "🔑" },
+    { title: "Employee Shift", href: "/admin-dashboard/shift", icon: "⏰" },
     { title: "Leave Requests", href: "/admin-dashboard/leave-request", icon: "📅" },
     { title: "Expenses", href: "/admin-dashboard/expense-management", icon: "💰" },
     { title: "AMC Report", href: "/admin-dashboard/amc-report", icon: "📊" },

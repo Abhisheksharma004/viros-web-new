@@ -102,7 +102,19 @@ export default function EmployeeHeader({ onMenuClick }: { onMenuClick: () => voi
         const loadEmployee = async () => {
             try {
                 const response = await fetch("/api/employee-auth/me", { cache: "no-store" });
-                if (!response.ok || !active) return;
+                if (!active) return;
+
+                if (response.status === 403) {
+                    const data = await response.json().catch(() => ({}));
+                    if (data.portalBlocked) {
+                        await fetch("/api/logout", { method: "POST" }).catch(() => undefined);
+                        router.replace("/admin-login");
+                        router.refresh();
+                    }
+                    return;
+                }
+
+                if (!response.ok) return;
 
                 const data = await response.json();
                 setEmployee({

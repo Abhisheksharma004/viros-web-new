@@ -15,6 +15,32 @@ const FEATURES = [
     { icon: "📦", text: "Product & service management" },
 ];
 
+type LoginErrorCode =
+    | "ATTENDANCE_PORTAL_DISABLED"
+    | "PORTAL_INACTIVE"
+    | "INVALID_CREDENTIALS"
+    | "GENERIC"
+    | null;
+
+function loginAlertStyles(code: LoginErrorCode) {
+    if (code === "ATTENDANCE_PORTAL_DISABLED") {
+        return {
+            box: "bg-amber-50 text-amber-950 border-amber-300",
+            title: "Portal access disabled — attendance",
+        };
+    }
+    if (code === "PORTAL_INACTIVE") {
+        return {
+            box: "bg-orange-50 text-orange-900 border-orange-200",
+            title: "Portal access inactive",
+        };
+    }
+    return {
+        box: "bg-red-50 text-red-700 border-red-200",
+        title: "Sign in failed",
+    };
+}
+
 export default function AdminLoginPage() {
     const router = useRouter();
     const [showPassword, setShowPassword] = useState(false);
@@ -22,6 +48,8 @@ export default function AdminLoginPage() {
     const [rememberMe, setRememberMe] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [loginErrorCode, setLoginErrorCode] = useState<LoginErrorCode>(null);
+    const [missedWorkingDays, setMissedWorkingDays] = useState<number | null>(null);
     const [forgotOpen, setForgotOpen] = useState(false);
     const [forgotStep, setForgotStep] = useState<"request" | "verify" | "success">("request");
     const [forgotIdentifier, setForgotIdentifier] = useState("");
@@ -236,6 +264,8 @@ export default function AdminLoginPage() {
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setError(null);
+        setLoginErrorCode(null);
+        setMissedWorkingDays(null);
         setIsLoading(true);
 
         try {
@@ -249,10 +279,30 @@ export default function AdminLoginPage() {
                 }),
             });
 
-            const data = await response.json();
+            const data = await response.json().catch(() => ({}));
 
             if (!response.ok) {
-                throw new Error(data.message || "Invalid credentials");
+                const code: LoginErrorCode =
+                    data.code === "ATTENDANCE_PORTAL_DISABLED"
+                        ? "ATTENDANCE_PORTAL_DISABLED"
+                        : data.code === "PORTAL_INACTIVE"
+                          ? "PORTAL_INACTIVE"
+                          : response.status === 401
+                            ? "INVALID_CREDENTIALS"
+                            : "GENERIC";
+                setLoginErrorCode(code);
+                if (
+                    typeof data.consecutiveMissedWorkingDays === "number" &&
+                    Number.isFinite(data.consecutiveMissedWorkingDays)
+                ) {
+                    setMissedWorkingDays(data.consecutiveMissedWorkingDays);
+                }
+                setError(
+                    typeof data.message === "string"
+                        ? data.message
+                        : "Invalid employee ID/email or password.",
+                );
+                return;
             }
 
             const destination = data.role === "employee" ? "/employee-dashboard" : "/admin-dashboard";
@@ -261,6 +311,7 @@ export default function AdminLoginPage() {
         } catch (err) {
             const message = err instanceof Error ? err.message : "Login failed";
             setError(message);
+            setLoginErrorCode("GENERIC");
         } finally {
             setIsLoading(false);
         }
@@ -398,8 +449,29 @@ export default function AdminLoginPage() {
                         className="flex flex-col gap-4 [&_button]:cursor-pointer [&_button:disabled]:cursor-not-allowed"
                     >
                         {error && (
-                            <div className="p-3 rounded-xl text-sm font-medium bg-red-50 text-red-700 border border-red-200">
-                                {error}
+                            <div
+                                className={`rounded-xl border p-3.5 text-sm ${loginAlertStyles(loginErrorCode).box}`}
+                                role="alert"
+                            >
+                                <p className="font-bold">
+                                    {loginAlertStyles(loginErrorCode).title}
+                                </p>
+                                <p className="mt-1.5 leading-relaxed">{error}</p>
+                                {loginErrorCode === "ATTENDANCE_PORTAL_DISABLED" && (
+                                    <p className="mt-2 text-xs leading-relaxed opacity-90">
+                                        {missedWorkingDays != null && missedWorkingDays >= 2
+                                            ? `Missed check-in on ${missedWorkingDays} consecutive working day(s). `
+                                            : null}
+                                        Please mark attendance daily on working days or apply leave in the
+                                        portal before absence. HR/Admin can enable your account again from
+                                        Employee Access.
+                                    </p>
+                                )}
+                                {loginErrorCode === "INVALID_CREDENTIALS" && (
+                                    <p className="mt-2 text-xs opacity-90">
+                                        Check your employee ID or email and password, or use Forgot password.
+                                    </p>
+                                )}
                             </div>
                         )}
 

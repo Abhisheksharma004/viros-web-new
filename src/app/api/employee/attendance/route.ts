@@ -13,6 +13,11 @@ import {
     mergeLeaveRequestsIntoAttendanceRecords,
 } from "@/lib/attendanceLeaveSync";
 import { mergeMonthRecordsWithShift } from "@/lib/attendanceSchedule";
+import {
+    evaluateMissedPunchPortalAccess,
+    missedPunchPortalBlockMessage,
+    missedPunchPortalWarningMessage,
+} from "@/lib/attendancePortalAutoDisable";
 import { todayDateOnly } from "@/lib/dateOnly";
 
 export async function GET(request: Request) {
@@ -20,6 +25,23 @@ export async function GET(request: Request) {
         const session = await getEmployeeSession();
         if (!session) {
             return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+        }
+
+        const employeeId = session.employeeId.trim();
+
+        const portalEval = await evaluateMissedPunchPortalAccess(employeeId);
+        if (portalEval.accessBlocked) {
+            return NextResponse.json(
+                {
+                    message: missedPunchPortalBlockMessage(portalEval.disableThresholdDays),
+                    portalAccess: {
+                        status: portalEval.portalStatus,
+                        blocked: true,
+                        consecutiveMissedWorkingDays: portalEval.consecutiveMissedWorkingDays,
+                    },
+                },
+                { status: 403 },
+            );
         }
 
         await ensureEmployeeAttendanceTable();
@@ -33,7 +55,6 @@ export async function GET(request: Request) {
             return NextResponse.json({ message: "Invalid year or month" }, { status: 400 });
         }
 
-        const employeeId = session.employeeId.trim();
         const shift = await getEmployeeShiftForLate(employeeId);
         const dbRecords = await getAttendanceForMonth(employeeId, year, month);
         const leaveRequests = await fetchLeaveRequestsOverlappingMonth(employeeId, year, month);
@@ -65,7 +86,22 @@ export async function GET(request: Request) {
         }
 
         return NextResponse.json(
-            { records, today, shift, todayLeave },
+            {
+                records,
+                today,
+                shift,
+                todayLeave,
+                portalAccess: {
+                    status: portalEval.portalStatus,
+                    blocked: false,
+                    consecutiveMissedWorkingDays: portalEval.consecutiveMissedWorkingDays,
+                    warning: missedPunchPortalWarningMessage(
+                        portalEval.consecutiveMissedWorkingDays,
+                        portalEval.disableThresholdDays,
+                    ),
+                    disableThresholdDays: portalEval.disableThresholdDays,
+                },
+            },
             { headers: { "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0" } },
         );
     } catch (error: unknown) {

@@ -14,6 +14,7 @@ import {
     TrendingUp,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import AttendancePunchModal, { type PunchCapture } from "@/components/employee-dashboard/AttendancePunchModal";
 import PhotoLightbox from "@/components/employee-dashboard/PhotoLightbox";
 
@@ -488,6 +489,7 @@ function applyTodaySession(
 }
 
 export default function EmployeeAttendancePage() {
+    const router = useRouter();
     const [viewYear, setViewYear] = useState(() => new Date().getFullYear());
     const [viewMonth, setViewMonth] = useState(() => new Date().getMonth());
     const [checkedIn, setCheckedIn] = useState(false);
@@ -506,6 +508,18 @@ export default function EmployeeAttendancePage() {
     const [todayLate, setTodayLate] = useState<LateCheckResult | null>(null);
     const [photoLightbox, setPhotoLightbox] = useState<{ src: string; alt: string } | null>(null);
     const [todayLeave, setTodayLeave] = useState<TodayLeaveInfo | null>(null);
+    const [portalWarning, setPortalWarning] = useState<string | null>(null);
+    const [portalBlockedMessage, setPortalBlockedMessage] = useState<string | null>(null);
+
+    const handlePortalLogout = async () => {
+        try {
+            await fetch("/api/logout", { method: "POST" });
+        } catch {
+            // Continue to login even if logout request fails.
+        }
+        router.replace("/admin-login");
+        router.refresh();
+    };
 
     const openPhotoLightbox = (src: string, alt: string) => {
         setPhotoLightbox({ src, alt });
@@ -524,9 +538,11 @@ export default function EmployeeAttendancePage() {
     }, [todayLate]);
 
     const loadAttendance = async (year: number, monthIndex: number) => {
+        let portalBlocked = false;
         try {
             setAttendanceLoading(true);
             setAttendanceError("");
+            setPortalBlockedMessage(null);
             const apiMonth = monthIndex + 1;
             const resp = await fetch(
                 `/api/employee/attendance?year=${year}&month=${apiMonth}`,
@@ -534,8 +550,29 @@ export default function EmployeeAttendancePage() {
             );
             const data = await resp.json().catch(() => ({}));
             if (!resp.ok) {
+                if (
+                    resp.status === 403 &&
+                    (data.portalAccess?.blocked === true || data.code === "ATTENDANCE_PORTAL_DISABLED")
+                ) {
+                    portalBlocked = true;
+                    setPortalWarning(null);
+                    setPortalBlockedMessage(
+                        typeof data.message === "string"
+                            ? data.message
+                            : "Portal access disabled. Contact your administrator.",
+                    );
+                    setMonthRecords([]);
+                    return;
+                }
                 throw new Error(typeof data.message === "string" ? data.message : "Failed to load attendance");
             }
+
+            const portalAccess = data.portalAccess as { warning?: string | null } | undefined;
+            setPortalWarning(
+                typeof portalAccess?.warning === "string" && portalAccess.warning.trim()
+                    ? portalAccess.warning
+                    : null,
+            );
 
             const records: DayRecord[] = Array.isArray(data.records) ? data.records : [];
             setMonthRecords(records.map((r) => normalizeLeaveDisplayStatus(r as DayRecord)));
@@ -559,9 +596,13 @@ export default function EmployeeAttendancePage() {
                 });
             }
         } catch (error) {
-            console.error("Load attendance failed:", error);
-            setAttendanceError(error instanceof Error ? error.message : "Failed to load attendance");
-            setMonthRecords([]);
+            if (!portalBlocked) {
+                console.error("Load attendance failed:", error);
+                setAttendanceError(
+                    error instanceof Error ? error.message : "Failed to load attendance",
+                );
+                setMonthRecords([]);
+            }
         } finally {
             setAttendanceLoading(false);
         }
@@ -710,6 +751,27 @@ export default function EmployeeAttendancePage() {
 
     const weekdayLabels = ["S", "M", "T", "W", "T", "F", "S"];
 
+    if (portalBlockedMessage) {
+        return (
+            <div className="mx-auto flex w-full max-w-lg flex-col items-center justify-center px-4 py-16 text-center">
+                <div className="w-full rounded-md border border-amber-200 bg-amber-50 px-6 py-8 shadow-sm">
+                    <p className="text-lg font-bold text-amber-950">Portal access disabled</p>
+                    <p className="mt-3 text-sm leading-relaxed text-amber-900">{portalBlockedMessage}</p>
+                    <p className="mt-3 text-xs text-amber-800/90">
+                        Contact your administrator to re-enable Employee Access, then sign in again.
+                    </p>
+                    <button
+                        type="button"
+                        onClick={() => void handlePortalLogout()}
+                        className="mt-6 inline-flex min-h-11 cursor-pointer items-center justify-center rounded-md bg-[#0a2a5e] px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:opacity-90"
+                    >
+                        Back to sign in
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="mx-auto w-full max-w-6xl space-y-4 pb-6 sm:space-y-6 sm:pb-8 [-webkit-tap-highlight-color:transparent]">
             <PhotoLightbox
@@ -728,6 +790,12 @@ export default function EmployeeAttendancePage() {
             {attendanceError && (
                 <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                     {attendanceError}
+                </div>
+            )}
+            {portalWarning && !attendanceError && (
+                <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                    <p className="font-semibold">Attendance notice</p>
+                    <p className="mt-1">{portalWarning}</p>
                 </div>
             )}
             {todayLeave && (
