@@ -91,6 +91,16 @@ const ADMIN_PAGE_META_ENTRIES: { path: string; title: string; subtitle?: string 
         subtitle: "Record advances and plan salary recovery.",
     },
     {
+        path: "/admin-dashboard/payroll/history",
+        title: "Payroll history",
+        subtitle: "Salary payment records and payslip receipts.",
+    },
+    {
+        path: "/admin-dashboard/payroll",
+        title: "Payroll",
+        subtitle: "Salary setup, advance recovery, and monthly payroll processing.",
+    },
+    {
         path: "/admin-dashboard/shift",
         title: "Employee shifts",
         subtitle: "Manage work shifts.",

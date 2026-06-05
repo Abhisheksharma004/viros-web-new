@@ -1,6 +1,7 @@
-import type { RowDataPacket } from "mysql2";
+import type { ResultSetHeader, RowDataPacket } from "mysql2";
 import pool from "@/lib/db";
 import { ensureAdminEmployeesTable } from "@/lib/adminEmployees";
+import { ensureAdminEmployeeSalariesTable } from "@/lib/adminEmployeeSalaries";
 import {
     ADVANCE_ID_MYSQL_PATTERN,
     ADVANCE_ID_PREFIX,
@@ -9,6 +10,9 @@ import {
 } from "@/lib/adminAdvancePaymentId";
 
 const TABLE = "admin_employee_advance_payments";
+const LEDGER_TABLE = "admin_advance_recovery_ledger";
+
+const PAYROLL_MONTH_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
 
 export type AdvancePaymentStatus = "pending" | "recovering" | "recovered" | "cancelled";
 export type AdvancePaymentMode = "bank_transfer" | "cash" | "cheque";
@@ -96,6 +100,20 @@ async function runEnsureAdminEmployeeAdvancePaymentsTable() {
             `ALTER TABLE ${TABLE} ADD COLUMN advance_id VARCHAR(16) NULL AFTER id`,
         );
     }
+
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS ${LEDGER_TABLE} (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            advance_payment_id INT NOT NULL,
+            payroll_month VARCHAR(7) NOT NULL,
+            deducted_amount DECIMAL(12,2) NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE KEY uq_advance_recovery_ledger_month (advance_payment_id, payroll_month),
+            INDEX idx_advance_recovery_ledger_payroll (payroll_month),
+            CONSTRAINT fk_advance_recovery_ledger_payment
+                FOREIGN KEY (advance_payment_id) REFERENCES ${TABLE}(id) ON DELETE CASCADE
+        )
+    `);
 }
 
 export async function ensureAdminEmployeeAdvancePaymentsTable() {
@@ -300,4 +318,313 @@ export async function getAdvancePaymentById(id: number) {
     const [rows] = await pool.query(`${ADVANCE_PAYMENT_SELECT_JOIN} WHERE a.id = ?`, [id]);
     const row = (rows as RowDataPacket[])[0] as AdminEmployeeAdvancePaymentRow | undefined;
     return row ?? null;
+}
+
+function roundMoney(value: number): number {
+    return Math.round(value * 100) / 100;
+}
+
+export function parsePayrollMonth(value: unknown): string {
+    if (typeof value !== "string") return "";
+    const trimmed = value.trim().slice(0, 7);
+    return PAYROLL_MONTH_PATTERN.test(trimmed) ? trimmed : "";
+}
+
+export function isPayrollMonthOnOrAfterRecoveryStart(
+    recoveryStartMonth: string | null | undefined,
+    payrollMonth: string,
+): boolean {
+    const start = (recoveryStartMonth ?? "").trim().slice(0, 7);
+    if (!start || !PAYROLL_MONTH_PATTERN.test(start)) return false;
+    return payrollMonth >= start;
+}
+
+function monthsBetweenInclusive(startYm: string, endYm: string): number {
+    const [sy, sm] = startYm.split("-").map(Number);
+    const [ey, em] = endYm.split("-").map(Number);
+    if (!sy || !sm || !ey || !em) return 0;
+    return (ey - sy) * 12 + (em - sm) + 1;
+}
+
+export type AdvanceDeductionPreviewRow = {
+    employee_id: string;
+    amount: number;
+    recovered_amount: number;
+    recovery_start_month: string;
+    monthly_deduction: number;
+    emi_months: number;
+    status: AdvancePaymentStatus;
+};
+
+/** Planned advance deduction for payroll month (0 before recovery start month). */
+export function computeAdvanceDeductionForPayrollMonth(
+    advances: AdvanceDeductionPreviewRow[],
+    employeeId: string,
+    payrollMonth: string,
+): number {
+    const month = parsePayrollMonth(payrollMonth);
+    if (!month) return 0;
+
+    let total = 0;
+    const empKey = employeeId.trim().toUpperCase();
+
+    for (const row of advances) {
+        if (row.employee_id.trim().toUpperCase() !== empKey) continue;
+        if (row.status === "cancelled" || row.status === "recovered") continue;
+        if (!isPayrollMonthOnOrAfterRecoveryStart(row.recovery_start_month, month)) continue;
+
+        const remaining = roundMoney(Math.max(0, Number(row.amount) - Number(row.recovered_amount)));
+        const monthlyDeduction = Number(row.monthly_deduction) || 0;
+        if (remaining <= 0 || monthlyDeduction <= 0) continue;
+
+        const emiMonths = Number(row.emi_months) || 0;
+        if (emiMonths > 0) {
+            const start = row.recovery_start_month.trim().slice(0, 7);
+            const monthsElapsed = monthsBetweenInclusive(start, month);
+            if (monthsElapsed > emiMonths) continue;
+        }
+
+        total = roundMoney(total + Math.min(monthlyDeduction, remaining));
+    }
+
+    return total;
+}
+
+export type AdvanceRecoveryLine = {
+    advance_payment_id: number;
+    advance_id: string;
+    employee_id: string;
+    deducted_amount: number;
+    new_recovered_amount: number;
+    new_status: AdvancePaymentStatus;
+};
+
+export type AdvanceRecoverySkip = {
+    advance_payment_id: number;
+    advance_id: string;
+    employee_id: string;
+    reason: string;
+};
+
+export type ProcessAdvanceRecoveryResult = {
+    payroll_month: string;
+    processed: AdvanceRecoveryLine[];
+    skipped: AdvanceRecoverySkip[];
+    total_deducted: number;
+    salary_deductions_updated: number;
+};
+
+type AdvanceRecoveryCandidate = RowDataPacket & {
+    id: number;
+    advance_id: string;
+    employee_id: string;
+    amount: number;
+    recovered_amount: number;
+    recovery_start_month: string | null;
+    monthly_deduction: number;
+    emi_months: number;
+    status: AdvancePaymentStatus;
+    ledger_count: number;
+    already_processed: number;
+};
+
+async function applyAdvanceRecoveryForRows(
+    conn: DbConnection,
+    rows: AdvanceRecoveryCandidate[],
+    month: string,
+): Promise<{
+    processed: AdvanceRecoveryLine[];
+    skipped: AdvanceRecoverySkip[];
+    salaryDeductionByEmployee: Map<string, number>;
+}> {
+    const processed: AdvanceRecoveryLine[] = [];
+    const skipped: AdvanceRecoverySkip[] = [];
+    const salaryDeductionByEmployee = new Map<string, number>();
+
+    for (const row of rows) {
+        const baseSkip = {
+            advance_payment_id: row.id,
+            advance_id: row.advance_id,
+            employee_id: row.employee_id,
+        };
+        const amount = Number(row.amount) || 0;
+        const recovered = Number(row.recovered_amount) || 0;
+        const monthlyDeduction = Number(row.monthly_deduction) || 0;
+        const emiMonths = Number(row.emi_months) || 0;
+        const ledgerCount = Number(row.ledger_count) || 0;
+        const remaining = roundMoney(Math.max(0, amount - recovered));
+
+        if (Number(row.already_processed) > 0) {
+            skipped.push({ ...baseSkip, reason: "Already processed for this payroll month" });
+            continue;
+        }
+        if (!isPayrollMonthOnOrAfterRecoveryStart(row.recovery_start_month, month)) {
+            skipped.push({ ...baseSkip, reason: "Recovery start month not reached" });
+            continue;
+        }
+        if (monthlyDeduction <= 0) {
+            skipped.push({ ...baseSkip, reason: "Monthly deduction is not set" });
+            continue;
+        }
+        if (remaining <= 0) {
+            skipped.push({ ...baseSkip, reason: "Advance already fully recovered" });
+            continue;
+        }
+        if (emiMonths > 0 && ledgerCount >= emiMonths) {
+            skipped.push({ ...baseSkip, reason: "EMI month limit reached" });
+            continue;
+        }
+
+        const deduct = roundMoney(Math.min(monthlyDeduction, remaining));
+        if (deduct <= 0) {
+            skipped.push({ ...baseSkip, reason: "No deductible amount" });
+            continue;
+        }
+
+        const newRecovered = roundMoney(recovered + deduct);
+        const newStatus = deriveAdvanceStatus(amount, newRecovered, row.status);
+
+        await conn.query(
+            `INSERT INTO ${LEDGER_TABLE} (advance_payment_id, payroll_month, deducted_amount)
+             VALUES (?, ?, ?)`,
+            [row.id, month, deduct],
+        );
+        await conn.query(
+            `UPDATE ${TABLE}
+             SET recovered_amount = ?, status = ?
+             WHERE id = ?`,
+            [newRecovered, newStatus, row.id],
+        );
+
+        processed.push({
+            advance_payment_id: row.id,
+            advance_id: row.advance_id,
+            employee_id: row.employee_id,
+            deducted_amount: deduct,
+            new_recovered_amount: newRecovered,
+            new_status: newStatus,
+        });
+
+        salaryDeductionByEmployee.set(
+            row.employee_id,
+            roundMoney((salaryDeductionByEmployee.get(row.employee_id) ?? 0) + deduct),
+        );
+    }
+
+    return { processed, skipped, salaryDeductionByEmployee };
+}
+
+async function syncSalaryAdvanceDeductions(
+    conn: DbConnection,
+    salaryDeductionByEmployee: Map<string, number>,
+): Promise<number> {
+    let salaryDeductionsUpdated = 0;
+    for (const [employeeId, deduction] of salaryDeductionByEmployee) {
+        const [result] = await conn.query(
+            `UPDATE admin_employee_salaries
+             SET advance_deduction = ?
+             WHERE employee_id = ?`,
+            [deduction, employeeId],
+        );
+        if ((result as ResultSetHeader).affectedRows > 0) {
+            salaryDeductionsUpdated += 1;
+        }
+    }
+    return salaryDeductionsUpdated;
+}
+
+const ADVANCE_RECOVERY_SELECT = `
+    SELECT a.id, a.advance_id, a.employee_id, a.amount, a.recovered_amount,
+           a.recovery_start_month, a.monthly_deduction, a.emi_months, a.status,
+           (SELECT COUNT(*) FROM ${LEDGER_TABLE} l WHERE l.advance_payment_id = a.id) AS ledger_count,
+           (SELECT COUNT(*) FROM ${LEDGER_TABLE} l
+            WHERE l.advance_payment_id = a.id AND l.payroll_month = ?) AS already_processed
+    FROM ${TABLE} a
+    WHERE a.status IN ('pending', 'recovering')
+`;
+
+/** Apply advance recovery for one employee within an existing transaction. */
+export async function processAdvanceRecoveryForEmployeePayrollMonth(
+    conn: DbConnection,
+    employeeId: string,
+    payrollMonth: string,
+): Promise<{
+    processed: AdvanceRecoveryLine[];
+    skipped: AdvanceRecoverySkip[];
+    total_deducted: number;
+}> {
+    const month = parsePayrollMonth(payrollMonth);
+    if (!month) {
+        throw new Error("Invalid payroll month. Use YYYY-MM format.");
+    }
+
+    const trimmed = employeeId.trim().toUpperCase();
+    const [rows] = await conn.query<AdvanceRecoveryCandidate[]>(
+        `${ADVANCE_RECOVERY_SELECT} AND a.employee_id = ?
+         ORDER BY a.recovery_start_month ASC, a.id ASC`,
+        [month, trimmed],
+    );
+
+    const { processed, skipped, salaryDeductionByEmployee } = await applyAdvanceRecoveryForRows(
+        conn,
+        rows,
+        month,
+    );
+    await syncSalaryAdvanceDeductions(conn, salaryDeductionByEmployee);
+
+    return {
+        processed,
+        skipped,
+        total_deducted: roundMoney(processed.reduce((sum, line) => sum + line.deducted_amount, 0)),
+    };
+}
+
+export async function processAdvanceRecoveryForPayrollMonth(
+    payrollMonth: string,
+): Promise<ProcessAdvanceRecoveryResult> {
+    const month = parsePayrollMonth(payrollMonth);
+    if (!month) {
+        throw new Error("Invalid payroll month. Use YYYY-MM format.");
+    }
+
+    await ensureAdminEmployeeAdvancePaymentsTable();
+    await ensureAdminEmployeeSalariesTable();
+
+    const conn = await pool.getConnection();
+    try {
+        await conn.beginTransaction();
+
+        const [rows] = await conn.query<AdvanceRecoveryCandidate[]>(
+            `${ADVANCE_RECOVERY_SELECT}
+             ORDER BY a.recovery_start_month ASC, a.id ASC`,
+            [month],
+        );
+
+        const { processed, skipped, salaryDeductionByEmployee } = await applyAdvanceRecoveryForRows(
+            conn,
+            rows,
+            month,
+        );
+        const salaryDeductionsUpdated = await syncSalaryAdvanceDeductions(
+            conn,
+            salaryDeductionByEmployee,
+        );
+
+        await conn.commit();
+
+        return {
+            payroll_month: month,
+            processed,
+            skipped,
+            total_deducted: roundMoney(
+                processed.reduce((sum, line) => sum + line.deducted_amount, 0),
+            ),
+            salary_deductions_updated: salaryDeductionsUpdated,
+        };
+    } catch (error) {
+        await conn.rollback();
+        throw error;
+    } finally {
+        conn.release();
+    }
 }

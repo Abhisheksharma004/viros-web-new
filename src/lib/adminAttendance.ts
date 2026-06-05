@@ -116,8 +116,20 @@ export type AdminMonthlySummaryRow = {
     leave: number;
     halfDay: number;
     totalPresent: number;
-    totalWorkingDays: number;
+    /**
+     * Total shift working days for the selected month (full month schedule).
+     * Payroll should use this value for per-day salary calculations.
+     */
+    totalWorkingDaysInMonth: number;
+    /**
+     * Total working days up to the cutoff date (today for current month).
+     * Attendance dashboards use this to avoid counting future days.
+     */
+    totalWorkingDaysToDate: number;
+    /** Full-month off days per employee shift schedule. */
     weekOff: number;
+    /** Off days from month start through today (current month only). */
+    weekOffToDate: number;
 };
 
 export type AdminEmployeeShiftContext = {
@@ -244,6 +256,26 @@ export async function getAdminMonthlySummary(
     const start = `${year}-${String(month).padStart(2, "0")}-01`;
     const lastDay = new Date(year, month, 0).getDate();
     const end = `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+    const todayIso = todayDateOnly();
+    const [ty, tm, td] = todayIso.split("-").map(Number);
+
+    const isFutureMonth = ty && tm ? year > ty || (year === ty && month > tm) : false;
+    const isCurrentMonth = ty && tm ? year === ty && month === tm : false;
+    const cutoffDay = isFutureMonth ? 0 : isCurrentMonth && td ? Math.min(td, lastDay) : lastDay;
+
+    const countScheduleUntil = (workingDays: number[]) => {
+        let totalWorkingDays = 0;
+        let weekOff = 0;
+        for (let d = 1; d <= cutoffDay; d++) {
+            const iso = `${year}-${String(month).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+            if (isDateWorkingDay(iso, workingDays)) {
+                totalWorkingDays += 1;
+            } else {
+                weekOff += 1;
+            }
+        }
+        return { totalWorkingDays, weekOff };
+    };
 
     const [rows] = await pool.query<
         (RowDataPacket & {
@@ -281,23 +313,31 @@ export async function getAdminMonthlySummary(
 
     return rows.map((row) => {
         const workingDays = shiftMap.get(row.employee_id) ?? DEFAULT_SHIFT_WORKING_DAYS;
-        const { totalWorkingDays, weekOff } = countMonthScheduleDays(year, month, workingDays);
+        const monthSchedule = countMonthScheduleDays(year, month, workingDays);
+        const toDateSchedule =
+            cutoffDay === lastDay ? monthSchedule : countScheduleUntil(workingDays);
         const present = Number(row.present) || 0;
         const late = Number(row.late) || 0;
         const leave = Number(row.leave_count) || 0;
         const halfDay = Number(row.half_day) || 0;
+        const totalPresent = present + late + leave + halfDay;
+        // Monthly summary doesn't materialize every day record (unlike employee detail view).
+        // So we treat missing working-day entries as absent for a more accurate month rollup.
+        const computedAbsent = Math.max(0, toDateSchedule.totalWorkingDays - totalPresent);
         return {
             employeeId: row.employee_id,
             fullName: row.full_name,
             department: row.department ?? "",
             present,
             late,
-            absent: Number(row.absent) || 0,
+            absent: computedAbsent,
             leave,
             halfDay,
-            totalPresent: present + late + leave + halfDay,
-            totalWorkingDays,
-            weekOff,
+            totalPresent,
+            totalWorkingDaysInMonth: monthSchedule.totalWorkingDays,
+            totalWorkingDaysToDate: toDateSchedule.totalWorkingDays,
+            weekOff: monthSchedule.weekOff,
+            weekOffToDate: toDateSchedule.weekOff,
         };
     });
 }

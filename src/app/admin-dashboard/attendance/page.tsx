@@ -66,8 +66,16 @@ type MonthlyRow = {
     leave: number;
     halfDay: number;
     totalPresent: number;
-    totalWorkingDays: number;
+    totalWorkingDaysInMonth: number;
+    totalWorkingDaysToDate: number;
     weekOff: number;
+};
+
+type MonthlyRowCompat = Omit<MonthlyRow, "totalWorkingDaysInMonth" | "totalWorkingDaysToDate"> & {
+    /** Older API field — maps to totalWorkingDaysInMonth when new fields absent */
+    totalWorkingDays?: number;
+    totalWorkingDaysInMonth?: number;
+    totalWorkingDaysToDate?: number;
 };
 
 type EmployeeListItem = {
@@ -518,7 +526,24 @@ function AdminEmployeeAttendancePageContent() {
             if (!resp.ok) {
                 throw new Error(typeof data.message === "string" ? data.message : "Failed to load monthly summary");
             }
-            setMonthlyRows(Array.isArray(data.rows) ? data.rows : []);
+            const raw = (Array.isArray(data.rows) ? data.rows : []) as MonthlyRowCompat[];
+            setMonthlyRows(
+                raw.map((r) => ({
+                    ...r,
+                    totalWorkingDaysInMonth:
+                        typeof r.totalWorkingDaysInMonth === "number"
+                            ? r.totalWorkingDaysInMonth
+                            : typeof r.totalWorkingDays === "number"
+                              ? r.totalWorkingDays
+                              : 0,
+                    totalWorkingDaysToDate:
+                        typeof r.totalWorkingDaysToDate === "number"
+                            ? r.totalWorkingDaysToDate
+                            : typeof r.totalWorkingDays === "number"
+                              ? r.totalWorkingDays
+                              : 0,
+                })),
+            );
         } catch (error) {
             setMonthlyError(error instanceof Error ? error.message : "Failed to load");
             setMonthlyRows([]);
@@ -701,7 +726,7 @@ function AdminEmployeeAttendancePageContent() {
                 leave: r.leave,
                 halfDay: r.halfDay,
                 totalPresent: r.totalPresent,
-                totalWorkingDays: r.totalWorkingDays,
+                totalWorkingDays: r.totalWorkingDaysInMonth,
                 weekOff: r.weekOff,
             })),
         [filteredMonthly],
@@ -1142,7 +1167,7 @@ function AdminEmployeeAttendancePageContent() {
                                                     {row.halfDay}
                                                 </td>
                                                 <td className={`${TD} text-center text-lg font-black text-[#0a2a5e]`}>
-                                                    {row.totalWorkingDays}
+                                                    {row.totalWorkingDaysInMonth}
                                                 </td>
                                                 <td className={`${TD} text-center text-lg font-black text-gray-700`}>
                                                     {row.weekOff}
@@ -1158,6 +1183,15 @@ function AdminEmployeeAttendancePageContent() {
                         </div>
                         <p className="border-t border-gray-100 px-4 py-2 text-xs text-gray-700">
                             Click a row to open employee-wise detail.
+                            {viewYear === new Date().getFullYear() &&
+                            viewMonth === new Date().getMonth() + 1 ? (
+                                <>
+                                    {" "}
+                                    Present, absent, and total present are counted from month start
+                                    through today; total working days and week off are for the full
+                                    month (per shift schedule).
+                                </>
+                            ) : null}
                         </p>
                     </div>
                 </div>
