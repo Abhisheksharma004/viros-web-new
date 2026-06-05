@@ -60,9 +60,11 @@ export async function GET(request: Request) {
         const leaveRequests = await fetchLeaveRequestsOverlappingMonth(employeeId, year, month);
         const withLeave = mergeLeaveRequestsIntoAttendanceRecords(dbRecords, leaveRequests);
         const workingDays = shift?.working_days?.length ? shift.working_days : [1, 2, 3, 4, 5];
-        const records = mergeMonthRecordsWithShift(year, month, withLeave, workingDays);
-
         const todayIso = todayDateOnly();
+        const records = mergeMonthRecordsWithShift(year, month, withLeave, workingDays, {
+            todayIso,
+            markPastAbsent: true,
+        });
         const todayLeave = await getTodayLeaveInfo(employeeId, todayIso);
         const todayRow = await getAttendanceByDate(employeeId, todayIso);
 

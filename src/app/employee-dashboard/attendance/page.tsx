@@ -697,8 +697,12 @@ export default function EmployeeAttendancePage() {
                 .filter(
                     (r) =>
                         r.status !== "weekend" &&
+                        r.status !== "holiday" &&
                         (r.checkIn ||
                             r.checkOut ||
+                            r.status === "absent" ||
+                            r.status === "present" ||
+                            r.status === "late" ||
                             r.status === "leave" ||
                             r.status === "half-day" ||
                             r.status === "leave-pending"),
