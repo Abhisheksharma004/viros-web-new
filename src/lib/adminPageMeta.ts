@@ -46,6 +46,16 @@ const ADMIN_PAGE_META_ENTRIES: { path: string; title: string; subtitle?: string 
         subtitle: "Manage leave rules.",
     },
     {
+        path: "/admin-dashboard/proposal/new",
+        title: "New proposal",
+        subtitle: "Create a client project proposal.",
+    },
+    {
+        path: "/admin-dashboard/proposal",
+        title: "Proposals",
+        subtitle: "Create and track client project proposals.",
+    },
+    {
         path: "/admin-dashboard/add-company",
         title: "Companies",
         subtitle: "Manage company records.",

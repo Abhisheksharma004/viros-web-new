@@ -16,7 +16,9 @@
     "test:forgot-password": "node test-forgot-password.js"
   },
   "dependencies": {
+    "@ckeditor/ckeditor5-react": "^11.1.2",
     "bcryptjs": "^2.4.3",
+    "ckeditor5": "^48.2.0",
     "cookie": "^1.1.1",
     "exceljs": "^4.4.0",
     "html5-qrcode": "^2.3.8",
