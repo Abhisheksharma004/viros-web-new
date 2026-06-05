@@ -86,6 +86,11 @@ const ADMIN_PAGE_META_ENTRIES: { path: string; title: string; subtitle?: string 
         subtitle: "Manage salary structure.",
     },
     {
+        path: "/admin-dashboard/advance-payment",
+        title: "Advance Paymet",
+        subtitle: "Record advances and plan salary recovery.",
+    },
+    {
         path: "/admin-dashboard/shift",
         title: "Employee shifts",
         subtitle: "Manage work shifts.",
