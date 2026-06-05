@@ -56,6 +56,16 @@ const ADMIN_PAGE_META_ENTRIES: { path: string; title: string; subtitle?: string 
         subtitle: "Create and track client project proposals.",
     },
     {
+        path: "/admin-dashboard/letter/new",
+        title: "New letter",
+        subtitle: "Create a business letter for a client.",
+    },
+    {
+        path: "/admin-dashboard/letter",
+        title: "Letters",
+        subtitle: "Create and track business letters.",
+    },
+    {
         path: "/admin-dashboard/add-company",
         title: "Companies",
         subtitle: "Manage company records.",
