@@ -104,6 +104,7 @@ type EmployeeRecord = {
     note?: string;
     checkInProof?: AttendancePunchProof;
     checkOutProof?: AttendancePunchProof;
+    workEntryCount?: number;
 };
 
 const STATUS_STYLES: Record<string, { label: string; className: string }> = {
@@ -1303,6 +1304,7 @@ function AdminEmployeeAttendancePageContent() {
                                 <tr>
                                     <th className={TH}>Date</th>
                                     <th className={TH}>Status</th>
+                                    <th className={`${TH} text-center`}>Work entries</th>
                                     <th className={TH}>Check in</th>
                                     <th className={TH}>Check out</th>
                                     <th className={TH}>Working hours</th>
@@ -1311,13 +1313,13 @@ function AdminEmployeeAttendancePageContent() {
                             <tbody className="divide-y divide-gray-200">
                                 {employeeLoading ? (
                                     <tr>
-                                        <td colSpan={5} className={`${TD} py-14 text-center ${TD_MUTED}`}>
+                                        <td colSpan={6} className={`${TD} py-14 text-center ${TD_MUTED}`}>
                                             <Loader2 className="mx-auto h-6 w-6 animate-spin" />
                                         </td>
                                     </tr>
                                 ) : employeeRecords.length === 0 ? (
                                     <tr>
-                                        <td colSpan={5} className={`${TD} py-14 text-center ${TD_MUTED}`}>
+                                        <td colSpan={6} className={`${TD} py-14 text-center ${TD_MUTED}`}>
                                             No attendance records for this month.
                                         </td>
                                     </tr>
@@ -1330,6 +1332,18 @@ function AdminEmployeeAttendancePageContent() {
                                             <td className={`${TD} font-bold`}>{formatTableDate(row.date)}</td>
                                             <td className={TD}>
                                                 <StatusBadge status={row.status} />
+                                            </td>
+                                            <td className={`${TD} text-center`}>
+                                                {(row.workEntryCount ?? 0) > 0 ? (
+                                                    <Link
+                                                        href={`/admin-dashboard/work-entries?month=${monthInputValue}&employeeId=${encodeURIComponent(selectedEmployeeId)}`}
+                                                        className="inline-flex min-w-[2rem] items-center justify-center rounded-full bg-[#0a2a5e]/10 px-2.5 py-1 text-xs font-bold tabular-nums text-[#0a2a5e] ring-1 ring-[#0a2a5e]/15 hover:bg-[#0a2a5e]/15"
+                                                    >
+                                                        {row.workEntryCount}
+                                                    </Link>
+                                                ) : (
+                                                    <span className={EMPTY}>—</span>
+                                                )}
                                             </td>
                                             <td className={TD}>
                                                 <PunchTimePhoto

@@ -91,6 +91,11 @@ const ADMIN_PAGE_META_ENTRIES: { path: string; title: string; subtitle?: string 
         subtitle: "Employee attendance records.",
     },
     {
+        path: "/admin-dashboard/work-entries",
+        title: "Employee Work Entries",
+        subtitle: "Employee daily work logs.",
+    },
+    {
         path: "/admin-dashboard/employees",
         title: "Employee directory",
         subtitle: "Manage employee details.",

@@ -49,6 +49,7 @@ type DayRecord = {
     checkInProof?: PunchProof;
     checkOutProof?: PunchProof;
     leaveRequestStatus?: LeaveRequestStatus | "rejected" | "cancelled";
+    workEntryCount?: number;
 };
 
 type TodayLeaveInfo = {
@@ -145,6 +146,21 @@ function AttendanceLogPhoto({
     );
 }
 
+function WorkEntryCountBadge({ count }: { count?: number }) {
+    if (!count || count <= 0) {
+        return <span className="text-gray-400">—</span>;
+    }
+    return (
+        <Link
+            href="/employee-dashboard/my-work"
+            className="inline-flex items-center justify-center rounded-full bg-[#0a2a5e]/10 px-2.5 py-1 text-xs font-bold tabular-nums text-[#0a2a5e] ring-1 ring-[#0a2a5e]/15 transition hover:bg-[#0a2a5e]/15"
+            title={`${count} work ${count === 1 ? "entry" : "entries"} logged`}
+        >
+            {count}
+        </Link>
+    );
+}
+
 function StatusBadge({ status }: { status: AttendanceStatus }) {
     const c = STATUS_CONFIG[status];
     return (
@@ -206,7 +222,7 @@ function AttendanceLogMobileRow({
                     <p className="mt-1 text-[11px] font-medium leading-snug text-amber-700">{row.note}</p>
                 )}
 
-                <div className="mt-2.5 flex flex-wrap gap-2">
+                <div className="mt-2.5 flex flex-wrap items-center gap-2">
                     {row.checkInProof?.time ? (
                         <span className="inline-flex items-center gap-1 rounded-full bg-[#06b6d4]/15 px-2.5 py-1 text-xs font-semibold text-[#058a9a]">
                             <LogIn className="h-3.5 w-3.5 shrink-0" aria-hidden />
@@ -217,6 +233,13 @@ function AttendanceLogMobileRow({
                         <span className="inline-flex items-center gap-1 rounded-full bg-[#0a2a5e]/10 px-2.5 py-1 text-xs font-semibold text-[#0a2a5e]">
                             <LogOut className="h-3.5 w-3.5 shrink-0" aria-hidden />
                             {row.checkOutProof.time}
+                        </span>
+                    ) : null}
+                    {(row.workEntryCount ?? 0) > 0 ? (
+                        <span className="inline-flex items-center gap-1 text-xs text-gray-500">
+                            <FileText className="h-3.5 w-3.5 shrink-0 text-[#0a2a5e]" aria-hidden />
+                            <WorkEntryCountBadge count={row.workEntryCount} />
+                            <span className="font-medium">work</span>
                         </span>
                     ) : null}
                 </div>
@@ -1231,6 +1254,9 @@ export default function EmployeeAttendancePage() {
                                 <th className="whitespace-nowrap px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-[#0a2a5e]/70">
                                     Status
                                 </th>
+                                <th className="whitespace-nowrap px-4 py-3.5 text-center text-xs font-semibold uppercase tracking-wider text-[#0a2a5e]/70">
+                                    Work entries
+                                </th>
                                 <th className="whitespace-nowrap px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-[#0a2a5e]/70">
                                     Check in
                                 </th>
@@ -1248,7 +1274,7 @@ export default function EmployeeAttendancePage() {
                         <tbody className="divide-y divide-gray-50">
                             {tableRows.length === 0 ? (
                                 <tr>
-                                    <td colSpan={8} className="px-6 py-14 text-center text-sm text-gray-500">
+                                    <td colSpan={9} className="px-6 py-14 text-center text-sm text-gray-500">
                                         No attendance records for this month.
                                     </td>
                                 </tr>
@@ -1274,6 +1300,9 @@ export default function EmployeeAttendancePage() {
                                                     {row.note}
                                                 </p>
                                             )}
+                                        </td>
+                                        <td className="whitespace-nowrap px-4 py-4 text-center">
+                                            <WorkEntryCountBadge count={row.workEntryCount} />
                                         </td>
                                         <td className="whitespace-nowrap px-4 py-4 font-semibold tabular-nums text-[#058a9a]">
                                             {row.checkInProof?.time ?? (

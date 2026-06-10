@@ -6,6 +6,7 @@ import {
     getAdminMonthlySummary,
 } from "@/lib/adminAttendance";
 import { todayDateOnly } from "@/lib/dateOnly";
+import { getEmployeeWorkEntryCountsByDate } from "@/lib/employeeWorkEntries";
 
 function parseYearMonth(searchParams: URLSearchParams) {
     const now = new Date();
@@ -60,12 +61,22 @@ export async function GET(request: Request) {
             if (!detail) {
                 return NextResponse.json({ message: "Employee not found" }, { status: 404 });
             }
+            const workEntryCounts = await getEmployeeWorkEntryCountsByDate(
+                employeeId,
+                parsed.year,
+                parsed.month,
+            );
+            const recordsWithWork = detail.records.map((record) => ({
+                ...record,
+                workEntryCount: workEntryCounts[record.date] ?? 0,
+            }));
             return NextResponse.json(
                 {
                     view: "employee",
                     year: parsed.year,
                     month: parsed.month,
                     ...detail,
+                    records: recordsWithWork,
                 },
                 { headers: { "Cache-Control": "no-store" } },
             );

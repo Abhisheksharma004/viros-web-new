@@ -19,6 +19,7 @@ import {
     missedPunchPortalWarningMessage,
 } from "@/lib/attendancePortalAutoDisable";
 import { todayDateOnly } from "@/lib/dateOnly";
+import { getEmployeeWorkEntryCountsByDate } from "@/lib/employeeWorkEntries";
 
 export async function GET(request: Request) {
     try {
@@ -65,6 +66,11 @@ export async function GET(request: Request) {
             todayIso,
             markPastAbsent: true,
         });
+        const workEntryCounts = await getEmployeeWorkEntryCountsByDate(employeeId, year, month);
+        const recordsWithWork = records.map((record) => ({
+            ...record,
+            workEntryCount: workEntryCounts[record.date] ?? 0,
+        }));
         const todayLeave = await getTodayLeaveInfo(employeeId, todayIso);
         const todayRow = await getAttendanceByDate(employeeId, todayIso);
 
@@ -89,7 +95,7 @@ export async function GET(request: Request) {
 
         return NextResponse.json(
             {
-                records,
+                records: recordsWithWork,
                 today,
                 shift,
                 todayLeave,
