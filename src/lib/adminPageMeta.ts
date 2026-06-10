@@ -66,6 +66,16 @@ const ADMIN_PAGE_META_ENTRIES: { path: string; title: string; subtitle?: string 
         subtitle: "Create and track business letters.",
     },
     {
+        path: "/admin-dashboard/offer-letter/new",
+        title: "New offer letter",
+        subtitle: "Create an employment offer letter for a candidate.",
+    },
+    {
+        path: "/admin-dashboard/offer-letter",
+        title: "Offer letters",
+        subtitle: "Create and track employment offer letters.",
+    },
+    {
         path: "/admin-dashboard/add-company",
         title: "Companies",
         subtitle: "Manage company records.",

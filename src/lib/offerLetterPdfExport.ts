@@ -1,0 +1,345 @@
+import {
+    OFFER_SIGNATORY,
+    formatOfferPhone,
+    offerSalutation,
+} from "@/lib/offerLetterDocument";
+import {
+    OFFER_LETTER_COMPANY,
+    offerIntroParagraph,
+    offerLetterDisplayMeta,
+} from "@/lib/offerLetterLayout";
+import type { OfferLetter } from "@/lib/offerLetterUi";
+
+const COMPANY = OFFER_LETTER_COMPANY;
+
+const PAGE_MARGIN = 14;
+const PRIMARY: [number, number, number] = [6, 18, 79];
+const ACCENT: [number, number, number] = [6, 182, 212];
+const SECONDARY: [number, number, number] = [10, 42, 94];
+const BORDER = 200;
+const FOOTER_RESERVED = 24;
+const TEXT_COLOR: [number, number, number] = [30, 30, 30];
+
+const LOGO_PATH = COMPANY.logoPath;
+
+type PdfDoc = import("jspdf").jsPDF;
+
+type LogoAsset = {
+    dataUrl: string;
+    format: "PNG" | "JPEG";
+    widthPx: number;
+    heightPx: number;
+};
+
+function getPageWidth(doc: PdfDoc): number {
+    return doc.internal.pageSize.getWidth();
+}
+
+function getPageHeight(doc: PdfDoc): number {
+    return doc.internal.pageSize.getHeight();
+}
+
+async function loadLogoAsset(): Promise<LogoAsset | null> {
+    if (typeof window === "undefined") return null;
+
+    const logoUrl = `${window.location.origin}${LOGO_PATH}?v=1`;
+    try {
+        const resp = await fetch(logoUrl, { cache: "no-store" });
+        if (!resp.ok) return null;
+
+        const blob = await resp.blob();
+        const dataUrl = await new Promise<string | null>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(typeof reader.result === "string" ? reader.result : null);
+            reader.onerror = () => resolve(null);
+            reader.readAsDataURL(blob);
+        });
+        if (!dataUrl) return null;
+
+        const format: LogoAsset["format"] = blob.type.includes("jpeg") ? "JPEG" : "PNG";
+        const dimensions = await new Promise<{ width: number; height: number } | null>((resolve) => {
+            const img = new Image();
+            img.onload = () =>
+                resolve({ width: img.naturalWidth || 1, height: img.naturalHeight || 1 });
+            img.onerror = () => resolve(null);
+            img.src = dataUrl;
+        });
+        if (!dimensions) return null;
+
+        return { dataUrl, format, widthPx: dimensions.width, heightPx: dimensions.height };
+    } catch {
+        return null;
+    }
+}
+
+function drawHr(doc: PdfDoc, y: number): void {
+    const pageWidth = getPageWidth(doc);
+    doc.setDrawColor(BORDER, BORDER, BORDER);
+    doc.setLineWidth(0.3);
+    doc.line(PAGE_MARGIN, y, pageWidth - PAGE_MARGIN, y);
+}
+
+function ensureSpace(doc: PdfDoc, y: number, needed: number): number {
+    const pageHeight = getPageHeight(doc);
+    if (y + needed <= pageHeight - FOOTER_RESERVED) return y;
+    doc.addPage();
+    return PAGE_MARGIN + 6;
+}
+
+const LINE_HEIGHT = 5.5;
+
+function drawPageFooter(doc: PdfDoc, pageNum: number, totalPages: number): void {
+    const pageWidth = getPageWidth(doc);
+    const pageHeight = getPageHeight(doc);
+    const y = pageHeight - 16;
+
+    drawHr(doc, y - 3);
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7.5);
+    doc.setTextColor(90, 90, 90);
+    doc.text(
+        `${OFFER_SIGNATORY.company} | Email: ${COMPANY.email} | Phone: +91-${COMPANY.phone}`,
+        pageWidth / 2,
+        y,
+        { align: "center" },
+    );
+
+    doc.setFontSize(8);
+    doc.setTextColor(80, 80, 80);
+    doc.text(`Page ${pageNum} of ${totalPages}`, pageWidth / 2, y + 5, { align: "center" });
+}
+
+function drawHeader(doc: PdfDoc, logo: LogoAsset | null): number {
+    const pageWidth = getPageWidth(doc);
+    let textX = PAGE_MARGIN;
+
+    if (logo) {
+        const maxH = 14;
+        const aspect = logo.widthPx / logo.heightPx;
+        let drawH = maxH;
+        let drawW = drawH * aspect;
+        if (drawW > 18) {
+            drawW = 18;
+            drawH = drawW / aspect;
+        }
+        doc.addImage(logo.dataUrl, logo.format, PAGE_MARGIN, 10, drawW, drawH);
+        textX = PAGE_MARGIN + drawW + 4;
+    }
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
+    doc.setTextColor(...PRIMARY);
+    doc.text(COMPANY.name, textX, 15);
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(...SECONDARY);
+    doc.text(COMPANY.subtitle, textX, 20);
+
+    doc.setFontSize(7.5);
+    doc.setTextColor(...ACCENT);
+    doc.text(COMPANY.tagline1, textX, 25);
+    doc.text(COMPANY.tagline2, textX, 29);
+
+    const rightX = pageWidth - PAGE_MARGIN;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7);
+    doc.setTextColor(80, 80, 80);
+
+    const contactLines = [
+        `Address: ${COMPANY.address}`,
+        `Email: ${COMPANY.email}`,
+        `Contact: ${COMPANY.phone}`,
+        `Website: ${COMPANY.website}`,
+    ];
+
+    let contactY = 12;
+    for (const line of contactLines) {
+        const wrapped = doc.splitTextToSize(line, 72);
+        doc.text(wrapped, rightX, contactY, { align: "right" });
+        contactY += wrapped.length * 3.2;
+    }
+
+    drawHr(doc, 36);
+    return 44;
+}
+
+function drawTitleBand(doc: PdfDoc, y: number, title: string, ref: string): number {
+    const pageWidth = getPageWidth(doc);
+    const rightX = pageWidth - PAGE_MARGIN;
+
+    y = ensureSpace(doc, y, 16);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.setTextColor(...TEXT_COLOR);
+    doc.text(title, pageWidth / 2, y, { align: "center" });
+    y += 8;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.text(`Ref: ${ref}`, rightX, y, { align: "right" });
+
+    return y + 10;
+}
+
+function drawRecipientBlock(doc: PdfDoc, y: number, letter: OfferLetter, date: string): number {
+    const pageWidth = getPageWidth(doc);
+    const contentWidth = pageWidth - PAGE_MARGIN * 2;
+    const phone = letter.candidatePhone.trim() ? formatOfferPhone(letter.candidatePhone) : "";
+
+    y = ensureSpace(doc, y, 20);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(...TEXT_COLOR);
+    doc.text(date, PAGE_MARGIN, y);
+    y += 8;
+
+    doc.setFont("helvetica", "bold");
+    doc.text(letter.candidateName, PAGE_MARGIN, y);
+    y += LINE_HEIGHT;
+
+    doc.setFont("helvetica", "normal");
+    if (letter.candidateAddress.trim()) {
+        const addressLines = doc.splitTextToSize(letter.candidateAddress, contentWidth);
+        for (const line of addressLines) {
+            y = ensureSpace(doc, y, LINE_HEIGHT);
+            doc.text(line, PAGE_MARGIN, y);
+            y += LINE_HEIGHT;
+        }
+    }
+    if (letter.candidateEmail.trim()) {
+        y = ensureSpace(doc, y, LINE_HEIGHT);
+        doc.text(letter.candidateEmail, PAGE_MARGIN, y);
+        y += LINE_HEIGHT;
+    }
+    if (phone) {
+        y = ensureSpace(doc, y, LINE_HEIGHT);
+        doc.text(phone, PAGE_MARGIN, y);
+        y += LINE_HEIGHT;
+    }
+
+    return y + 4;
+}
+
+function drawParagraph(doc: PdfDoc, y: number, text: string): number {
+    const contentWidth = getPageWidth(doc) - PAGE_MARGIN * 2;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(...TEXT_COLOR);
+    const wrapped = doc.splitTextToSize(text, contentWidth);
+    y = ensureSpace(doc, y, wrapped.length * LINE_HEIGHT + 4);
+    doc.text(wrapped, PAGE_MARGIN, y, { maxWidth: contentWidth, align: "justify" });
+    return y + wrapped.length * LINE_HEIGHT + 2;
+}
+
+function drawSectionHeader(doc: PdfDoc, y: number, title: string): number {
+    y = ensureSpace(doc, y, 8);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.setTextColor(...TEXT_COLOR);
+    doc.text(title.toUpperCase(), PAGE_MARGIN, y);
+    return y + 4;
+}
+
+const SIGNATURE_SPACE = 22;
+
+function drawSignatureBlock(doc: PdfDoc, y: number, candidateName: string): number {
+    const pageWidth = getPageWidth(doc);
+    const rightColX = pageWidth / 2 + 8;
+    const candidate = candidateName.trim() || "Candidate";
+
+    y = ensureSpace(doc, y, SIGNATURE_SPACE + 28);
+    const topY = y + 4;
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(...TEXT_COLOR);
+    doc.text("Sincerely,", PAGE_MARGIN, topY);
+    doc.text("Accepted by:", rightColX, topY);
+
+    const bottomY = topY + SIGNATURE_SPACE;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.setTextColor(...TEXT_COLOR);
+    doc.text(OFFER_SIGNATORY.company, PAGE_MARGIN, bottomY);
+    doc.text(candidate, rightColX, bottomY);
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(120, 120, 120);
+    doc.text(OFFER_SIGNATORY.title, PAGE_MARGIN, bottomY + 5);
+    doc.text("Candidate Signature", rightColX, bottomY + 5);
+
+    return bottomY + 12;
+}
+
+function drawOfferLetterBody(doc: PdfDoc, y: number, letter: OfferLetter): number {
+    const meta = offerLetterDisplayMeta(letter);
+
+    y = drawTitleBand(doc, y, meta.title, meta.ref);
+    y = drawRecipientBlock(doc, y, letter, meta.date);
+
+    y = ensureSpace(doc, y, LINE_HEIGHT);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.text(offerSalutation(letter), PAGE_MARGIN, y);
+    y += LINE_HEIGHT + 2;
+
+    y = drawParagraph(doc, y, offerIntroParagraph(letter));
+
+    y = drawSectionHeader(doc, y, "Position Details");
+    y = drawParagraph(doc, y, meta.positionParagraph);
+
+    y = drawSectionHeader(doc, y, "Compensation");
+    y = drawParagraph(doc, y, meta.compensationParagraph);
+
+    if (meta.benefitsParagraph) {
+        y = drawSectionHeader(doc, y, "Benefits");
+        y = drawParagraph(doc, y, meta.benefitsParagraph);
+    }
+
+    if (meta.responsibilities.length > 0) {
+        y = drawSectionHeader(doc, y, "Key Responsibilities");
+        for (const item of meta.responsibilities) {
+            y = drawParagraph(doc, y, item);
+        }
+    }
+
+    if (meta.terms.length > 0) {
+        y = drawSectionHeader(doc, y, "Terms & Conditions");
+        for (const item of meta.terms) {
+            y = drawParagraph(doc, y, item);
+        }
+    }
+
+    if (meta.expiryDate) {
+        y = drawParagraph(doc, y, `This offer is valid until ${meta.expiryDate}.`);
+    }
+
+    y = drawParagraph(
+        doc,
+        y,
+        "Please sign and return a copy of this letter as confirmation of your acceptance of this offer.",
+    );
+
+    return drawSignatureBlock(doc, y, letter.candidateName);
+}
+
+export async function downloadOfferLetterPdf(letter: OfferLetter): Promise<void> {
+    const [{ jsPDF }, logo] = await Promise.all([import("jspdf"), loadLogoAsset()]);
+    const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+
+    let y = drawHeader(doc, logo);
+    drawOfferLetterBody(doc, y, letter);
+
+    const totalPages = doc.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        drawPageFooter(doc, i, totalPages);
+    }
+
+    const safeName = letter.offerNumber.replace(/[^\w-]+/g, "_");
+    doc.save(`Offer-Letter-${safeName}.pdf`);
+}

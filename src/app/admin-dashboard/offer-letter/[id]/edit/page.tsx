@@ -1,0 +1,165 @@
+"use client";
+
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { ArrowLeft, Loader2, Pencil } from "lucide-react";
+import OfferLetterFormFields from "@/components/admin-dashboard/OfferLetterFormFields";
+import {
+    formValuesToApiBody,
+    offerLetterToFormValues,
+    mapApiRow,
+    type OfferLetterApiRow,
+    type OfferLetterFormValues,
+} from "@/lib/offerLetterUi";
+
+export default function EditOfferLetterPage() {
+    const params = useParams();
+    const router = useRouter();
+    const id = Number(params.id);
+
+    const [formValues, setFormValues] = useState<OfferLetterFormValues | null>(null);
+    const [offerNumber, setOfferNumber] = useState("");
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState("");
+
+    useEffect(() => {
+        if (!Number.isFinite(id) || id < 1) {
+            setError("Invalid offer letter id");
+            setIsLoading(false);
+            return;
+        }
+
+        const load = async () => {
+            try {
+                const resp = await fetch(`/api/admin/offer-letters/${id}`, { cache: "no-store" });
+                const data = await resp.json().catch(() => ({}));
+                if (!resp.ok) {
+                    throw new Error(typeof data.message === "string" ? data.message : "Failed to load offer letter");
+                }
+                const row = mapApiRow((data.offer_letter ?? data) as OfferLetterApiRow);
+                setOfferNumber(row.offerNumber);
+                setFormValues(offerLetterToFormValues(row));
+            } catch (err) {
+                setError(err instanceof Error ? err.message : "Failed to load offer letter");
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        void load();
+    }, [id]);
+
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        if (
+            !formValues ||
+            !formValues.candidateName.trim() ||
+            !formValues.candidateEmail.trim() ||
+            !formValues.candidatePhone.trim() ||
+            !formValues.candidateAddress.trim() ||
+            !formValues.designation.trim() ||
+            !formValues.department.trim() ||
+            !formValues.location.trim() ||
+            !formValues.reportingTo.trim() ||
+            !formValues.joiningDate.trim() ||
+            !formValues.compensation.trim() ||
+            !formValues.keyResponsibilities.trim() ||
+            !formValues.termsAndConditions.trim()
+        ) {
+            return;
+        }
+
+        setIsSubmitting(true);
+        setError("");
+        try {
+            const resp = await fetch(`/api/admin/offer-letters/${id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(formValuesToApiBody(formValues)),
+            });
+            const data = await resp.json().catch(() => ({}));
+            if (!resp.ok) {
+                throw new Error(typeof data.message === "string" ? data.message : "Failed to update offer letter");
+            }
+            router.push(`/admin-dashboard/offer-letter/${id}`);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Unable to save changes.");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    if (isLoading) {
+        return (
+            <div className="flex min-h-[40vh] items-center justify-center">
+                <Loader2 className="h-6 w-6 animate-spin text-[#0a2a5e]" />
+            </div>
+        );
+    }
+
+    if (!formValues) {
+        return (
+            <div className="space-y-4">
+                <Link href="/admin-dashboard/offer-letter" className="text-sm font-semibold text-[#0a2a5e]">
+                    ← Back to offer letters
+                </Link>
+                <p className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                    {error || "Offer letter not found."}
+                </p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="space-y-6">
+            <Link
+                href={`/admin-dashboard/offer-letter/${id}`}
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#0a2a5e] hover:text-[#06b6d4]"
+            >
+                <ArrowLeft className="h-4 w-4" aria-hidden />
+                Back to offer letter
+            </Link>
+
+            <div className="overflow-hidden rounded-md border border-gray-100 bg-white shadow-sm">
+                <div className="bg-gradient-to-r from-[#06124f] to-[#0a2a5e] px-6 py-6 lg:px-8">
+                    <div className="flex items-start gap-4">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-white/10 text-white">
+                            <Pencil className="h-6 w-6" aria-hidden />
+                        </div>
+                        <div>
+                            <h1 className="text-xl font-bold text-white sm:text-2xl">Edit offer letter</h1>
+                            <p className="mt-1 text-sm text-white/80">{offerNumber}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <form onSubmit={(e) => void handleSubmit(e)} className="space-y-6 bg-[#f8fafc] p-6 sm:p-8">
+                    {error ? (
+                        <p className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</p>
+                    ) : null}
+
+                    <OfferLetterFormFields values={formValues} onChange={setFormValues} offerNumber={offerNumber} />
+
+                    <div className="flex flex-col-reverse gap-3 border-t border-gray-200 pt-6 sm:flex-row sm:justify-end">
+                        <Link
+                            href={`/admin-dashboard/offer-letter/${id}`}
+                            className="inline-flex items-center justify-center rounded-md border border-gray-200 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                        >
+                            Cancel
+                        </Link>
+                        <button
+                            type="submit"
+                            disabled={isSubmitting}
+                            className="inline-flex items-center justify-center gap-2 rounded-md bg-gradient-to-r from-[#06124f] to-[#0a2a5e] px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:opacity-90 disabled:opacity-60"
+                        >
+                            {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                            Save changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+}
