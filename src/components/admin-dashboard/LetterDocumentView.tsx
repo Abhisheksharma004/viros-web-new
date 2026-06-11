@@ -1,11 +1,13 @@
 "use client";
 
-import ProposalContentView from "@/components/admin-dashboard/ProposalContentView";
+import GeneratedDocumentFooter from "@/components/admin-dashboard/GeneratedDocumentFooter";
+import LetterBodyContent from "@/components/admin-dashboard/LetterBodyContent";
 import {
     LETTER_SIGNATORY,
     formatLetterDateLong,
     formatLetterPhone,
     letterSalutation,
+    normalizeLetterContent,
 } from "@/lib/letterDocument";
 import type { Letter } from "@/lib/letterUi";
 
@@ -16,6 +18,7 @@ type Props = {
 
 export default function LetterDocumentView({ letter, className = "" }: Props) {
     const phone = letter.clientPhone.trim() ? formatLetterPhone(letter.clientPhone) : "";
+    const bodyContent = normalizeLetterContent(letter.content, letter);
 
     return (
         <article
@@ -49,26 +52,29 @@ export default function LetterDocumentView({ letter, className = "" }: Props) {
                 ) : null}
             </div>
 
-            <p className="mt-7 text-gray-900">
+            <p className="mt-5 text-gray-900">
                 <span className="font-bold">Subject:</span> {letter.subject}
             </p>
 
-            <p className="mt-5 text-gray-900">{letterSalutation(letter)}</p>
+            <p className="mt-4 text-gray-900">{letterSalutation(letter)}</p>
 
-            {letter.content.trim() ? (
-                <div className="mt-4 space-y-5 text-justify text-[15px] leading-8 text-gray-800 [&_li]:text-left [&_p]:mb-5 [&_p]:text-justify">
-                    <ProposalContentView content={letter.content} />
+            {bodyContent ? (
+                <div className="mt-3">
+                    <LetterBodyContent content={bodyContent} />
                 </div>
             ) : null}
 
-            <div className="mt-10 space-y-4 text-gray-900">
+            <div className="ml-auto w-fit text-right text-gray-900">
                 <p>Sincerely,</p>
-                <div className="space-y-0.5 pt-2">
+                <div className="h-14" aria-hidden />
+                <div className="space-y-0.5">
+                    <p className="text-sm text-gray-700">{LETTER_SIGNATORY.title}</p>
                     <p className="font-bold">{LETTER_SIGNATORY.company}</p>
                     <p className="font-semibold text-gray-800">{LETTER_SIGNATORY.subtitle}</p>
-                    <p className="text-sm text-gray-700">{LETTER_SIGNATORY.title}</p>
                 </div>
             </div>
+
+            <GeneratedDocumentFooter kind="letter" />
         </article>
     );
 }

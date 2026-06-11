@@ -78,7 +78,7 @@ export default function NewOfferLetterPage() {
                         <div>
                             <h1 className="text-xl font-bold text-white sm:text-2xl">New offer letter</h1>
                             <p className="mt-1 max-w-3xl text-sm text-white/80">
-                                Fill in candidate and offer details. An offer ID (e.g. JITOFFER0626001) will be generated
+                                Fill in candidate and offer details. An offer ID (e.g. VEO0626001) will be generated
                                 on save.
                             </p>
                         </div>

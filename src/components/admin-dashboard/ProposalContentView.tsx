@@ -75,18 +75,33 @@ function RenderSegments({ segments }: { segments: DisplaySegment[] }) {
 
 type Props = {
     content: string;
+    compact?: boolean;
 };
 
-export default function ProposalContentView({ content }: Props) {
+export default function ProposalContentView({ content, compact = false }: Props) {
     const blocks = parseProposalContent(content);
 
     return (
-        <div className="space-y-4 text-sm leading-relaxed text-gray-700">
+        <div
+            className={
+                compact
+                    ? "space-y-2.5 text-sm leading-relaxed text-gray-700"
+                    : "space-y-4 text-sm leading-relaxed text-gray-700"
+            }
+        >
             {blocks.map((block, index) => {
                 if (block.type === "heading") {
                     return (
-                        <div key={index}>
-                            <h3 className="text-base font-bold text-[#06124f]">{block.title}</h3>
+                        <div key={index} className={compact ? "pt-1" : undefined}>
+                            <h3
+                                className={
+                                    compact
+                                        ? "text-base font-bold text-[#06124f]"
+                                        : "text-base font-bold text-[#06124f]"
+                                }
+                            >
+                                {block.title}
+                            </h3>
                             {block.lines.length > 0 ? (
                                 <RenderSegments segments={groupLinesForDisplay(block.lines)} />
                             ) : null}

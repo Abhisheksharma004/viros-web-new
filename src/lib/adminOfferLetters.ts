@@ -15,7 +15,7 @@ import {
 export { OFFER_LETTER_STATUSES, normalizeOfferLetterStatus, type OfferLetterStatus } from "@/lib/offerLetterConstants";
 
 const TABLE = "admin_offer_letters";
-const OFFER_PREFIX = "JITOFFER";
+const OFFER_PREFIX = "VEO";
 
 export const OFFER_LETTER_LIST_COLUMNS = `
     id, offer_number, offer_type, priority,

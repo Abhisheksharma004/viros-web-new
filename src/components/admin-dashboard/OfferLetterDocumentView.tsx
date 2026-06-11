@@ -1,9 +1,9 @@
 "use client";
 
 import Image from "next/image";
+import GeneratedDocumentFooter from "@/components/admin-dashboard/GeneratedDocumentFooter";
 import {
     OFFER_SIGNATORY,
-    formatOfferDateLong,
 } from "@/lib/offerLetterDocument";
 import { OFFER_LETTER_COMPANY, offerLetterDisplayMeta } from "@/lib/offerLetterLayout";
 import type { OfferLetter } from "@/lib/offerLetterUi";
@@ -124,31 +124,32 @@ export default function OfferLetterDocumentView({ offerLetter, className = "" }:
                     Please sign and return a copy of this letter as confirmation of your acceptance of this offer.
                 </p>
 
-                <div className="mt-10 grid grid-cols-1 gap-10 sm:grid-cols-2 sm:gap-8">
-                    <div className="flex min-h-[120px] flex-col justify-between text-sm text-gray-900">
-                        <p>Sincerely,</p>
+                <div className="mt-8 grid grid-cols-1 gap-10 sm:grid-cols-2 sm:gap-8">
+                    <div className="text-sm text-gray-900">
+                        <p>Accepted by:</p>
+                        <div className="h-8" aria-hidden />
                         <div className="space-y-0.5">
-                            <p className="font-bold">{OFFER_SIGNATORY.company}</p>
-                            <p className="text-xs text-gray-500">{OFFER_SIGNATORY.title}</p>
+                            <p className="text-sm text-gray-700">Candidate Signature</p>
+                            <p className="font-bold">{meta.candidateName}</p>
                         </div>
                     </div>
-                    <div className="flex min-h-[120px] flex-col justify-between text-sm text-gray-900">
-                        <p>Accepted by:</p>
+                    <div className="ml-auto w-fit text-right text-sm text-gray-900 sm:ml-0 sm:w-auto">
+                        <p>Sincerely,</p>
+                        <div className="h-8" aria-hidden />
                         <div className="space-y-0.5">
-                            <p className="font-bold">{meta.candidateName}</p>
-                            <p className="text-xs text-gray-500">Candidate Signature</p>
+                            <p className="text-sm text-gray-700">{OFFER_SIGNATORY.title}</p>
+                            <p className="font-bold">{OFFER_SIGNATORY.company}</p>
+                            <p className="font-semibold text-gray-800">{OFFER_SIGNATORY.subtitle}</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div className="border-t border-gray-200 px-8 py-4 text-center text-[11px] text-gray-500 sm:px-12">
-                <p>
-                    {OFFER_SIGNATORY.company} | Email: {OFFER_LETTER_COMPANY.email} | Phone: +91-
-                    {OFFER_LETTER_COMPANY.phone}
-                </p>
-                <p className="mt-1 text-gray-400">Generated on {formatOfferDateLong(offerLetter.offerDate)}</p>
-            </div>
+            <GeneratedDocumentFooter
+                kind="offer"
+                email={OFFER_LETTER_COMPANY.email}
+                phone={OFFER_LETTER_COMPANY.phone}
+            />
         </article>
     );
 }

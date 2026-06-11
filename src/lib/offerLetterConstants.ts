@@ -59,5 +59,5 @@ export function normalizeNoticePeriod(raw: unknown): NoticePeriod {
 export function previewOfferNumber(date = new Date()): string {
     const mm = String(date.getMonth() + 1).padStart(2, "0");
     const yy = String(date.getFullYear()).slice(-2);
-    return `JITOFFER${mm}${yy}000`;
+    return `VEO${mm}${yy}001`;
 }

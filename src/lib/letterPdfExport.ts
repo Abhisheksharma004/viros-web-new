@@ -1,6 +1,10 @@
+import { drawPdfInlineText, hasInlineMarkdown } from "@/lib/inlineMarkdown";
 import {
+    extractEditableTables,
     groupLinesForDisplay,
+    isBulletLine,
     parseProposalContent,
+    stripBulletPrefix,
     type DisplaySegment,
 } from "@/lib/proposalContentMarkdown";
 import {
@@ -8,6 +12,7 @@ import {
     formatLetterDateLong,
     formatLetterPhone,
     letterSalutation,
+    normalizeLetterContent,
 } from "@/lib/letterDocument";
 import type { Letter } from "@/lib/letterUi";
 
@@ -190,7 +195,78 @@ function drawHeader(doc: PdfDoc, logo: LogoAsset | null): number {
 }
 
 const LINE_HEIGHT = 6;
-const PARA_GAP = 5;
+const PARA_GAP = 3;
+
+function contentHasMarkdownTable(content: string): boolean {
+    return extractEditableTables(content).length > 0;
+}
+
+/** Renders letter body using only the line breaks present in the source text. */
+function drawLetterBodyContent(doc: PdfDoc, y: number, content: string): number {
+    const contentWidth = getPageWidth(doc) - PAGE_MARGIN * 2;
+    const lines = content.replace(/\r\n/g, "\n").split("\n");
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(...TEXT_COLOR);
+
+    for (const line of lines) {
+        const trimmed = line.trim();
+
+        if (!trimmed) {
+            y = ensureSpace(doc, y, LINE_HEIGHT);
+            y += LINE_HEIGHT;
+            continue;
+        }
+
+        if (trimmed.startsWith("## ")) {
+            const title = trimmed.slice(3).trim();
+            y = ensureSpace(doc, y, LINE_HEIGHT);
+            doc.setFontSize(10);
+            doc.setTextColor(...PRIMARY);
+            y = drawPdfInlineText(doc, PAGE_MARGIN, y, contentWidth, title, LINE_HEIGHT, {
+                baseBold: true,
+            });
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(10);
+            doc.setTextColor(...TEXT_COLOR);
+            continue;
+        }
+
+        if (isBulletLine(line)) {
+            const bulletText = stripBulletPrefix(line);
+            const textX = PAGE_MARGIN + 8;
+            const textWidth = contentWidth - 8;
+            y = ensureSpace(doc, y, LINE_HEIGHT);
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(...TEXT_COLOR);
+            doc.text("•", PAGE_MARGIN + 2, y);
+            doc.setFont("helvetica", "normal");
+            if (hasInlineMarkdown(bulletText)) {
+                y = drawPdfInlineText(doc, textX, y, textWidth, bulletText, LINE_HEIGHT);
+            } else {
+                const wrapped = doc.splitTextToSize(bulletText, textWidth);
+                doc.text(wrapped, textX, y);
+                y += wrapped.length * LINE_HEIGHT;
+            }
+            continue;
+        }
+
+        if (hasInlineMarkdown(line)) {
+            y = ensureSpace(doc, y, LINE_HEIGHT);
+            y = drawPdfInlineText(doc, PAGE_MARGIN, y, contentWidth, line, LINE_HEIGHT);
+            continue;
+        }
+
+        const wrapped = doc.splitTextToSize(line, contentWidth);
+        y = ensureSpace(doc, y, wrapped.length * LINE_HEIGHT);
+        doc.setFont("helvetica", "normal");
+        doc.text(line, PAGE_MARGIN, y, { maxWidth: contentWidth, align: "justify" });
+        y += wrapped.length * LINE_HEIGHT;
+    }
+
+    return y;
+}
 
 function drawJustifiedText(doc: PdfDoc, y: number, text: string): number {
     const contentWidth = getPageWidth(doc) - PAGE_MARGIN * 2;
@@ -396,34 +472,34 @@ function drawFormalLetterBody(doc: PdfDoc, y: number, letter: Letter): number {
     doc.setFontSize(10);
     doc.setTextColor(...TEXT_COLOR);
     doc.text(letterSalutation(letter), PAGE_MARGIN, y);
-    return y + 10;
+    return y + 6;
 }
 
 function drawSignatureBlock(doc: PdfDoc, y: number): number {
-    y = ensureSpace(doc, y, 28);
-    y += 4;
+    y = ensureSpace(doc, y, 40);
+    const rightX = getPageWidth(doc) - PAGE_MARGIN;
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
     doc.setTextColor(...TEXT_COLOR);
-    doc.text("Sincerely,", PAGE_MARGIN, y);
-    y += 12;
-
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
-    doc.text(LETTER_SIGNATORY.company, PAGE_MARGIN, y);
-    y += 5;
-
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(9);
-    doc.setTextColor(...TEXT_COLOR);
-    doc.text(LETTER_SIGNATORY.subtitle, PAGE_MARGIN, y);
-    y += 5;
+    doc.text("Sincerely,", rightX, y, { align: "right" });
+    y += 22;
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(80, 80, 80);
-    doc.text(LETTER_SIGNATORY.title, PAGE_MARGIN, y);
+    doc.text(LETTER_SIGNATORY.title, rightX, y, { align: "right" });
+    y += 5;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.setTextColor(...TEXT_COLOR);
+    doc.text(LETTER_SIGNATORY.company, rightX, y, { align: "right" });
+    y += 5;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.text(LETTER_SIGNATORY.subtitle, rightX, y, { align: "right" });
 
     return y + 6;
 }
@@ -440,8 +516,11 @@ export async function downloadLetterPdf(letter: Letter): Promise<void> {
     let y = drawHeader(doc, logo);
     y = drawFormalLetterBody(doc, y, letter);
 
-    if (letter.content.trim()) {
-        y = renderContentBlocks(doc, autoTable, y, letter.content);
+    const bodyContent = normalizeLetterContent(letter.content, letter);
+    if (bodyContent) {
+        y = contentHasMarkdownTable(bodyContent)
+            ? renderContentBlocks(doc, autoTable, y, bodyContent)
+            : drawLetterBodyContent(doc, y, bodyContent);
     }
 
     y = drawSignatureBlock(doc, y);
