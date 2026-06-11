@@ -100,11 +100,6 @@ function buildTeamTaskAssignmentHtml(options: {
         isNewAssignment,
     } = options;
 
-    const appUrl =
-        process.env.NEXT_PUBLIC_APP_URL ||
-        process.env.APP_URL ||
-        "http://localhost:3000";
-    const tasksUrl = `${appUrl.replace(/\/$/, "")}/employee-dashboard/tasks`;
     const heading = isNewAssignment ? "New team task assigned" : "Added to team task";
     const intro = isNewAssignment
         ? "You are part of a team assigned to this task. Coordinate with your teammates and update progress in the employee portal."
@@ -139,9 +134,6 @@ function buildTeamTaskAssignmentHtml(options: {
                 <tr><td style="padding:14px 18px;border-bottom:1px solid #e5e7eb;"><strong style="color:#0a2a5e;">Status</strong><br><span>${escapeHtml(getStatusLabel(status))}</span></td></tr>
                 <tr><td style="padding:14px 18px;"><strong style="color:#0a2a5e;">Due date</strong><br><span>${escapeHtml(formatDisplayDate(dueDate))}</span></td></tr>
               </table>
-              <p style="margin:24px 0 0;">
-                <a href="${tasksUrl}" style="display:inline-block;background:#06b6d4;color:#ffffff;text-decoration:none;font-weight:600;padding:12px 22px;border-radius:10px;">View team tasks in portal</a>
-              </p>
             </td>
           </tr>
           <tr>
@@ -157,7 +149,7 @@ function buildTeamTaskAssignmentHtml(options: {
 </html>`;
 }
 
-async function fetchEmployeeOfficialEmail(employeeId: string): Promise<string | null> {
+export async function fetchEmployeeOfficialEmail(employeeId: string): Promise<string | null> {
     const [rows] = await pool.query<RowDataPacket[]>(
         `SELECT
             COALESCE(NULLIF(TRIM(e.official_email), ''), NULLIF(TRIM(ea.official_email), '')) AS email
@@ -198,11 +190,6 @@ function buildTaskAssignmentHtml(options: {
         isNewAssignment,
     } = options;
 
-    const appUrl =
-        process.env.NEXT_PUBLIC_APP_URL ||
-        process.env.APP_URL ||
-        "http://localhost:3000";
-    const tasksUrl = `${appUrl.replace(/\/$/, "")}/employee-dashboard/tasks`;
     const heading = isNewAssignment ? "New task assigned" : "Task assignment updated";
     const intro = isNewAssignment
         ? "You have been assigned a new task. Please review the details below and update your progress in the employee portal."
@@ -236,9 +223,6 @@ function buildTaskAssignmentHtml(options: {
                 <tr><td style="padding:14px 18px;border-bottom:1px solid #e5e7eb;"><strong style="color:#0a2a5e;">Status</strong><br><span>${escapeHtml(getStatusLabel(status))}</span></td></tr>
                 <tr><td style="padding:14px 18px;"><strong style="color:#0a2a5e;">Due date</strong><br><span>${escapeHtml(formatDisplayDate(dueDate))}</span></td></tr>
               </table>
-              <p style="margin:24px 0 0;">
-                <a href="${tasksUrl}" style="display:inline-block;background:#06b6d4;color:#fff;text-decoration:none;font-weight:600;padding:12px 22px;border-radius:10px;">View tasks in portal</a>
-              </p>
             </td>
           </tr>
           <tr>

@@ -9,6 +9,10 @@ import {
     evaluateMissedPunchPortalAccess,
     missedPunchPortalBlockMessage,
 } from "@/lib/attendancePortalAutoDisable";
+import {
+    trySendOverdueTaskReminder,
+    trySendPendingTaskReminder,
+} from "@/lib/pendingTaskReminderEmail";
 
 function parsePunchBody(body: Record<string, unknown>): PunchInput | null {
     const type = body.type === "check-out" ? "check-out" : body.type === "check-in" ? "check-in" : null;
@@ -88,6 +92,15 @@ export async function POST(request: Request) {
         }
 
         const today = await punchAttendance(employeeId, punch);
+
+        if (punch.type === "check-in") {
+            void trySendPendingTaskReminder(employeeId).catch((err) => {
+                console.error("[Pending task reminder] Check-in trigger failed:", err);
+            });
+            void trySendOverdueTaskReminder(employeeId).catch((err) => {
+                console.error("[Overdue task reminder] Check-in trigger failed:", err);
+            });
+        }
 
         return NextResponse.json({ today });
     } catch (error: unknown) {
