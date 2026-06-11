@@ -1,18 +1,61 @@
 import { NextResponse } from "next/server";
-import { EXPENSE_ADMIN_STATUSES, updateExpenseStatusForAdmin } from "@/lib/employeeExpenses";
+import {
+    EXPENSE_ADMIN_STATUSES,
+    deleteExpenseForAdmin,
+    reworkExpenseForAdmin,
+    updateExpenseStatusForAdmin,
+} from "@/lib/employeeExpenses";
 import type { ExpenseStatus } from "@/lib/employeeExpenses";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
+function parseRecordId(raw: string) {
+    const recordId = Number.parseInt(raw, 10);
+    return Number.isFinite(recordId) && recordId > 0 ? recordId : null;
+}
+
+export async function DELETE(_request: Request, context: RouteContext) {
+    try {
+        const { id } = await context.params;
+        const recordId = parseRecordId(id);
+        if (!recordId) {
+            return NextResponse.json({ message: "Invalid expense id" }, { status: 400 });
+        }
+
+        const deleted = await deleteExpenseForAdmin(recordId);
+        if (!deleted) {
+            return NextResponse.json({ message: "Expense not found" }, { status: 404 });
+        }
+
+        return NextResponse.json({ message: "Expense deleted" });
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        console.error("Admin expense DELETE error:", error);
+        return NextResponse.json({ message }, { status: 400 });
+    }
+}
+
 export async function PATCH(request: Request, context: RouteContext) {
     try {
         const { id } = await context.params;
-        const recordId = Number.parseInt(id, 10);
-        if (!Number.isFinite(recordId) || recordId <= 0) {
+        const recordId = parseRecordId(id);
+        if (!recordId) {
             return NextResponse.json({ message: "Invalid expense id" }, { status: 400 });
         }
 
         const body = (await request.json()) as Record<string, unknown>;
+        const action = typeof body.action === "string" ? body.action.trim() : "";
+
+        if (action === "rework") {
+            const reworkReason =
+                typeof body.rework_reason === "string" ? body.rework_reason.trim() : "";
+            const updated = await reworkExpenseForAdmin(recordId, { reworkReason });
+            if (!updated) {
+                return NextResponse.json({ message: "Expense not found" }, { status: 404 });
+            }
+            return NextResponse.json(updated);
+        }
+
         const statusRaw = typeof body.status === "string" ? body.status.trim() : "";
         const status = statusRaw as ExpenseStatus;
         if (!(EXPENSE_ADMIN_STATUSES as readonly string[]).includes(status)) {

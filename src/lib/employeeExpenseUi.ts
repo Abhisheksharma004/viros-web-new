@@ -54,6 +54,10 @@ export function isPartialExpenseApproval(row: {
     return Math.abs(approved - row.amount) > 0.001;
 }
 
+export function isEmployeeEditableExpenseStatus(status: ExpenseStatus) {
+    return status === "draft" || status === "rework";
+}
+
 export function getExpenseStatusStyles(status: ExpenseStatus) {
     switch (status) {
         case "approved":
@@ -62,6 +66,8 @@ export function getExpenseStatusStyles(status: ExpenseStatus) {
             return "bg-red-50 text-red-800 ring-1 ring-red-600/15";
         case "draft":
             return "bg-slate-100 text-slate-700 ring-1 ring-slate-300/50";
+        case "rework":
+            return "bg-orange-50 text-orange-900 ring-1 ring-orange-500/25";
         default:
             return "bg-amber-50 text-amber-800 ring-1 ring-amber-600/15";
     }
@@ -75,6 +81,8 @@ export function getExpenseStatusLabel(status: ExpenseStatus) {
             return "Rejected";
         case "draft":
             return "Draft";
+        case "rework":
+            return "Rework";
         default:
             return "Pending";
     }

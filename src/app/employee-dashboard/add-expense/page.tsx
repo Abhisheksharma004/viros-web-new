@@ -29,6 +29,7 @@ import {
     formatExpenseDate,
     getExpenseStatusLabel,
     getExpenseStatusStyles,
+    isEmployeeEditableExpenseStatus,
 } from "@/lib/employeeExpenseUi";
 
 type ExpenseSummary = {
@@ -52,6 +53,10 @@ const EMPTY_MONTH_CLAIM: EmployeeMonthClaimInfo = {
     status: "empty",
     draftCount: 0,
     draftAmount: 0,
+    reworkCount: 0,
+    reworkAmount: 0,
+    submitCount: 0,
+    submitAmount: 0,
     submittedCount: 0,
     pendingCount: 0,
     approvedCount: 0,
@@ -60,6 +65,16 @@ const EMPTY_MONTH_CLAIM: EmployeeMonthClaimInfo = {
     canSubmit: false,
     canEdit: true,
 };
+
+function ExpenseReworkNote({ note }: { note: string | null }) {
+    if (!note?.trim()) return null;
+    return (
+        <p className="mt-1.5 line-clamp-2 text-[11px] font-medium leading-snug text-orange-800 sm:line-clamp-3">
+            
+            {note.trim()}
+        </p>
+    );
+}
 
 function getTodayIso() {
     const d = new Date();
@@ -84,10 +99,10 @@ function formatMonthShort(month: string) {
     return d.toLocaleDateString("en-IN", { month: "short", year: "numeric" });
 }
 
-type ExpenseStatusFilter = "all" | "rejected" | "pending" | "draft";
+type ExpenseStatusFilter = "all" | "rejected" | "pending" | "draft" | "rework";
 
 function parseStatusFilter(value: string | null): ExpenseStatusFilter {
-    if (value === "rejected" || value === "pending" || value === "draft") {
+    if (value === "rejected" || value === "pending" || value === "draft" || value === "rework") {
         return value;
     }
     return "all";
@@ -238,7 +253,8 @@ function AddExpensePageInner() {
     };
 
     const handleDeleteExpense = async (expense: EmployeeExpenseRow) => {
-        if (!window.confirm("Remove this draft expense?")) return;
+        const label = expense.status === "rework" ? "rework expense" : "draft expense";
+        if (!window.confirm(`Remove this ${label}?`)) return;
         const response = await fetch(`/api/employee/expenses/${expense.id}`, {
             method: "DELETE",
         });
@@ -251,9 +267,13 @@ function AddExpensePageInner() {
 
     const handleSubmitBatch = async () => {
         if (!monthClaim.canSubmit) return;
+        const resubmitNote =
+            monthClaim.submittedCount > 0
+                ? `\n\nThese expense${monthClaim.submitCount === 1 ? "" : "s"} will be sent back for admin review.`
+                : `\n\nYou won't be able to add new expenses for ${monthLabel} after this until admin sends items for rework.`;
         if (
             !window.confirm(
-                `Submit ${monthClaim.draftCount} expense${monthClaim.draftCount === 1 ? "" : "s"} (${formatCurrencyWhole(monthClaim.draftAmount)}) for admin approval?\n\nYou won't be able to add or edit expenses for ${monthLabel} after this.`,
+                `Submit ${monthClaim.submitCount} expense${monthClaim.submitCount === 1 ? "" : "s"} (${formatCurrencyWhole(monthClaim.submitAmount)}) for admin approval?${resubmitNote}`,
             )
         ) {
             return;
@@ -481,13 +501,18 @@ function AddExpensePageInner() {
                                             </div>
                                         </button>
                                         <div className="flex items-center justify-between gap-2 border-t border-gray-100 px-4 pb-4 pt-3">
-                                            <span
-                                                className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${getExpenseStatusStyles(exp.status)}`}
-                                            >
-                                                {getExpenseStatusLabel(exp.status)}
-                                            </span>
+                                            <div className="min-w-0 flex-1">
+                                                <span
+                                                    className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${getExpenseStatusStyles(exp.status)}`}
+                                                >
+                                                    {getExpenseStatusLabel(exp.status)}
+                                                </span>
+                                                {exp.status === "rework" ? (
+                                                    <ExpenseReworkNote note={exp.reject_reason} />
+                                                ) : null}
+                                            </div>
                                             <div className="flex items-center gap-2">
-                                                {exp.status === "draft" && monthClaim.canEdit ? (
+                                                {isEmployeeEditableExpenseStatus(exp.status) ? (
                                                     <>
                                                         <button
                                                             type="button"
@@ -545,16 +570,19 @@ function AddExpensePageInner() {
                                                 <td className="whitespace-nowrap px-3 py-3 font-semibold text-gray-900">
                                                     {formatCurrencyWhole(exp.amount)}
                                                 </td>
-                                                <td className="px-3 py-3">
+                                                <td className="max-w-[220px] px-3 py-3">
                                                     <span
                                                         className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${getExpenseStatusStyles(exp.status)}`}
                                                     >
                                                         {getExpenseStatusLabel(exp.status)}
                                                     </span>
+                                                    {exp.status === "rework" ? (
+                                                        <ExpenseReworkNote note={exp.reject_reason} />
+                                                    ) : null}
                                                 </td>
                                                 <td className="px-3 py-3 text-right">
                                                     <div className="inline-flex items-center gap-1.5">
-                                                        {exp.status === "draft" && monthClaim.canEdit ? (
+                                                        {isEmployeeEditableExpenseStatus(exp.status) ? (
                                                             <>
                                                                 <button
                                                                     type="button"
@@ -602,9 +630,15 @@ function AddExpensePageInner() {
                             <div className="min-w-0">
                                 <p className="text-sm font-bold text-[#0a2a5e]">Ready to submit?</p>
                                 <p className="mt-0.5 text-xs text-gray-600">
-                                    {monthClaim.draftCount} draft expense
-                                    {monthClaim.draftCount === 1 ? "" : "s"} ·{" "}
-                                    {formatCurrencyWhole(monthClaim.draftAmount)} will be sent to admin for approval
+                                    {monthClaim.submitCount} expense
+                                    {monthClaim.submitCount === 1 ? "" : "s"}
+                                    {monthClaim.reworkCount > 0
+                                        ? ` (${monthClaim.reworkCount} rework)`
+                                        : monthClaim.draftCount > 0
+                                          ? ` (${monthClaim.draftCount} draft)`
+                                          : ""}{" "}
+                                    · {formatCurrencyWhole(monthClaim.submitAmount)} will be sent to admin for
+                                    approval
                                 </p>
                             </div>
                             <button
@@ -652,8 +686,8 @@ function AddExpensePageInner() {
             <ExpenseViewModal
                 expense={viewExpense}
                 onClose={() => setViewExpense(null)}
-                onEdit={monthClaim.canEdit ? openEditModal : undefined}
-                onDelete={monthClaim.canEdit ? handleDeleteExpense : undefined}
+                onEdit={openEditModal}
+                onDelete={handleDeleteExpense}
             />
 
             <ExpenseSuccessAlert

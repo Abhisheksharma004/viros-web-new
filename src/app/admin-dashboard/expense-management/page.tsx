@@ -11,7 +11,9 @@ import {
     LayoutList,
     Loader2,
     RefreshCw,
+    RotateCcw,
     Search,
+    Trash2,
     XCircle,
 } from "lucide-react";
 import type {
@@ -82,6 +84,10 @@ export default function ExpenseManagementPage() {
     const [batchRejectModal, setBatchRejectModal] = useState<AdminExpenseBatchSummary | null>(null);
     const [rejectReason, setRejectReason] = useState("");
     const [rejectError, setRejectError] = useState("");
+    const [reworkModal, setReworkModal] = useState<EmployeeExpenseRow | null>(null);
+    const [reworkReason, setReworkReason] = useState("");
+    const [reworkError, setReworkError] = useState("");
+    const [deletingId, setDeletingId] = useState<number | null>(null);
     const [exportBusy, setExportBusy] = useState<"excel" | "pdf" | null>(null);
 
     const monthLabel = useMemo(() => formatMonthLabel(month), [month]);
@@ -290,6 +296,74 @@ export default function ExpenseManagementPage() {
         void setExpenseStatus(rejectModal, "rejected", { rejectionReason: reason });
     };
 
+    const deleteExpense = async (row: EmployeeExpenseRow) => {
+        const confirmed = window.confirm(
+            `Permanently delete expense ${row.expense_id} (${formatCurrency(row.amount)}) for ${row.employee_name || row.employee_id}?\n\nThis cannot be undone.`,
+        );
+        if (!confirmed) return;
+
+        setDeletingId(row.id);
+        setError("");
+        try {
+            const resp = await fetch(`/api/admin/expenses/${row.id}`, { method: "DELETE" });
+            const data = await resp.json().catch(() => ({}));
+            if (!resp.ok) {
+                throw new Error(typeof data.message === "string" ? data.message : "Failed to delete expense");
+            }
+            setExpenses((prev) => prev.filter((e) => e.id !== row.id));
+            if (viewExpense?.id === row.id) setViewExpense(null);
+            refreshAfterUpdate();
+        } catch (e) {
+            setError(e instanceof Error ? e.message : "Failed to delete expense");
+        } finally {
+            setDeletingId(null);
+        }
+    };
+
+    const openReworkModal = (row: EmployeeExpenseRow) => {
+        setReworkModal(row);
+        setReworkReason("");
+        setReworkError("");
+    };
+
+    const closeReworkModal = () => {
+        if (updatingId === reworkModal?.id) return;
+        setReworkModal(null);
+        setReworkReason("");
+        setReworkError("");
+    };
+
+    const confirmRework = async () => {
+        if (!reworkModal) return;
+        setUpdatingId(reworkModal.id);
+        setReworkError("");
+        try {
+            const payload: Record<string, string> = { action: "rework" };
+            const reason = reworkReason.trim();
+            if (reason) payload.rework_reason = reason;
+
+            const resp = await fetch(`/api/admin/expenses/${reworkModal.id}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            });
+            const data = await resp.json().catch(() => ({}));
+            if (!resp.ok) {
+                throw new Error(typeof data.message === "string" ? data.message : "Failed to send for rework");
+            }
+
+            setExpenses((prev) => prev.filter((e) => e.id !== reworkModal.id));
+            if (viewExpense?.id === reworkModal.id) setViewExpense(null);
+            setReworkModal(null);
+            setReworkReason("");
+            refreshAfterUpdate();
+        } catch (e) {
+            setReworkError(e instanceof Error ? e.message : "Failed to send for rework");
+        } finally {
+            setUpdatingId(null);
+        }
+    };
+
     const reviewBatch = async (
         batch: AdminExpenseBatchSummary,
         action: "approve" | "reject",
@@ -458,17 +532,6 @@ export default function ExpenseManagementPage() {
                 })}
             </div>
 
-            <div className="flex items-start gap-3 rounded-md border border-[#0a2a5e]/15 bg-[#0a2a5e]/5 px-4 py-3.5">
-                <Inbox className="mt-0.5 h-5 w-5 shrink-0 text-[#0a2a5e]" aria-hidden />
-                <div>
-                    <p className="text-sm font-bold text-[#0a2a5e]">Monthly batch submissions</p>
-                    <p className="mt-0.5 text-xs text-[#0a2a5e]/80">
-                        Employees add expenses throughout the month and submit them in one batch. Review each
-                        employee&apos;s batch here, or open expense lines for line-by-line approval.
-                    </p>
-                </div>
-            </div>
-
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
                 <div className="rounded-md border border-gray-100 bg-white p-4 shadow-sm">
                     <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Month</p>
@@ -631,11 +694,9 @@ export default function ExpenseManagementPage() {
                             <table className="min-w-full text-sm">
                                 <thead>
                                     <tr className="border-b border-gray-100 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-                                        <th className="px-6 py-3">Expense ID</th>
+                                        <th className="px-6 py-3">Expense ID / Date</th>
                                         <th className="px-6 py-3">Employee</th>
-                                        <th className="px-6 py-3">Date</th>
-                                        <th className="px-6 py-3">Category</th>
-                                        <th className="px-6 py-3">Title</th>
+                                        <th className="px-6 py-3">Category / Title</th>
                                         <th className="px-6 py-3">Amount</th>
                                         <th className="px-6 py-3">Approved amt.</th>
                                         <th className="px-6 py-3">Status</th>
@@ -645,8 +706,13 @@ export default function ExpenseManagementPage() {
                                 <tbody className="divide-y divide-gray-50">
                                     {expenses.map((row) => (
                                         <tr key={row.id} className="hover:bg-gray-50/80">
-                                            <td className="whitespace-nowrap px-6 py-4 font-mono text-xs font-semibold text-[#0a2a5e]">
-                                                {row.expense_id}
+                                            <td className="whitespace-nowrap px-6 py-4">
+                                                <p className="font-mono text-xs font-semibold text-[#0a2a5e]">
+                                                    {row.expense_id}
+                                                </p>
+                                                <p className="mt-0.5 text-xs text-gray-500">
+                                                    {formatExpenseDate(row.expense_date)}
+                                                </p>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <p className="font-semibold text-gray-900">
@@ -654,12 +720,9 @@ export default function ExpenseManagementPage() {
                                                 </p>
                                                 <p className="text-xs text-gray-500">{row.employee_id}</p>
                                             </td>
-                                            <td className="whitespace-nowrap px-6 py-4 text-gray-700">
-                                                {formatExpenseDate(row.expense_date)}
-                                            </td>
-                                            <td className="whitespace-nowrap px-6 py-4 text-gray-700">{row.category}</td>
-                                            <td className="max-w-[320px] truncate px-6 py-4 font-medium text-gray-900">
-                                                {row.title}
+                                            <td className="max-w-[280px] px-6 py-4">
+                                                <p className="truncate font-medium text-gray-900">{row.category}</p>
+                                                <p className="mt-0.5 truncate text-xs text-gray-500">{row.title}</p>
                                             </td>
                                             <td className="whitespace-nowrap px-6 py-4 font-semibold text-gray-900">
                                                 {formatCurrency(row.amount)}
@@ -705,22 +768,54 @@ export default function ExpenseManagementPage() {
                                                         <>
                                                             <button
                                                                 type="button"
-                                                                disabled={updatingId === row.id}
+                                                                disabled={updatingId === row.id || deletingId === row.id}
                                                                 onClick={() => openApproveModal(row)}
-                                                                className="inline-flex h-10 items-center justify-center rounded-md bg-emerald-600 px-3 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-60"
+                                                                className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-emerald-200 bg-emerald-600 text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-60"
+                                                                title="Approve"
+                                                                aria-label="Approve"
                                                             >
-                                                                Approve
+                                                                {updatingId === row.id ? (
+                                                                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                                                                ) : (
+                                                                    <CheckCheck className="h-4 w-4" aria-hidden />
+                                                                )}
                                                             </button>
                                                             <button
                                                                 type="button"
-                                                                disabled={updatingId === row.id}
+                                                                disabled={updatingId === row.id || deletingId === row.id}
                                                                 onClick={() => openRejectModal(row)}
-                                                                className="inline-flex h-10 items-center justify-center rounded-md bg-red-600 px-3 text-xs font-bold text-white shadow-sm hover:bg-red-700 disabled:opacity-60"
+                                                                className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-red-200 bg-red-600 text-white shadow-sm transition hover:bg-red-700 disabled:opacity-60"
+                                                                title="Reject"
+                                                                aria-label="Reject"
                                                             >
-                                                                Reject
+                                                                <XCircle className="h-4 w-4" aria-hidden />
                                                             </button>
                                                         </>
                                                     ) : null}
+                                                    <button
+                                                        type="button"
+                                                        disabled={updatingId === row.id || deletingId === row.id}
+                                                        onClick={() => openReworkModal(row)}
+                                                        className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-amber-300 bg-amber-50 text-amber-800 shadow-sm transition hover:bg-amber-100 disabled:opacity-60"
+                                                        title="Send back to employee for rework"
+                                                        aria-label="Rework"
+                                                    >
+                                                        <RotateCcw className="h-4 w-4" aria-hidden />
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        disabled={updatingId === row.id || deletingId === row.id}
+                                                        onClick={() => void deleteExpense(row)}
+                                                        className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-red-200 bg-red-50 text-red-700 shadow-sm hover:bg-red-100 disabled:opacity-60"
+                                                        title="Delete expense"
+                                                        aria-label="Delete expense"
+                                                    >
+                                                        {deletingId === row.id ? (
+                                                            <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                                                        ) : (
+                                                            <Trash2 className="h-4 w-4" aria-hidden />
+                                                        )}
+                                                    </button>
                                                 </div>
                                             </td>
                                         </tr>
@@ -930,12 +1025,12 @@ export default function ExpenseManagementPage() {
                                 ) : null}
                             </div>
                         </div>
-                        <div className="flex shrink-0 flex-col gap-2 border-t border-gray-100 px-5 py-4 sm:flex-row sm:justify-end sm:px-6">
+                        <div className="flex shrink-0 flex-col gap-2 border-t border-gray-100 px-5 py-4 sm:flex-row sm:flex-wrap sm:justify-end sm:px-6">
                             {viewExpense.status === "pending" ? (
                                 <>
                                     <button
                                         type="button"
-                                        disabled={updatingId === viewExpense.id}
+                                        disabled={updatingId === viewExpense.id || deletingId === viewExpense.id}
                                         onClick={() => openApproveModal(viewExpense)}
                                         className="h-11 w-full rounded-md bg-emerald-600 px-5 text-sm font-bold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-60 sm:w-auto"
                                     >
@@ -943,7 +1038,7 @@ export default function ExpenseManagementPage() {
                                     </button>
                                     <button
                                         type="button"
-                                        disabled={updatingId === viewExpense.id}
+                                        disabled={updatingId === viewExpense.id || deletingId === viewExpense.id}
                                         onClick={() => openRejectModal(viewExpense)}
                                         className="h-11 w-full rounded-md bg-red-600 px-5 text-sm font-bold text-white shadow-sm hover:bg-red-700 disabled:opacity-60 sm:w-auto"
                                     >
@@ -951,6 +1046,28 @@ export default function ExpenseManagementPage() {
                                     </button>
                                 </>
                             ) : null}
+                            <button
+                                type="button"
+                                disabled={updatingId === viewExpense.id || deletingId === viewExpense.id}
+                                onClick={() => openReworkModal(viewExpense)}
+                                className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md border border-amber-300 bg-amber-50 px-5 text-sm font-bold text-amber-900 hover:bg-amber-100 disabled:opacity-60 sm:w-auto"
+                            >
+                                <RotateCcw className="h-4 w-4" aria-hidden />
+                                Send for rework
+                            </button>
+                            <button
+                                type="button"
+                                disabled={updatingId === viewExpense.id || deletingId === viewExpense.id}
+                                onClick={() => void deleteExpense(viewExpense)}
+                                className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md border border-red-200 bg-red-50 px-5 text-sm font-bold text-red-700 hover:bg-red-100 disabled:opacity-60 sm:w-auto"
+                            >
+                                {deletingId === viewExpense.id ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                                ) : (
+                                    <Trash2 className="h-4 w-4" aria-hidden />
+                                )}
+                                Delete
+                            </button>
                             <button
                                 type="button"
                                 onClick={() => setViewExpense(null)}
@@ -1122,6 +1239,85 @@ export default function ExpenseManagementPage() {
                                         <XCircle className="h-4 w-4" aria-hidden />
                                     )}
                                     Confirm reject
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            ) : null}
+
+            {reworkModal ? (
+                <div
+                    className="fixed inset-0 z-[60] flex items-end justify-center p-0 sm:items-center sm:p-4"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="expense-rework-modal-title"
+                    onClick={closeReworkModal}
+                >
+                    <div className="absolute inset-0 bg-black/50" aria-hidden />
+                    <div
+                        className="relative w-full max-w-md overflow-hidden rounded-t-lg border border-gray-200 bg-white shadow-2xl sm:rounded-md"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="border-b border-white/10 bg-gradient-to-r from-amber-700 to-amber-600 px-5 py-4 text-white">
+                            <h2 id="expense-rework-modal-title" className="text-lg font-bold">
+                                Send for rework
+                            </h2>
+                            <p className="mt-0.5 font-mono text-xs text-amber-100/90">{reworkModal.expense_id}</p>
+                            <p className="mt-1 text-xs text-white/85">
+                                {reworkModal.employee_name || "Employee"} · {formatCurrency(reworkModal.amount)}
+                            </p>
+                        </div>
+                        <div className="space-y-4 p-5 sm:p-6">
+                            <p className="text-sm text-gray-600">
+                                This expense will return to the employee as a draft. They can edit it and
+                                resubmit for approval. Optionally add a note explaining what needs to be fixed.
+                            </p>
+                            <div>
+                                <label
+                                    htmlFor="expense-rework-reason"
+                                    className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-gray-600"
+                                >
+                                    Rework note (optional)
+                                </label>
+                                <textarea
+                                    id="expense-rework-reason"
+                                    value={reworkReason}
+                                    onChange={(e) => {
+                                        setReworkReason(e.target.value);
+                                        setReworkError("");
+                                    }}
+                                    rows={4}
+                                    placeholder="What should the employee update?"
+                                    className="w-full resize-none rounded-md border border-gray-200 bg-white px-3 py-2.5 text-sm font-medium text-gray-900 outline-none focus:border-amber-600 focus:ring-2 focus:ring-amber-600/20"
+                                />
+                            </div>
+                            {reworkError ? (
+                                <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+                                    {reworkError}
+                                </p>
+                            ) : null}
+                            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                                <button
+                                    type="button"
+                                    onClick={closeReworkModal}
+                                    disabled={updatingId === reworkModal.id}
+                                    className="inline-flex h-11 items-center justify-center rounded-md border border-gray-200 px-5 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => void confirmRework()}
+                                    disabled={updatingId === reworkModal.id}
+                                    className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-amber-600 px-6 text-sm font-bold text-white hover:bg-amber-700 disabled:opacity-60"
+                                >
+                                    {updatingId === reworkModal.id ? (
+                                        <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                                    ) : (
+                                        <RotateCcw className="h-4 w-4" aria-hidden />
+                                    )}
+                                    Confirm rework
                                 </button>
                             </div>
                         </div>

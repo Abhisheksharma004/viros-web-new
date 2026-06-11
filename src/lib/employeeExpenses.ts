@@ -31,7 +31,13 @@ export const EXPENSE_CATEGORIES = [
 
 export const EXPENSE_PAYMENT_MODES = ["Cash", "UPI", "Card", "Bank Transfer"] as const;
 
-export const EXPENSE_STATUSES = ["draft", "pending", "approved", "rejected"] as const;
+export const EXPENSE_STATUSES = ["draft", "rework", "pending", "approved", "rejected"] as const;
+
+export const EMPLOYEE_EDITABLE_EXPENSE_STATUSES = ["draft", "rework"] as const;
+
+export function isEmployeeEditableExpenseStatus(status: ExpenseStatus) {
+    return status === "draft" || status === "rework";
+}
 
 /** Statuses visible to admin after an employee submits their monthly batch. */
 export const EXPENSE_ADMIN_STATUSES = ["pending", "approved", "rejected"] as const;
@@ -136,7 +142,7 @@ async function runEnsure() {
             amount DECIMAL(12, 2) NOT NULL,
             payment_mode VARCHAR(32) NOT NULL,
             receipt_reference VARCHAR(128) NULL,
-            status ENUM('draft', 'pending', 'approved', 'rejected') NOT NULL DEFAULT 'draft',
+            status ENUM('draft', 'rework', 'pending', 'approved', 'rejected') NOT NULL DEFAULT 'draft',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             UNIQUE KEY uk_employee_expenses_expense_id (expense_id),
@@ -182,7 +188,15 @@ async function runEnsure() {
     );
 
     await pool.query(
-        `ALTER TABLE ${TABLE} MODIFY COLUMN status ENUM('draft', 'pending', 'approved', 'rejected') NOT NULL DEFAULT 'draft'`,
+        `ALTER TABLE ${TABLE} MODIFY COLUMN status ENUM('draft', 'rework', 'pending', 'approved', 'rejected') NOT NULL DEFAULT 'draft'`,
+    );
+
+    await pool.query(
+        `UPDATE ${TABLE}
+         SET status = 'rework'
+         WHERE status = 'draft'
+           AND reject_reason IS NOT NULL
+           AND TRIM(reject_reason) != ''`,
     );
 
     if (columns.has("notes")) {
@@ -496,6 +510,10 @@ export type EmployeeMonthClaimInfo = {
     status: MonthClaimStatus;
     draftCount: number;
     draftAmount: number;
+    reworkCount: number;
+    reworkAmount: number;
+    submitCount: number;
+    submitAmount: number;
     submittedCount: number;
     pendingCount: number;
     approvedCount: number;
@@ -515,6 +533,8 @@ export async function getEmployeeMonthClaimInfo(
         `SELECT
             SUM(CASE WHEN status = 'draft' THEN 1 ELSE 0 END) AS draft_count,
             COALESCE(SUM(CASE WHEN status = 'draft' THEN amount ELSE 0 END), 0) AS draft_amount,
+            SUM(CASE WHEN status = 'rework' THEN 1 ELSE 0 END) AS rework_count,
+            COALESCE(SUM(CASE WHEN status = 'rework' THEN amount ELSE 0 END), 0) AS rework_amount,
             SUM(CASE WHEN status IN ('pending', 'approved', 'rejected') THEN 1 ELSE 0 END) AS submitted_count,
             SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) AS pending_count,
             SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) AS approved_count,
@@ -528,6 +548,8 @@ export async function getEmployeeMonthClaimInfo(
         | (RowDataPacket & {
               draft_count: number;
               draft_amount: string | number;
+              rework_count: number;
+              rework_amount: string | number;
               submitted_count: number;
               pending_count: number;
               approved_count: number;
@@ -537,6 +559,10 @@ export async function getEmployeeMonthClaimInfo(
 
     const draftCount = Number(row?.draft_count) || 0;
     const draftAmount = Number(row?.draft_amount) || 0;
+    const reworkCount = Number(row?.rework_count) || 0;
+    const reworkAmount = Number(row?.rework_amount) || 0;
+    const submitCount = draftCount + reworkCount;
+    const submitAmount = draftAmount + reworkAmount;
     const submittedCount = Number(row?.submitted_count) || 0;
     const pendingCount = Number(row?.pending_count) || 0;
     const approvedCount = Number(row?.approved_count) || 0;
@@ -552,13 +578,17 @@ export async function getEmployeeMonthClaimInfo(
         status,
         draftCount,
         draftAmount,
+        reworkCount,
+        reworkAmount,
+        submitCount,
+        submitAmount,
         submittedCount,
         pendingCount,
         approvedCount,
         rejectedCount,
         canAdd: isDraftOnly,
-        canSubmit: draftCount > 0 && submittedCount === 0,
-        canEdit: isDraftOnly,
+        canSubmit: submitCount > 0,
+        canEdit: submitCount > 0,
     };
 }
 
@@ -574,9 +604,6 @@ export async function submitEmployeeExpenseMonth(
 
     const claimInfo = await getEmployeeMonthClaimInfo(employeeId, month);
     if (!claimInfo.canSubmit) {
-        if (claimInfo.submittedCount > 0) {
-            throw new Error("This month's expenses have already been submitted for approval");
-        }
         throw new Error("Add at least one expense before submitting");
     }
 
@@ -586,10 +613,10 @@ export async function submitEmployeeExpenseMonth(
 
         const [result] = await conn.query<ResultSetHeader>(
             `UPDATE ${TABLE}
-             SET status = 'pending', updated_at = CURRENT_TIMESTAMP
+             SET status = 'pending', reject_reason = NULL, updated_at = CURRENT_TIMESTAMP
              WHERE employee_id = ?
                AND DATE_FORMAT(expense_date, '%Y-%m') = ?
-               AND status = 'draft'`,
+               AND status IN ('draft', 'rework')`,
             [employeeId, month],
         );
 
@@ -659,14 +686,8 @@ export async function updateEmployeeExpense(
 
     const existing = await getEmployeeExpenseById(employeeId, recordId);
     if (!existing) return null;
-    if (existing.status !== "draft") {
-        throw new Error("Only draft expenses can be edited");
-    }
-
-    const month = input.expenseDate.slice(0, 7);
-    const claimInfo = await getEmployeeMonthClaimInfo(employeeId, month);
-    if (!claimInfo.canAdd) {
-        throw new Error("This month has already been submitted and cannot be edited");
+    if (!isEmployeeEditableExpenseStatus(existing.status)) {
+        throw new Error("Only draft or rework expenses can be edited");
     }
 
     await pool.query(
@@ -674,7 +695,7 @@ export async function updateEmployeeExpense(
          SET expense_date = ?, category = ?, from_address = ?, to_address = ?,
              title = ?, amount = ?, payment_mode = ?, receipt_reference = ?,
              updated_at = CURRENT_TIMESTAMP
-         WHERE id = ? AND employee_id = ? AND status = 'draft'`,
+         WHERE id = ? AND employee_id = ? AND status IN ('draft', 'rework')`,
         [
             input.expenseDate,
             input.category,
@@ -701,18 +722,12 @@ export async function deleteEmployeeExpense(
 
     const existing = await getEmployeeExpenseById(employeeId, recordId);
     if (!existing) return false;
-    if (existing.status !== "draft") {
-        throw new Error("Only draft expenses can be deleted");
-    }
-
-    const month = existing.expense_date.slice(0, 7);
-    const claimInfo = await getEmployeeMonthClaimInfo(employeeId, month);
-    if (!claimInfo.canEdit) {
-        throw new Error("This month has already been submitted and cannot be modified");
+    if (!isEmployeeEditableExpenseStatus(existing.status)) {
+        throw new Error("Only draft or rework expenses can be deleted");
     }
 
     const [result] = await pool.query<ResultSetHeader>(
-        `DELETE FROM ${TABLE} WHERE id = ? AND employee_id = ? AND status = 'draft'`,
+        `DELETE FROM ${TABLE} WHERE id = ? AND employee_id = ? AND status IN ('draft', 'rework')`,
         [recordId, employeeId],
     );
 
@@ -734,7 +749,7 @@ export async function listAllExpensesForAdmin(filters?: AdminExpenseFilters): Pr
 
     const limit = Math.min(Math.max(filters?.limit ?? 200, 1), 500);
     const params: unknown[] = [];
-    const where: string[] = ["status != 'draft'"];
+    const where: string[] = ["status NOT IN ('draft', 'rework')"];
 
     const month = filters?.month?.trim();
     if (month && /^\d{4}-\d{2}$/.test(month)) {
@@ -814,7 +829,7 @@ export async function listAdminExpenseEmployeeSummaries(
     await ensureEmployeeExpensesTable();
 
     const params: unknown[] = [];
-    const where: string[] = ["status != 'draft'"];
+    const where: string[] = ["status NOT IN ('draft', 'rework')"];
 
     const month = filters?.month?.trim();
     if (month && /^\d{4}-\d{2}$/.test(month)) {
@@ -1019,7 +1034,7 @@ export async function updateExpenseStatusForAdmin(
     await ensureEmployeeExpensesTable();
     if (!Number.isFinite(recordId) || recordId <= 0) return null;
     if (!EXPENSE_STATUSES.includes(status)) return null;
-    if (status === "draft") return null;
+    if (status === "draft" || status === "rework") return null;
 
     const [existingRows] = await pool.query<DbRow[]>(
         `SELECT ${EXPENSE_ROW_SELECT} FROM ${TABLE} WHERE id = ? LIMIT 1`,
@@ -1063,6 +1078,60 @@ export async function updateExpenseStatusForAdmin(
     const [rows] = await pool.query<DbRow[]>(
         `SELECT ${EXPENSE_ROW_SELECT}
          FROM ${TABLE} WHERE id = ? LIMIT 1`,
+        [recordId],
+    );
+    const row = rows[0];
+    if (!row) return null;
+    return mapExpenseRow(row);
+}
+
+export async function deleteExpenseForAdmin(recordId: number): Promise<boolean> {
+    await ensureEmployeeExpensesTable();
+    if (!Number.isFinite(recordId) || recordId <= 0) return false;
+
+    const [existingRows] = await pool.query<DbRow[]>(
+        `SELECT id, status FROM ${TABLE} WHERE id = ? LIMIT 1`,
+        [recordId],
+    );
+    const existing = existingRows[0];
+    if (!existing) return false;
+    if (existing.status === "draft" || existing.status === "rework") {
+        throw new Error("Draft and rework expenses are not visible in admin review");
+    }
+
+    const [result] = await pool.query<ResultSetHeader>(`DELETE FROM ${TABLE} WHERE id = ?`, [recordId]);
+    return result.affectedRows > 0;
+}
+
+export async function reworkExpenseForAdmin(
+    recordId: number,
+    options?: { reworkReason?: string },
+): Promise<EmployeeExpenseRow | null> {
+    await ensureEmployeeExpensesTable();
+    if (!Number.isFinite(recordId) || recordId <= 0) return null;
+
+    const [existingRows] = await pool.query<DbRow[]>(
+        `SELECT ${EXPENSE_ROW_SELECT} FROM ${TABLE} WHERE id = ? LIMIT 1`,
+        [recordId],
+    );
+    const existing = existingRows[0];
+    if (!existing) return null;
+    if (existing.status === "draft" || existing.status === "rework") {
+        throw new Error("Expense is already editable by the employee");
+    }
+
+    const reworkReason = options?.reworkReason?.trim() ?? "";
+    const rejectReason = reworkReason || null;
+
+    await pool.query(
+        `UPDATE ${TABLE}
+         SET status = 'rework', reject_reason = ?, approved_amount = NULL, updated_at = CURRENT_TIMESTAMP
+         WHERE id = ?`,
+        [rejectReason, recordId],
+    );
+
+    const [rows] = await pool.query<DbRow[]>(
+        `SELECT ${EXPENSE_ROW_SELECT} FROM ${TABLE} WHERE id = ? LIMIT 1`,
         [recordId],
     );
     const row = rows[0];

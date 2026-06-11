@@ -174,7 +174,7 @@ export default function AddExpenseFormModal({
                         </h3>
                         <p className="mt-0.5 text-xs text-cyan-100/90">
                             {isEdit
-                                ? "Update this draft entry before submitting the month"
+                                ? "Update this entry, then submit for admin approval when ready"
                                 : "Save as draft — submit the full month when ready"}
                         </p>
                     </div>

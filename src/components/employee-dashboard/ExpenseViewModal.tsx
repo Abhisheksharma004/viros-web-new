@@ -9,6 +9,7 @@ import {
     formatExpenseDateTime,
     getExpenseStatusLabel,
     getExpenseStatusStyles,
+    isEmployeeEditableExpenseStatus,
     resolveExpenseApprovedAmount,
 } from "@/lib/employeeExpenseUi";
 
@@ -56,11 +57,11 @@ export default function ExpenseViewModal({ expense, onClose, onEdit, onDelete }:
 
     if (!expense) return null;
 
-    const isDraft = expense.status === "draft";
-    const canModify = isDraft && onEdit && onDelete;
+    const canModify = isEmployeeEditableExpenseStatus(expense.status) && onEdit && onDelete;
 
     const handleDelete = async () => {
-        if (!onDelete || !window.confirm("Remove this draft expense?")) return;
+        const label = expense.status === "rework" ? "rework expense" : "draft expense";
+        if (!onDelete || !window.confirm(`Remove this ${label}?`)) return;
         setIsDeleting(true);
         try {
             await onDelete(expense);
@@ -172,6 +173,14 @@ export default function ExpenseViewModal({ expense, onClose, onEdit, onDelete }:
                                 <p className="text-xs font-medium text-red-800">Rejection reason</p>
                                 <p className="mt-1 text-sm font-semibold text-red-900 whitespace-pre-wrap break-words">
                                     {expense.reject_reason}
+                                </p>
+                            </div>
+                        ) : null}
+                        {expense.status === "rework" ? (
+                            <div className="rounded-md border border-orange-200 bg-orange-50 px-3 py-2.5 sm:col-span-2">
+                                <p className="text-xs font-medium text-orange-800">Rework note</p>
+                                <p className="mt-1 text-sm font-semibold text-orange-900 whitespace-pre-wrap break-words">
+                                    {expense.reject_reason?.trim() || "Admin sent this expense back for corrections."}
                                 </p>
                             </div>
                         ) : null}
