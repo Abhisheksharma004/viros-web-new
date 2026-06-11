@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { DashboardHeroSlide } from "@/lib/employeeDashboard";
 import BirthdayWishCard from "@/components/employee-dashboard/BirthdayWishCard";
+import HeroVortexBackground from "@/components/employee-dashboard/HeroVortexBackground";
 
 const HERO_GRADIENT = "linear-gradient(135deg, #06124f 0%, #0a2a5e 55%, #0d3a7a 100%)";
 
@@ -22,15 +23,17 @@ const BADGE_STYLES = {
 
 const DOT_ACTIVE = "w-6 bg-white";
 const DOT_IDLE = "w-2 bg-white/35";
+const AUTO_PLAY_MS = 5000;
 
 const HERO_SECTION_CLASS =
     "relative flex h-full min-h-[11.5rem] flex-col overflow-hidden rounded-md border border-white/10 shadow-md sm:min-h-[12.75rem] sm:rounded-md";
 
-function BirthdaySlideLayout({ slide }: { slide: DashboardHeroSlide }) {
+function BirthdaySlideLayout({ slide, isActive }: { slide: DashboardHeroSlide; isActive: boolean }) {
     return (
         <BirthdayWishCard
             id={slide.id}
             variant={slide.variant === "birthday-today" ? "birthday-today" : "birthday-soon"}
+            vortexActive={isActive}
             eyebrow={slide.eyebrow}
             title={slide.title}
             subtitle={slide.subtitle}
@@ -42,13 +45,14 @@ function BirthdaySlideLayout({ slide }: { slide: DashboardHeroSlide }) {
     );
 }
 
-function DefaultSlideCard({ slide }: { slide: DashboardHeroSlide }) {
+function DefaultSlideCard({ slide, isActive }: { slide: DashboardHeroSlide; isActive: boolean }) {
     const content = (
         <section
             className={`${HERO_SECTION_CLASS} border-white/10`}
             style={{ background: HERO_GRADIENT }}
         >
-            <div className="flex flex-1 flex-col px-4 py-4 sm:px-6 sm:py-5">
+            <HeroVortexBackground theme="default" active={isActive} />
+            <div className="relative z-10 flex flex-1 flex-col px-4 py-4 sm:px-6 sm:py-5">
                 <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                         <p className="text-xs font-semibold text-cyan-200/90">{slide.eyebrow}</p>
@@ -97,14 +101,14 @@ function DefaultSlideCard({ slide }: { slide: DashboardHeroSlide }) {
     return content;
 }
 
-function HeroSlideCard({ slide }: { slide: DashboardHeroSlide }) {
+function HeroSlideCard({ slide, isActive }: { slide: DashboardHeroSlide; isActive: boolean }) {
     const isBirthday = slide.variant === "birthday-today" || slide.variant === "birthday-soon";
 
     if (isBirthday) {
-        return <BirthdaySlideLayout slide={slide} />;
+        return <BirthdaySlideLayout slide={slide} isActive={isActive} />;
     }
 
-    return <DefaultSlideCard slide={slide} />;
+    return <DefaultSlideCard slide={slide} isActive={isActive} />;
 }
 
 function birthdayDotClass(slide: DashboardHeroSlide, isActive: boolean) {
@@ -125,6 +129,7 @@ type DashboardHeroSliderProps = {
 
 export default function DashboardHeroSlider({ slides }: DashboardHeroSliderProps) {
     const scrollRef = useRef<HTMLDivElement>(null);
+    const autoPlayPausedRef = useRef(false);
     const [activeIndex, setActiveIndex] = useState(0);
 
     const syncActiveFromScroll = useCallback(() => {
@@ -146,16 +151,48 @@ export default function DashboardHeroSlider({ slides }: DashboardHeroSliderProps
         scrollRef.current?.scrollTo({ left: 0 });
     }, [slides]);
 
-    const goToSlide = (index: number) => {
-        const el = scrollRef.current;
-        if (!el) return;
-        const next = Math.min(Math.max(index, 0), slides.length - 1);
-        el.scrollTo({ left: next * el.offsetWidth, behavior: "smooth" });
-        setActiveIndex(next);
+    const goToSlide = useCallback(
+        (index: number) => {
+            const el = scrollRef.current;
+            if (!el) return;
+            const next = Math.min(Math.max(index, 0), slides.length - 1);
+            el.scrollTo({ left: next * el.offsetWidth, behavior: "smooth" });
+            setActiveIndex(next);
+        },
+        [slides.length],
+    );
+
+    useEffect(() => {
+        if (slides.length <= 1) return;
+
+        const timer = window.setInterval(() => {
+            if (autoPlayPausedRef.current) return;
+            setActiveIndex((current) => {
+                const next = current >= slides.length - 1 ? 0 : current + 1;
+                const el = scrollRef.current;
+                if (el) {
+                    el.scrollTo({ left: next * el.offsetWidth, behavior: "smooth" });
+                }
+                return next;
+            });
+        }, AUTO_PLAY_MS);
+
+        return () => window.clearInterval(timer);
+    }, [slides.length]);
+
+    const pauseAutoPlay = () => {
+        autoPlayPausedRef.current = true;
     };
 
-    const goPrev = () => goToSlide(activeIndex - 1);
-    const goNext = () => goToSlide(activeIndex + 1);
+    const resumeAutoPlay = () => {
+        autoPlayPausedRef.current = false;
+    };
+
+    const handleManualNav = (index: number) => {
+        pauseAutoPlay();
+        goToSlide(index);
+        window.setTimeout(resumeAutoPlay, AUTO_PLAY_MS);
+    };
 
     if (slides.length === 0) return null;
 
@@ -164,7 +201,13 @@ export default function DashboardHeroSlider({ slides }: DashboardHeroSliderProps
         activeSlide?.variant === "birthday-today" || activeSlide?.variant === "birthday-soon";
 
     return (
-        <div className="relative">
+        <div
+            className="relative"
+            onMouseEnter={pauseAutoPlay}
+            onMouseLeave={resumeAutoPlay}
+            onTouchStart={pauseAutoPlay}
+            onTouchEnd={resumeAutoPlay}
+        >
             <div
                 ref={scrollRef}
                 className="flex snap-x snap-mandatory overflow-x-auto scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
@@ -180,7 +223,7 @@ export default function DashboardHeroSlider({ slides }: DashboardHeroSliderProps
                         aria-label={`${index + 1} of ${slides.length}: ${slide.title}`}
                         aria-hidden={activeIndex !== index}
                     >
-                        <HeroSlideCard slide={slide} />
+                        <HeroSlideCard slide={slide} isActive={activeIndex === index} />
                     </div>
                 ))}
             </div>
@@ -190,7 +233,7 @@ export default function DashboardHeroSlider({ slides }: DashboardHeroSliderProps
                     <button
                         key={slide.id}
                         type="button"
-                        onClick={() => goToSlide(index)}
+                        onClick={() => handleManualNav(index)}
                         className={`h-2 rounded-full transition-all touch-manipulation ${birthdayDotClass(slide, activeIndex === index)}`}
                         aria-label={`Go to slide ${index + 1}: ${slide.title}`}
                         aria-current={activeIndex === index ? "true" : undefined}
@@ -201,7 +244,7 @@ export default function DashboardHeroSlider({ slides }: DashboardHeroSliderProps
             {activeIndex > 0 ? (
                 <button
                     type="button"
-                    onClick={goPrev}
+                    onClick={() => handleManualNav(activeIndex - 1)}
                     className={`absolute left-2 top-1/2 z-10 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border text-white shadow-lg backdrop-blur-sm transition sm:flex ${
                         isBirthdayActive
                             ? "border-white/30 bg-black/25 hover:bg-black/40"
@@ -215,7 +258,7 @@ export default function DashboardHeroSlider({ slides }: DashboardHeroSliderProps
             {activeIndex < slides.length - 1 ? (
                 <button
                     type="button"
-                    onClick={goNext}
+                    onClick={() => handleManualNav(activeIndex >= slides.length - 1 ? 0 : activeIndex + 1)}
                     className={`absolute right-2 top-1/2 z-10 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border text-white shadow-lg backdrop-blur-sm transition sm:flex ${
                         isBirthdayActive
                             ? "border-white/30 bg-black/25 hover:bg-black/40"

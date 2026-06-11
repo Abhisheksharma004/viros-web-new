@@ -3,6 +3,7 @@
 import { Cake, Gift, Sparkles } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { BirthdayWishCardData } from "@/lib/employeeBirthdayCards";
+import HeroVortexBackground from "@/components/employee-dashboard/HeroVortexBackground";
 
 const BIRTHDAY_THEMES: Record<
     BirthdayWishCardData["variant"],
@@ -54,6 +55,7 @@ type BirthdayWishCardProps = BirthdayWishCardData & {
     /** Tighter layout for What's New panel (320px) */
     compact?: boolean;
     className?: string;
+    vortexActive?: boolean;
 };
 
 export default function BirthdayWishCard({
@@ -66,6 +68,7 @@ export default function BirthdayWishCard({
     initials,
     compact = false,
     className = "",
+    vortexActive = true,
 }: BirthdayWishCardProps) {
     const theme = BIRTHDAY_THEMES[variant];
     const BadgeIcon = theme.BadgeIcon;
@@ -75,8 +78,9 @@ export default function BirthdayWishCard({
             className={`relative overflow-hidden rounded-md border border-white/25 shadow-lg shadow-black/10 ${compact ? "min-h-0" : "min-h-[10.25rem] sm:min-h-[11rem]"} ${className}`}
             style={{ background: theme.gradient }}
         >
+            <HeroVortexBackground theme={variant} active={vortexActive} />
             <div
-                className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${theme.accent}`}
+                className={`pointer-events-none absolute inset-0 z-[1] bg-gradient-to-br ${theme.accent}`}
                 aria-hidden
             />
             <div
@@ -86,7 +90,7 @@ export default function BirthdayWishCard({
             <BirthdayConfetti />
 
             <div
-                className={`relative flex items-center gap-3 ${compact ? "px-3.5 py-3.5" : "gap-4 px-4 py-4 sm:gap-5 sm:px-6 sm:py-5"}`}
+                className={`relative z-10 flex items-center gap-3 ${compact ? "px-3.5 py-3.5" : "gap-4 px-4 py-4 sm:gap-5 sm:px-6 sm:py-5"}`}
             >
                 <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-1.5">
