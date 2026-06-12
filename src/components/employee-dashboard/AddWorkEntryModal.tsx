@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2, Plus, X } from "lucide-react";
+import { Loader2, Pencil, Plus, X } from "lucide-react";
+import type { EmployeeWorkEntryRow } from "@/lib/employeeWorkShared";
 import { inputClass, labelClass, selectClass } from "@/lib/adminTaskUiShared";
 import {
     WORK_DURATION_OPTIONS as WORK_DURATION_VALUES,
@@ -24,6 +25,17 @@ export type WorkFormValues = {
     status: WorkStatus;
     remark: string;
 };
+
+export function workEntryToForm(entry: EmployeeWorkEntryRow): WorkFormValues {
+    return {
+        workDate: entry.work_date,
+        task: entry.task,
+        activity: entry.activity,
+        duration: entry.duration ?? "",
+        status: entry.status,
+        remark: entry.remark ?? "",
+    };
+}
 
 export function emptyWorkForm(todayIso: string): WorkFormValues {
     return {
@@ -78,19 +90,33 @@ type Props = {
     onSubmit: (form: WorkFormValues) => void | Promise<void>;
     /** Restrict work date to this calendar month (YYYY-MM). */
     month?: string;
+    /** When set, modal opens in edit mode with fields pre-filled. */
+    editingEntry?: EmployeeWorkEntryRow | null;
 };
 
-export default function AddWorkEntryModal({ open, onClose, onSubmit, month }: Props) {
-    const dateBounds = resolveWorkDateBounds(month);
+export default function AddWorkEntryModal({
+    open,
+    onClose,
+    onSubmit,
+    month,
+    editingEntry = null,
+}: Props) {
+    const isEdit = Boolean(editingEntry);
+    const activeMonth = isEdit ? editingEntry!.work_date.slice(0, 7) : month;
+    const dateBounds = resolveWorkDateBounds(activeMonth);
     const [form, setForm] = useState<WorkFormValues>(() => emptyWorkForm(todayDateOnly()));
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         if (open) {
-            setForm(emptyWorkForm(month ? defaultDateForMonth(month) : todayDateOnly()));
+            if (editingEntry) {
+                setForm(workEntryToForm(editingEntry));
+            } else {
+                setForm(emptyWorkForm(month ? defaultDateForMonth(month) : todayDateOnly()));
+            }
             setIsSubmitting(false);
         }
-    }, [open, month]);
+    }, [open, month, editingEntry]);
 
     if (!open) return null;
 
@@ -129,7 +155,7 @@ export default function AddWorkEntryModal({ open, onClose, onSubmit, month }: Pr
             <div
                 role="dialog"
                 aria-modal="true"
-                aria-labelledby="add-work-entry-title"
+                aria-labelledby="work-entry-modal-title"
                 className="relative flex max-h-[92dvh] w-full max-w-2xl flex-col overflow-hidden rounded-t-lg border border-gray-200 bg-white shadow-2xl sm:max-h-[min(90vh,720px)] sm:rounded-md"
                 onClick={(e) => e.stopPropagation()}
             >
@@ -145,13 +171,19 @@ export default function AddWorkEntryModal({ open, onClose, onSubmit, month }: Pr
                 >
                     <div className="min-w-0">
                         <h3
-                            id="add-work-entry-title"
+                            id="work-entry-modal-title"
                             className="flex items-center gap-2 text-lg font-bold text-white"
                         >
-                            <Plus className="h-5 w-5 shrink-0" aria-hidden />
-                            Add work entry
+                            {isEdit ? (
+                                <Pencil className="h-5 w-5 shrink-0" aria-hidden />
+                            ) : (
+                                <Plus className="h-5 w-5 shrink-0" aria-hidden />
+                            )}
+                            {isEdit ? "Update work entry" : "Add work entry"}
                         </h3>
-                        <p className="mt-0.5 text-xs text-cyan-100/90">Record what you worked on</p>
+                        <p className="mt-0.5 text-xs text-cyan-100/90">
+                            {isEdit ? "Edit your logged work details" : "Record what you worked on"}
+                        </p>
                     </div>
                     <button
                         type="button"
@@ -264,8 +296,14 @@ export default function AddWorkEntryModal({ open, onClose, onSubmit, month }: Pr
                             disabled={isSubmitting}
                             className="inline-flex items-center justify-center gap-2 rounded-md bg-gradient-to-r from-[#06124f] to-[#0a2a5e] px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:opacity-90 disabled:opacity-60"
                         >
-                            {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-                            Add entry
+                            {isSubmitting ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : isEdit ? (
+                                <Pencil className="h-4 w-4" />
+                            ) : (
+                                <Plus className="h-4 w-4" />
+                            )}
+                            {isEdit ? "Save changes" : "Add entry"}
                         </button>
                     </div>
                 </form>

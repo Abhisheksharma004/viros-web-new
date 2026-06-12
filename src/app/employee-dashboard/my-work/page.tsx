@@ -7,6 +7,7 @@ import {
     ChevronRight,
     ClipboardList,
     Loader2,
+    Pencil,
     Plus,
     RefreshCw,
     Trash2,
@@ -77,6 +78,7 @@ export default function MyWorkPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState("");
     const [modalOpen, setModalOpen] = useState(false);
+    const [editingEntry, setEditingEntry] = useState<EmployeeWorkEntryRow | null>(null);
 
     const monthLabel = useMemo(() => formatMonthLabel(month), [month]);
     const monthShortLabel = useMemo(() => formatMonthShort(month), [month]);
@@ -163,6 +165,49 @@ export default function MyWorkPage() {
         }
     };
 
+    const handleUpdateEntry = async (form: WorkFormValues) => {
+        if (!editingEntry) return;
+
+        const response = await fetch(`/api/employee/work-entries/${editingEntry.id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                work_date: form.workDate,
+                task: form.task,
+                activity: form.activity,
+                duration: form.duration,
+                status: form.status,
+                remark: form.remark,
+            }),
+        });
+
+        const data = (await response.json().catch(() => ({}))) as WorkEntriesPayload & {
+            entry?: EmployeeWorkEntryRow;
+        };
+
+        if (!response.ok) {
+            throw new Error(typeof data.message === "string" ? data.message : "Failed to update work entry");
+        }
+
+        const entryMonthValue = form.workDate.slice(0, 7);
+        if (entryMonthValue !== month) {
+            setMonth(entryMonthValue);
+        } else {
+            if (data.summary) {
+                setSummary(data.summary);
+            }
+            await loadEntries();
+        }
+    };
+
+    const handleFormSubmit = async (form: WorkFormValues) => {
+        if (editingEntry) {
+            await handleUpdateEntry(form);
+        } else {
+            await handleAddEntry(form);
+        }
+    };
+
     const handleDelete = async (id: number) => {
         if (!window.confirm("Remove this work entry?")) return;
 
@@ -180,7 +225,20 @@ export default function MyWorkPage() {
         await loadEntries();
     };
 
-    const openAddModal = () => setModalOpen(true);
+    const openAddModal = () => {
+        setEditingEntry(null);
+        setModalOpen(true);
+    };
+
+    const openEditModal = (row: EmployeeWorkEntryRow) => {
+        setEditingEntry(row);
+        setModalOpen(true);
+    };
+
+    const closeModal = () => {
+        setModalOpen(false);
+        setEditingEntry(null);
+    };
 
     const hasAnyEntries = totalCount > 0;
     const hasMonthEntries = entries.length > 0;
@@ -359,14 +417,24 @@ export default function MyWorkPage() {
                                                         </p>
                                                     ) : null}
                                                 </div>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => void handleDelete(row.id)}
-                                                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-red-200 text-red-600 touch-manipulation active:scale-95"
-                                                    aria-label="Remove entry"
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </button>
+                                                <div className="flex shrink-0 items-center gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => openEditModal(row)}
+                                                        className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-[#0a2a5e]/20 text-[#0a2a5e] touch-manipulation active:scale-95"
+                                                        aria-label="Edit entry"
+                                                    >
+                                                        <Pencil className="h-4 w-4" />
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => void handleDelete(row.id)}
+                                                        className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-red-200 text-red-600 touch-manipulation active:scale-95"
+                                                        aria-label="Remove entry"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </button>
+                                                </div>
                                             </div>
                                         </article>
                                     ))}
@@ -428,15 +496,26 @@ export default function MyWorkPage() {
                                                         {row.remark || "—"}
                                                     </td>
                                                     <td className="px-4 py-4 text-right lg:px-6">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => void handleDelete(row.id)}
-                                                            className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-red-200 bg-red-50 text-red-700 transition hover:bg-red-100"
-                                                            title="Remove"
-                                                            aria-label="Remove entry"
-                                                        >
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </button>
+                                                        <div className="inline-flex items-center justify-end gap-2">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => openEditModal(row)}
+                                                                className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-[#0a2a5e]/20 bg-[#0a2a5e]/5 text-[#0a2a5e] transition hover:bg-[#0a2a5e]/10"
+                                                                title="Edit"
+                                                                aria-label="Edit entry"
+                                                            >
+                                                                <Pencil className="h-4 w-4" />
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => void handleDelete(row.id)}
+                                                                className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-red-200 bg-red-50 text-red-700 transition hover:bg-red-100"
+                                                                title="Remove"
+                                                                aria-label="Remove entry"
+                                                            >
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </button>
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             ))}
@@ -460,9 +539,10 @@ export default function MyWorkPage() {
 
             <AddWorkEntryModal
                 open={modalOpen}
-                onClose={() => setModalOpen(false)}
-                onSubmit={handleAddEntry}
+                onClose={closeModal}
+                onSubmit={handleFormSubmit}
                 month={month}
+                editingEntry={editingEntry}
             />
         </>
     );

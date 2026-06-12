@@ -256,6 +256,50 @@ export async function getEmployeeWorkEntryById(
     return row ? mapWorkEntryRow(row) : null;
 }
 
+export type UpdateWorkEntryInput = {
+    workDate: string;
+    task: string;
+    activity: string;
+    duration?: string | null;
+    status: WorkStatus;
+    remark?: string | null;
+};
+
+export async function updateEmployeeWorkEntry(
+    employeeId: string,
+    recordId: number,
+    input: UpdateWorkEntryInput,
+): Promise<EmployeeWorkEntryRow | null> {
+    await ensureEmployeeWorkEntriesTable();
+
+    const duration = input.duration?.trim() || null;
+    if (duration && !isValidWorkDuration(duration)) {
+        throw new Error("Select a valid duration");
+    }
+
+    const [result] = await pool.query<ResultSetHeader>(
+        `UPDATE ${TABLE}
+         SET work_date = ?, task = ?, activity = ?, duration = ?, status = ?, remark = ?
+         WHERE id = ? AND employee_id = ?`,
+        [
+            input.workDate,
+            input.task.trim(),
+            input.activity.trim(),
+            duration,
+            normalizeWorkStatus(input.status),
+            input.remark?.trim() || null,
+            recordId,
+            employeeId,
+        ],
+    );
+
+    if (result.affectedRows === 0) {
+        return null;
+    }
+
+    return getEmployeeWorkEntryById(employeeId, recordId);
+}
+
 export async function deleteEmployeeWorkEntry(
     employeeId: string,
     recordId: number,

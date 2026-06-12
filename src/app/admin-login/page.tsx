@@ -340,7 +340,7 @@ export default function AdminLoginPage() {
                     <rect width="100%" height="100%" fill="url(#mgrid)" />
                 </svg>
                 <div className="relative z-10 flex flex-col items-center gap-3">
-                    <div className="bg-white rounded-2xl p-3 shadow-xl">
+                    <div className="bg-white rounded-md p-3 shadow-xl">
                         <Image src="/logo.png" alt="Viros" width={52} height={52} className="object-contain" />
                     </div>
                     <div className="text-center">
@@ -381,7 +381,7 @@ export default function AdminLoginPage() {
                 {/* Logo */}
                 <div className="relative z-10">
                     <div className="flex items-center gap-3">
-                        <div className="bg-white rounded-xl p-2 shadow-lg">
+                        <div className="bg-white rounded-md p-2 shadow-lg">
                             <Image src="/logo.png" alt="Viros" width={44} height={44} className="object-contain" />
                         </div>
                         <div>
@@ -414,7 +414,7 @@ export default function AdminLoginPage() {
                         {FEATURES.map((f) => (
                             <div key={f.text} className="flex items-center gap-3">
                                 <div
-                                    className="w-9 h-9 rounded-xl flex items-center justify-center text-base shrink-0"
+                                    className="w-9 h-9 rounded-md flex items-center justify-center text-base shrink-0"
                                     style={{ background: "rgba(255,255,255,0.08)" }}
                                 >
                                     {f.icon}
@@ -450,7 +450,7 @@ export default function AdminLoginPage() {
                     >
                         {error && (
                             <div
-                                className={`rounded-xl border p-3.5 text-sm ${loginAlertStyles(loginErrorCode).box}`}
+                                className={`rounded-md border p-3.5 text-sm ${loginAlertStyles(loginErrorCode).box}`}
                                 role="alert"
                             >
                                 <p className="font-bold">
@@ -488,7 +488,7 @@ export default function AdminLoginPage() {
                                 value={formValues.identifier}
                                 onChange={handleInput}
                                 required
-                                className="w-full px-4 bg-gray-50 border border-gray-200 rounded-2xl text-sm text-gray-800 placeholder-gray-400 outline-none transition-all"
+                                className="w-full px-4 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-800 placeholder-gray-400 outline-none transition-all"
                                 style={{ height: "52px" }}
                                 onFocus={(e) => { e.currentTarget.style.boxShadow = `0 0 0 3px ${ACCENT}28`; e.currentTarget.style.borderColor = ACCENT; e.currentTarget.style.background = "#fff"; }}
                                 onBlur={(e) => { e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.borderColor = "#e5e7eb"; e.currentTarget.style.background = "#f9fafb"; }}
@@ -507,7 +507,7 @@ export default function AdminLoginPage() {
                                     value={formValues.password}
                                     onChange={handleInput}
                                     required
-                                    className="w-full px-4 bg-gray-50 border border-gray-200 rounded-2xl text-sm text-gray-800 placeholder-gray-400 outline-none transition-all"
+                                    className="w-full px-4 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-800 placeholder-gray-400 outline-none transition-all"
                                     style={{ height: "52px" }}
                                     onFocus={(e) => { e.currentTarget.style.boxShadow = `0 0 0 3px ${ACCENT}28`; e.currentTarget.style.borderColor = ACCENT; e.currentTarget.style.background = "#fff"; }}
                                     onBlur={(e) => { e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.borderColor = "#e5e7eb"; e.currentTarget.style.background = "#f9fafb"; }}
@@ -557,7 +557,7 @@ export default function AdminLoginPage() {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full cursor-pointer font-bold text-sm text-white tracking-wide rounded-2xl transition-all duration-200 active:scale-[0.97] hover:opacity-90 disabled:cursor-not-allowed"
+                            className="w-full cursor-pointer font-bold text-sm text-white tracking-wide rounded-md transition-all duration-200 active:scale-[0.97] hover:opacity-90 disabled:cursor-not-allowed"
                             style={{ height: "54px", background: GRADIENT, boxShadow: `0 6px 20px ${SHADOW}` }}
                         >
                             {isLoading ? "Signing In..." : "Sign In"}
@@ -582,7 +582,7 @@ export default function AdminLoginPage() {
                     onClick={closeForgotModal}
                 >
                     <div
-                        className="relative z-10 flex w-full max-w-md max-h-[min(92dvh,720px)] cursor-default flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:rounded-3xl [&_button]:cursor-pointer [&_button:disabled]:cursor-not-allowed"
+                        className="relative z-10 flex w-full max-w-md max-h-[min(92dvh,720px)] cursor-default flex-col overflow-hidden rounded-t-md bg-white shadow-2xl sm:rounded-md [&_button]:cursor-pointer [&_button:disabled]:cursor-not-allowed"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div
@@ -605,7 +605,7 @@ export default function AdminLoginPage() {
 
                             <div className="relative flex flex-col items-center text-center">
                                 <div
-                                    className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl shadow-lg"
+                                    className="mb-4 flex h-14 w-14 items-center justify-center rounded-md shadow-lg"
                                     style={{ background: "rgba(0,188,212,0.2)", border: "1px solid rgba(0,188,212,0.4)" }}
                                 >
                                     {forgotStep === "success" ? (
@@ -648,7 +648,7 @@ export default function AdminLoginPage() {
                             }`}
                         >
                             {forgotError && (
-                                <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700">
+                                <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700">
                                     {forgotError}
                                 </div>
                             )}
@@ -671,7 +671,7 @@ export default function AdminLoginPage() {
                                             onChange={(e) => setForgotIdentifier(e.target.value)}
                                             required
                                             disabled={forgotLoading}
-                                            className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 text-sm text-gray-800 placeholder-gray-400 outline-none transition-all disabled:opacity-60"
+                                            className="w-full rounded-md border border-gray-200 bg-gray-50 px-4 text-sm text-gray-800 placeholder-gray-400 outline-none transition-all disabled:opacity-60"
                                             style={{ height: "52px" }}
                                             onFocus={(e) => {
                                                 e.currentTarget.style.boxShadow = `0 0 0 3px ${ACCENT}28`;
@@ -689,7 +689,7 @@ export default function AdminLoginPage() {
                                     <button
                                         type="submit"
                                         disabled={forgotLoading}
-                                        className="w-full cursor-pointer rounded-2xl text-sm font-bold tracking-wide text-white transition-all duration-200 hover:opacity-90 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-70"
+                                        className="w-full cursor-pointer rounded-md text-sm font-bold tracking-wide text-white transition-all duration-200 hover:opacity-90 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-70"
                                         style={{ height: "52px", background: GRADIENT, boxShadow: `0 6px 20px ${SHADOW}` }}
                                     >
                                         {forgotLoading ? "Sending..." : "Send OTP"}
@@ -717,7 +717,7 @@ export default function AdminLoginPage() {
                                             onChange={(e) => setForgotOtp(e.target.value.replace(/\D/g, ""))}
                                             required
                                             disabled={forgotLoading}
-                                            className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 text-center font-mono text-2xl tracking-widest text-gray-800 outline-none transition-all disabled:opacity-60"
+                                            className="w-full rounded-md border border-gray-200 bg-gray-50 px-4 text-center font-mono text-2xl tracking-widest text-gray-800 outline-none transition-all disabled:opacity-60"
                                             style={{ height: "52px" }}
                                             onFocus={(e) => {
                                                 e.currentTarget.style.boxShadow = `0 0 0 3px ${ACCENT}28`;
@@ -747,7 +747,7 @@ export default function AdminLoginPage() {
                                                 required
                                             minLength={forgotAccountType === "admin" ? 8 : 6}
                                             disabled={forgotLoading}
-                                            className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 pr-12 text-sm text-gray-800 placeholder-gray-400 outline-none transition-all disabled:opacity-60"
+                                            className="w-full rounded-md border border-gray-200 bg-gray-50 px-4 pr-12 text-sm text-gray-800 placeholder-gray-400 outline-none transition-all disabled:opacity-60"
                                             style={{ height: "52px" }}
                                             onFocus={(e) => {
                                                 e.currentTarget.style.boxShadow = `0 0 0 3px ${ACCENT}28`;
@@ -792,7 +792,7 @@ export default function AdminLoginPage() {
                                             required
                                             minLength={forgotAccountType === "admin" ? 8 : 6}
                                             disabled={forgotLoading}
-                                            className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 text-sm text-gray-800 placeholder-gray-400 outline-none transition-all disabled:opacity-60"
+                                            className="w-full rounded-md border border-gray-200 bg-gray-50 px-4 text-sm text-gray-800 placeholder-gray-400 outline-none transition-all disabled:opacity-60"
                                             style={{ height: "52px" }}
                                             onFocus={(e) => {
                                                 e.currentTarget.style.boxShadow = `0 0 0 3px ${ACCENT}28`;
@@ -810,7 +810,7 @@ export default function AdminLoginPage() {
                                     <button
                                         type="submit"
                                         disabled={forgotLoading}
-                                        className="w-full cursor-pointer rounded-2xl text-sm font-bold tracking-wide text-white transition-all duration-200 hover:opacity-90 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-70"
+                                        className="w-full cursor-pointer rounded-md text-sm font-bold tracking-wide text-white transition-all duration-200 hover:opacity-90 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-70"
                                         style={{ height: "52px", background: GRADIENT, boxShadow: `0 6px 20px ${SHADOW}` }}
                                     >
                                         {forgotLoading ? "Updating..." : "Reset password"}
@@ -834,7 +834,7 @@ export default function AdminLoginPage() {
                             {forgotStep === "success" && (
                                 <div className="flex flex-col gap-4">
                                     <div
-                                        className="flex items-start gap-3 rounded-2xl border px-4 py-3.5"
+                                        className="flex items-start gap-3 rounded-md border px-4 py-3.5"
                                         style={{ background: "rgba(0,188,212,0.08)", borderColor: "rgba(0,188,212,0.25)" }}
                                     >
                                         <span className="mt-0.5 text-lg">✓</span>
@@ -849,7 +849,7 @@ export default function AdminLoginPage() {
                                     <button
                                         type="button"
                                         onClick={closeForgotModal}
-                                        className="w-full cursor-pointer rounded-2xl text-sm font-bold tracking-wide text-white transition-all duration-200 hover:opacity-90 active:scale-[0.97]"
+                                        className="w-full cursor-pointer rounded-md text-sm font-bold tracking-wide text-white transition-all duration-200 hover:opacity-90 active:scale-[0.97]"
                                         style={{ height: "52px", background: GRADIENT, boxShadow: `0 6px 20px ${SHADOW}` }}
                                     >
                                         Continue to sign in
