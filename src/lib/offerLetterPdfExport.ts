@@ -1,3 +1,5 @@
+import { drawPdfInlineText, hasInlineMarkdown } from "@/lib/inlineMarkdown";
+import { isBulletLine, stripBulletPrefix } from "@/lib/proposalContentMarkdown";
 import {
     OFFER_SIGNATORY,
     formatOfferPhone,
@@ -232,6 +234,71 @@ function drawRecipientBlock(doc: PdfDoc, y: number, letter: OfferLetter, date: s
     return y + 4;
 }
 
+function drawMarkdownSection(doc: PdfDoc, y: number, content: string): number {
+    const contentWidth = getPageWidth(doc) - PAGE_MARGIN * 2;
+    const lines = content.replace(/\r\n/g, "\n").split("\n");
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(...TEXT_COLOR);
+
+    for (const line of lines) {
+        const trimmed = line.trim();
+
+        if (!trimmed) {
+            y = ensureSpace(doc, y, LINE_HEIGHT);
+            y += LINE_HEIGHT;
+            continue;
+        }
+
+        if (trimmed.startsWith("## ")) {
+            const title = trimmed.slice(3).trim();
+            y = ensureSpace(doc, y, LINE_HEIGHT);
+            doc.setFontSize(10);
+            doc.setTextColor(...PRIMARY);
+            y = drawPdfInlineText(doc, PAGE_MARGIN, y, contentWidth, title, LINE_HEIGHT, {
+                baseBold: true,
+            });
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(10);
+            doc.setTextColor(...TEXT_COLOR);
+            continue;
+        }
+
+        if (isBulletLine(line)) {
+            const bulletText = stripBulletPrefix(line);
+            const textX = PAGE_MARGIN + 8;
+            const textWidth = contentWidth - 8;
+            y = ensureSpace(doc, y, LINE_HEIGHT);
+            doc.setFont("helvetica", "bold");
+            doc.text("•", PAGE_MARGIN + 2, y);
+            doc.setFont("helvetica", "normal");
+            if (hasInlineMarkdown(bulletText)) {
+                y = drawPdfInlineText(doc, textX, y, textWidth, bulletText, LINE_HEIGHT);
+            } else {
+                const wrapped = doc.splitTextToSize(bulletText, textWidth);
+                doc.text(wrapped, textX, y);
+                y += wrapped.length * LINE_HEIGHT;
+            }
+            continue;
+        }
+
+        if (hasInlineMarkdown(line)) {
+            y = ensureSpace(doc, y, LINE_HEIGHT);
+            y = drawPdfInlineText(doc, PAGE_MARGIN, y, contentWidth, line, LINE_HEIGHT);
+            continue;
+        }
+
+        const wrapped = doc.splitTextToSize(line, contentWidth);
+        y = ensureSpace(doc, y, wrapped.length * LINE_HEIGHT);
+        doc.setFont("helvetica", "normal");
+        doc.text(line, PAGE_MARGIN, y, { maxWidth: contentWidth, align: "justify" });
+        y += wrapped.length * LINE_HEIGHT;
+    }
+
+    return y;
+}
+
 function drawParagraph(doc: PdfDoc, y: number, text: string): number {
     const contentWidth = getPageWidth(doc) - PAGE_MARGIN * 2;
     doc.setFont("helvetica", "normal");
@@ -335,23 +402,19 @@ function drawOfferLetterBody(doc: PdfDoc, y: number, letter: OfferLetter): numbe
     y = drawSectionHeader(doc, y, "Compensation");
     y = drawParagraph(doc, y, meta.compensationParagraph);
 
-    if (meta.benefitsParagraph) {
+    if (letter.benefits.trim()) {
         y = drawSectionHeader(doc, y, "Benefits");
-        y = drawParagraph(doc, y, meta.benefitsParagraph);
+        y = drawMarkdownSection(doc, y, letter.benefits);
     }
 
-    if (meta.responsibilities.length > 0) {
+    if (letter.keyResponsibilities.trim()) {
         y = drawSectionHeader(doc, y, "Key Responsibilities");
-        for (const item of meta.responsibilities) {
-            y = drawParagraph(doc, y, item);
-        }
+        y = drawMarkdownSection(doc, y, letter.keyResponsibilities);
     }
 
-    if (meta.terms.length > 0) {
+    if (letter.termsAndConditions.trim()) {
         y = drawSectionHeader(doc, y, "Terms & Conditions");
-        for (const item of meta.terms) {
-            y = drawParagraph(doc, y, item);
-        }
+        y = drawMarkdownSection(doc, y, letter.termsAndConditions);
     }
 
     if (meta.expiryDate) {

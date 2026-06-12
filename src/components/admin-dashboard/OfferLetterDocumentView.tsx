@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import GeneratedDocumentFooter from "@/components/admin-dashboard/GeneratedDocumentFooter";
+import ProposalContentView from "@/components/admin-dashboard/ProposalContentView";
 import {
     OFFER_SIGNATORY,
 } from "@/lib/offerLetterDocument";
@@ -81,35 +82,29 @@ export default function OfferLetterDocumentView({ offerLetter, className = "" }:
                 <SectionHeader>Compensation</SectionHeader>
                 <SectionParagraph>{meta.compensationParagraph}</SectionParagraph>
 
-                {meta.benefitsParagraph ? (
+                {offerLetter.benefits.trim() ? (
                     <>
                         <SectionHeader>Benefits</SectionHeader>
-                        <SectionParagraph>{meta.benefitsParagraph}</SectionParagraph>
-                    </>
-                ) : null}
-
-                {meta.responsibilities.length > 0 ? (
-                    <>
-                        <SectionHeader>Key Responsibilities</SectionHeader>
-                        <div className="mt-1 space-y-1 text-[14px] leading-6 text-gray-800">
-                            {meta.responsibilities.map((item) => (
-                                <p key={item} className="text-justify">
-                                    {item}
-                                </p>
-                            ))}
+                        <div className="mt-1 text-[14px] leading-6 text-gray-800">
+                            <ProposalContentView content={offerLetter.benefits} compact />
                         </div>
                     </>
                 ) : null}
 
-                {meta.terms.length > 0 ? (
+                {offerLetter.keyResponsibilities.trim() ? (
+                    <>
+                        <SectionHeader>Key Responsibilities</SectionHeader>
+                        <div className="mt-1 text-[14px] leading-6 text-gray-800">
+                            <ProposalContentView content={offerLetter.keyResponsibilities} compact />
+                        </div>
+                    </>
+                ) : null}
+
+                {offerLetter.termsAndConditions.trim() ? (
                     <>
                         <SectionHeader>Terms & Conditions</SectionHeader>
-                        <div className="mt-1 space-y-1 text-[14px] leading-6 text-gray-800">
-                            {meta.terms.map((item) => (
-                                <p key={item} className="text-justify">
-                                    {item}
-                                </p>
-                            ))}
+                        <div className="mt-1 text-[14px] leading-6 text-gray-800">
+                            <ProposalContentView content={offerLetter.termsAndConditions} compact />
                         </div>
                     </>
                 ) : null}

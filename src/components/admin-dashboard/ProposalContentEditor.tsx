@@ -19,6 +19,8 @@ import {
 type Props = {
     value: string;
     onChange: (value: string) => void;
+    placeholder?: string;
+    previewHint?: string;
 };
 
 type FormatKind = "bold" | "italic" | "h2";
@@ -74,7 +76,12 @@ function applyHeading(text: string, start: number, end: number) {
     return { next, cursorStart: cursor, cursorEnd: cursor };
 }
 
-export default function ProposalContentEditor({ value, onChange }: Props) {
+export default function ProposalContentEditor({
+    value,
+    onChange,
+    placeholder = "Write your introduction here…\n\n## Scope of work\n\nAdd details here. Click the Table button above to insert a table.",
+    previewHint = "Final preview",
+}: Props) {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const [tab, setTab] = useState<EditorTab>("write");
     const [newTableDraft, setNewTableDraft] = useState<TableData | null>(null);
@@ -218,7 +225,7 @@ export default function ProposalContentEditor({ value, onChange }: Props) {
                         ) : null}
                     </div>
                     <p className="text-xs text-gray-400">
-                        {tab === "write" ? "Write text above, edit tables below" : "Final proposal preview"}
+                        {tab === "write" ? "Write text above, edit tables below" : previewHint}
                     </p>
                 </div>
 
@@ -230,9 +237,7 @@ export default function ProposalContentEditor({ value, onChange }: Props) {
                             onChange={(e) => onChange(e.target.value)}
                             rows={8}
                             className="min-h-[180px] w-full resize-y rounded-md border border-gray-200 px-4 py-3 text-sm leading-relaxed text-gray-800 outline-none focus:border-[#06b6d4] focus:ring-2 focus:ring-[#06b6d4]/20"
-                            placeholder={
-                                "Write your introduction here…\n\n## Scope of work\n\nAdd details here. Click the Table button above to insert a table."
-                            }
+                            placeholder={placeholder}
                         />
                     </div>
                 ) : (

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import ProposalContentEditor from "@/components/admin-dashboard/ProposalContentEditor";
 import { previewOfferNumber, WORK_LOCATIONS } from "@/lib/offerLetterConstants";
 import {
     CURRENCIES,
@@ -426,32 +427,30 @@ export default function OfferLetterFormFields({ values, onChange, offerNumber }:
 
             <div className="space-y-4 rounded-md border border-gray-100 bg-white p-6 shadow-sm">
                 <div>
-                    <FieldLabel>Benefits (one per line)</FieldLabel>
-                    <textarea
+                    <FieldLabel>Benefits</FieldLabel>
+                    <ProposalContentEditor
                         value={values.benefits}
-                        onChange={(e) => set({ benefits: e.target.value })}
-                        className={`${OFFER_LETTER_INPUT_CLASS} min-h-[96px] resize-y`}
+                        onChange={(benefits) => set({ benefits })}
                         placeholder={"Health Insurance\nPaid Leave\nProfessional Development"}
+                        previewHint="Benefits preview"
                     />
                 </div>
                 <div>
                     <FieldLabel required>Key Responsibilities</FieldLabel>
-                    <textarea
+                    <ProposalContentEditor
                         value={values.keyResponsibilities}
-                        onChange={(e) => set({ keyResponsibilities: e.target.value })}
-                        className={`${OFFER_LETTER_INPUT_CLASS} min-h-[120px] resize-y`}
+                        onChange={(keyResponsibilities) => set({ keyResponsibilities })}
                         placeholder="Describe key responsibilities..."
-                        required
+                        previewHint="Responsibilities preview"
                     />
                 </div>
                 <div>
                     <FieldLabel required>Terms & Conditions</FieldLabel>
-                    <textarea
+                    <ProposalContentEditor
                         value={values.termsAndConditions}
-                        onChange={(e) => set({ termsAndConditions: e.target.value })}
-                        className={`${OFFER_LETTER_INPUT_CLASS} min-h-[120px] resize-y`}
+                        onChange={(termsAndConditions) => set({ termsAndConditions })}
                         placeholder="Terms and conditions..."
-                        required
+                        previewHint="Terms preview"
                     />
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">
