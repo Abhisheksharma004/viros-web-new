@@ -422,7 +422,10 @@ export async function buildEmployeeDashboard(
     ]);
 
     const withLeave = mergeLeaveRequestsIntoAttendanceRecords(dbRecords, leaveRequestsMonth);
-    const records = mergeMonthRecordsWithShift(year, month, withLeave, workingDays);
+    const records = mergeMonthRecordsWithShift(year, month, withLeave, workingDays, {
+        todayIso,
+        markPastAbsent: true,
+    });
     const todayRecord = records.find((r) => r.date === todayIso);
     const att = countAttendanceStats(records);
 
@@ -557,13 +560,18 @@ export async function buildEmployeeDashboard(
             daysPresent: att.present,
             leaveBalance,
             pendingTasks,
-            expenseTotal: expenseApprovedFormatted,
+            expenseTotal: expenseAllFormatted,
             expenseSubtextApproved:
                 expenseApproved.expenseCount > 0
-                    ? `${expenseApproved.expenseCount} approved`
+                    ? `${expenseApproved.expenseCount} approved · ${expenseApprovedFormatted}`
                     : "No approved",
             expenseSubtextReject: `Reject ${expenseRejectedFormatted}`,
-            expenseSubtextAll: `All ${expenseAllFormatted}`,
+            expenseSubtextAll:
+                expenseSummary.pendingCount > 0
+                    ? `${expenseSummary.pendingCount} pending`
+                    : expenseSummary.draftCount > 0
+                      ? `${expenseSummary.draftCount} draft`
+                      : "This month",
             expenseApprovedCount: expenseApproved.expenseCount,
             expenseRejectedCount: expenseRejected.expenseCount,
         },

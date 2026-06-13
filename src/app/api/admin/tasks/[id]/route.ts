@@ -72,6 +72,14 @@ export async function PATCH(request: Request, context: RouteContext) {
 
         if (newlyAssignedIds.length > 0) {
             void sendTaskAssignmentEmails(task, newlyAssignedIds, { isNewTask: false });
+            const { notifyTaskAssigned } = await import("@/lib/employeeNotifications");
+            for (const employeeId of newlyAssignedIds) {
+                void notifyTaskAssigned(employeeId, {
+                    recordId: task.recordId,
+                    title: task.title,
+                    dueDate: task.dueDate,
+                });
+            }
         }
 
         return NextResponse.json(task);

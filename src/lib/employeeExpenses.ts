@@ -631,7 +631,11 @@ export async function submitEmployeeExpenseMonth(
 
         await conn.commit();
 
-        const totalAmount = Number((sumRows[0] as RowDataPacket & { total_amount: string | number })?.total_amount) || 0;
+        const totalAmount =
+            Number((sumRows[0] as RowDataPacket & { total_amount: string | number })?.total_amount) || 0;
+
+        const { notifyExpenseMonthSubmitted } = await import("@/lib/employeeNotifications");
+        void notifyExpenseMonthSubmitted(employeeId, month, result.affectedRows, totalAmount);
 
         return {
             submittedCount: result.affectedRows,
@@ -983,7 +987,7 @@ export async function reviewEmployeeExpenseBatch(
                 ? [options!.rejectReason!.trim(), employeeId, month]
                 : [employeeId, month];
 
-        const [result] = await conn.query<ResultSetHeader>(
+        const [updateResult] = await conn.query<ResultSetHeader>(
             action === "approve"
                 ? `UPDATE ${TABLE}
                    SET status = 'approved', approved_amount = amount, reject_reason = NULL, updated_at = CURRENT_TIMESTAMP
@@ -998,7 +1002,7 @@ export async function reviewEmployeeExpenseBatch(
             params,
         );
 
-        if (result.affectedRows === 0) {
+        if (updateResult.affectedRows === 0) {
             throw new Error("No pending expenses found in this batch");
         }
 
@@ -1017,7 +1021,17 @@ export async function reviewEmployeeExpenseBatch(
         }
 
         await conn.commit();
-        return { updatedCount: result.affectedRows, totalApprovedAmount };
+
+        const { notifyExpenseBatchReviewed } = await import("@/lib/employeeNotifications");
+        void notifyExpenseBatchReviewed(
+            employeeId,
+            month,
+            action,
+            updateResult.affectedRows,
+            totalApprovedAmount,
+        );
+
+        return { updatedCount: updateResult.affectedRows, totalApprovedAmount };
     } catch (error) {
         await conn.rollback();
         throw error;
@@ -1082,7 +1096,14 @@ export async function updateExpenseStatusForAdmin(
     );
     const row = rows[0];
     if (!row) return null;
-    return mapExpenseRow(row);
+    const mapped = mapExpenseRow(row);
+
+    if (mapped.status === "approved" || mapped.status === "rejected") {
+        const { notifyExpenseStatusUpdated } = await import("@/lib/employeeNotifications");
+        void notifyExpenseStatusUpdated(mapped);
+    }
+
+    return mapped;
 }
 
 export async function deleteExpenseForAdmin(recordId: number): Promise<boolean> {
@@ -1136,7 +1157,10 @@ export async function reworkExpenseForAdmin(
     );
     const row = rows[0];
     if (!row) return null;
-    return mapExpenseRow(row);
+    const mapped = mapExpenseRow(row);
+    const { notifyExpenseRework } = await import("@/lib/employeeNotifications");
+    void notifyExpenseRework(mapped);
+    return mapped;
 }
 
 export type EmployeeExpenseMonthlySummary = {

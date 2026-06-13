@@ -79,6 +79,31 @@ type EmployeeSession = {
     email: string;
 };
 
+type EmployeeNotification = {
+    id: number;
+    type: string;
+    title: string;
+    message: string;
+    href: string | null;
+    isRead: boolean;
+    createdAt: string;
+};
+
+function formatNotificationRelativeTime(iso: string): string {
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return "";
+    const diffMs = Date.now() - date.getTime();
+    const diffMin = Math.floor(diffMs / 60_000);
+    if (diffMin < 1) return "Just now";
+    if (diffMin < 60) return `${diffMin} min ago`;
+    const diffHr = Math.floor(diffMin / 60);
+    if (diffHr < 24) return `${diffHr} hr ago`;
+    const diffDay = Math.floor(diffHr / 24);
+    if (diffDay === 1) return "Yesterday";
+    if (diffDay < 7) return `${diffDay} days ago`;
+    return date.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+}
+
 function displayName(session: EmployeeSession | null): string {
     if (!session) return "Employee";
     const name = session.name.trim();
@@ -96,6 +121,10 @@ export default function EmployeeHeader({ onMenuClick }: { onMenuClick: () => voi
     const [showProfileMenu, setShowProfileMenu] = useState(false);
     const [showNotifications, setShowNotifications] = useState(false);
     const [employee, setEmployee] = useState<EmployeeSession | null>(null);
+    const [notifications, setNotifications] = useState<EmployeeNotification[]>([]);
+    const [unreadCount, setUnreadCount] = useState(0);
+    const [notificationsLoading, setNotificationsLoading] = useState(false);
+    const [markingAllRead, setMarkingAllRead] = useState(false);
     const router = useRouter();
     const pathname = usePathname();
     const pageHeader = useMemo(() => getPageHeader(pathname), [pathname]);
@@ -135,19 +164,79 @@ export default function EmployeeHeader({ onMenuClick }: { onMenuClick: () => voi
         return () => {
             active = false;
         };
+    }, [router]);
+
+    const loadNotifications = async () => {
+        try {
+            setNotificationsLoading(true);
+            const response = await fetch("/api/employee/notifications", { cache: "no-store" });
+            if (!response.ok) return;
+            const data = await response.json();
+            setNotifications(Array.isArray(data.notifications) ? data.notifications : []);
+            setUnreadCount(typeof data.unreadCount === "number" ? data.unreadCount : 0);
+        } catch {
+            // Keep previous notifications on transient failures.
+        } finally {
+            setNotificationsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        void loadNotifications();
+        const interval = window.setInterval(() => {
+            void loadNotifications();
+        }, 60_000);
+        return () => window.clearInterval(interval);
     }, []);
+
+    useEffect(() => {
+        if (showNotifications) {
+            void loadNotifications();
+        }
+    }, [showNotifications]);
+
+    const handleMarkAllRead = async () => {
+        if (unreadCount === 0 || markingAllRead) return;
+        try {
+            setMarkingAllRead(true);
+            const response = await fetch("/api/employee/notifications", { method: "PATCH" });
+            if (!response.ok) return;
+            const data = await response.json();
+            setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+            setUnreadCount(typeof data.unreadCount === "number" ? data.unreadCount : 0);
+        } catch {
+            // Ignore — user can retry.
+        } finally {
+            setMarkingAllRead(false);
+        }
+    };
+
+    const handleNotificationClick = async (notification: EmployeeNotification) => {
+        if (!notification.isRead) {
+            try {
+                const response = await fetch(`/api/employee/notifications/${notification.id}`, {
+                    method: "PATCH",
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    setNotifications((prev) =>
+                        prev.map((n) => (n.id === notification.id ? { ...n, isRead: true } : n)),
+                    );
+                    setUnreadCount(typeof data.unreadCount === "number" ? data.unreadCount : 0);
+                }
+            } catch {
+                // Still navigate even if mark-read fails.
+            }
+        }
+
+        setShowNotifications(false);
+        if (notification.href) {
+            router.push(notification.href);
+        }
+    };
 
     const employeeName = useMemo(() => displayName(employee), [employee]);
     const initial = useMemo(() => avatarInitial(employee), [employee]);
-
-    const notifications = [
-        { text: "Your leave request has been approved", time: "30 min ago", unread: true },
-        { text: "New company announcement posted", time: "2 hours ago", unread: true },
-        { text: "Salary slip for April is available", time: "Yesterday", unread: false },
-        { text: "Team meeting scheduled: Monday 10 AM", time: "2 days ago", unread: false },
-    ];
-
-    const unreadCount = notifications.filter((n) => n.unread).length;
 
     const handleLogout = async () => {
         try {
@@ -212,28 +301,58 @@ export default function EmployeeHeader({ onMenuClick }: { onMenuClick: () => voi
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                             </svg>
                             {unreadCount > 0 && (
-                                <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
+                                <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                                    {unreadCount > 9 ? "9+" : unreadCount}
+                                </span>
                             )}
                         </button>
 
                         {showNotifications && (
                             <>
-                                <div className="fixed inset-0 z-10" onClick={() => setShowNotifications(false)} />
-                                <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg border border-gray-200 z-20 overflow-hidden">
+                                <div
+                                    className="fixed inset-0 z-10 bg-black/20 sm:bg-transparent"
+                                    onClick={() => setShowNotifications(false)}
+                                />
+                                <div className="fixed left-1/2 top-[4.75rem] z-20 w-[calc(100vw-1.5rem)] max-w-sm -translate-x-1/2 rounded-md border border-gray-200 bg-white shadow-lg overflow-hidden sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:w-80 sm:max-w-none sm:translate-x-0">
                                     <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
                                         <p className="text-sm font-bold text-gray-900">Notifications</p>
-                                        <span className="text-xs text-[#0a2a5e] font-semibold cursor-pointer hover:underline">Mark all read</span>
+                                        {unreadCount > 0 ? (
+                                            <button
+                                                type="button"
+                                                onClick={() => void handleMarkAllRead()}
+                                                disabled={markingAllRead}
+                                                className="text-xs text-[#0a2a5e] font-semibold hover:underline disabled:opacity-50"
+                                            >
+                                                {markingAllRead ? "Updating…" : "Mark all read"}
+                                            </button>
+                                        ) : null}
                                     </div>
-                                    <div className="divide-y divide-gray-50">
-                                        {notifications.map((n, i) => (
-                                            <div key={i} className={`px-4 py-3 flex items-start gap-3 ${n.unread ? "bg-blue-50/50" : ""}`}>
-                                                <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${n.unread ? "bg-[#0a2a5e]" : "bg-gray-300"}`} />
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="text-sm text-gray-800">{n.text}</p>
-                                                    <p className="text-xs text-gray-400 mt-0.5">{n.time}</p>
-                                                </div>
-                                            </div>
-                                        ))}
+                                    <div className="max-h-80 overflow-y-auto divide-y divide-gray-50">
+                                        {notificationsLoading && notifications.length === 0 ? (
+                                            <p className="px-4 py-6 text-sm text-gray-500 text-center">Loading…</p>
+                                        ) : notifications.length === 0 ? (
+                                            <p className="px-4 py-6 text-sm text-gray-500 text-center">
+                                                No notifications yet
+                                            </p>
+                                        ) : (
+                                            notifications.map((n) => (
+                                                <button
+                                                    key={n.id}
+                                                    type="button"
+                                                    onClick={() => void handleNotificationClick(n)}
+                                                    className={`w-full text-left px-4 py-3 flex items-start gap-3 hover:bg-gray-50 transition-colors ${n.isRead ? "" : "bg-blue-50/50"}`}
+                                                >
+                                                    <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${n.isRead ? "bg-gray-300" : "bg-[#0a2a5e]"}`} />
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-sm font-medium text-gray-900">{n.title}</p>
+                                                        <p className="text-sm text-gray-600 mt-0.5 line-clamp-2">{n.message}</p>
+                                                        <p className="text-xs text-gray-400 mt-0.5">
+                                                            {formatNotificationRelativeTime(n.createdAt)}
+                                                        </p>
+                                                    </div>
+                                                </button>
+                                            ))
+                                        )}
                                     </div>
                                 </div>
                             </>

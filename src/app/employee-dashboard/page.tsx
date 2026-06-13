@@ -265,7 +265,7 @@ export default function EmployeeDashboardPage() {
                 id: "expenses",
                 title: "Expenses",
                 value: data.stats.expenseTotal,
-                change: "",
+                change: data.stats.expenseSubtextApproved,
                 expenseSubtext: {
                     approved: data.stats.expenseSubtextApproved,
                     reject: data.stats.expenseSubtextReject,
@@ -327,7 +327,9 @@ export default function EmployeeDashboardPage() {
                                     </p>
                                     {stat.expenseSubtext ? (
                                         <p className="mt-1 line-clamp-2 text-[10px] leading-snug text-gray-400 sm:text-xs">
-                                            <span>{stat.expenseSubtext.approved}</span>
+                                            <span className="font-medium text-emerald-700">
+                                                {stat.expenseSubtext.approved}
+                                            </span>
                                             <span className="text-gray-300"> · </span>
                                             <span className="font-medium text-red-600">
                                                 {stat.expenseSubtext.reject}

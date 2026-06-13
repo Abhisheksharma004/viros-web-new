@@ -381,7 +381,7 @@ export async function fetchUsedDaysByPolicy(
         `SELECT policy_id, COALESCE(SUM(days), 0) AS used
          FROM ${REQUESTS_TABLE}
          WHERE employee_id = ?
-           AND status IN ('pending', 'approved')
+           AND status IN ('pending', 'l1_approved', 'approved')
            AND start_date >= ?
          GROUP BY policy_id`,
         [employeeId, from],
@@ -465,7 +465,17 @@ export async function insertEmployeeLeaveRequest(input: InsertLeaveRequestInput)
     if (!row) {
         throw new Error("Leave request created but could not be loaded");
     }
-    return mapLeaveRequestRowToApi(row);
+    const created = mapLeaveRequestRowToApi(row);
+    const { notifyLeaveSubmitted } = await import("@/lib/employeeNotifications");
+    void notifyLeaveSubmitted({
+        id: created.id,
+        employee_id: created.employee_id,
+        policy_name: created.policy_name,
+        start_date: created.start_date,
+        end_date: created.end_date,
+        days: created.days,
+    });
+    return created;
 }
 
 const LEAVE_REQUEST_JOIN_EMPLOYEE = `
@@ -629,6 +639,18 @@ export async function updateLeaveRequestStatus(
     ) {
         await clearSyncedLeaveAttendance(updated.employee_id, updated);
     }
+
+    const { notifyLeaveStatusUpdated } = await import("@/lib/employeeNotifications");
+    void notifyLeaveStatusUpdated({
+        id: updated.id,
+        employee_id: updated.employee_id,
+        request_id: updated.request_id,
+        policy_name: updated.policy_name,
+        start_date: updated.start_date,
+        end_date: updated.end_date,
+        status: updated.status,
+        rejected_at_stage: updated.rejected_at_stage,
+    });
 
     return updated;
 }

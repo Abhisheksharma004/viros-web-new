@@ -535,7 +535,18 @@ export async function createAdminTask(input: CreateAdminTaskInput): Promise<Task
         );
 
         const row = mapTaskRow((taskRows as TaskDbRow[])[0], assigneeRows as AssigneeDbRow[]);
-        return attachRemarksToTasks([row], new Map())[0];
+        const task = attachRemarksToTasks([row], new Map())[0];
+
+        const { notifyTaskAssigned } = await import("@/lib/employeeNotifications");
+        for (const assignee of input.assignees) {
+            void notifyTaskAssigned(assignee.employee_id, {
+                recordId: task.recordId,
+                title: task.title,
+                dueDate: task.dueDate,
+            });
+        }
+
+        return task;
     } catch (error) {
         await conn.rollback();
         throw error;
