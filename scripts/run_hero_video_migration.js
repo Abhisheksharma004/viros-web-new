@@ -15,7 +15,7 @@ async function runMigration() {
         console.log('🎬 Starting hero slides video support migration...\n');
 
         const migrationSQL = await fs.readFile(
-            path.join(__dirname, 'migrations', 'add_video_to_hero_slides.sql'),
+            path.join(__dirname, '..', 'migrations', 'add_video_to_hero_slides.sql'),
             'utf-8'
         );
 

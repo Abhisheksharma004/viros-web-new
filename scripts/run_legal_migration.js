@@ -16,7 +16,7 @@ async function runMigration() {
 
         console.log('Connected to database.');
 
-        const sql = fs.readFileSync(path.join(__dirname, 'migrations', 'create_legal_content_table.sql'), 'utf8');
+        const sql = fs.readFileSync(path.join(__dirname, '..', 'migrations', 'create_legal_content_table.sql'), 'utf8');
         await connection.query(sql);
 
         console.log('Migration executed successfully.');

@@ -57,7 +57,7 @@ export default function BirthdayRemainderPage() {
             if (!res.ok) {
                 const errorData = await res.json();
                 if (errorData.code === 'TABLE_NOT_FOUND') {
-                    setError('Database table not found. Please run: node run_birthday_migration.js');
+                    setError('Database table not found. Please run: npm run migrate:birthday');
                 } else if (errorData.code === 'CONNECTION_ERROR') {
                     setError(`Database connection error: ${errorData.details || 'Connection was reset. Please check if your MySQL server is running.'}`);
                 } else {
@@ -129,7 +129,7 @@ export default function BirthdayRemainderPage() {
             } else {
                 const errorData = await res.json();
                 if (errorData.code === 'TABLE_NOT_FOUND') {
-                    setError('Database table not found. Please run: node run_birthday_migration.js');
+                    setError('Database table not found. Please run: npm run migrate:birthday');
                 } else {
                     alert('Failed to save birthday. Please try again.');
                 }
@@ -253,7 +253,7 @@ export default function BirthdayRemainderPage() {
             } else {
                 const errorData = await response.json();
                 if (errorData.code === 'TABLE_NOT_FOUND') {
-                    alert('⚠️ Email history table not found.\n\nPlease run: node run_birthday_email_history_migration.js');
+                    alert('⚠️ Email history table not found.\n\nPlease run: npm run migrate:birthday-history');
                 }
                 setEmailHistory([]);
             }

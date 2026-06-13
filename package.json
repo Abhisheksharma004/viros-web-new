@@ -7,13 +7,13 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "setup:birthday": "node setup-birthday-system.js",
-    "migrate:birthday": "node run_birthday_migration_fixed.js",
-    "migrate:birthday-history": "node run_birthday_email_history_migration.js",
-    "cron:birthday": "node birthday-cron.js",
-    "test:birthday": "node test-birthday-system.js",
-    "migrate:password-reset": "node run_password_reset_migration.js",
-    "test:forgot-password": "node test-forgot-password.js"
+    "setup:birthday": "node scripts/setup-birthday-system.js",
+    "migrate:birthday": "node scripts/run_birthday_migration_fixed.js",
+    "migrate:birthday-history": "node scripts/run_birthday_email_history_migration.js",
+    "cron:birthday": "node scripts/birthday-cron.js",
+    "test:birthday": "node scripts/test-birthday-system.js",
+    "migrate:password-reset": "node scripts/run_password_reset_migration.js",
+    "test:forgot-password": "node scripts/test-forgot-password.js"
   },
   "dependencies": {
     "@ckeditor/ckeditor5-react": "^11.1.2",

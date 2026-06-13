@@ -96,7 +96,7 @@ async function runTests() {
                         }
                     } else if (historyResult.status === 404 && historyResult.data.code === 'TABLE_NOT_FOUND') {
                         console.log(`${RED}❌ Email history table not found${RESET}`);
-                        console.log(`${YELLOW}   Run: node run_birthday_email_history_migration.js${RESET}`);
+                        console.log(`${YELLOW}   Run: npm run migrate:birthday-history${RESET}`);
                         allPassed = false;
                     } else {
                         console.log(`${RED}❌ History API error: ${historyResult.data.error}${RESET}`);
@@ -146,7 +146,7 @@ async function runTests() {
         console.log(`\n${YELLOW}Next steps:${RESET}`);
         console.log(`   1. Open: http://localhost:3000/dashboard/birthday-remainder`);
         console.log(`   2. Click the ${CYAN}blue History icon${RESET} (📜) to view email history`);
-        console.log(`   3. Setup automation (see BIRTHDAY_EMAIL_ENHANCED.md)\n`);
+        console.log(`   3. Setup automation (see docs/BIRTHDAY_EMAIL_ENHANCED.md)\n`);
     } else {
         console.log(`\n${RED}${BOLD}⚠️  SOME TESTS FAILED${RESET}\n`);
         console.log(`${YELLOW}Please check the errors above and fix them.${RESET}\n`);

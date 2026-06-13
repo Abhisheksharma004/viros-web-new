@@ -20,7 +20,7 @@ async function runMigration() {
         console.log('✅ Connected to database');
 
         // Read the migration SQL file
-        const migrationPath = path.join(__dirname, 'migrations', 'create_services_page_content_table.sql');
+        const migrationPath = path.join(__dirname, '..', 'migrations', 'create_services_page_content_table.sql');
         const sql = await fs.readFile(migrationPath, 'utf8');
 
         console.log('📄 Running migration: create_services_page_content_table.sql');

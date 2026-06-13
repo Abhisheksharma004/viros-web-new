@@ -70,7 +70,7 @@ CREATE TABLE birthdays (
         
         if (historyTables.length === 0) {
             console.log('📝 Creating birthday_email_history table...');
-            const migrationPath = path.join(__dirname, 'migrations', 'create_birthday_email_history_table.sql');
+            const migrationPath = path.join(__dirname, '..', 'migrations', 'create_birthday_email_history_table.sql');
             const migrationSQL = await fs.readFile(migrationPath, 'utf-8');
             await connection.query(migrationSQL);
             console.log('✅ Birthday email history table created');
@@ -102,8 +102,8 @@ CREATE TABLE birthdays (
         console.log('4. Test preview & send features');
         console.log('5. Setup cron job for automation');
         console.log('\n📚 Documentation:');
-        console.log('- BIRTHDAY_EMAIL_ENHANCED.md - Complete guide');
-        console.log('- IMPLEMENTATION_SUMMARY.md - Feature overview');
+        console.log('- docs/BIRTHDAY_EMAIL_ENHANCED.md - Complete guide');
+        console.log('- docs/IMPLEMENTATION_SUMMARY.md - Feature overview');
         console.log('\n');
 
     } catch (error) {

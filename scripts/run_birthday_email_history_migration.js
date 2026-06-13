@@ -19,7 +19,7 @@ async function runMigration() {
         console.log('✅ Connected to database');
 
         // Read the migration file
-        const migrationPath = path.join(__dirname, 'migrations', 'create_birthday_email_history_table.sql');
+        const migrationPath = path.join(__dirname, '..', 'migrations', 'create_birthday_email_history_table.sql');
         const migrationSQL = await fs.readFile(migrationPath, 'utf-8');
 
         // Execute the migration

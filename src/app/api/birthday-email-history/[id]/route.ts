@@ -61,7 +61,7 @@ export async function GET(
                 { 
                     error: 'Email history table not found',
                     code: 'TABLE_NOT_FOUND',
-                    message: 'Please run: node run_birthday_email_history_migration.js'
+                    message: 'Please run: npm run migrate:birthday-history'
                 },
                 { status: 404 }
             );

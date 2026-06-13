@@ -19,7 +19,7 @@ async function runMigration() {
         connection = await mysql.createConnection(dbConfig);
         console.log('Connected to database.');
 
-        const migrationPath = path.join(__dirname, 'migrations', 'create_navbar_content_table.sql');
+        const migrationPath = path.join(__dirname, '..', 'migrations', 'create_footer_content_table.sql');
         const migrationSql = fs.readFileSync(migrationPath, 'utf8');
 
         console.log('Executing migration...');

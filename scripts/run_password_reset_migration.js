@@ -15,7 +15,7 @@ async function runMigration() {
         console.log('🔑 Starting password reset OTP table migration...\n');
 
         const migrationSQL = await fs.readFile(
-            path.join(__dirname, 'migrations', 'create_password_reset_otps_table.sql'),
+            path.join(__dirname, '..', 'migrations', 'create_password_reset_otps_table.sql'),
             'utf-8'
         );
 

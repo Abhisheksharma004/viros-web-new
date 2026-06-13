@@ -25,7 +25,7 @@ async function runMigration() {
 
         // Read and execute migration SQL
         const sql = fs.readFileSync(
-            path.join(__dirname, 'migrations', 'create_birthdays_table.sql'), 
+            path.join(__dirname, '..', 'migrations', 'create_birthdays_table.sql'), 
             'utf8'
         );
         

@@ -43,7 +43,7 @@ const emailConfig = {
  */
 async function getEmailTemplate(data) {
     try {
-        const templatePath = path.join(__dirname, 'email-templates', 'birthday-wishes.html');
+        const templatePath = path.join(__dirname, '..', 'email-templates', 'birthday-wishes.html');
         let template = await fs.readFile(templatePath, 'utf-8');
         
         // Replace placeholders with actual data

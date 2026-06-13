@@ -14,11 +14,11 @@ async function runMigration() {
     });
 
     try {
-        const sql = fs.readFileSync(path.join(__dirname, 'migrations', 'create_contact_content_table.sql'), 'utf8');
+        const sql = fs.readFileSync(path.join(__dirname, '..', 'migrations', 'add_email_to_testimonials.sql'), 'utf8');
         await connection.query(sql);
-        console.log('Migration executed successfully');
+        console.log('✅ Migration executed successfully - email column added to testimonials table');
     } catch (error) {
-        console.error('Error executing migration:', error);
+        console.error('❌ Error executing migration:', error);
     } finally {
         await connection.end();
     }

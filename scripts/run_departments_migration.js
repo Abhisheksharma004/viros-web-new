@@ -14,7 +14,7 @@ async function runMigration() {
     });
 
     try {
-        const sql = fs.readFileSync(path.join(__dirname, 'migrations', 'create_departments_table.sql'), 'utf8');
+        const sql = fs.readFileSync(path.join(__dirname, '..', 'migrations', 'create_departments_table.sql'), 'utf8');
         await connection.query(sql);
         console.log('Departments migration executed successfully');
     } catch (error) {

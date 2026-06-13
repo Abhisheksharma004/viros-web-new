@@ -14,7 +14,7 @@ export async function GET() {
         // Check if table doesn't exist
         if (error.code === 'ER_NO_SUCH_TABLE') {
             return NextResponse.json({ 
-                error: 'Birthdays table not found. Please run the migration script: node run_birthday_migration.js',
+                error: 'Birthdays table not found. Please run the migration script: npm run migrate:birthday',
                 code: 'TABLE_NOT_FOUND'
             }, { status: 503 });
         }
@@ -60,7 +60,7 @@ export async function POST(request: Request) {
         // Check if table doesn't exist
         if (error.code === 'ER_NO_SUCH_TABLE') {
             return NextResponse.json({ 
-                error: 'Birthdays table not found. Please run the migration script: node run_birthday_migration.js',
+                error: 'Birthdays table not found. Please run the migration script: npm run migrate:birthday',
                 code: 'TABLE_NOT_FOUND'
             }, { status: 503 });
         }
