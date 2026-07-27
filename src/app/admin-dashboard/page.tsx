@@ -36,6 +36,8 @@ const quickActions = [
     { title: "Leave Requests", href: "/admin-dashboard/leave-request", icon: "📅" },
     { title: "Expenses", href: "/admin-dashboard/expense-management", icon: "💰" },
     { title: "AMC Report", href: "/admin-dashboard/amc-report", icon: "📊" },
+    { title: "Products", href: "/admin-dashboard/products", icon: "📦" },
+    { title: "Warranty", href: "/admin-dashboard/warranty", icon: "🛡️" },
     { title: "Website Dashboard", href: "/dashboard", icon: "🌐" },
 ];
 

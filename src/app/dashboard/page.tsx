@@ -27,7 +27,7 @@ const initialStats = [
             </svg>
         ),
         color: "from-green-500 to-green-600",
-        href: "/dashboard/products"
+        href: "/admin-dashboard/products"
     },
     {
         title: "Testimonials",
@@ -59,7 +59,7 @@ const initialStats = [
 
 const quickActions = [
     { title: "Add New Service", href: "/dashboard/services", icon: "+" },
-    { title: "Add Product", href: "/dashboard/products", icon: "+" },
+    { title: "Add Product", href: "/admin-dashboard/products", icon: "+" },
     { title: "Manage Hero", href: "/dashboard/hero", icon: "🖼️" },
     { title: "Site Settings", href: "/dashboard/settings", icon: "⚙️" }
 ];

@@ -128,7 +128,7 @@ export default function FeaturedProducts() {
                 ) : products.length === 0 ? (
                     <div className="text-center py-16">
                         <p className="text-gray-500 text-lg mb-4">No featured products available yet.</p>
-                        <Link href="/dashboard/products" className="text-[#06b6d4] hover:underline font-semibold">
+                        <Link href="/admin-dashboard/products" className="text-[#06b6d4] hover:underline font-semibold">
                             Add products in dashboard →
                         </Link>
                     </div>

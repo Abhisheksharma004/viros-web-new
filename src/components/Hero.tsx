@@ -28,7 +28,7 @@ const getYouTubeVideoId = (url: string): string | null => {
     /youtube\.com\/v\/([a-zA-Z0-9_-]{11})/,
     /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/
   ];
-  
+
   for (const pattern of patterns) {
     const match = url.match(pattern);
     if (match) return match[1];
@@ -279,7 +279,7 @@ export default function Hero() {
 
                 {/* CTA Buttons - Mobile-First Design */}
                 <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center px-4 sm:px-0">
-                  <Link 
+                  <Link
                     href={slide.cta_link || "/products"}
                     className="group relative w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-[#06b6d4] to-[#06124f] text-white font-semibold rounded-lg sm:rounded-xl overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-[#06b6d4]/30 hover:-translate-y-1 min-w-0 sm:min-w-[160px] touch-manipulation text-center"
                   >
@@ -287,7 +287,7 @@ export default function Hero() {
                     <div className="absolute inset-0 bg-gradient-to-r from-[#06124f] to-[#06b6d4] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   </Link>
 
-                  <Link 
+                  <Link
                     href={slide.cta_secondary_link || "/contact"}
                     className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 border-2 border-white/50 text-white font-semibold rounded-lg sm:rounded-xl backdrop-blur-sm hover:bg-white/10 hover:border-white/70 transition-all duration-300 min-w-0 sm:min-w-[160px] touch-manipulation text-center"
                   >
@@ -300,20 +300,7 @@ export default function Hero() {
         </div>
       </div>
 
-      {/* Slide Indicators - Mobile Enhanced */}
-      <div className="absolute bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 z-20 flex space-x-2 sm:space-x-3">
-        {slides.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => goToSlide(index)}
-            className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full transition-all duration-300 touch-manipulation ${index === currentSlide
-              ? 'bg-[#06b6d4] scale-125 shadow-lg shadow-[#06b6d4]/50'
-              : 'bg-white/40 hover:bg-white/60'
-              }`}
-            aria-label={`Go to slide ${index + 1}`}
-          />
-        ))}
-      </div>
+
 
       {/* Progress Bar - Mobile Optimized */}
       <div className="absolute bottom-0 left-0 w-full h-1 bg-white/20 z-20">

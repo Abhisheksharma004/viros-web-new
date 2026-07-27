@@ -140,14 +140,13 @@ export default function ProductHeroSlider({ products: initialProducts }: Product
                         {activeProduct.name}
                     </h2>
 
-                    <div className="space-y-3 md:space-y-4 max-w-lg">
-                        <h3 className="text-xl md:text-2xl font-bold text-[#06b6d4]">
-                            {activeProduct.tagline}
-                        </h3>
-                        <p className="text-gray-700 md:text-gray-600 text-lg md:text-xl leading-relaxed font-medium md:font-light">
-                            {activeProduct.description}
-                        </p>
-                    </div>
+                    {activeProduct.tagline && (
+                        <div className="space-y-3 md:space-y-4 max-w-lg">
+                            <h3 className="text-xl md:text-2xl font-bold text-[#06b6d4]">
+                                {activeProduct.tagline}
+                            </h3>
+                        </div>
+                    )}
 
                     <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto px-4 md:px-0 pt-4 md:pt-0">
                         <Link href="/contact" className="px-8 py-4 bg-[#06124f] text-white font-bold rounded-xl shadow-lg hover:shadow-2xl hover:bg-[#06b6d4] transition-all duration-300 transform hover:-translate-y-1 text-center text-base">
@@ -208,25 +207,7 @@ export default function ProductHeroSlider({ products: initialProducts }: Product
                 </div>
             </div>
 
-            {/* Slide Indicators */}
-            {featuredProducts.length > 1 && (
-                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 hidden md:flex space-x-2 z-30">
-                    {featuredProducts.map((_, idx) => (
-                        <button
-                            key={idx}
-                            onClick={() => {
-                                setDirection(idx > currentIndex ? 1 : -1);
-                                setCurrentIndex(idx);
-                            }}
-                            className={`transition-all duration-300 rounded-full ${idx === currentIndex
-                                ? "bg-[#06124f] w-8 h-2 md:w-12 md:h-3"
-                                : "bg-[#06124f]/20 w-2 h-2 md:w-3 md:h-3 hover:bg-[#06b6d4] hover:scale-110"
-                                }`}
-                            aria-label={`Go to slide ${idx + 1}`}
-                        />
-                    ))}
-                </div>
-            )}
+
 
             {/* Inquiry Popup */}
             {selectedProduct && (
