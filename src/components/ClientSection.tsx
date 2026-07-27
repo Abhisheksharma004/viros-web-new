@@ -1,5 +1,6 @@
 import Image from "next/image";
 import pool from "@/lib/db";
+import ClientPartnerDome from "./ClientPartnerDome";
 
 async function getClients() {
     try {
@@ -94,12 +95,6 @@ export default async function ClientSection() {
 
     if (clients.length === 0 && partners.length === 0) return null;
 
-    const displayClients = clients.slice(0, 8);
-    const displayPartners = partners.slice(0, 8);
-
-    const clientTotal = displayClients.length;
-    const partnerTotal = displayPartners.length;
-
     return (
         <section className="py-12 sm:py-16 md:py-24 relative overflow-hidden bg-[#f3f7fd]">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -113,123 +108,15 @@ export default async function ClientSection() {
                     </h2>
                 </div>
 
-                {/* FULL DOUBLE-DOME SYSTEM ON ALL SCREEN SIZES */}
-                <div className="relative w-full max-w-5xl mx-auto">
-                    
-                    {/* TOP DOME: CLIENTS */}
-                    <div className="relative w-full h-[250px] xs:h-[300px] sm:h-[380px] md:h-[420px] lg:h-[460px]">
-                        {/* SVG Top Arc Rings & Node Dots */}
-                        <svg className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full h-[250px] xs:h-[300px] sm:h-[380px] md:h-[420px] lg:h-[460px] pointer-events-none" viewBox="0 0 1000 500" fill="none">
-                            <path d="M 60 490 A 440 440 0 0 1 940 490" stroke="#06b6d4" strokeOpacity="0.2" strokeWidth="2" strokeDasharray="6 6" />
-                            <path d="M 170 490 A 330 330 0 0 1 830 490" stroke="#06124f" strokeOpacity="0.12" strokeWidth="1.5" strokeDasharray="5 5" />
-                            <path d="M 270 490 A 230 230 0 0 1 730 490" stroke="#06b6d4" strokeOpacity="0.15" strokeWidth="1.5" strokeDasharray="4 4" />
-                            
-                            <circle cx="210" cy="270" r="6" fill="#cbd5e1" stroke="#ffffff" strokeWidth="2" />
-                            <circle cx="280" cy="360" r="6" fill="#cbd5e1" stroke="#ffffff" strokeWidth="2" />
-                            <circle cx="300" cy="450" r="6" fill="#cbd5e1" stroke="#ffffff" strokeWidth="2" />
-                            <circle cx="790" cy="270" r="6" fill="#cbd5e1" stroke="#ffffff" strokeWidth="2" />
-                        </svg>
-
-                        {/* Top Center Stats (Clients) */}
-                        <div className="absolute bottom-1 sm:bottom-2 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 xs:gap-2 sm:gap-3.5 lg:gap-5 z-20 w-full max-w-md text-center">
-                            {clientStats.map((stat, idx) => (
-                                <div key={idx} className="flex flex-col items-center group/stat transition-transform hover:scale-105">
-                                    <div className="scale-60 xs:scale-75 sm:scale-90 lg:scale-100 mb-0.5">{stat.icon}</div>
-                                    <h3 className="text-sm xs:text-base sm:text-2xl lg:text-3xl font-extrabold text-gray-900 leading-none tracking-tight">{stat.value}</h3>
-                                    <p className="text-[9px] xs:text-[10px] sm:text-xs lg:text-sm font-normal text-gray-600 mt-0.5">{stat.label}</p>
-                                </div>
-                            ))}
-                        </div>
-
-                        {/* Top Arc Client Logos */}
-                        {displayClients.map((client: any, index: number) => {
-                            const delaySeconds = (index / clientTotal) * 24;
-
-                            return (
-                                <div
-                                    key={`client-${client.id || index}`}
-                                    style={{
-                                        animationDelay: `-${delaySeconds}s`,
-                                        transform: 'translate(-50%, -50%)',
-                                    }}
-                                    className="absolute z-30 animate-arc-cw group/logo cursor-pointer"
-                                >
-                                    <div className="relative w-11 h-11 xs:w-14 xs:h-14 sm:w-20 sm:h-20 md:w-24 md:h-24 lg:w-32 lg:h-32 rounded-full bg-white shadow-md group-hover/logo:shadow-2xl border-2 border-cyan-100 flex items-center justify-center p-1.5 xs:p-2 sm:p-2.5 md:p-3 lg:p-3.5 transition-all duration-300 group-hover/logo:scale-115">
-                                        <div className="relative w-full h-full">
-                                            <Image src={client.logo_url} alt={client.name} fill className="object-contain p-0.5 sm:p-1" />
-                                        </div>
-                                    </div>
-
-                                    {/* Floating High-Contrast Client Name Tooltip */}
-                                    <div className="absolute top-[106%] left-1/2 -translate-x-1/2 opacity-0 group-hover/logo:opacity-100 transition-all duration-200 pointer-events-none z-50 min-w-[90px] xs:min-w-[110px] sm:min-w-[130px] max-w-[170px]">
-                                        <div className="bg-[#06124f] text-white text-[9px] xs:text-[10px] sm:text-xs font-bold px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl shadow-2xl text-center border border-[#06b6d4]/40 whitespace-normal leading-snug">
-                                            {client.name}
-                                        </div>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-
-                    {/* DIVIDER LINE */}
-                    <div className="relative w-full border-b border-blue-200/70 my-2 xs:my-4" />
-
-                    {/* BOTTOM INVERTED DOME: PARTNERS */}
-                    <div className="relative w-full h-[250px] xs:h-[300px] sm:h-[380px] md:h-[420px] lg:h-[460px]">
-                        {/* SVG Bottom Inverted Arc Rings & Node Dots */}
-                        <svg className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[250px] xs:h-[300px] sm:h-[380px] md:h-[420px] lg:h-[460px] pointer-events-none" viewBox="0 0 1000 500" fill="none">
-                            <path d="M 60 10 A 440 440 0 0 0 940 10" stroke="#06b6d4" strokeOpacity="0.2" strokeWidth="2" strokeDasharray="6 6" />
-                            <path d="M 170 10 A 330 330 0 0 0 830 10" stroke="#06124f" strokeOpacity="0.12" strokeWidth="1.5" strokeDasharray="5 5" />
-                            <path d="M 270 10 A 230 230 0 0 0 730 10" stroke="#06b6d4" strokeOpacity="0.15" strokeWidth="1.5" strokeDasharray="4 4" />
-
-                            <circle cx="210" cy="230" r="6" fill="#cbd5e1" stroke="#ffffff" strokeWidth="2" />
-                            <circle cx="280" cy="140" r="6" fill="#cbd5e1" stroke="#ffffff" strokeWidth="2" />
-                            <circle cx="300" cy="50" r="6" fill="#cbd5e1" stroke="#ffffff" strokeWidth="2" />
-                            <circle cx="790" cy="230" r="6" fill="#cbd5e1" stroke="#ffffff" strokeWidth="2" />
-                        </svg>
-
-                        {/* Bottom Center Stats (Partners) */}
-                        <div className="absolute top-1 sm:top-2 lg:top-4 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 xs:gap-2 sm:gap-3.5 lg:gap-5 z-20 w-full max-w-md text-center">
-                            {partnerStats.map((stat, idx) => (
-                                <div key={idx} className="flex flex-col items-center group/stat transition-transform hover:scale-105">
-                                    <div className="scale-60 xs:scale-75 sm:scale-90 lg:scale-100 mb-0.5">{stat.icon}</div>
-                                    <h3 className="text-sm xs:text-base sm:text-2xl lg:text-3xl font-extrabold text-gray-900 leading-none tracking-tight">{stat.value}</h3>
-                                    <p className="text-[9px] xs:text-[10px] sm:text-xs lg:text-sm font-normal text-gray-600 mt-0.5">{stat.label}</p>
-                                </div>
-                            ))}
-                        </div>
-
-                        {/* Bottom Inverted Arc Partner Logos */}
-                        {displayPartners.map((partner: any, index: number) => {
-                            const delaySeconds = (index / partnerTotal) * 24;
-
-                            return (
-                                <div
-                                    key={`partner-${partner.id || index}`}
-                                    style={{
-                                        animationDelay: `-${delaySeconds}s`,
-                                        transform: 'translate(-50%, -50%)',
-                                    }}
-                                    className="absolute z-30 animate-bot-arc-cw group/logo cursor-pointer"
-                                >
-                                    <div className="relative w-11 h-11 xs:w-14 xs:h-14 sm:w-20 sm:h-20 md:w-24 md:h-24 lg:w-32 lg:h-32 rounded-full bg-white shadow-md group-hover/logo:shadow-2xl border-2 border-indigo-100 flex items-center justify-center p-1.5 xs:p-2 sm:p-2.5 md:p-3 lg:p-3.5 transition-all duration-300 group-hover/logo:scale-115">
-                                        <div className="relative w-full h-full">
-                                            <Image src={partner.logo_url} alt={partner.name} fill className="object-contain p-0.5 sm:p-1" />
-                                        </div>
-                                    </div>
-
-                                    {/* Floating High-Contrast Partner Name Tooltip */}
-                                    <div className="absolute bottom-[106%] left-1/2 -translate-x-1/2 opacity-0 group-hover/logo:opacity-100 transition-all duration-200 pointer-events-none z-50 min-w-[90px] xs:min-w-[110px] sm:min-w-[130px] max-w-[170px]">
-                                        <div className="bg-[#06124f] text-white text-[9px] xs:text-[10px] sm:text-xs font-bold px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl shadow-2xl text-center border border-indigo-400/40 whitespace-normal leading-snug">
-                                            {partner.name}
-                                        </div>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
+                {/* FULL SEQUENTIAL DOUBLE-DOME SLIDER SHOWCASING ALL DATABASE CLIENTS & PARTNERS */}
+                <ClientPartnerDome
+                    clients={clients}
+                    partners={partners}
+                    clientStats={clientStats}
+                    partnerStats={partnerStats}
+                />
             </div>
         </section>
     );
 }
+
