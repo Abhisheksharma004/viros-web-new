@@ -1,78 +1,40 @@
-import Image from "next/image";
 import pool from "@/lib/db";
+import ProductArcDome from "./ProductArcDome";
 
-async function getPartners() {
+async function getProducts() {
     try {
         const [rows]: any = await pool.query(
-            'SELECT * FROM partners WHERE is_active = TRUE ORDER BY display_order ASC'
+            'SELECT * FROM products ORDER BY id DESC'
         );
         return rows;
     } catch (error) {
-        // Suppress errors during build when database is unavailable
         if (process.env.NODE_ENV !== 'production' && error && typeof error === 'object' && 'code' in error && error.code !== 'ECONNREFUSED') {
-            console.error('Error fetching partners:', error);
+            console.error('Error fetching products for TrustedPartners:', error);
         }
         return [];
     }
 }
 
 export default async function TrustedPartners() {
-    const partners = await getPartners();
+    const products = await getProducts();
 
-    if (partners.length === 0) return null;
+    if (products.length === 0) return null;
 
     return (
-        <section className="py-16 bg-white overflow-hidden">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <section className="py-24 relative overflow-hidden bg-[#f3f7fd]">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                {/* Header Title */}
                 <div className="text-center mb-12">
-                    <span className="text-[#06b6d4] font-bold tracking-wider uppercase text-sm mb-2 block">
-                        TRUSTED BY INDUSTRY LEADERS
+                    <span className="inline-block px-4 py-2 rounded-full bg-[#06b6d4]/10 text-[#06b6d4] text-sm font-bold mb-4 border border-[#06b6d4]/20 uppercase tracking-wider">
+                        PREMIUM HARDWARE RANGE
                     </span>
-                    <h2 className="text-4xl font-extrabold text-[#06124f] sm:text-5xl">
-                        Our Strategic Partners
+                    <h2 className="text-4xl md:text-5xl font-black text-[#06124f]">
+                        Featured Products & Solutions
                     </h2>
-                    <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
-                        
-                    </p>
                 </div>
 
-                <div className="relative flex overflow-hidden group">
-                    <div className="flex animate-marquee whitespace-nowrap shrink-0">
-                        {partners.map((partner: any, index: number) => (
-                            <div
-                                key={partner.id || index}
-                                className="mx-8 flex items-center justify-center h-24 w-40 shrink-0"
-                            >
-                                <div className="relative w-full h-full">
-                                    <Image
-                                        src={partner.logo_url}
-                                        alt={partner.name}
-                                        fill
-                                        className="object-contain"
-                                    />
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                    {/* Duplicate for infinite scroll */}
-                    <div className="flex animate-marquee whitespace-nowrap shrink-0">
-                        {partners.map((partner: any, index: number) => (
-                            <div
-                                key={`clone-${partner.id || index}`}
-                                className="mx-8 flex items-center justify-center h-24 w-40 shrink-0"
-                            >
-                                <div className="relative w-full h-full">
-                                    <Image
-                                        src={partner.logo_url}
-                                        alt={partner.name}
-                                        fill
-                                        className="object-contain"
-                                    />
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
+                {/* 60FPS SEQUENTIAL SLIDER SHOWCASING ALL DATABASE PRODUCTS WITHOUT OVERCROWDING */}
+                <ProductArcDome products={products} />
             </div>
         </section>
     );

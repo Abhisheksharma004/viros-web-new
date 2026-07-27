@@ -31,9 +31,14 @@ if (process.env.NODE_ENV !== "production") {
     global.__virosMysqlPool = pool;
 }
 
+pool.setMaxListeners(50);
+
 pool.on("connection", (connection) => {
+    connection.setMaxListeners(50);
     connection.on("error", (err) => {
-        console.error("Database connection error:", err);
+        if (err.code !== 'PROTOCOL_CONNECTION_LOST') {
+            console.error("Database connection error:", err);
+        }
     });
 });
 

@@ -24,7 +24,7 @@ export default function Home() {
       <ClientSection />
       <TrustedPartners />
       <TestimonialSection />
-      
+
       {/* Feedback Button */}
       <FeedbackButton />
 

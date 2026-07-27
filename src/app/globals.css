@@ -1,4 +1,4 @@
-﻿@import "tailwindcss";
+@import "tailwindcss";
 
 @keyframes slide-in-right {
   from {
@@ -106,6 +106,126 @@ body {
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+/* Arc Path Movement Animation - Clockwise Along Half-Circle Arc */
+@keyframes slide-arc-cw {
+  0% {
+    left: 6.67%;
+    top: 77.15%;
+    opacity: 0.2;
+  }
+  5% {
+    opacity: 1;
+  }
+  10% {
+    left: 10.45%;
+    top: 57.56%;
+  }
+  20% {
+    left: 17.30%;
+    top: 40.48%;
+  }
+  30% {
+    left: 26.68%;
+    top: 27.25%;
+  }
+  40% {
+    left: 37.87%;
+    top: 18.87%;
+  }
+  50% {
+    left: 50.00%;
+    top: 16.00%;
+  }
+  60% {
+    left: 62.13%;
+    top: 18.87%;
+  }
+  70% {
+    left: 73.32%;
+    top: 27.25%;
+  }
+  80% {
+    left: 82.70%;
+    top: 40.48%;
+  }
+  90% {
+    left: 89.55%;
+    top: 57.56%;
+  }
+  95% {
+    opacity: 1;
+  }
+  100% {
+    left: 93.33%;
+    top: 77.15%;
+    opacity: 0.2;
+  }
+}
+
+.animate-arc-cw {
+  animation: slide-arc-cw 24s linear infinite;
+}
+
+/* Bottom Inverted Arc Path Movement Animation - Clockwise Along Bottom Half-Circle */
+@keyframes slide-bot-arc-cw {
+  0% {
+    left: 6.67%;
+    top: 20.85%;
+    opacity: 0.2;
+  }
+  5% {
+    opacity: 1;
+  }
+  10% {
+    left: 10.45%;
+    top: 40.44%;
+  }
+  20% {
+    left: 17.30%;
+    top: 57.52%;
+  }
+  30% {
+    left: 26.68%;
+    top: 70.75%;
+  }
+  40% {
+    left: 37.87%;
+    top: 79.13%;
+  }
+  50% {
+    left: 50.00%;
+    top: 82.00%;
+  }
+  60% {
+    left: 62.13%;
+    top: 79.13%;
+  }
+  70% {
+    left: 73.32%;
+    top: 70.75%;
+  }
+  80% {
+    left: 82.70%;
+    top: 57.52%;
+  }
+  90% {
+    left: 89.55%;
+    top: 40.44%;
+  }
+  95% {
+    opacity: 1;
+  }
+  100% {
+    left: 93.33%;
+    top: 20.85%;
+    opacity: 0.2;
+  }
+}
+
+.animate-bot-arc-cw {
+  animation: slide-bot-arc-cw 24s linear infinite;
 }
 
 /* Custom Animations for Product Slider using standard CSS to avoid Hydration Mismatch */
