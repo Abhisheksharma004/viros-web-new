@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState, useEffect } from 'react';
 
 
@@ -114,8 +115,15 @@ export default function Footer() {
                     {/* Brand Column */}
                     <div>
                         <Link href="/" className="inline-block mb-6 group">
-                            <span className="text-3xl font-bold text-white group-hover:text-[#06b6d4] transition-colors">{navbarContent.brand_title}</span>
-                            <span className="block text-sm text-[#06b6d4] font-medium tracking-widest uppercase">{navbarContent.brand_subtitle}</span>
+                            <div className="bg-white/95 backdrop-blur-xs px-4 py-2.5 rounded-xl shadow-md border border-white/20 transition-transform duration-200 group-hover:scale-105 inline-block">
+                                <Image
+                                    src="/plogo.png"
+                                    alt={navbarContent.brand_title || "Viros Entrepreneurs IT Solutions Private Limited"}
+                                    width={240}
+                                    height={70}
+                                    className="h-11 sm:h-12 md:h-12 lg:h-12 w-auto object-contain"
+                                />
+                            </div>
                         </Link>
                         <p className="text-gray-400 mb-8 leading-relaxed">
                             {footerContent.description}

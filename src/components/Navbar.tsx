@@ -12,7 +12,7 @@ export default function Navbar() {
     const buttonRef = useRef<HTMLButtonElement>(null);
 
     const [navbarContent, setNavbarContent] = useState({
-        logo_url: '/logo.png',
+        logo_url: '/plogo.png',
         brand_title: '',
         brand_subtitle: ''
     });
@@ -60,6 +60,12 @@ export default function Navbar() {
         };
     }, [isOpen]);
 
+    const activeLogoUrl = !navbarContent.logo_url || navbarContent.logo_url === '/logo.png' || navbarContent.logo_url === '/hlogo.png'
+        ? '/plogo.png'
+        : navbarContent.logo_url;
+
+    const showSeparateText = navbarContent.brand_title && activeLogoUrl !== '/plogo.png' && activeLogoUrl !== '/hlogo.png';
+
     return (
         <nav className="fixed w-full z-50 transition-all duration-300 bg-white/90 backdrop-blur-md border-b border-[#06b6d4]/30 shadow-sm shadow-[#06124f]/5">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -68,21 +74,23 @@ export default function Navbar() {
                     <div className="shrink-0">
                         <Link href="/" className="flex items-center group">
                             <Image
-                                src={navbarContent.logo_url || '/logo.png'}
-                                alt={navbarContent.brand_title || 'Logo'}
-                                width={200}
-                                height={70}
-                                className="h-14 w-auto object-contain transition-transform duration-200 group-hover:scale-105"
+                                src={activeLogoUrl}
+                                alt={navbarContent.brand_title || 'Viros Entrepreneurs IT Solutions Private Limited'}
+                                width={280}
+                                height={80}
+                                className="h-12 sm:h-14 md:h-14 lg:h-16 w-auto object-contain transition-transform duration-200 group-hover:scale-105"
                                 priority
                             />
-                            <div className="ml-4 flex flex-col">
-                                <span className="text-2xl font-bold bg-linear-to-r from-[#06124f] to-[#06b6d4] bg-clip-text text-transparent">
-                                    {navbarContent.brand_title}
-                                </span>
-                                <span className="text-sm text-[#06124f] font-medium tracking-wide">
-                                    {navbarContent.brand_subtitle}
-                                </span>
-                            </div>
+                            {showSeparateText && (
+                                <div className="ml-4 flex flex-col">
+                                    <span className="text-2xl font-bold bg-linear-to-r from-[#06124f] to-[#06b6d4] bg-clip-text text-transparent">
+                                        {navbarContent.brand_title}
+                                    </span>
+                                    <span className="text-[#06124f] text-sm font-medium tracking-wide">
+                                        {navbarContent.brand_subtitle}
+                                    </span>
+                                </div>
+                            )}
                         </Link>
                     </div>
 
