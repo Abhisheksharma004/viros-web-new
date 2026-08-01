@@ -345,19 +345,46 @@ function parsePunchTime12ToMinutes(time12: string): number | null {
     return hours * 60 + minutes;
 }
 
+function getIstParts(date: Date) {
+    const formatter = new Intl.DateTimeFormat("en-GB", {
+        timeZone: "Asia/Kolkata",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+    });
+    const parts = formatter.formatToParts(date);
+    const get = (type: Intl.DateTimeFormatPartTypes) =>
+        parts.find((p) => p.type === type)?.value ?? "00";
+    return {
+        year: get("year"),
+        month: get("month"),
+        day: get("day"),
+        hour: get("hour"),
+        minute: get("minute"),
+        second: get("second"),
+    };
+}
+
 function punchToMinutes(capture: PunchCapture): number | null {
     if (capture.punchedAt) {
         const d = new Date(capture.punchedAt);
         if (!Number.isNaN(d.getTime())) {
-            return d.getHours() * 60 + d.getMinutes();
+            const p = getIstParts(d);
+            return Number(p.hour) * 60 + Number(p.minute);
         }
     }
     return parsePunchTime12ToMinutes(capture.time);
 }
 
 function isWorkingDay(date: Date, workingDays: number[]) {
-    if (!workingDays.length) return date.getDay() !== 0 && date.getDay() !== 6;
-    return workingDays.includes(date.getDay());
+    const p = getIstParts(date);
+    const dayOfWeek = new Date(`${p.year}-${p.month}-${p.day}T12:00:00+05:30`).getDay();
+    if (!workingDays.length) return dayOfWeek !== 0 && dayOfWeek !== 6;
+    return workingDays.includes(dayOfWeek);
 }
 
 export type LateCheckResult = {
@@ -377,10 +404,18 @@ function formatDurationHms(totalSeconds: number) {
 
 function buildShiftDeadline(punchDate: Date, startTime24: string, graceMinutes: number) {
     const [h, m] = startTime24.split(":").map(Number);
-    const deadline = new Date(punchDate);
-    deadline.setHours(Number.isNaN(h) ? 9 : h, Number.isNaN(m) ? 0 : m, 0, 0);
-    deadline.setMinutes(deadline.getMinutes() + graceMinutes);
-    return deadline;
+    const safeH = Number.isNaN(h) ? 9 : h;
+    const safeM = Number.isNaN(m) ? 0 : m;
+    const totalMinutes = safeH * 60 + safeM + Math.max(0, graceMinutes);
+
+    const deadlineHour = Math.floor(totalMinutes / 60) % 24;
+    const deadlineMinute = totalMinutes % 60;
+
+    const p = getIstParts(punchDate);
+    const hh = String(deadlineHour).padStart(2, "0");
+    const mm = String(deadlineMinute).padStart(2, "0");
+
+    return new Date(`${p.year}-${p.month}-${p.day}T${hh}:${mm}:00+05:30`);
 }
 
 function diffSecondsBetweenPunches(checkIn: PunchCapture, checkOut: PunchCapture): number | null {

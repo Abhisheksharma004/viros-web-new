@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import {
+    computeLateSeconds,
     ensureEmployeeAttendanceTable,
     getAttendanceByDate,
     getAttendanceForMonth,
@@ -84,11 +85,16 @@ export async function GET(request: Request) {
 
         if (todayRow) {
             const sessionToday = mapRowToTodaySession(todayRow);
+            const computedLate = sessionToday.checkIn?.punchedAt
+                ? computeLateSeconds(sessionToday.checkIn.punchedAt, shift)
+                : sessionToday.late;
             today = {
                 ...sessionToday,
                 late: {
-                    ...sessionToday.late,
+                    isLate: computedLate.isLate,
+                    secondsLate: computedLate.secondsLate,
                     graceMinutes: shift?.grace_minutes ?? 0,
+                    shiftStartMinutes: 0,
                 },
             };
         }

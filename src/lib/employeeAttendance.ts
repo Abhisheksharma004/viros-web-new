@@ -232,15 +232,25 @@ export function formatDurationHms(totalSeconds: number) {
 
 function buildShiftDeadline(punchDate: Date, startTime24: string, graceMinutes: number) {
     const [h, m] = startTime24.split(":").map(Number);
-    const deadline = new Date(punchDate);
-    deadline.setHours(Number.isNaN(h) ? 9 : h, Number.isNaN(m) ? 0 : m, 0, 0);
-    deadline.setMinutes(deadline.getMinutes() + graceMinutes);
-    return deadline;
+    const safeH = Number.isNaN(h) ? 9 : h;
+    const safeM = Number.isNaN(m) ? 0 : m;
+    const totalMinutes = safeH * 60 + safeM + Math.max(0, graceMinutes);
+
+    const deadlineHour = Math.floor(totalMinutes / 60) % 24;
+    const deadlineMinute = totalMinutes % 60;
+
+    const p = getPartsInTimeZone(punchDate, ATTENDANCE_TIMEZONE);
+    const hh = String(deadlineHour).padStart(2, "0");
+    const mm = String(deadlineMinute).padStart(2, "0");
+
+    return new Date(`${p.year}-${p.month}-${p.day}T${hh}:${mm}:00${ATTENDANCE_TZ_OFFSET}`);
 }
 
 function isWorkingDay(date: Date, workingDays: number[]) {
-    if (!workingDays.length) return date.getDay() !== 0 && date.getDay() !== 6;
-    return workingDays.includes(date.getDay());
+    const p = getPartsInTimeZone(date, ATTENDANCE_TIMEZONE);
+    const dayOfWeek = new Date(`${p.year}-${p.month}-${p.day}T12:00:00${ATTENDANCE_TZ_OFFSET}`).getDay();
+    if (!workingDays.length) return dayOfWeek !== 0 && dayOfWeek !== 6;
+    return workingDays.includes(dayOfWeek);
 }
 
 export async function getEmployeeShiftForLate(employeeId: string) {
