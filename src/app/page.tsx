@@ -1,6 +1,7 @@
 import Hero from "@/components/Hero";
 import FeaturedProducts from "@/components/FeaturedProducts";
 import FeaturedServices from "@/components/FeaturedServices";
+import BrandBanner from "@/components/BrandBanner";
 import AboutSection from "@/components/AboutSection";
 import ClientSection from "@/components/ClientSection";
 import TestimonialSection from "@/components/TestimonialSection";
@@ -20,6 +21,7 @@ export default function Home() {
       <Hero />
       <FeaturedProducts />
       <FeaturedServices />
+      <BrandBanner />
       <AboutSection />
       <ClientSection />
       <TrustedPartners />

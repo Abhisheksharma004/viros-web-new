@@ -105,12 +105,52 @@ export default function Footer() {
     };
 
     return (
-        <footer className="bg-[#06124f] text-white pt-20 pb-10 relative overflow-hidden">
-            {/* Background Decorations */}
-            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#06b6d4]/5 rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-[#06b6d4]/5 rounded-full blur-3xl pointer-events-none" />
+        <footer className="bg-[#06124f] text-white pt-16 pb-10 relative overflow-hidden">
+            {/* Top Accent Gradient Bar matching hlogo header wave */}
+            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#06124f] via-[#0077b6] to-[#06b6d4]" />
+
+            {/* Background Ambient Glows */}
+            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#06b6d4]/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-[#0077b6]/10 rounded-full blur-3xl pointer-events-none" />
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                {/* 3 Pillars Bar matching hlogo design (INNOVATE, RELIABLE, GROW) */}
+                <div className="mb-14 p-4 sm:p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+                    <div className="flex items-center space-x-4 px-2">
+                        <div className="w-12 h-12 rounded-full bg-[#06b6d4]/20 border border-[#06b6d4]/40 flex items-center justify-center text-[#06b6d4] shrink-0">
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h5 className="text-sm font-bold text-white tracking-wider uppercase">INNOVATE</h5>
+                            <p className="text-xs text-gray-400">Smart Solutions</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center space-x-4 px-2 border-t md:border-t-0 md:border-l border-white/10 pt-4 md:pt-0">
+                        <div className="w-12 h-12 rounded-full bg-[#06b6d4]/20 border border-[#06b6d4]/40 flex items-center justify-center text-[#06b6d4] shrink-0">
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h5 className="text-sm font-bold text-white tracking-wider uppercase">RELIABLE</h5>
+                            <p className="text-xs text-gray-400">Secure & Scalable</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center space-x-4 px-2 border-t md:border-t-0 md:border-l border-white/10 pt-4 md:pt-0">
+                        <div className="w-12 h-12 rounded-full bg-[#06b6d4]/20 border border-[#06b6d4]/40 flex items-center justify-center text-[#06b6d4] shrink-0">
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h5 className="text-sm font-bold text-white tracking-wider uppercase">GROW</h5>
+                            <p className="text-xs text-gray-400">Your Business</p>
+                        </div>
+                    </div>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
                     {/* Brand Column */}
                     <div>
@@ -153,7 +193,11 @@ export default function Footer() {
 
                     {/* Quick Links */}
                     <div>
-                        <h4 className="text-lg font-bold text-white mb-6 border-b border-[#06b6d4]/30 pb-2 inline-block">Quick Links</h4>
+                        <h4 className="text-lg font-bold text-white mb-2">Quick Links</h4>
+                        <div className="flex items-center mb-6">
+                            <div className="h-0.5 w-10 bg-gradient-to-r from-[#06b6d4] to-cyan-300 rounded-full" />
+                            <div className="w-1.5 h-1.5 rounded-full bg-[#06b6d4] ml-0.5" />
+                        </div>
                         <ul className="space-y-3">
                             {["Home", "About", "Products", "Services", "Certificates", "Warranty", "Contact"].map((link) => (
                                 <li key={link}>
@@ -171,7 +215,11 @@ export default function Footer() {
 
                     {/* Solutions */}
                     <div>
-                        <h4 className="text-lg font-bold text-white mb-6 border-b border-[#06b6d4]/30 pb-2 inline-block">Our Solutions</h4>
+                        <h4 className="text-lg font-bold text-white mb-2">Our Solutions</h4>
+                        <div className="flex items-center mb-6">
+                            <div className="h-0.5 w-10 bg-gradient-to-r from-[#06b6d4] to-cyan-300 rounded-full" />
+                            <div className="w-1.5 h-1.5 rounded-full bg-[#06b6d4] ml-0.5" />
+                        </div>
                         <ul className="space-y-3">
                             {[
                                 "Industrial Printers",
@@ -195,7 +243,11 @@ export default function Footer() {
 
                     {/* Contact Info */}
                     <div>
-                        <h4 className="text-lg font-bold text-white mb-6 border-b border-[#06b6d4]/30 pb-2 inline-block">Contact Us</h4>
+                        <h4 className="text-lg font-bold text-white mb-2">Contact Us</h4>
+                        <div className="flex items-center mb-6">
+                            <div className="h-0.5 w-10 bg-gradient-to-r from-[#06b6d4] to-cyan-300 rounded-full" />
+                            <div className="w-1.5 h-1.5 rounded-full bg-[#06b6d4] ml-0.5" />
+                        </div>
                         <ul className="space-y-6">
                             <li className="flex items-start">
                                 <svg className="w-6 h-6 text-[#06b6d4] mt-1 mr-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
