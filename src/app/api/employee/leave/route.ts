@@ -18,6 +18,8 @@ import {
     sendLeaveApplicationNotification,
 } from "@/lib/leaveNotificationEmail";
 
+import { getShiftByEmployeeId } from "@/lib/adminEmployeeShifts";
+
 function isoToday() {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -32,11 +34,12 @@ export async function GET() {
 
         await ensureEmployeeLeaveDataReady();
 
-        const [policies, settings, joiningDate, requests] = await Promise.all([
+        const [policies, settings, joiningDate, requests, shift] = await Promise.all([
             fetchActivePolicies(),
             fetchOrgSettings(),
             fetchEmployeeJoiningDate(session.employeeId),
             fetchEmployeeRequests(session.employeeId),
+            getShiftByEmployeeId(session.employeeId),
         ]);
 
         const usedByPolicy = await fetchUsedDaysByPolicy(
@@ -67,6 +70,7 @@ export async function GET() {
                 joining_date: joiningDate,
                 balances,
                 requests,
+                working_days: shift?.working_days ?? [1, 2, 3, 4, 5],
             },
             {
                 headers: { "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0" },
@@ -121,9 +125,11 @@ export async function POST(request: Request) {
         const total = policy.accrual_cycle === "none" ? 0 : Number(policy.days_per_year) || 0;
         const balanceRemaining = total > 0 ? Math.max(0, total - used) : 999;
 
+        const shift = await getShiftByEmployeeId(session.employeeId);
         const requestedDays = countLeaveDays(startDate, endDate, dayType, {
             weekdaysOnly: policy.weekdays_only,
             excludeWeekends: !settings.count_weekends_in_leave,
+            workingDays: shift?.working_days,
         });
 
         const existingRequests = await fetchEmployeeRequests(session.employeeId, 200);

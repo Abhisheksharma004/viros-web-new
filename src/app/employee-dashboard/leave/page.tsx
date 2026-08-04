@@ -73,6 +73,7 @@ type LeaveBalance = {
     code: string;
     name: string;
     accrual_cycle: string;
+    paid?: boolean;
     total: number;
     used: number;
     remaining: number;
@@ -117,9 +118,6 @@ function policyHints(policy: LeavePolicy, settings: OrgSettings, joiningDate: st
         hints.push("Full-day only for this leave type.");
     }
     if (policy.requires_approval) hints.push("Manager approval required.");
-    if (policy.weekdays_only || !settings.count_weekends_in_leave) {
-        hints.push("Weekends may be excluded from day count.");
-    }
     return hints;
 }
 
@@ -254,6 +252,7 @@ function LeaveApplyModal({
     balances,
     existingRequests,
     initialPolicyId,
+    workingDays,
 }: {
     open: boolean;
     onClose: () => void;
@@ -266,6 +265,7 @@ function LeaveApplyModal({
     existingRequests: LeaveRequestRow[];
     /** When set, pre-selects this leave type when the modal opens (e.g. from balance card click). */
     initialPolicyId?: number | null;
+    workingDays?: number[];
 }) {
     const [policyId, setPolicyId] = useState<number>(policies[0]?.id ?? 0);
     const [startDate, setStartDate] = useState("");
@@ -296,8 +296,9 @@ function LeaveApplyModal({
             countLeaveDays(startDate, endDate, dayType, {
                 weekdaysOnly: selectedPolicy?.weekdays_only,
                 excludeWeekends: !settings.count_weekends_in_leave,
+                workingDays,
             }),
-        [startDate, endDate, dayType, selectedPolicy, settings.count_weekends_in_leave],
+        [startDate, endDate, dayType, selectedPolicy, settings.count_weekends_in_leave, workingDays],
     );
 
     const minDate = useMemo(() => {
@@ -735,6 +736,7 @@ export default function EmployeeLeaveRequestPage() {
     const [joiningDate, setJoiningDate] = useState<string | null>(null);
     const [balances, setBalances] = useState<LeaveBalance[]>([]);
     const [requests, setRequests] = useState<LeaveRequestRow[]>([]);
+    const [workingDays, setWorkingDays] = useState<number[]>([1, 2, 3, 4, 5]);
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState("");
     const [pageAlertOpen, setPageAlertOpen] = useState(false);
@@ -775,6 +777,7 @@ export default function EmployeeLeaveRequestPage() {
             setJoiningDate(data.joining_date ?? null);
             setBalances(Array.isArray(data.balances) ? data.balances : []);
             setRequests(Array.isArray(data.requests) ? data.requests : []);
+            setWorkingDays(Array.isArray(data.working_days) ? data.working_days : [1, 2, 3, 4, 5]);
         } catch (error) {
             console.error("Load leave data failed:", error);
             const msg =
@@ -812,6 +815,7 @@ export default function EmployeeLeaveRequestPage() {
                 setWithdrawSuccessOpen(true);
                 void fetchLeaveData();
             } catch (error) {
+                console.error("Withdraw leave failed:", error);
                 const msg =
                     error instanceof Error ? error.message : "Failed to withdraw leave";
                 setPageAlertMessages([msg]);
@@ -882,6 +886,7 @@ export default function EmployeeLeaveRequestPage() {
                     balances={balances}
                     existingRequests={requests}
                     initialPolicyId={modalInitialPolicyId}
+                    workingDays={workingDays}
                 />
             )}
 
@@ -914,9 +919,11 @@ export default function EmployeeLeaveRequestPage() {
                     {balanceCards.length > 0 ? (
                         <div className="grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-4">
                             {balanceCards.map((b) => {
-                                const left = b.remaining;
-                                const pct =
-                                    b.total > 0 ? Math.round((b.used / b.total) * 100) : 0;
+                                const isUnpaidOrNoQuota = b.paid === false || b.accrual_cycle === "none" || b.total === 0;
+                                const displayValue = isUnpaidOrNoQuota && b.total === 0 ? b.used : b.remaining;
+                                const displaySubtext = isUnpaidOrNoQuota && b.total === 0 ? "days taken" : "days left";
+                                const displayFooter = isUnpaidOrNoQuota && b.total === 0 ? "Unpaid / No Quota Limit" : `${b.used}/${b.total} used`;
+                                const pct = b.total > 0 ? Math.round((b.used / b.total) * 100) : 0;
                                 return (
                                     <button
                                         key={b.policy_id}
@@ -934,19 +941,19 @@ export default function EmployeeLeaveRequestPage() {
                                             </span>
                                         </div>
                                         <p className="mt-2 text-2xl font-black tabular-nums sm:text-3xl">
-                                            {left}
+                                            {displayValue}
                                         </p>
                                         <p className="text-[11px] font-medium text-white/80 sm:text-xs">
-                                            days left
+                                            {displaySubtext}
                                         </p>
                                         <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-white/20 sm:mt-3">
                                             <div
                                                 className="h-full rounded-full bg-white/90"
-                                                style={{ width: `${Math.min(100, pct)}%` }}
+                                                style={{ width: `${isUnpaidOrNoQuota && b.total === 0 ? 0 : Math.min(100, pct)}%` }}
                                             />
                                         </div>
                                         <p className="mt-1 text-[10px] font-semibold text-white/70">
-                                            {b.used}/{b.total} used
+                                            {displayFooter}
                                         </p>
                                     </button>
                                 );

@@ -289,8 +289,8 @@ function buildActivityFeed(input: {
                     req.status === "approved"
                         ? "success"
                         : req.status === "rejected"
-                          ? "warning"
-                          : "info",
+                            ? "warning"
+                            : "info",
                 href: "/employee-dashboard/leave",
             },
         });
@@ -570,8 +570,8 @@ export async function buildEmployeeDashboard(
                 expenseSummary.pendingCount > 0
                     ? `${expenseSummary.pendingCount} pending`
                     : expenseSummary.draftCount > 0
-                      ? `${expenseSummary.draftCount} draft`
-                      : "This month",
+                        ? `${expenseSummary.draftCount} draft`
+                        : "This month",
             expenseApprovedCount: expenseApproved.expenseCount,
             expenseRejectedCount: expenseRejected.expenseCount,
         },

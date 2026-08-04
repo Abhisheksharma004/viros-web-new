@@ -67,20 +67,29 @@ export function countLeaveDays(
     from: string,
     to: string,
     dayType: LeaveDayType,
-    options?: { weekdaysOnly?: boolean; excludeWeekends?: boolean },
+    options?: { weekdaysOnly?: boolean; excludeWeekends?: boolean; workingDays?: number[] },
 ) {
     if (!from || !to) return 0;
     const start = new Date(from + "T12:00:00");
     const end = new Date(to + "T12:00:00");
     if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) return 0;
 
+    const workingDaysSet = options?.workingDays?.length ? new Set(options.workingDays) : null;
+
     let total = 0;
     const cur = new Date(start);
     while (cur <= end) {
-        const iso = `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, "0")}-${String(cur.getDate()).padStart(2, "0")}`;
-        const weekend = isWeekend(iso);
-        const skip =
-            (options?.weekdaysOnly && weekend) || (options?.excludeWeekends && weekend);
+        const dayOfWeek = cur.getDay();
+        const isSundayBetween = dayOfWeek === 0 && cur > start && cur < end;
+        const isOffDay = workingDaysSet ? !workingDaysSet.has(dayOfWeek) : isWeekend(`${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, "0")}-${String(cur.getDate()).padStart(2, "0")}`);
+        
+        let skip =
+            (options?.weekdaysOnly && isOffDay) || (options?.excludeWeekends && isOffDay);
+        
+        if (isSundayBetween) {
+            skip = false;
+        }
+
         if (!skip) total += 1;
         cur.setDate(cur.getDate() + 1);
     }

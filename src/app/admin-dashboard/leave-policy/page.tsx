@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+    AlertTriangle,
     Check,
     Eye,
     FileText,
@@ -146,7 +147,7 @@ function formToApiBody(form: typeof emptyPolicyForm) {
         code: form.code.trim().toUpperCase(),
         name: form.name.trim(),
         description: form.description.trim(),
-        days_per_year: Math.max(0, Number(form.daysPerYear) || 0),
+        days_per_year: (!form.paid || form.accrualCycle === "none") ? 0 : Math.max(0, Number(form.daysPerYear) || 0),
         accrual_cycle: form.accrualCycle,
         carry_forward_enabled: form.carryForwardEnabled,
         carry_forward_max: form.carryForwardEnabled
@@ -168,7 +169,7 @@ function formToApiBody(form: typeof emptyPolicyForm) {
         months_after_joining: form.applicableFromJoining
             ? Math.max(0, Number(form.monthsAfterJoining) || 0)
             : 0,
-        max_days_per_request: Math.max(0.5, Number(form.maxDaysPerRequest) || 0.5),
+        max_days_per_request: Math.max(0, Number(form.maxDaysPerRequest) || 0),
         min_days_per_request: Math.max(0, Number(form.minDaysPerRequest) || 0),
         enforce_remaining_balance_cap: form.enforceRemainingBalanceCap,
         must_use_full_balance_when_low: form.mustUseFullBalanceWhenLow,
@@ -342,11 +343,10 @@ function toggleMonthInList(months: number[], month: number): number[] {
 function YesNoBadge({ yes, yesLabel = "Yes", noLabel = "No" }: { yes: boolean; yesLabel?: string; noLabel?: string }) {
     return (
         <span
-            className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset ${
-                yes
+            className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset ${yes
                     ? "bg-emerald-50 text-emerald-800 ring-emerald-500/20"
                     : "bg-gray-100 text-gray-600 ring-gray-300/50"
-            }`}
+                }`}
         >
             {yes ? yesLabel : noLabel}
         </span>
@@ -356,11 +356,10 @@ function YesNoBadge({ yes, yesLabel = "Yes", noLabel = "No" }: { yes: boolean; y
 function ActiveBadge({ active }: { active: boolean }) {
     return (
         <span
-            className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold ring-1 ring-inset ${
-                active
+            className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold ring-1 ring-inset ${active
                     ? "bg-[#06b6d4]/15 text-[#0a2a5e] ring-[#06b6d4]/30"
                     : "bg-gray-100 text-gray-600 ring-gray-300/50"
-            }`}
+                }`}
         >
             {active ? "Active" : "Inactive"}
         </span>
@@ -370,6 +369,7 @@ function ActiveBadge({ active }: { active: boolean }) {
 export default function Page() {
     const [policies, setPolicies] = useState<LeavePolicyRow[]>([]);
     const [globalSettings, setGlobalSettings] = useState<GlobalSettings>(DEFAULT_GLOBAL);
+    const [savedGlobalSettings, setSavedGlobalSettings] = useState<GlobalSettings>(DEFAULT_GLOBAL);
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -379,13 +379,25 @@ export default function Page() {
     const [modalMode, setModalMode] = useState<"add" | "edit" | "view" | null>(null);
     const [editingId, setEditingId] = useState<number | null>(null);
     const [form, setForm] = useState(emptyPolicyForm);
+    const [isFormDirty, setIsFormDirty] = useState(false);
+    const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
     const [formError, setFormError] = useState("");
+    const [deleteTarget, setDeleteTarget] = useState<LeavePolicyRow | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
     const [emailModalOpen, setEmailModalOpen] = useState(false);
     const [emailDraft, setEmailDraft] = useState<string[]>([]);
     const [newEmailInput, setNewEmailInput] = useState("");
     const [emailError, setEmailError] = useState("");
     const [isSavingEmails, setIsSavingEmails] = useState(false);
     const [emailsSaved, setEmailsSaved] = useState(false);
+    const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+
+    const showToast = useCallback((message: string, type: "success" | "error" = "success") => {
+        setToast({ message, type });
+        window.setTimeout(() => {
+            setToast(null);
+        }, 3500);
+    }, []);
 
     const fetchPolicies = useCallback(async () => {
         try {
@@ -407,7 +419,9 @@ export default function Page() {
             const rows: PolicyApiRow[] = Array.isArray(policiesData) ? policiesData : [];
             setPolicies(rows.map(apiToPolicy));
             if (settingsResp.ok) {
-                setGlobalSettings(apiToGlobalSettings(settingsData as OrgSettingsApi));
+                const parsedSettings = apiToGlobalSettings(settingsData as OrgSettingsApi);
+                setGlobalSettings(parsedSettings);
+                setSavedGlobalSettings(parsedSettings);
             }
         } catch (error) {
             console.error("Error loading leave policies:", error);
@@ -436,23 +450,39 @@ export default function Page() {
     const stats = useMemo(() => {
         const active = policies.filter((p) => p.active).length;
         const totalDays = policies
-            .filter((p) => p.active && p.accrualCycle !== "none")
+            .filter((p) => p.active && p.paid && p.accrualCycle !== "none")
             .reduce((sum, p) => sum + p.daysPerYear, 0);
         const paid = policies.filter((p) => p.paid && p.active).length;
         return { total: policies.length, active, totalDays, paid };
     }, [policies]);
 
-    const closeModal = useCallback(() => {
+    const closeModalDirectly = useCallback(() => {
         setModalMode(null);
         setEditingId(null);
         setForm(emptyPolicyForm);
         setFormError("");
+        setIsFormDirty(false);
+        setShowDiscardConfirm(false);
     }, []);
+
+    const requestCloseModal = useCallback(() => {
+        if (isFormDirty && modalMode !== "view") {
+            setShowDiscardConfirm(true);
+        } else {
+            closeModalDirectly();
+        }
+    }, [isFormDirty, modalMode, closeModalDirectly]);
 
     useEffect(() => {
         if (!modalMode) return;
         const onKeyDown = (e: KeyboardEvent) => {
-            if (e.key === "Escape") closeModal();
+            if (e.key === "Escape") {
+                if (showDiscardConfirm) {
+                    setShowDiscardConfirm(false);
+                } else {
+                    requestCloseModal();
+                }
+            }
         };
         window.addEventListener("keydown", onKeyDown);
         const prev = document.body.style.overflow;
@@ -461,12 +491,13 @@ export default function Page() {
             window.removeEventListener("keydown", onKeyDown);
             document.body.style.overflow = prev;
         };
-    }, [modalMode, closeModal]);
+    }, [modalMode, requestCloseModal, showDiscardConfirm]);
 
     const openAdd = () => {
         setForm(emptyPolicyForm);
         setEditingId(null);
         setFormError("");
+        setIsFormDirty(false);
         setModalMode("add");
     };
 
@@ -504,6 +535,7 @@ export default function Page() {
         });
         setEditingId(row.id);
         setFormError("");
+        setIsFormDirty(false);
         setModalMode("edit");
     };
 
@@ -512,18 +544,34 @@ export default function Page() {
         setModalMode("view");
     };
 
-    const handleDelete = async (row: LeavePolicyRow) => {
-        if (!window.confirm(`Delete policy “${row.name}”?`)) return;
+    const updateFormState = (updater: (prev: typeof emptyPolicyForm) => typeof emptyPolicyForm) => {
+        setForm(updater);
+        if (modalMode !== "view") {
+            setIsFormDirty(true);
+        }
+    };
+
+    const promptDeletePolicy = (row: LeavePolicyRow) => {
+        setDeleteTarget(row);
+    };
+
+    const confirmDeletePolicy = async () => {
+        if (!deleteTarget || isDeleting) return;
         try {
-            const resp = await fetch(`/api/admin/leave-policies/${row.id}`, { method: "DELETE" });
+            setIsDeleting(true);
+            const resp = await fetch(`/api/admin/leave-policies/${deleteTarget.id}`, { method: "DELETE" });
             const data = await resp.json().catch(() => ({}));
             if (!resp.ok) {
                 throw new Error(typeof data.message === "string" ? data.message : "Delete failed");
             }
-            setPolicies((prev) => prev.filter((p) => p.id !== row.id));
+            setPolicies((prev) => prev.filter((p) => p.id !== deleteTarget.id));
+            showToast(`Policy “${deleteTarget.name}” deleted.`);
+            setDeleteTarget(null);
         } catch (error) {
             console.error("Delete policy failed:", error);
-            alert(error instanceof Error ? error.message : "Failed to delete policy");
+            showToast(error instanceof Error ? error.message : "Failed to delete policy", "error");
+        } finally {
+            setIsDeleting(false);
         }
     };
 
@@ -544,9 +592,10 @@ export default function Page() {
             }
             const saved = apiToPolicy(data as PolicyApiRow);
             setPolicies((prev) => prev.map((p) => (p.id === saved.id ? saved : p)));
+            showToast(`Policy “${row.name}” ${nextActive ? "activated" : "deactivated"}.`);
         } catch (error) {
             console.error("Toggle policy active failed:", error);
-            alert(error instanceof Error ? error.message : "Failed to update status");
+            showToast(error instanceof Error ? error.message : "Failed to update status", "error");
         }
     };
 
@@ -574,13 +623,18 @@ export default function Page() {
         }
         const maxPerReq = Number(form.maxDaysPerRequest) || 0;
         const minPerReq = Number(form.minDaysPerRequest) || 0;
+        const maxConsec = Number(form.maxConsecutiveDays) || 1;
+
         if (maxPerReq > 0 && minPerReq > maxPerReq) {
             setFormError("Min. days per request cannot exceed max. days per request.");
             return;
         }
-        const maxConsec = Number(form.maxConsecutiveDays) || 1;
-        if (maxPerReq > maxConsec) {
+        if (maxPerReq > 0 && maxPerReq > maxConsec) {
             setFormError("Max days per request cannot exceed max consecutive days.");
+            return;
+        }
+        if (minPerReq > maxConsec) {
+            setFormError("Min. days per request cannot exceed max consecutive days.");
             return;
         }
 
@@ -604,10 +658,12 @@ export default function Page() {
             const saved = apiToPolicy(data as PolicyApiRow);
             if (isEdit) {
                 setPolicies((prev) => prev.map((p) => (p.id === saved.id ? saved : p)));
+                showToast(`Policy “${saved.name}” updated successfully.`);
             } else {
                 setPolicies((prev) => [saved, ...prev]);
+                showToast(`Policy “${saved.name}” created successfully.`);
             }
-            closeModal();
+            closeModalDirectly();
         } catch (error) {
             console.error("Save policy failed:", error);
             setFormError(error instanceof Error ? error.message : "Failed to save policy");
@@ -617,7 +673,7 @@ export default function Page() {
     };
 
     const openEmailModal = () => {
-        setEmailDraft([...globalSettings.notificationEmails]);
+        setEmailDraft([...savedGlobalSettings.notificationEmails]);
         setNewEmailInput("");
         setEmailError("");
         setEmailsSaved(false);
@@ -667,7 +723,7 @@ export default function Page() {
             setIsSavingEmails(true);
             setEmailError("");
             const payload = globalSettingsToApiBody({
-                ...globalSettings,
+                ...savedGlobalSettings,
                 notificationEmails: unique,
             });
             const resp = await fetch("/api/admin/leave-policies/settings", {
@@ -681,8 +737,10 @@ export default function Page() {
             }
             const saved = apiToGlobalSettings(data as OrgSettingsApi);
             setGlobalSettings(saved);
+            setSavedGlobalSettings(saved);
             setEmailDraft([...saved.notificationEmails]);
             setEmailsSaved(true);
+            showToast("Notification emails updated.");
             window.setTimeout(() => setEmailsSaved(false), 2500);
         } catch (error) {
             console.error("Save notification emails failed:", error);
@@ -718,12 +776,15 @@ export default function Page() {
             if (!resp.ok) {
                 throw new Error(typeof data.message === "string" ? data.message : "Save failed");
             }
-            setGlobalSettings(apiToGlobalSettings(data as OrgSettingsApi));
+            const saved = apiToGlobalSettings(data as OrgSettingsApi);
+            setGlobalSettings(saved);
+            setSavedGlobalSettings(saved);
             setSettingsSaved(true);
+            showToast("Organization settings saved.");
             window.setTimeout(() => setSettingsSaved(false), 2500);
         } catch (error) {
             console.error("Save org settings failed:", error);
-            alert(error instanceof Error ? error.message : "Failed to save settings");
+            showToast(error instanceof Error ? error.message : "Failed to save settings", "error");
         } finally {
             setIsSavingSettings(false);
         }
@@ -735,7 +796,22 @@ export default function Page() {
     const readOnly = modalMode === "view";
 
     return (
-        <div className="mx-auto max-w-7xl space-y-6">
+        <div className="relative mx-auto max-w-7xl space-y-6">
+            {toast && (
+                <div
+                    className={`fixed top-5 right-5 z-[70] flex items-center gap-2.5 rounded-lg px-4 py-3 text-sm font-semibold shadow-xl transition-all ${toast.type === "success"
+                            ? "bg-emerald-900 text-emerald-50 ring-1 ring-emerald-700"
+                            : "bg-red-900 text-red-50 ring-1 ring-red-700"
+                        }`}
+                >
+                    {toast.type === "success" ? (
+                        <Check className="h-4 w-4 shrink-0 text-emerald-400" />
+                    ) : (
+                        <AlertTriangle className="h-4 w-4 shrink-0 text-red-400" />
+                    )}
+                    <span>{toast.message}</span>
+                </div>
+            )}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 {loadError ? <p className="text-xs text-amber-600">{loadError}</p> : <span className="hidden sm:block" aria-hidden />}
                 <button
@@ -927,130 +1003,130 @@ export default function Page() {
                         </div>
                     )}
                     {!isLoading && (
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-[#0a2a5e]/8">
-                            <tr>
-                                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-[#0a2a5e] sm:px-6">
-                                    Policy
-                                </th>
-                                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-[#0a2a5e]">
-                                    Quota
-                                </th>
-                                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-[#0a2a5e]">
-                                    Rules
-                                </th>
-                                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-[#0a2a5e]">
-                                    Carry forward
-                                </th>
-                                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-[#0a2a5e]">
-                                    Status
-                                </th>
-                                <th className="px-4 py-3 text-right text-xs font-bold uppercase tracking-wide text-[#0a2a5e] sm:px-6">
-                                    Actions
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                            {filtered.length === 0 && (
+                        <table className="min-w-full divide-y divide-gray-200">
+                            <thead className="bg-[#0a2a5e]/8">
                                 <tr>
-                                    <td colSpan={6} className="px-6 py-10 text-center text-sm text-gray-500">
-                                        No policies match your search.
-                                    </td>
+                                    <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-[#0a2a5e] sm:px-6">
+                                        Policy
+                                    </th>
+                                    <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-[#0a2a5e]">
+                                        Quota
+                                    </th>
+                                    <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-[#0a2a5e]">
+                                        Rules
+                                    </th>
+                                    <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-[#0a2a5e]">
+                                        Carry forward
+                                    </th>
+                                    <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-[#0a2a5e]">
+                                        Status
+                                    </th>
+                                    <th className="px-4 py-3 text-right text-xs font-bold uppercase tracking-wide text-[#0a2a5e] sm:px-6">
+                                        Actions
+                                    </th>
                                 </tr>
-                            )}
-                            {filtered.map((row, idx) => (
-                                <tr
-                                    key={row.id}
-                                    className={idx % 2 === 1 ? "bg-gray-50/60" : "bg-white"}
-                                >
-                                    <td className="px-4 py-4 sm:px-6">
-                                        <div className="flex items-center gap-3">
-                                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[#0a2a5e] text-xs font-bold text-white">
-                                                {row.code}
-                                            </span>
-                                            <div>
-                                                <p className="text-sm font-semibold text-gray-900">{row.name}</p>
-                                                <p className="max-w-[220px] truncate text-xs text-gray-500">
-                                                    {row.description || "—"}
-                                                </p>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {filtered.length === 0 && (
+                                    <tr>
+                                        <td colSpan={6} className="px-6 py-10 text-center text-sm text-gray-500">
+                                            No policies match your search.
+                                        </td>
+                                    </tr>
+                                )}
+                                {filtered.map((row, idx) => (
+                                    <tr
+                                        key={row.id}
+                                        className={idx % 2 === 1 ? "bg-gray-50/60" : "bg-white"}
+                                    >
+                                        <td className="px-4 py-4 sm:px-6">
+                                            <div className="flex items-center gap-3">
+                                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[#0a2a5e] text-xs font-bold text-white">
+                                                    {row.code}
+                                                </span>
+                                                <div>
+                                                    <p className="text-sm font-semibold text-gray-900">{row.name}</p>
+                                                    <p className="max-w-[220px] truncate text-xs text-gray-500">
+                                                        {row.description || "—"}
+                                                    </p>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </td>
-                                    <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-700">
-                                        <p className="font-semibold text-gray-900">
-                                            {row.accrualCycle === "none"
-                                                ? "As granted"
-                                                : `${row.daysPerYear} days / yr`}
-                                        </p>
-                                        <p className="text-xs text-gray-500">{accrualLabel(row.accrualCycle)}</p>
-                                    </td>
-                                    <td className="px-4 py-4 text-sm text-gray-700">
-                                        <div className="flex flex-wrap gap-1.5">
-                                            <YesNoBadge yes={row.halfDayAllowed} yesLabel="½ day" noLabel="Full only" />
-                                            <YesNoBadge yes={row.documentRequired} yesLabel="Doc" noLabel="No doc" />
-                                            <YesNoBadge yes={row.paid} yesLabel="Paid" noLabel="Unpaid" />
-                                        </div>
-                                        <p className="mt-1 text-xs text-gray-500">
-                                            Notice {row.minNoticeDays}d · max {row.maxConsecutiveDays}d
-                                            {row.requiresApproval ? " · approval" : ""}
-                                        </p>
-                                        <p className="mt-0.5 text-xs text-[#0a2a5e]/80">
-                                            {formatApplicableMonths(row)} · max {row.maxDaysPerRequest}d/request
-                                            {row.applicableFromJoining
-                                                ? ` · after ${row.monthsAfterJoining} mo. from joining`
-                                                : ""}
-                                        </p>
-                                    </td>
-                                    <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-700">
-                                        {row.carryForwardEnabled ? (
-                                            <span className="font-medium text-gray-900">Up to {row.carryForwardMax} days</span>
-                                        ) : (
-                                            <span className="text-gray-500">Not allowed</span>
-                                        )}
-                                    </td>
-                                    <td className="whitespace-nowrap px-4 py-4">
-                                        <ActiveBadge active={row.active} />
-                                    </td>
-                                    <td className="whitespace-nowrap px-4 py-4 text-right sm:px-6">
-                                        <div className="inline-flex items-center gap-1">
-                                            <button
-                                                type="button"
-                                                onClick={() => openView(row)}
-                                                className="rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-[#0a2a5e]"
-                                                title="View"
-                                            >
-                                                <Eye className="h-4 w-4" />
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => openEdit(row)}
-                                                className="rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-[#0a2a5e]"
-                                                title="Edit"
-                                            >
-                                                <Pencil className="h-4 w-4" />
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => toggleActive(row)}
-                                                className="rounded-md px-2 py-2 text-xs font-semibold text-[#06b6d4] hover:bg-[#06b6d4]/10"
-                                                title={row.active ? "Deactivate" : "Activate"}
-                                            >
-                                                {row.active ? "Off" : "On"}
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => handleDelete(row)}
-                                                className="rounded-md p-2 text-gray-500 hover:bg-red-50 hover:text-red-600"
-                                                title="Delete"
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                                        </td>
+                                        <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-700">
+                                            <p className="font-semibold text-gray-900">
+                                                {row.accrualCycle === "none"
+                                                    ? "As granted"
+                                                    : `${row.daysPerYear} days / yr`}
+                                            </p>
+                                            <p className="text-xs text-gray-500">{accrualLabel(row.accrualCycle)}</p>
+                                        </td>
+                                        <td className="px-4 py-4 text-sm text-gray-700">
+                                            <div className="flex flex-wrap gap-1.5">
+                                                <YesNoBadge yes={row.halfDayAllowed} yesLabel="½ day" noLabel="Full only" />
+                                                <YesNoBadge yes={row.documentRequired} yesLabel="Doc" noLabel="No doc" />
+                                                <YesNoBadge yes={row.paid} yesLabel="Paid" noLabel="Unpaid" />
+                                            </div>
+                                            <p className="mt-1 text-xs text-gray-500">
+                                                Notice {row.minNoticeDays}d · max {row.maxConsecutiveDays}d
+                                                {row.requiresApproval ? " · approval" : ""}
+                                            </p>
+                                            <p className="mt-0.5 text-xs text-[#0a2a5e]/80">
+                                                {formatApplicableMonths(row)} · max {row.maxDaysPerRequest}d/request
+                                                {row.applicableFromJoining
+                                                    ? ` · after ${row.monthsAfterJoining} mo. from joining`
+                                                    : ""}
+                                            </p>
+                                        </td>
+                                        <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-700">
+                                            {row.carryForwardEnabled ? (
+                                                <span className="font-medium text-gray-900">Up to {row.carryForwardMax} days</span>
+                                            ) : (
+                                                <span className="text-gray-500">Not allowed</span>
+                                            )}
+                                        </td>
+                                        <td className="whitespace-nowrap px-4 py-4">
+                                            <ActiveBadge active={row.active} />
+                                        </td>
+                                        <td className="whitespace-nowrap px-4 py-4 text-right sm:px-6">
+                                            <div className="inline-flex items-center gap-1">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => openView(row)}
+                                                    className="rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-[#0a2a5e]"
+                                                    title="View"
+                                                >
+                                                    <Eye className="h-4 w-4" />
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => openEdit(row)}
+                                                    className="rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-[#0a2a5e]"
+                                                    title="Edit"
+                                                >
+                                                    <Pencil className="h-4 w-4" />
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => toggleActive(row)}
+                                                    className="rounded-md px-2 py-2 text-xs font-semibold text-[#06b6d4] hover:bg-[#06b6d4]/10"
+                                                    title={row.active ? "Deactivate" : "Activate"}
+                                                >
+                                                    {row.active ? "Off" : "On"}
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => promptDeletePolicy(row)}
+                                                    className="rounded-md p-2 text-gray-500 hover:bg-red-50 hover:text-red-600"
+                                                    title="Delete"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     )}
                 </div>
             </div>
@@ -1060,7 +1136,7 @@ export default function Page() {
                     className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4"
                     role="dialog"
                     aria-modal="true"
-                    onClick={closeModal}
+                    onClick={requestCloseModal}
                 >
                     <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px]" aria-hidden />
                     <div
@@ -1080,8 +1156,8 @@ export default function Page() {
                                         {modalMode === "add"
                                             ? "Add leave policy"
                                             : modalMode === "view"
-                                              ? "View leave policy"
-                                              : "Edit leave policy"}
+                                                ? "View leave policy"
+                                                : "Edit leave policy"}
                                     </h2>
                                     <p className="text-xs text-white/75">
                                         {readOnly
@@ -1091,7 +1167,7 @@ export default function Page() {
                                 </div>
                                 <button
                                     type="button"
-                                    onClick={closeModal}
+                                    onClick={requestCloseModal}
                                     className="flex h-9 w-9 items-center justify-center rounded-full bg-white/15 hover:bg-white/25"
                                     aria-label="Close"
                                 >
@@ -1120,7 +1196,7 @@ export default function Page() {
                                             id="policy-code"
                                             value={form.code}
                                             onChange={(e) =>
-                                                setForm((f) => ({
+                                                updateFormState((f) => ({
                                                     ...f,
                                                     code: e.target.value.toUpperCase(),
                                                 }))
@@ -1139,7 +1215,7 @@ export default function Page() {
                                             id="policy-name"
                                             value={form.name}
                                             onChange={(e) =>
-                                                setForm((f) => ({ ...f, name: e.target.value }))
+                                                updateFormState((f) => ({ ...f, name: e.target.value }))
                                             }
                                             disabled={readOnly}
                                             placeholder="Casual leave"
@@ -1156,7 +1232,7 @@ export default function Page() {
                                         id="policy-desc"
                                         value={form.description}
                                         onChange={(e) =>
-                                            setForm((f) => ({ ...f, description: e.target.value }))
+                                            updateFormState((f) => ({ ...f, description: e.target.value }))
                                         }
                                         disabled={readOnly}
                                         rows={2}
@@ -1173,11 +1249,11 @@ export default function Page() {
                                             id="days-year"
                                             type="number"
                                             min={0}
-                                            value={form.daysPerYear}
+                                            value={form.paid ? form.daysPerYear : "0"}
                                             onChange={(e) =>
-                                                setForm((f) => ({ ...f, daysPerYear: e.target.value }))
+                                                updateFormState((f) => ({ ...f, daysPerYear: e.target.value }))
                                             }
-                                            disabled={readOnly || form.accrualCycle === "none"}
+                                            disabled={readOnly || !form.paid || form.accrualCycle === "none"}
                                             className={inputClass}
                                         />
                                     </div>
@@ -1188,12 +1264,14 @@ export default function Page() {
                                         <select
                                             id="accrual"
                                             value={form.accrualCycle}
-                                            onChange={(e) =>
-                                                setForm((f) => ({
+                                            onChange={(e) => {
+                                                const nextCycle = e.target.value as AccrualCycle;
+                                                updateFormState((f) => ({
                                                     ...f,
-                                                    accrualCycle: e.target.value as AccrualCycle,
-                                                }))
-                                            }
+                                                    accrualCycle: nextCycle,
+                                                    daysPerYear: nextCycle === "none" ? "0" : f.daysPerYear,
+                                                }));
+                                            }}
                                             disabled={readOnly}
                                             className={inputClass}
                                         >
@@ -1214,7 +1292,7 @@ export default function Page() {
                                             min={0}
                                             value={form.minNoticeDays}
                                             onChange={(e) =>
-                                                setForm((f) => ({
+                                                updateFormState((f) => ({
                                                     ...f,
                                                     minNoticeDays: e.target.value,
                                                 }))
@@ -1236,7 +1314,7 @@ export default function Page() {
                                             min={1}
                                             value={form.maxConsecutiveDays}
                                             onChange={(e) =>
-                                                setForm((f) => ({
+                                                updateFormState((f) => ({
                                                     ...f,
                                                     maxConsecutiveDays: e.target.value,
                                                 }))
@@ -1255,7 +1333,7 @@ export default function Page() {
                                             min={0}
                                             value={form.carryForwardMax}
                                             onChange={(e) =>
-                                                setForm((f) => ({
+                                                updateFormState((f) => ({
                                                     ...f,
                                                     carryForwardMax: e.target.value,
                                                 }))
@@ -1282,7 +1360,7 @@ export default function Page() {
                                                 checked={form.allMonthsApplicable}
                                                 onChange={(e) => {
                                                     const checked = e.target.checked;
-                                                    setForm((f) => ({
+                                                    updateFormState((f) => ({
                                                         ...f,
                                                         allMonthsApplicable: checked,
                                                         applicableMonths: checked ? [] : [...ALL_MONTHS],
@@ -1303,7 +1381,7 @@ export default function Page() {
                                                             type="button"
                                                             disabled={readOnly}
                                                             onClick={() =>
-                                                                setForm((f) => ({
+                                                                updateFormState((f) => ({
                                                                     ...f,
                                                                     applicableMonths: toggleMonthInList(
                                                                         f.applicableMonths,
@@ -1311,11 +1389,10 @@ export default function Page() {
                                                                     ),
                                                                 }))
                                                             }
-                                                            className={`rounded-md border px-2 py-2 text-xs font-semibold transition ${
-                                                                selected
+                                                            className={`rounded-md border px-2 py-2 text-xs font-semibold transition ${selected
                                                                     ? "border-[#06b6d4] bg-[#06b6d4]/15 text-[#0a2a5e]"
                                                                     : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
-                                                            } disabled:opacity-60`}
+                                                                } disabled:opacity-60`}
                                                         >
                                                             {m.label.slice(0, 3)}
                                                         </button>
@@ -1331,7 +1408,7 @@ export default function Page() {
                                                 type="checkbox"
                                                 checked={form.applicableFromJoining}
                                                 onChange={(e) =>
-                                                    setForm((f) => ({
+                                                    updateFormState((f) => ({
                                                         ...f,
                                                         applicableFromJoining: e.target.checked,
                                                         monthsAfterJoining: e.target.checked
@@ -1364,7 +1441,7 @@ export default function Page() {
                                                     max={24}
                                                     value={form.monthsAfterJoining}
                                                     onChange={(e) =>
-                                                        setForm((f) => ({
+                                                        updateFormState((f) => ({
                                                             ...f,
                                                             monthsAfterJoining: e.target.value,
                                                         }))
@@ -1384,20 +1461,21 @@ export default function Page() {
                                             <input
                                                 id="max-per-request"
                                                 type="number"
-                                                min={0.5}
+                                                min={0}
                                                 step={0.5}
                                                 value={form.maxDaysPerRequest}
                                                 onChange={(e) =>
-                                                    setForm((f) => ({
+                                                    updateFormState((f) => ({
                                                         ...f,
                                                         maxDaysPerRequest: e.target.value,
                                                     }))
                                                 }
                                                 disabled={readOnly}
+                                                placeholder="0 = no limit"
                                                 className={inputClass}
                                             />
                                             <p className="mt-1 text-[10px] text-gray-500">
-                                                Single application cannot exceed this
+                                                Single application limit (0 = no limit)
                                             </p>
                                         </div>
                                         <div>
@@ -1411,7 +1489,7 @@ export default function Page() {
                                                 step={0.5}
                                                 value={form.minDaysPerRequest}
                                                 onChange={(e) =>
-                                                    setForm((f) => ({
+                                                    updateFormState((f) => ({
                                                         ...f,
                                                         minDaysPerRequest: e.target.value,
                                                     }))
@@ -1430,7 +1508,7 @@ export default function Page() {
                                                 min={0}
                                                 value={form.maxAdvanceBookingDays}
                                                 onChange={(e) =>
-                                                    setForm((f) => ({
+                                                    updateFormState((f) => ({
                                                         ...f,
                                                         maxAdvanceBookingDays: e.target.value,
                                                     }))
@@ -1450,7 +1528,7 @@ export default function Page() {
                                                 min={0}
                                                 value={form.maxRequestsPerMonth}
                                                 onChange={(e) =>
-                                                    setForm((f) => ({
+                                                    updateFormState((f) => ({
                                                         ...f,
                                                         maxRequestsPerMonth: e.target.value,
                                                     }))
@@ -1470,7 +1548,7 @@ export default function Page() {
                                                 min={0}
                                                 value={form.maxRequestsPerYear}
                                                 onChange={(e) =>
-                                                    setForm((f) => ({
+                                                    updateFormState((f) => ({
                                                         ...f,
                                                         maxRequestsPerYear: e.target.value,
                                                     }))
@@ -1490,7 +1568,7 @@ export default function Page() {
                                                 min={0}
                                                 value={form.minGapDaysBetweenRequests}
                                                 onChange={(e) =>
-                                                    setForm((f) => ({
+                                                    updateFormState((f) => ({
                                                         ...f,
                                                         minGapDaysBetweenRequests: e.target.value,
                                                     }))
@@ -1507,7 +1585,7 @@ export default function Page() {
                                                 type="checkbox"
                                                 checked={form.enforceRemainingBalanceCap}
                                                 onChange={(e) =>
-                                                    setForm((f) => ({
+                                                    updateFormState((f) => ({
                                                         ...f,
                                                         enforceRemainingBalanceCap: e.target.checked,
                                                     }))
@@ -1527,7 +1605,7 @@ export default function Page() {
                                                 type="checkbox"
                                                 checked={form.mustUseFullBalanceWhenLow}
                                                 onChange={(e) =>
-                                                    setForm((f) => ({
+                                                    updateFormState((f) => ({
                                                         ...f,
                                                         mustUseFullBalanceWhenLow: e.target.checked,
                                                     }))
@@ -1555,7 +1633,7 @@ export default function Page() {
                                                     step={0.5}
                                                     value={form.fullBalanceThresholdDays}
                                                     onChange={(e) =>
-                                                        setForm((f) => ({
+                                                        updateFormState((f) => ({
                                                             ...f,
                                                             fullBalanceThresholdDays: e.target.value,
                                                         }))
@@ -1570,7 +1648,7 @@ export default function Page() {
                                                 type="checkbox"
                                                 checked={form.weekdaysOnly}
                                                 onChange={(e) =>
-                                                    setForm((f) => ({
+                                                    updateFormState((f) => ({
                                                         ...f,
                                                         weekdaysOnly: e.target.checked,
                                                     }))
@@ -1578,14 +1656,17 @@ export default function Page() {
                                                 disabled={readOnly}
                                                 className="h-4 w-4 rounded border-gray-300 text-[#06b6d4]"
                                             />
-                                            Weekdays only (exclude weekends)
+                                            <span>
+                                                Weekdays only
+                                                <span className="ml-1 text-xs font-normal text-gray-500">(Exclude weekends for this policy)</span>
+                                            </span>
                                         </label>
                                         <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-gray-700">
                                             <input
                                                 type="checkbox"
                                                 checked={form.allowBackdatedLeave}
                                                 onChange={(e) =>
-                                                    setForm((f) => ({
+                                                    updateFormState((f) => ({
                                                         ...f,
                                                         allowBackdatedLeave: e.target.checked,
                                                     }))
@@ -1604,7 +1685,7 @@ export default function Page() {
                                             type="checkbox"
                                             checked={form.carryForwardEnabled}
                                             onChange={(e) =>
-                                                setForm((f) => ({
+                                                updateFormState((f) => ({
                                                     ...f,
                                                     carryForwardEnabled: e.target.checked,
                                                 }))
@@ -1619,7 +1700,7 @@ export default function Page() {
                                             type="checkbox"
                                             checked={form.halfDayAllowed}
                                             onChange={(e) =>
-                                                setForm((f) => ({
+                                                updateFormState((f) => ({
                                                     ...f,
                                                     halfDayAllowed: e.target.checked,
                                                 }))
@@ -1634,7 +1715,7 @@ export default function Page() {
                                             type="checkbox"
                                             checked={form.documentRequired}
                                             onChange={(e) =>
-                                                setForm((f) => ({
+                                                updateFormState((f) => ({
                                                     ...f,
                                                     documentRequired: e.target.checked,
                                                 }))
@@ -1649,7 +1730,7 @@ export default function Page() {
                                             type="checkbox"
                                             checked={form.requiresApproval}
                                             onChange={(e) =>
-                                                setForm((f) => ({
+                                                updateFormState((f) => ({
                                                     ...f,
                                                     requiresApproval: e.target.checked,
                                                 }))
@@ -1664,7 +1745,11 @@ export default function Page() {
                                             type="checkbox"
                                             checked={form.paid}
                                             onChange={(e) =>
-                                                setForm((f) => ({ ...f, paid: e.target.checked }))
+                                                updateFormState((f) => ({
+                                                    ...f,
+                                                    paid: e.target.checked,
+                                                    daysPerYear: !e.target.checked ? "0" : f.daysPerYear,
+                                                }))
                                             }
                                             disabled={readOnly}
                                             className="h-4 w-4 rounded border-gray-300 text-[#06b6d4]"
@@ -1676,7 +1761,7 @@ export default function Page() {
                                             type="checkbox"
                                             checked={form.active}
                                             onChange={(e) =>
-                                                setForm((f) => ({ ...f, active: e.target.checked }))
+                                                updateFormState((f) => ({ ...f, active: e.target.checked }))
                                             }
                                             disabled={readOnly}
                                             className="h-4 w-4 rounded border-gray-300 text-[#06b6d4]"
@@ -1684,12 +1769,13 @@ export default function Page() {
                                         Active policy
                                     </label>
                                 </div>
+
                             </div>
 
                             <div className="sticky bottom-0 flex shrink-0 justify-end gap-2 border-t border-gray-100 bg-white p-4 sm:px-6">
                                 <button
                                     type="button"
-                                    onClick={closeModal}
+                                    onClick={requestCloseModal}
                                     className="rounded-md border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-800 hover:bg-gray-50"
                                 >
                                     {readOnly ? "Close" : "Cancel"}
@@ -1848,6 +1934,92 @@ export default function Page() {
                                     <Save className="h-4 w-4" aria-hidden />
                                 )}
                                 {isSavingEmails ? "Saving…" : "Save emails"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {deleteTarget && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center p-4"
+                    role="dialog"
+                    aria-modal="true"
+                >
+                    <div
+                        className="absolute inset-0 bg-black/40 backdrop-blur-[1px]"
+                        onClick={() => setDeleteTarget(null)}
+                    />
+                    <div className="relative w-full max-w-md rounded-lg border border-gray-200 bg-white p-6 shadow-2xl">
+                        <div className="flex items-center gap-3 text-red-600">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100">
+                                <AlertTriangle className="h-5 w-5" />
+                            </div>
+                            <div>
+                                <h3 className="text-base font-bold text-gray-900">Delete policy</h3>
+                                <p className="text-xs text-gray-500">This action cannot be undone.</p>
+                            </div>
+                        </div>
+                        <p className="mt-4 text-sm text-gray-700">
+                            Are you sure you want to delete <span className="font-semibold text-gray-900">“{deleteTarget.name}”</span> ({deleteTarget.code})?
+                        </p>
+                        <div className="mt-6 flex justify-end gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setDeleteTarget(null)}
+                                disabled={isDeleting}
+                                className="rounded-md border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => void confirmDeletePolicy()}
+                                disabled={isDeleting}
+                                className="inline-flex items-center gap-2 rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60"
+                            >
+                                {isDeleting && <Loader2 className="h-4 w-4 animate-spin" />}
+                                {isDeleting ? "Deleting…" : "Delete policy"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showDiscardConfirm && (
+                <div
+                    className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+                    role="dialog"
+                    aria-modal="true"
+                >
+                    <div
+                        className="absolute inset-0 bg-black/50 backdrop-blur-[1px]"
+                        onClick={() => setShowDiscardConfirm(false)}
+                    />
+                    <div className="relative w-full max-w-sm rounded-lg border border-gray-200 bg-white p-5 shadow-2xl">
+                        <div className="flex items-center gap-3 text-amber-600">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-100">
+                                <AlertTriangle className="h-5 w-5" />
+                            </div>
+                            <h3 className="text-base font-bold text-gray-900">Discard unsaved changes?</h3>
+                        </div>
+                        <p className="mt-3 text-sm text-gray-600">
+                            You have modified this leave policy. If you close now, all unsaved changes will be lost.
+                        </p>
+                        <div className="mt-5 flex justify-end gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setShowDiscardConfirm(false)}
+                                className="rounded-md border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                            >
+                                Keep editing
+                            </button>
+                            <button
+                                type="button"
+                                onClick={closeModalDirectly}
+                                className="rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
+                            >
+                                Discard changes
                             </button>
                         </div>
                     </div>
