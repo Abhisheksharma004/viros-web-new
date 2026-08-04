@@ -161,14 +161,24 @@ function WorkEntryCountBadge({ count }: { count?: number }) {
     );
 }
 
-function StatusBadge({ status }: { status: AttendanceStatus }) {
-    const c = STATUS_CONFIG[status];
+function StatusBadge({ status, note }: { status: AttendanceStatus; note?: string }) {
+    const c = STATUS_CONFIG[status] || STATUS_CONFIG.weekend;
+
+    const isHolidayOrEvent =
+        status === "holiday" ||
+        (status === "weekend" && note && note !== "Off day");
+
+    const label = isHolidayOrEvent && note ? (note.split(" | ")[0] || note) : c.label;
+    const bg = isHolidayOrEvent ? "bg-purple-50" : c.bg;
+    const text = isHolidayOrEvent ? "text-purple-700" : c.text;
+    const dot = isHolidayOrEvent ? "bg-purple-500" : c.dot;
+
     return (
         <span
-            className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${c.bg} ${c.text}`}
+            className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${bg} ${text}`}
         >
-            <span className={`h-1.5 w-1.5 rounded-full ${c.dot}`} />
-            {c.label}
+            <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />
+            {label}
         </span>
     );
 }
@@ -215,7 +225,7 @@ function AttendanceLogMobileRow({
                     <p className="text-sm font-bold leading-snug text-gray-900">
                         {formatLogMobileDate(row.date)}
                     </p>
-                    <StatusBadge status={row.status} />
+                    <StatusBadge status={row.status} note={row.note} />
                 </div>
 
                 {row.note && (
@@ -568,6 +578,7 @@ export default function EmployeeAttendancePage() {
     const [todayLeave, setTodayLeave] = useState<TodayLeaveInfo | null>(null);
     const [portalWarning, setPortalWarning] = useState<string | null>(null);
     const [portalBlockedMessage, setPortalBlockedMessage] = useState<string | null>(null);
+    const [selectedCalendarIso, setSelectedCalendarIso] = useState<string | null>(null);
 
     const handlePortalLogout = async () => {
         try {
@@ -799,7 +810,7 @@ export default function EmployeeAttendancePage() {
 
     const calendarCells = useMemo(() => {
         const first = new Date(viewYear, viewMonth, 1);
-        const startPad = first.getDay();
+        const startPad = (first.getDay() + 6) % 7;
         const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
         const cells: ({ pad: true } | { pad: false; day: number; record?: DayRecord })[] = [];
 
@@ -1072,91 +1083,260 @@ export default function EmployeeAttendancePage() {
 
             {/* Month calendar */}
             <div className="bg-white rounded-md border border-gray-100 shadow-sm overflow-hidden">
-                <div className="px-4 sm:px-6 py-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="flex items-center gap-2">
-                        <Calendar className="h-5 w-5 text-[#0a2a5e]" aria-hidden />
-                        <h2 className="text-base font-bold text-gray-900">Monthly calendar</h2>
+                <div className="px-4 sm:px-6 py-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white">
+                    <div className="flex items-center gap-2.5">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#06b6d4]/10 text-[#06b6d4]">
+                            <Calendar className="h-5 w-5" aria-hidden />
+                        </div>
+                        <div>
+                            <h2 className="text-base font-bold text-gray-900">Monthly Calendar & Schedule</h2>
+                            <p className="text-xs text-gray-500 font-medium">Daily attendance status & official corporate events</p>
+                        </div>
                     </div>
                     <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-start">
                         <button
                             type="button"
                             onClick={() => shiftMonth(-1)}
-                            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-gray-200 text-gray-600 active:bg-gray-100 sm:h-10 sm:w-10 sm:rounded-md"
+                            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50 active:bg-gray-100 transition"
                             aria-label="Previous month"
                         >
-                            <ChevronLeft className="h-5 w-5 sm:h-4 sm:w-4" />
+                            <ChevronLeft className="h-4 w-4" />
                         </button>
-                        <span className="flex-1 text-center text-sm font-bold text-gray-900 sm:min-w-[140px] sm:flex-none">
+                        <span className="flex-1 text-center text-sm font-bold text-gray-900 sm:min-w-[150px] sm:flex-none">
                             {formatMonthLabel(viewYear, viewMonth)}
                         </span>
                         <button
                             type="button"
                             onClick={() => shiftMonth(1)}
-                            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-gray-200 text-gray-600 active:bg-gray-100 sm:h-10 sm:w-10 sm:rounded-md"
+                            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50 active:bg-gray-100 transition"
                             aria-label="Next month"
                         >
-                            <ChevronRight className="h-5 w-5 sm:h-4 sm:w-4" />
+                            <ChevronRight className="h-4 w-4" />
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                const now = new Date();
+                                setViewYear(now.getFullYear());
+                                setViewMonth(now.getMonth());
+                            }}
+                            className="ml-1 rounded-md border border-gray-200 bg-gray-50 px-2.5 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-100 transition"
+                        >
+                            Today
                         </button>
                     </div>
                 </div>
 
-                <div className="px-3 pb-4 sm:px-6">
-                    <div className="mb-1.5 grid grid-cols-7 gap-0.5 sm:mb-2 sm:gap-1">
-                        {weekdayLabels.map((d, idx) => (
-                            <div
-                                key={`${d}-${idx}`}
-                                className="py-1 text-center text-[10px] font-semibold text-gray-400 sm:text-xs"
-                            >
-                                <span className="sm:hidden">{d}</span>
-                                <span className="hidden sm:inline">
-                                    {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][idx]}
-                                </span>
-                            </div>
-                        ))}
+                <div className="p-3 sm:p-5">
+                    {/* Day Headers (Mon-Sun) */}
+                    <div className="grid grid-cols-7 border-b border-gray-200 bg-gray-50/80 rounded-t-md text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-[#0a2a5e]">
+                        <div className="py-2 sm:py-2.5">Mon</div>
+                        <div className="py-2 sm:py-2.5">Tue</div>
+                        <div className="py-2 sm:py-2.5">Wed</div>
+                        <div className="py-2 sm:py-2.5">Thu</div>
+                        <div className="py-2 sm:py-2.5">Fri</div>
+                        <div className="py-2 sm:py-2.5 text-rose-600">Sat</div>
+                        <div className="py-2 sm:py-2.5 text-rose-600">Sun</div>
                     </div>
-                    <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
+
+                    {/* Day Cells Grid */}
+                    <div className="grid grid-cols-7 divide-x divide-y divide-gray-100 border-x border-b border-gray-200 rounded-b-md bg-white overflow-hidden">
                         {calendarCells.map((cell, i) => {
                             if (cell.pad) {
-                                return <div key={`pad-${i}`} className="aspect-square" />;
-                            }
-                            const iso = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${String(cell.day).padStart(2, "0")}`;
-                            const isToday = todayIso !== "" && iso === todayIso;
-                            if (!cell.record) {
                                 return (
                                     <div
-                                        key={iso}
-                                        className={`flex aspect-square items-center justify-center rounded-md text-[11px] font-medium text-gray-300 bg-gray-50/80 sm:rounded-md sm:text-xs ${
-                                            isToday ? "ring-2 ring-[#06b6d4]/50 ring-offset-1" : ""
-                                        }`}
-                                    >
-                                        {cell.day}
-                                    </div>
+                                        key={`pad-${i}`}
+                                        className="min-h-[56px] sm:min-h-[100px] bg-gray-50/40 p-1 sm:p-2 text-gray-300"
+                                    />
                                 );
                             }
-                            const cfg = STATUS_CONFIG[cell.record.status];
+
+                            const iso = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${String(cell.day).padStart(2, "0")}`;
+                            const isToday = todayIso !== "" && iso === todayIso;
+                            const isSelected = selectedCalendarIso === iso;
+                            const record = cell.record;
+                            const noteText = record?.note;
+                            const isHolidayOrEvent =
+                                record?.status === "holiday" ||
+                                (record?.status === "weekend" && noteText && noteText !== "Off day");
+
                             return (
                                 <div
                                     key={iso}
-                                    title={cell.record.note ?? cfg.label}
-                                    className={`flex aspect-square flex-col items-center justify-center rounded-md border text-[11px] font-semibold transition-colors sm:rounded-md sm:text-xs ${
-                                        isToday
-                                            ? "ring-2 ring-[#06b6d4] ring-offset-1 border-[#06b6d4]/30"
-                                            : "border-transparent"
-                                    } ${cfg.bg} ${cfg.text}`}
+                                    onClick={() => setSelectedCalendarIso(iso)}
+                                    className={`group relative flex min-h-[56px] sm:min-h-[100px] cursor-pointer flex-col justify-between p-1 sm:p-2 transition ${
+                                        isSelected
+                                            ? "bg-[#0a2a5e]/10 ring-2 ring-inset ring-[#0a2a5e]"
+                                            : isToday
+                                              ? "bg-[#06b6d4]/5 ring-1 ring-inset ring-[#06b6d4]/40"
+                                              : "bg-white hover:bg-gray-50/80"
+                                    }`}
                                 >
-                                    <span>{cell.day}</span>
-                                    <span className={`mt-0.5 h-1 w-1 rounded-full ${cfg.dot}`} />
+                                    {/* Cell Header: Date Number */}
+                                    <div className="flex items-center justify-between">
+                                        <span
+                                            className={`inline-flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center text-[11px] sm:text-xs font-bold ${
+                                                isToday
+                                                    ? "rounded-full bg-[#06b6d4] text-white shadow-xs"
+                                                    : isSelected
+                                                      ? "rounded-full bg-[#0a2a5e] text-white"
+                                                      : "text-gray-800"
+                                            }`}
+                                        >
+                                            {cell.day}
+                                        </span>
+                                    </div>
+
+                                    {/* Content Badges inside cell */}
+                                    <div className="mt-0.5 sm:mt-1 flex flex-col gap-0.5 sm:gap-1">
+                                        {record ? (
+                                            isHolidayOrEvent && noteText ? (
+                                                <>
+                                                    {/* Desktop Full Badge */}
+                                                    <div
+                                                        title={noteText}
+                                                        className="hidden sm:block truncate rounded-md bg-purple-50 px-1.5 py-1 text-xs font-bold text-purple-800 border border-purple-200/80 shadow-2xs"
+                                                    >
+                                                        🎉 {noteText.split(" | ")[0]}
+                                                    </div>
+                                                    {/* Mobile Compact Badge */}
+                                                    <div
+                                                        title={noteText}
+                                                        className="block sm:hidden truncate rounded bg-purple-100 px-1 py-0.5 text-[9px] font-bold text-purple-900 leading-tight"
+                                                    >
+                                                        🎉 {noteText.split(" | ")[0]}
+                                                    </div>
+                                                </>
+                                            ) : record.status === "present" ? (
+                                                <>
+                                                    {/* Desktop Badge */}
+                                                    <div className="hidden sm:block truncate rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700 border border-emerald-200">
+                                                        ✓ Present {record.checkIn ? record.checkIn.slice(0, 5) : ""}
+                                                    </div>
+                                                    {/* Mobile Badge */}
+                                                    <div className="block sm:hidden truncate rounded bg-emerald-100 px-1 py-0.5 text-[9px] font-bold text-emerald-900 leading-tight">
+                                                        ✓ In
+                                                    </div>
+                                                </>
+                                            ) : record.status === "late" ? (
+                                                <>
+                                                    <div className="hidden sm:block truncate rounded-md bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 border border-amber-200">
+                                                        ⏰ Late
+                                                    </div>
+                                                    <div className="block sm:hidden truncate rounded bg-amber-100 px-1 py-0.5 text-[9px] font-bold text-amber-900 leading-tight">
+                                                        ⏰ Late
+                                                    </div>
+                                                </>
+                                            ) : record.status === "leave" ? (
+                                                <>
+                                                    <div className="hidden sm:block truncate rounded-md bg-blue-50 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700 border border-blue-200">
+                                                        ✈ Leave
+                                                    </div>
+                                                    <div className="block sm:hidden truncate rounded bg-blue-100 px-1 py-0.5 text-[9px] font-bold text-blue-900 leading-tight">
+                                                        ✈ Leave
+                                                    </div>
+                                                </>
+                                            ) : record.status === "absent" ? (
+                                                <>
+                                                    <div className="hidden sm:block truncate rounded-md bg-rose-50 px-1.5 py-0.5 text-[10px] font-semibold text-rose-700 border border-rose-200">
+                                                        ✕ Absent
+                                                    </div>
+                                                    <div className="block sm:hidden truncate rounded bg-rose-100 px-1 py-0.5 text-[9px] font-bold text-rose-900 leading-tight">
+                                                        ✕ Abs
+                                                    </div>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <div className="hidden sm:block truncate rounded-md bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold text-gray-500">
+                                                        Off day
+                                                    </div>
+                                                    <div className="block sm:hidden truncate rounded bg-gray-100 px-1 py-0.5 text-[9px] font-medium text-gray-500 leading-tight">
+                                                        Off
+                                                    </div>
+                                                </>
+                                            )
+                                        ) : null}
+                                    </div>
                                 </div>
                             );
                         })}
                     </div>
-                    <div className="-mx-1 mt-3 flex gap-2 overflow-x-auto border-t border-gray-100 px-1 pt-3 sm:mx-0 sm:flex-wrap sm:gap-3 sm:mt-4">
-                        {(Object.keys(STATUS_CONFIG) as AttendanceStatus[]).map((key) => (
-                            <span key={key} className="inline-flex items-center gap-1.5 text-xs text-gray-600">
-                                <span className={`h-2 w-2 rounded-full ${STATUS_CONFIG[key].dot}`} />
-                                {STATUS_CONFIG[key].label}
+
+                    {/* Interactive Selected Day Details Panel */}
+                    {selectedCalendarIso && (
+                        (() => {
+                            const selectedRec = monthRecords.find((r) => r.date === selectedCalendarIso);
+                            if (!selectedRec) return null;
+                            const d = new Date(selectedCalendarIso + "T12:00:00");
+                            const dateLabel = d.toLocaleDateString("en-IN", {
+                                weekday: "long",
+                                day: "numeric",
+                                month: "long",
+                                year: "numeric",
+                            });
+
+                            return (
+                                <div className="mt-3.5 rounded-lg border border-[#0a2a5e]/20 bg-[#0a2a5e]/5 p-3.5 sm:p-4 text-xs transition-all shadow-xs">
+                                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#0a2a5e]/15 pb-2.5">
+                                        <div className="flex items-center gap-2">
+                                            <Calendar className="h-4 w-4 text-[#0a2a5e]" />
+                                            <p className="font-bold text-[#0a2a5e] text-xs sm:text-sm">
+                                                {dateLabel}
+                                            </p>
+                                        </div>
+                                        <StatusBadge status={selectedRec.status} note={selectedRec.note} />
+                                    </div>
+                                    <div className="mt-2.5 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-4 text-gray-800">
+                                        <div>
+                                            <span className="text-[10px] uppercase font-bold text-gray-500">Check In:</span>
+                                            <p className="font-semibold text-gray-900">{selectedRec.checkIn || "—"}</p>
+                                        </div>
+                                        <div>
+                                            <span className="text-[10px] uppercase font-bold text-gray-500">Check Out:</span>
+                                            <p className="font-semibold text-gray-900">{selectedRec.checkOut || "—"}</p>
+                                        </div>
+                                        <div>
+                                            <span className="text-[10px] uppercase font-bold text-gray-500">Working Hours:</span>
+                                            <p className="font-semibold text-gray-900">{selectedRec.hours || "—"}</p>
+                                        </div>
+                                        <div>
+                                            <span className="text-[10px] uppercase font-bold text-gray-500">Work Entries:</span>
+                                            <p className="font-semibold text-[#0a2a5e]">{selectedRec.workEntryCount ?? 0} entries</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })()
+                    )}
+
+                    {/* Bottom Legend */}
+                    <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 pt-3 text-xs text-gray-600">
+                        <div className="flex flex-wrap items-center gap-3 text-[11px] sm:text-xs">
+                            <span className="inline-flex items-center gap-1.5 font-medium">
+                                <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
+                                Present
                             </span>
-                        ))}
+                            <span className="inline-flex items-center gap-1.5 font-medium">
+                                <span className="h-2.5 w-2.5 rounded-full bg-amber-500" />
+                                Late
+                            </span>
+                            <span className="inline-flex items-center gap-1.5 font-medium">
+                                <span className="h-2.5 w-2.5 rounded-full bg-rose-500" />
+                                Absent
+                            </span>
+                            <span className="inline-flex items-center gap-1.5 font-medium">
+                                <span className="h-2.5 w-2.5 rounded-full bg-blue-500" />
+                                Leave
+                            </span>
+                            <span className="inline-flex items-center gap-1.5 font-medium">
+                                <span className="h-2.5 w-2.5 rounded-full bg-purple-500" />
+                                Corporate Event / Holiday
+                            </span>
+                            <span className="inline-flex items-center gap-1.5 font-medium">
+                                <span className="h-2.5 w-2.5 rounded-full bg-gray-400" />
+                                Week Off
+                            </span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1329,12 +1509,7 @@ export default function EmployeeAttendancePage() {
                                             {formatLogTableDay(row.date)}
                                         </td>
                                         <td className="whitespace-nowrap px-4 py-4">
-                                            <StatusBadge status={row.status} />
-                                            {row.note && (
-                                                <p className="mt-1 max-w-[180px] text-[11px] font-medium text-amber-700">
-                                                    {row.note}
-                                                </p>
-                                            )}
+                                            <StatusBadge status={row.status} note={row.note} />
                                         </td>
                                         <td className="whitespace-nowrap px-4 py-4 text-center">
                                             <WorkEntryCountBadge count={row.workEntryCount} />

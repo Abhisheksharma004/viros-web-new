@@ -13,6 +13,10 @@ import {
     getTodayLeaveInfo,
     mergeLeaveRequestsIntoAttendanceRecords,
 } from "@/lib/attendanceLeaveSync";
+import {
+    fetchCorporateEventsForMonth,
+    mergeCorporateEventsIntoAttendanceRecords,
+} from "@/lib/attendanceCorporateCalendarSync";
 import { mergeMonthRecordsWithShift } from "@/lib/attendanceSchedule";
 import {
     evaluateMissedPunchPortalAccess,
@@ -67,8 +71,10 @@ export async function GET(request: Request) {
             todayIso,
             markPastAbsent: true,
         });
+        const corpEvents = await fetchCorporateEventsForMonth(year, month);
+        const recordsWithCorpEvents = mergeCorporateEventsIntoAttendanceRecords(records, corpEvents);
         const workEntryCounts = await getEmployeeWorkEntryCountsByDate(employeeId, year, month);
-        const recordsWithWork = records.map((record) => ({
+        const recordsWithWork = recordsWithCorpEvents.map((record) => ({
             ...record,
             workEntryCount: workEntryCounts[record.date] ?? 0,
         }));

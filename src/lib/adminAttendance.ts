@@ -21,6 +21,10 @@ import {
     mergeLeaveRequestsIntoAttendanceRecords,
 } from "@/lib/attendanceLeaveSync";
 import {
+    fetchCorporateEventsForMonth,
+    mergeCorporateEventsIntoAttendanceRecords,
+} from "@/lib/attendanceCorporateCalendarSync";
+import {
     countMonthScheduleDays,
     DEFAULT_SHIFT_WORKING_DAYS,
     isDateWorkingDay,
@@ -269,10 +273,36 @@ export async function getAdminDailyAttendance(dateIso: string): Promise<AdminDai
     );
 
     const shiftMap = await getActiveShiftsMap();
+    const [year, month] = date.split("-").map(Number);
+    const corpEvents = await fetchCorporateEventsForMonth(year, month);
+    const eventsOnDate = corpEvents.filter((ev) => date >= ev.start_date && date <= ev.end_date);
 
     return rows.map((row) => {
         const shiftDetail = shiftMap.get(row.employee_id) ?? null;
-        return mapJoinRowToDaily(row, date, shiftDetail, shiftMap.has(row.employee_id));
+        const daily = mapJoinRowToDaily(row, date, shiftDetail, shiftMap.has(row.employee_id));
+
+        if (eventsOnDate.length > 0) {
+            const eventTitle = eventsOnDate.map((ev) => ev.title).join(" | ");
+            const hasHoliday = eventsOnDate.some((ev) => ev.event_type === "holiday");
+            const hasPunch = Boolean(daily.checkIn || daily.checkOut || daily.checkInProof || daily.checkOutProof);
+
+            if (hasHoliday) {
+                if (!hasPunch && daily.status !== "leave") {
+                    daily.status = "holiday" as AttendanceStatus;
+                    daily.note = eventTitle;
+                } else if (hasPunch) {
+                    const notePrefix = daily.note ? `${daily.note} | ` : "";
+                    daily.note = `${notePrefix}Present on ${eventTitle}`;
+                }
+            } else {
+                const notePrefix = daily.note ? `${daily.note} | ` : "";
+                if (!daily.note?.includes(eventTitle)) {
+                    daily.note = daily.note ? `${notePrefix}${eventTitle}` : eventTitle;
+                }
+            }
+        }
+
+        return daily;
     });
 }
 
@@ -443,32 +473,34 @@ export async function getAdminEmployeeMonthlyDetail(
     const leaveRequests = await fetchLeaveRequestsOverlappingMonth(trimmedId, year, month);
     const withLeave = mergeLeaveRequestsIntoAttendanceRecords(dbRecords, leaveRequests);
     const todayIso = todayDateOnly();
-    const records = mergeMonthRecordsWithShift(year, month, withLeave, workingDays, {
+    const recordsWithShift = mergeMonthRecordsWithShift(year, month, withLeave, workingDays, {
         todayIso,
         markPastAbsent: true,
     });
+    const corpEvents = await fetchCorporateEventsForMonth(year, month);
+    const records = mergeCorporateEventsIntoAttendanceRecords(recordsWithShift, corpEvents);
 
     const shift: AdminEmployeeShiftContext = shiftRow
         ? {
-              configured: true,
-              active: shiftRow.is_active,
-              startTime: shiftRow.start_time,
-              endTime: shiftRow.end_time,
-              graceMinutes: shiftRow.grace_minutes,
-              workingDays: shiftRow.working_days,
-              locationType: shiftRow.location_type,
-              locationLabel: shiftRow.location_label,
-          }
+            configured: true,
+            active: shiftRow.is_active,
+            startTime: shiftRow.start_time,
+            endTime: shiftRow.end_time,
+            graceMinutes: shiftRow.grace_minutes,
+            workingDays: shiftRow.working_days,
+            locationType: shiftRow.location_type,
+            locationLabel: shiftRow.location_label,
+        }
         : {
-              configured: false,
-              active: false,
-              startTime: "09:00",
-              endTime: "18:00",
-              graceMinutes: 0,
-              workingDays: DEFAULT_SHIFT_WORKING_DAYS,
-              locationType: "office",
-              locationLabel: "",
-          };
+            configured: false,
+            active: false,
+            startTime: "09:00",
+            endTime: "18:00",
+            graceMinutes: 0,
+            workingDays: DEFAULT_SHIFT_WORKING_DAYS,
+            locationType: "office",
+            locationLabel: "",
+        };
 
     return {
         employee: {

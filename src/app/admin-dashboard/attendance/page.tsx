@@ -150,16 +150,27 @@ const BTN_ACTION =
     "inline-flex h-10 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md bg-[#06b6d4] px-4 text-xs font-bold text-white hover:bg-[#05a8b8] disabled:opacity-60 sm:text-sm";
 const EMPTY = "font-semibold text-gray-600";
 
-function StatusBadge({ status }: { status: string }) {
+function StatusBadge({ status, note }: { status: string; note?: string }) {
     const cfg = STATUS_STYLES[status] ?? {
         label: status,
         className: "bg-gray-100 text-gray-700 ring-gray-500/20",
     };
+
+    const isHolidayOrEvent =
+        status === "holiday" ||
+        (status === "weekend" && note && note !== "Off day") ||
+        (Boolean(note) && !note?.startsWith("Marked") && !note?.startsWith("Updated"));
+
+    const label = isHolidayOrEvent && note ? (note.split(" | ")[0] || note) : cfg.label;
+    const className = isHolidayOrEvent
+        ? "bg-purple-100 text-purple-900 ring-purple-600/30 font-bold"
+        : cfg.className;
+
     return (
         <span
-            className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-bold ring-1 ring-inset ${cfg.className}`}
+            className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-bold ring-1 ring-inset ${className}`}
         >
-            {cfg.label}
+            {label}
         </span>
     );
 }
@@ -167,9 +178,9 @@ function StatusBadge({ status }: { status: string }) {
 function hasPunchDetail(proof?: AttendancePunchProof) {
     return Boolean(
         proof?.time ||
-            proof?.photoUrl ||
-            (proof?.latitude != null && proof?.longitude != null) ||
-            proof?.address,
+        proof?.photoUrl ||
+        (proof?.latitude != null && proof?.longitude != null) ||
+        proof?.address,
     );
 }
 
@@ -318,9 +329,8 @@ function PunchProofModal({
                         <button
                             type="button"
                             onClick={() => onPhotoZoom(proof.photoUrl!, `${employeeName} — ${label}`)}
-                            className={`mx-auto block overflow-hidden rounded-md ring-2 ring-offset-2 transition hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-[#06b6d4] ${
-                                variant === "in" ? "ring-[#06b6d4]" : "ring-[#0a2a5e]"
-                            }`}
+                            className={`mx-auto block overflow-hidden rounded-md ring-2 ring-offset-2 transition hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-[#06b6d4] ${variant === "in" ? "ring-[#06b6d4]" : "ring-[#0a2a5e]"
+                                }`}
                             aria-label="View full size photo"
                         >
                             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -508,10 +518,10 @@ function AdminEmployeeAttendancePageContent() {
             if (!resp.ok) return;
             const rows: EmployeeListItem[] = Array.isArray(data)
                 ? data.map((r: { employee_id: string; full_name: string; department: string | null }) => ({
-                      employee_id: r.employee_id,
-                      full_name: r.full_name,
-                      department: r.department,
-                  }))
+                    employee_id: r.employee_id,
+                    full_name: r.full_name,
+                    department: r.department,
+                }))
                 : [];
             setEmployees(rows);
             if (rows.length && !selectedEmployeeId && !urlEmployeeId) {
@@ -565,14 +575,14 @@ function AdminEmployeeAttendancePageContent() {
                         typeof r.totalWorkingDaysInMonth === "number"
                             ? r.totalWorkingDaysInMonth
                             : typeof r.totalWorkingDays === "number"
-                              ? r.totalWorkingDays
-                              : 0,
+                                ? r.totalWorkingDays
+                                : 0,
                     totalWorkingDaysToDate:
                         typeof r.totalWorkingDaysToDate === "number"
                             ? r.totalWorkingDaysToDate
                             : typeof r.totalWorkingDays === "number"
-                              ? r.totalWorkingDays
-                              : 0,
+                                ? r.totalWorkingDays
+                                : 0,
                 })),
             );
         } catch (error) {
@@ -599,10 +609,10 @@ function AdminEmployeeAttendancePageContent() {
             setEmployeeMeta(
                 data.employee
                     ? {
-                          fullName: data.employee.fullName,
-                          department: data.employee.department,
-                          designation: data.employee.designation,
-                      }
+                        fullName: data.employee.fullName,
+                        department: data.employee.department,
+                        designation: data.employee.designation,
+                    }
                     : null,
             );
             setEmployeeShift(
@@ -958,11 +968,10 @@ function AdminEmployeeAttendancePageContent() {
                             key={t.id}
                             type="button"
                             onClick={() => setTab(t.id)}
-                            className={`inline-flex items-center gap-2 rounded-t-lg px-4 py-2.5 text-sm font-semibold transition ${
-                                active
-                                    ? "bg-[#0a2a5e] text-white shadow-sm"
-                                    : "text-gray-800 hover:bg-gray-100"
-                            }`}
+                            className={`inline-flex items-center gap-2 rounded-t-lg px-4 py-2.5 text-sm font-semibold transition ${active
+                                ? "bg-[#0a2a5e] text-white shadow-sm"
+                                : "text-gray-800 hover:bg-gray-100"
+                                }`}
                         >
                             <Icon className="h-4 w-4" aria-hidden />
                             {t.label}
@@ -1111,7 +1120,7 @@ function AdminEmployeeAttendancePageContent() {
                                                     {row.hours ?? <span className={EMPTY}>—</span>}
                                                 </td>
                                                 <td className={TD}>
-                                                    <StatusBadge status={row.status} />
+                                                    <StatusBadge status={row.status} note={row.note} />
                                                 </td>
                                                 <td className={`${TD} text-center`}>
                                                     {row.status === "weekend" ? (
@@ -1331,7 +1340,7 @@ function AdminEmployeeAttendancePageContent() {
                         <p className="border-t border-gray-100 px-4 py-2 text-xs text-gray-700">
                             Click a row to open employee-wise detail.
                             {viewYear === new Date().getFullYear() &&
-                            viewMonth === new Date().getMonth() + 1 ? (
+                                viewMonth === new Date().getMonth() + 1 ? (
                                 <>
                                     {" "}
                                     Present, absent, and total present are counted from month start
@@ -1477,7 +1486,7 @@ function AdminEmployeeAttendancePageContent() {
                                         >
                                             <td className={`${TD} font-bold`}>{formatTableDate(row.date)}</td>
                                             <td className={TD}>
-                                                <StatusBadge status={row.status} />
+                                                <StatusBadge status={row.status} note={row.note} />
                                             </td>
                                             <td className={`${TD} text-center`}>
                                                 {(row.workEntryCount ?? 0) > 0 ? (

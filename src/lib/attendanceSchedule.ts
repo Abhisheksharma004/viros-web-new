@@ -12,7 +12,7 @@ export function isDateWorkingDay(isoDate: string, workingDays: number[]): boolea
 }
 
 export function offDayNote(): string {
-    return "Off day (per shift schedule)";
+    return "Off day";
 }
 
 /**

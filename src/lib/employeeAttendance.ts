@@ -102,7 +102,8 @@ export type AttendanceStatus =
     | "absent"
     | "leave"
     | "half-day"
-    | "weekend";
+    | "weekend"
+    | "holiday";
 
 export type AttendancePunchProof = {
     time?: string;
