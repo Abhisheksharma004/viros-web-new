@@ -12,7 +12,7 @@ export default function Navbar() {
     const buttonRef = useRef<HTMLButtonElement>(null);
 
     const [navbarContent, setNavbarContent] = useState({
-        logo_url: '/plogo.png',
+        logo_url: '/newlogo.png',
         brand_title: '',
         brand_subtitle: ''
     });
@@ -60,11 +60,8 @@ export default function Navbar() {
         };
     }, [isOpen]);
 
-    const activeLogoUrl = !navbarContent.logo_url || navbarContent.logo_url === '/logo.png' || navbarContent.logo_url === '/hlogo.png'
-        ? '/plogo.png'
-        : navbarContent.logo_url;
-
-    const showSeparateText = navbarContent.brand_title && activeLogoUrl !== '/plogo.png' && activeLogoUrl !== '/hlogo.png';
+    const activeLogoUrl = '/newlogo.png';
+    const showSeparateText = false;
 
     return (
         <nav className="fixed w-full z-50 transition-all duration-300 bg-white/90 backdrop-blur-md border-b border-[#06b6d4]/30 shadow-sm shadow-[#06124f]/5">

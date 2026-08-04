@@ -157,10 +157,10 @@ export default function Footer() {
                         <Link href="/" className="inline-block mb-6 group">
                             <div className="bg-white/95 backdrop-blur-xs px-4 py-2.5 rounded-xl shadow-md border border-white/20 transition-transform duration-200 group-hover:scale-105 inline-block">
                                 <Image
-                                    src="/plogo.png"
+                                    src="/newlogo.png"
                                     alt={navbarContent.brand_title || "Viros Entrepreneurs IT Solutions Private Limited"}
-                                    width={240}
-                                    height={70}
+                                    width={280}
+                                    height={80}
                                     className="h-11 sm:h-12 md:h-12 lg:h-12 w-auto object-contain"
                                 />
                             </div>
