@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import {
+    adminMarkEmployeeAbsent,
     adminMarkEmployeePresent,
+    adminUpdateEmployeeAttendanceRecord,
     getAdminDailyAttendance,
     getAdminEmployeeMonthlyDetail,
     getAdminMonthlySummary,
@@ -95,7 +97,7 @@ export async function POST(request: Request) {
         const body = (await request.json()) as Record<string, unknown>;
         const action = typeof body.action === "string" ? body.action : "";
 
-        if (action !== "mark-present") {
+        if (action !== "mark-present" && action !== "mark-absent" && action !== "update-record") {
             return NextResponse.json({ message: "Invalid action" }, { status: 400 });
         }
 
@@ -108,6 +110,22 @@ export async function POST(request: Request) {
                 { message: "employeeId and date are required" },
                 { status: 400 },
             );
+        }
+
+        if (action === "update-record") {
+            const record = await adminUpdateEmployeeAttendanceRecord(employeeId, date, {
+                checkInTime: typeof body.checkInTime === "string" ? body.checkInTime : undefined,
+                checkOutTime: typeof body.checkOutTime === "string" ? body.checkOutTime : undefined,
+                checkInAddress: typeof body.checkInAddress === "string" ? body.checkInAddress : undefined,
+                checkOutAddress: typeof body.checkOutAddress === "string" ? body.checkOutAddress : undefined,
+                note,
+            });
+            return NextResponse.json({ message: "Attendance updated", record });
+        }
+
+        if (action === "mark-absent") {
+            const record = await adminMarkEmployeeAbsent(employeeId, date, note);
+            return NextResponse.json({ message: "Marked absent", record });
         }
 
         const record = await adminMarkEmployeePresent(employeeId, date, note);

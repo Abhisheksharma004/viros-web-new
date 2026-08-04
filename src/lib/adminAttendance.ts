@@ -3,12 +3,14 @@ import pool from "@/lib/db";
 import { todayDateOnly } from "@/lib/dateOnly";
 import { ensureAdminEmployeesTable } from "@/lib/adminEmployees";
 import {
+    computeLateSeconds,
     ensureEmployeeAttendanceTable,
     formatDbTime12h,
     formatDurationHms,
     getAttendanceByDate,
     mapPunchProof,
     mapRowToDayRecord,
+    parseISTDateTime,
     type AttendanceDayRecord,
     type AttendancePunchProof,
     type AttendanceStatus,
@@ -27,7 +29,9 @@ import {
 } from "@/lib/attendanceSchedule";
 import {
     getActiveShiftWorkingDaysMap,
+    getActiveShiftsMap,
     getShiftByEmployeeId,
+    type ActiveShiftDetail,
 } from "@/lib/adminEmployeeShifts";
 
 const ATTENDANCE_TABLE = "employee_attendance";
@@ -102,6 +106,7 @@ export type AdminDailyAttendanceRow = {
     checkInProof?: AttendancePunchProof;
     checkOutProof?: AttendancePunchProof;
     canMarkPresent: boolean;
+    canMarkAbsent: boolean;
     isWorkingDay: boolean;
     hasShift: boolean;
 };
@@ -165,16 +170,34 @@ function isoDateOnly(value: string): string {
 function mapJoinRowToDaily(
     row: EmployeeJoinRow,
     dateIso: string,
-    workingDays: number[] | null,
+    shiftDetail: ActiveShiftDetail | null,
     hasShift: boolean,
 ): AdminDailyAttendanceRow {
     const hasRecord = row.attendance_id != null;
-    const shiftDays = workingDays ?? DEFAULT_SHIFT_WORKING_DAYS;
+    const shiftDays = shiftDetail?.workingDays ?? DEFAULT_SHIFT_WORKING_DAYS;
     const isWorking = isDateWorkingDay(dateIso, shiftDays);
 
     let status: AttendanceStatus;
     if (hasRecord) {
         status = row.status as AttendanceStatus;
+        if (status === "present" && row.check_in_at && shiftDetail) {
+            const checkInDate = parseISTDateTime(row.check_in_at);
+            if (checkInDate) {
+                const [sh, sm] = shiftDetail.startTime.split(":").map(Number);
+                const safeH = Number.isNaN(sh) ? 9 : sh;
+                const safeM = Number.isNaN(sm) ? 0 : sm;
+                const startMins = safeH * 60 + safeM;
+                const graceMins = startMins + Math.max(0, shiftDetail.graceMinutes);
+                const checkInMins = checkInDate.getHours() * 60 + checkInDate.getMinutes();
+
+                if (checkInMins > startMins && checkInMins <= graceMins) {
+                    status = "grace" as AttendanceStatus;
+                }
+            }
+        }
+        if (status === "present" && row.note?.toLowerCase().includes("grace")) {
+            status = "grace" as AttendanceStatus;
+        }
     } else if (!isWorking) {
         status = "weekend";
     } else {
@@ -190,6 +213,12 @@ function mapJoinRowToDaily(
         (!hasRecord ||
             status === "absent" ||
             (hasRecord && !row.check_in_at && status !== "leave" && status !== "weekend"));
+
+    const canMarkAbsent =
+        isWorking &&
+        status !== "absent" &&
+        status !== "leave" &&
+        status !== "weekend";
 
     return {
         employeeId: row.employee_id,
@@ -223,6 +252,7 @@ function mapJoinRowToDaily(
             row.check_out_address,
         ),
         canMarkPresent,
+        canMarkAbsent,
         isWorkingDay: isWorking,
         hasShift,
     };
@@ -238,11 +268,11 @@ export async function getAdminDailyAttendance(dateIso: string): Promise<AdminDai
         [date],
     );
 
-    const shiftMap = await getActiveShiftWorkingDaysMap();
+    const shiftMap = await getActiveShiftsMap();
 
     return rows.map((row) => {
-        const wd = shiftMap.get(row.employee_id) ?? null;
-        return mapJoinRowToDaily(row, date, wd, shiftMap.has(row.employee_id));
+        const shiftDetail = shiftMap.get(row.employee_id) ?? null;
+        return mapJoinRowToDaily(row, date, shiftDetail, shiftMap.has(row.employee_id));
     });
 }
 
@@ -387,7 +417,29 @@ export async function getAdminEmployeeMonthlyDetail(
 
     const shiftRow = await getShiftByEmployeeId(trimmedId);
     const workingDays = shiftRow?.working_days ?? DEFAULT_SHIFT_WORKING_DAYS;
-    const dbRecords = attRows.map(mapRowToDayRecord);
+
+    const dbRecords = attRows.map((row) => {
+        const rec = mapRowToDayRecord(row);
+        if (rec.status === "present" && row.check_in_at && shiftRow) {
+            const checkInDate = parseISTDateTime(row.check_in_at);
+            if (checkInDate) {
+                const [sh, sm] = shiftRow.start_time.split(":").map(Number);
+                const safeH = Number.isNaN(sh) ? 9 : sh;
+                const safeM = Number.isNaN(sm) ? 0 : sm;
+                const startMins = safeH * 60 + safeM;
+                const graceMins = startMins + Math.max(0, shiftRow.grace_minutes);
+                const checkInMins = checkInDate.getHours() * 60 + checkInDate.getMinutes();
+
+                if (checkInMins > startMins && checkInMins <= graceMins) {
+                    rec.status = "grace" as AttendanceStatus;
+                }
+            }
+        }
+        if (rec.status === "present" && row.note?.toLowerCase().includes("grace")) {
+            rec.status = "grace" as AttendanceStatus;
+        }
+        return rec;
+    });
     const leaveRequests = await fetchLeaveRequestsOverlappingMonth(trimmedId, year, month);
     const withLeave = mergeLeaveRequestsIntoAttendanceRecords(dbRecords, leaveRequests);
     const todayIso = todayDateOnly();
@@ -479,6 +531,179 @@ export async function adminMarkEmployeePresent(
             `INSERT INTO ${ATTENDANCE_TABLE} (employee_id, attendance_date, status, note)
              VALUES (?, ?, 'present', ?)`,
             [trimmedId, date, noteText],
+        );
+    }
+
+    const updated = await getAttendanceByDate(trimmedId, date);
+    if (!updated) throw new Error("Failed to update attendance");
+    return mapRowToDayRecord(updated);
+}
+
+export async function adminMarkEmployeeAbsent(
+    employeeId: string,
+    dateIso: string,
+    adminNote?: string,
+) {
+    await ensureAdminEmployeesTable();
+    await ensureEmployeeAttendanceTable();
+
+    const date = isoDateOnly(dateIso);
+    const trimmedId = employeeId.trim().toUpperCase();
+
+    const [empRows] = await pool.query<RowDataPacket[]>(
+        `SELECT employee_id FROM admin_employees WHERE employee_id = ? LIMIT 1`,
+        [trimmedId],
+    );
+    if (!empRows[0]) {
+        throw new Error("Employee not found");
+    }
+
+    const noteText = adminNote?.trim()
+        ? `Marked absent by admin: ${adminNote.trim()}`
+        : "Marked absent by admin";
+
+    const shiftRow = await getShiftByEmployeeId(trimmedId);
+    const workingDays = shiftRow?.working_days ?? DEFAULT_SHIFT_WORKING_DAYS;
+    if (!isDateWorkingDay(date, workingDays)) {
+        throw new Error("Cannot mark attendance on a non-working day for this employee's shift");
+    }
+
+    const existing = await getAttendanceByDate(trimmedId, date);
+
+    if (existing) {
+        await pool.query(
+            `UPDATE ${ATTENDANCE_TABLE}
+             SET status = 'absent', check_in_at = NULL, check_out_at = NULL, late_seconds = 0, working_seconds = NULL, note = ?
+             WHERE id = ?`,
+            [noteText, existing.id],
+        );
+    } else {
+        await pool.query(
+            `INSERT INTO ${ATTENDANCE_TABLE} (employee_id, attendance_date, status, note)
+             VALUES (?, ?, 'absent', ?)`,
+            [trimmedId, date, noteText],
+        );
+    }
+
+    const updated = await getAttendanceByDate(trimmedId, date);
+    if (!updated) throw new Error("Failed to update attendance");
+    return mapRowToDayRecord(updated);
+}
+
+export async function adminUpdateEmployeeAttendanceRecord(
+    employeeId: string,
+    dateIso: string,
+    data: {
+        checkInTime?: string | null;
+        checkOutTime?: string | null;
+        checkInAddress?: string | null;
+        checkOutAddress?: string | null;
+        note?: string | null;
+    },
+) {
+    await ensureAdminEmployeesTable();
+    await ensureEmployeeAttendanceTable();
+
+    const date = isoDateOnly(dateIso);
+    const trimmedId = employeeId.trim().toUpperCase();
+
+    const [empRows] = await pool.query<RowDataPacket[]>(
+        `SELECT employee_id FROM admin_employees WHERE employee_id = ? LIMIT 1`,
+        [trimmedId],
+    );
+    if (!empRows[0]) {
+        throw new Error("Employee not found");
+    }
+
+    const shift = await getShiftByEmployeeId(trimmedId);
+    const workingDays = shift?.working_days ?? DEFAULT_SHIFT_WORKING_DAYS;
+    if (!isDateWorkingDay(date, workingDays)) {
+        throw new Error("Cannot update attendance on a non-working day for this employee's shift");
+    }
+
+    let checkInDateTime: string | null = null;
+    let checkOutDateTime: string | null = null;
+
+    if (data.checkInTime && data.checkInTime.trim()) {
+        const [h, m] = data.checkInTime.trim().split(":").map(Number);
+        const hh = String(Number.isNaN(h) ? 9 : h).padStart(2, "0");
+        const mm = String(Number.isNaN(m) ? 0 : m).padStart(2, "0");
+        checkInDateTime = `${date} ${hh}:${mm}:00`;
+    }
+
+    if (data.checkOutTime && data.checkOutTime.trim()) {
+        const [h, m] = data.checkOutTime.trim().split(":").map(Number);
+        const hh = String(Number.isNaN(h) ? 18 : h).padStart(2, "0");
+        const mm = String(Number.isNaN(m) ? 0 : m).padStart(2, "0");
+        checkOutDateTime = `${date} ${hh}:${mm}:00`;
+    }
+
+    let status: AttendanceStatus = "present";
+    let lateSeconds = 0;
+
+    if (checkInDateTime && shift) {
+        const punchedAtIso = `${date}T${checkInDateTime.split(" ")[1]}+05:30`;
+        const lateCalc = computeLateSeconds(punchedAtIso, shift);
+        status = lateCalc.isLate ? "late" : "present";
+        lateSeconds = lateCalc.secondsLate;
+    }
+
+    let workingSeconds: number | null = null;
+    if (checkInDateTime && checkOutDateTime) {
+        const tIn = new Date(`${date}T${checkInDateTime.split(" ")[1]}+05:30`).getTime();
+        const tOut = new Date(`${date}T${checkOutDateTime.split(" ")[1]}+05:30`).getTime();
+        if (tOut > tIn) {
+            workingSeconds = Math.floor((tOut - tIn) / 1000);
+        }
+    }
+
+    const noteText = data.note?.trim()
+        ? `Updated by admin: ${data.note.trim()}`
+        : "Updated by admin";
+
+    const existing = await getAttendanceByDate(trimmedId, date);
+
+    if (existing) {
+        await pool.query(
+            `UPDATE ${ATTENDANCE_TABLE}
+             SET status = ?,
+                 check_in_at = COALESCE(?, check_in_at),
+                 check_out_at = COALESCE(?, check_out_at),
+                 check_in_address = COALESCE(?, check_in_address),
+                 check_out_address = COALESCE(?, check_out_address),
+                 late_seconds = ?,
+                 working_seconds = COALESCE(?, working_seconds),
+                 note = ?
+             WHERE id = ?`,
+            [
+                status,
+                checkInDateTime,
+                checkOutDateTime,
+                data.checkInAddress?.trim() ?? existing.check_in_address,
+                data.checkOutAddress?.trim() ?? existing.check_out_address,
+                lateSeconds,
+                workingSeconds,
+                noteText,
+                existing.id,
+            ],
+        );
+    } else {
+        await pool.query(
+            `INSERT INTO ${ATTENDANCE_TABLE}
+             (employee_id, attendance_date, status, check_in_at, check_out_at, check_in_address, check_out_address, late_seconds, working_seconds, note)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                trimmedId,
+                date,
+                status,
+                checkInDateTime,
+                checkOutDateTime,
+                data.checkInAddress?.trim() ?? null,
+                data.checkOutAddress?.trim() ?? null,
+                lateSeconds,
+                workingSeconds,
+                noteText,
+            ],
         );
     }
 

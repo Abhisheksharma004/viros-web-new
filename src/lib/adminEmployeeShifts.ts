@@ -168,6 +168,31 @@ export async function getMissedPunchDisableDaysForEmployee(
     return normalizeMissedPunchDisableDays(shift.missed_punch_disable_days);
 }
 
+export type ActiveShiftDetail = {
+    startTime: string;
+    endTime: string;
+    graceMinutes: number;
+    workingDays: number[];
+};
+
+export async function getActiveShiftsMap(): Promise<Map<string, ActiveShiftDetail>> {
+    await ensureAdminEmployeeShiftsTable();
+    const [rows] = await pool.query<RowDataPacket[]>(
+        `SELECT employee_id, start_time, end_time, grace_minutes, working_days, is_active FROM ${TABLE}`,
+    );
+    const map = new Map<string, ActiveShiftDetail>();
+    for (const row of rows) {
+        if (!Number(row.is_active)) continue;
+        map.set(String(row.employee_id), {
+            startTime: formatTimeHHMM(row.start_time),
+            endTime: formatTimeHHMM(row.end_time),
+            graceMinutes: Number(row.grace_minutes) || 0,
+            workingDays: parseWorkingDaysJson(row.working_days),
+        });
+    }
+    return map;
+}
+
 export async function getActiveShiftWorkingDaysMap(): Promise<Map<string, number[]>> {
     await ensureAdminEmployeeShiftsTable();
     const [rows] = await pool.query<RowDataPacket[]>(

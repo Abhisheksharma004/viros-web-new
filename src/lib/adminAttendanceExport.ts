@@ -194,6 +194,7 @@ async function exportToPdf<T extends Record<string, string | number>>(
 export function formatAttendanceStatusLabel(status: string): string {
     const map: Record<string, string> = {
         present: "Present",
+        grace: "Checked in during grace time",
         absent: "Absent",
         late: "Late",
         leave: "Leave",

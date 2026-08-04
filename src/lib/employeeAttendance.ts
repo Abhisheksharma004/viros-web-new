@@ -230,6 +230,16 @@ export function formatDurationHms(totalSeconds: number) {
     return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
+function buildShiftStartTime(punchDate: Date, startTime24: string) {
+    const [h, m] = startTime24.split(":").map(Number);
+    const safeH = Number.isNaN(h) ? 9 : h;
+    const safeM = Number.isNaN(m) ? 0 : m;
+    const p = getPartsInTimeZone(punchDate, ATTENDANCE_TIMEZONE);
+    const hh = String(safeH).padStart(2, "0");
+    const mm = String(safeM).padStart(2, "0");
+    return new Date(`${p.year}-${p.month}-${p.day}T${hh}:${mm}:00${ATTENDANCE_TZ_OFFSET}`);
+}
+
 function buildShiftDeadline(punchDate: Date, startTime24: string, graceMinutes: number) {
     const [h, m] = startTime24.split(":").map(Number);
     const safeH = Number.isNaN(h) ? 9 : h;
@@ -263,21 +273,24 @@ export async function getEmployeeShiftForLate(employeeId: string) {
 }
 
 export function computeLateSeconds(punchedAtIso: string, shift: ReturnType<typeof mapShiftRowToApi> | null) {
-    if (!shift?.is_active) return { isLate: false, secondsLate: 0, graceMinutes: shift?.grace_minutes ?? 0 };
+    if (!shift?.is_active) return { isLate: false, isGrace: false, secondsLate: 0, graceMinutes: shift?.grace_minutes ?? 0 };
 
     const punchAt = new Date(punchedAtIso);
     if (Number.isNaN(punchAt.getTime())) {
-        return { isLate: false, secondsLate: 0, graceMinutes: shift.grace_minutes ?? 0 };
+        return { isLate: false, isGrace: false, secondsLate: 0, graceMinutes: shift.grace_minutes ?? 0 };
     }
 
     if (!isWorkingDay(punchAt, shift.working_days ?? [])) {
-        return { isLate: false, secondsLate: 0, graceMinutes: shift.grace_minutes ?? 0 };
+        return { isLate: false, isGrace: false, secondsLate: 0, graceMinutes: shift.grace_minutes ?? 0 };
     }
 
+    const startTime = buildShiftStartTime(punchAt, shift.start_time);
     const deadline = buildShiftDeadline(punchAt, shift.start_time, shift.grace_minutes ?? 0);
     const secondsLate = Math.max(0, Math.floor((punchAt.getTime() - deadline.getTime()) / 1000));
+    const isGrace = (shift.grace_minutes ?? 0) > 0 && punchAt.getTime() > startTime.getTime() && punchAt.getTime() <= deadline.getTime();
     return {
         isLate: secondsLate > 0,
+        isGrace,
         secondsLate,
         graceMinutes: shift.grace_minutes ?? 0,
     };
@@ -441,6 +454,8 @@ export async function punchAttendance(employeeId: string, punch: PunchInput) {
         const status: AttendanceStatus = late.isLate ? "late" : "present";
         const note = late.isLate
             ? `Late by ${formatDurationHms(late.secondsLate)} (grace ${late.graceMinutes} min)`
+            : late.isGrace
+            ? `Checked in during grace time (${late.graceMinutes} min grace)`
             : null;
 
         if (existing) {

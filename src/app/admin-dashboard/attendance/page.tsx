@@ -12,9 +12,12 @@ import {
     FileSpreadsheet,
     FileText,
     Loader2,
+    Eye,
     MapPin,
+    Pencil,
     Search,
     UserCheck,
+    UserX,
     Users,
     X,
 } from "lucide-react";
@@ -37,7 +40,7 @@ import {
 
 type TabId = "daily" | "monthly" | "employee";
 
-type AttendanceStatus = "present" | "absent" | "late" | "leave" | "half-day" | "weekend";
+type AttendanceStatus = "present" | "absent" | "late" | "grace" | "leave" | "half-day" | "weekend";
 
 type DailyRow = {
     employeeId: string;
@@ -54,6 +57,8 @@ type DailyRow = {
     checkInProof?: AttendancePunchProof;
     checkOutProof?: AttendancePunchProof;
     canMarkPresent: boolean;
+    canMarkAbsent: boolean;
+    workEntryCount?: number;
 };
 
 type MonthlyRow = {
@@ -107,8 +112,21 @@ type EmployeeRecord = {
     workEntryCount?: number;
 };
 
+function time12hTo24h(timeStr?: string): string {
+    if (!timeStr || timeStr === "—") return "";
+    const match = timeStr.trim().match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(am|pm)?$/i);
+    if (!match) return "";
+    let h = parseInt(match[1], 10);
+    const m = match[2];
+    const ampm = match[4]?.toLowerCase();
+    if (ampm === "pm" && h < 12) h += 12;
+    if (ampm === "am" && h === 12) h = 0;
+    return `${String(h).padStart(2, "0")}:${m}`;
+}
+
 const STATUS_STYLES: Record<string, { label: string; className: string }> = {
     present: { label: "Present", className: "bg-emerald-100 text-emerald-900 ring-emerald-600/30" },
+    grace: { label: "Checked in during grace time", className: "bg-purple-100 text-purple-900 ring-purple-600/30" },
     late: { label: "Late", className: "bg-amber-100 text-amber-900 ring-amber-600/30" },
     absent: { label: "Absent", className: "bg-red-100 text-red-900 ring-red-600/30" },
     leave: { label: "Leave", className: "bg-blue-100 text-blue-900 ring-blue-600/30" },
@@ -419,6 +437,18 @@ function AdminEmployeeAttendancePageContent() {
     const [markingKey, setMarkingKey] = useState<string | null>(null);
     const [markNote, setMarkNote] = useState("");
     const [markTarget, setMarkTarget] = useState<{ employeeId: string; name: string } | null>(null);
+    const [markAbsentNote, setMarkAbsentNote] = useState("");
+    const [markAbsentTarget, setMarkAbsentTarget] = useState<{ employeeId: string; name: string } | null>(null);
+    const [updateTarget, setUpdateTarget] = useState<{
+        employeeId: string;
+        name: string;
+        checkInTime: string;
+        checkOutTime: string;
+        checkInAddress: string;
+        checkOutAddress: string;
+        note: string;
+    } | null>(null);
+    const [viewDetailTarget, setViewDetailTarget] = useState<DailyRow | null>(null);
     const [exportBusy, setExportBusy] = useState<"excel" | "pdf" | null>(null);
     const [photoLightbox, setPhotoLightbox] = useState<{ src: string; alt: string } | null>(null);
     const [punchDetail, setPunchDetail] = useState<{
@@ -630,7 +660,7 @@ function AdminEmployeeAttendancePageContent() {
     }, [monthlyRows, filterText]);
 
     const dailyStats = useMemo(() => {
-        const present = dailyRows.filter((r) => r.status === "present" || r.status === "late").length;
+        const present = dailyRows.filter((r) => r.status === "present" || r.status === "grace" || r.status === "late").length;
         const absent = dailyRows.filter((r) => r.status === "absent").length;
         const late = dailyRows.filter((r) => r.status === "late").length;
         const checkedOut = dailyRows.filter((r) => r.checkOut).length;
@@ -676,6 +706,73 @@ function AdminEmployeeAttendancePageContent() {
             }
         } catch (error) {
             alert(error instanceof Error ? error.message : "Failed to mark present");
+        } finally {
+            setMarkingKey(null);
+        }
+    };
+
+    const handleMarkAbsent = async () => {
+        if (!markAbsentTarget) return;
+        try {
+            setMarkingKey(`${markAbsentTarget.employeeId}-${dailyDate}`);
+            const resp = await fetch("/api/admin/attendance", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    action: "mark-absent",
+                    employeeId: markAbsentTarget.employeeId,
+                    date: dailyDate,
+                    note: markAbsentNote.trim() || undefined,
+                }),
+            });
+            const data = await resp.json().catch(() => ({}));
+            if (!resp.ok) {
+                throw new Error(typeof data.message === "string" ? data.message : "Failed to mark absent");
+            }
+            setMarkAbsentTarget(null);
+            setMarkAbsentNote("");
+            await loadDaily();
+            if (tab === "monthly") await loadMonthly();
+            if (tab === "employee" && selectedEmployeeId === markAbsentTarget.employeeId) {
+                await loadEmployeeMonthly();
+            }
+        } catch (error) {
+            alert(error instanceof Error ? error.message : "Failed to mark absent");
+        } finally {
+            setMarkingKey(null);
+        }
+    };
+
+    const handleUpdateRecord = async () => {
+        if (!updateTarget) return;
+        try {
+            setMarkingKey(`${updateTarget.employeeId}-${dailyDate}`);
+            const resp = await fetch("/api/admin/attendance", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    action: "update-record",
+                    employeeId: updateTarget.employeeId,
+                    date: dailyDate,
+                    checkInTime: updateTarget.checkInTime || undefined,
+                    checkOutTime: updateTarget.checkOutTime || undefined,
+                    checkInAddress: updateTarget.checkInAddress || undefined,
+                    checkOutAddress: updateTarget.checkOutAddress || undefined,
+                    note: updateTarget.note.trim() || undefined,
+                }),
+            });
+            const data = await resp.json().catch(() => ({}));
+            if (!resp.ok) {
+                throw new Error(typeof data.message === "string" ? data.message : "Failed to update attendance");
+            }
+            setUpdateTarget(null);
+            await loadDaily();
+            if (tab === "monthly") await loadMonthly();
+            if (tab === "employee" && selectedEmployeeId === updateTarget.employeeId) {
+                await loadEmployeeMonthly();
+            }
+        } catch (error) {
+            alert(error instanceof Error ? error.message : "Failed to update attendance");
         } finally {
             setMarkingKey(null);
         }
@@ -1019,27 +1116,76 @@ function AdminEmployeeAttendancePageContent() {
                                                 <td className={`${TD} text-center`}>
                                                     {row.status === "weekend" ? (
                                                         <span className={`${EMPTY} text-xs`}>Off day</span>
-                                                    ) : row.canMarkPresent ? (
-                                                        <button
-                                                            type="button"
-                                                            disabled={markingKey === `${row.employeeId}-${dailyDate}`}
-                                                            onClick={() =>
-                                                                setMarkTarget({
-                                                                    employeeId: row.employeeId,
-                                                                    name: row.fullName,
-                                                                })
-                                                            }
-                                                            className="inline-flex items-center gap-1.5 rounded-md bg-[#06b6d4] px-3 py-2 text-xs font-bold text-white shadow-sm hover:bg-[#05a8b8] disabled:opacity-60"
-                                                        >
-                                                            {markingKey === `${row.employeeId}-${dailyDate}` ? (
-                                                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                                            ) : (
-                                                                <UserCheck className="h-3.5 w-3.5" />
-                                                            )}
-                                                            Mark present
-                                                        </button>
                                                     ) : (
-                                                        <span className={`text-xs ${EMPTY}`}>—</span>
+                                                        <div className="flex items-center justify-center gap-2">
+                                                            {row.canMarkPresent && (
+                                                                <button
+                                                                    type="button"
+                                                                    disabled={markingKey === `${row.employeeId}-${dailyDate}`}
+                                                                    onClick={() =>
+                                                                        setMarkTarget({
+                                                                            employeeId: row.employeeId,
+                                                                            name: row.fullName,
+                                                                        })
+                                                                    }
+                                                                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[#06b6d4] text-white shadow-sm hover:bg-[#05a8b8] disabled:opacity-60 transition-colors"
+                                                                    title="Mark Present"
+                                                                >
+                                                                    {markingKey === `${row.employeeId}-${dailyDate}` ? (
+                                                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                                                    ) : (
+                                                                        <UserCheck className="h-4 w-4" />
+                                                                    )}
+                                                                </button>
+                                                            )}
+                                                            {row.canMarkAbsent && (
+                                                                <button
+                                                                    type="button"
+                                                                    disabled={markingKey === `${row.employeeId}-${dailyDate}`}
+                                                                    onClick={() =>
+                                                                        setMarkAbsentTarget({
+                                                                            employeeId: row.employeeId,
+                                                                            name: row.fullName,
+                                                                        })
+                                                                    }
+                                                                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-rose-600 text-white shadow-sm hover:bg-rose-700 disabled:opacity-60 transition-colors"
+                                                                    title="Mark Absent"
+                                                                >
+                                                                    {markingKey === `${row.employeeId}-${dailyDate}` ? (
+                                                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                                                    ) : (
+                                                                        <UserX className="h-4 w-4" />
+                                                                    )}
+                                                                </button>
+                                                            )}
+                                                            <button
+                                                                type="button"
+                                                                disabled={markingKey === `${row.employeeId}-${dailyDate}`}
+                                                                onClick={() =>
+                                                                    setUpdateTarget({
+                                                                        employeeId: row.employeeId,
+                                                                        name: row.fullName,
+                                                                        checkInTime: time12hTo24h(row.checkIn),
+                                                                        checkOutTime: time12hTo24h(row.checkOut),
+                                                                        checkInAddress: row.checkInProof?.address ?? "",
+                                                                        checkOutAddress: row.checkOutProof?.address ?? "",
+                                                                        note: "",
+                                                                    })
+                                                                }
+                                                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-700 shadow-sm hover:bg-amber-50 hover:text-amber-700 hover:border-amber-300 disabled:opacity-60 transition-colors"
+                                                                title="Update Time & Location"
+                                                            >
+                                                                <Pencil className="h-4 w-4" />
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setViewDetailTarget(row)}
+                                                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#0a2a5e]/20 bg-[#0a2a5e]/5 text-[#0a2a5e] shadow-sm hover:bg-[#0a2a5e] hover:text-white transition-colors group"
+                                                                title="View All Details"
+                                                            >
+                                                                <Eye className="h-4 w-4 text-[#0a2a5e] group-hover:text-white" />
+                                                            </button>
+                                                        </div>
                                                     )}
                                                 </td>
                                             </tr>
@@ -1444,6 +1590,358 @@ function AdminEmployeeAttendancePageContent() {
                                     <Check className="h-4 w-4" />
                                 )}
                                 Confirm present
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Mark absent modal */}
+            {markAbsentTarget && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                    <div className="w-full max-w-md rounded-md bg-white p-6 shadow-xl">
+                        <h3 className="text-lg font-bold text-gray-900">Mark as absent</h3>
+                        <p className="mt-1 text-sm font-medium text-gray-800">
+                            <strong className="text-gray-900">{markAbsentTarget.name}</strong> ({markAbsentTarget.employeeId}) on{" "}
+                            {new Date(dailyDate + "T12:00:00").toLocaleDateString("en-IN", {
+                                weekday: "long",
+                                day: "numeric",
+                                month: "long",
+                                year: "numeric",
+                            })}
+                        </p>
+                        <label className="mt-4 block text-xs font-bold text-gray-800">
+                            Note (optional)
+                        </label>
+                        <textarea
+                            value={markAbsentNote}
+                            onChange={(e) => setMarkAbsentNote(e.target.value)}
+                            rows={2}
+                            placeholder="Reason for manual absent mark…"
+                            className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 placeholder:text-gray-600 outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-500/30"
+                        />
+                        <div className="mt-5 flex gap-2">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setMarkAbsentTarget(null);
+                                    setMarkAbsentNote("");
+                                }}
+                                className="flex-1 rounded-md border border-gray-200 py-2.5 text-sm font-semibold text-gray-800 hover:bg-gray-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => void handleMarkAbsent()}
+                                disabled={Boolean(markingKey)}
+                                className="flex flex-1 items-center justify-center gap-2 rounded-md bg-rose-600 py-2.5 text-sm font-bold text-white hover:bg-rose-700 disabled:opacity-60"
+                            >
+                                {markingKey ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                    <Check className="h-4 w-4" />
+                                )}
+                                Confirm absent
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Update time & location modal */}
+            {updateTarget && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                    <div className="w-full max-w-lg rounded-lg bg-white p-6 shadow-xl">
+                        <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                            <div>
+                                <h3 className="text-lg font-bold text-gray-900">Update Attendance</h3>
+                                <p className="text-xs font-semibold text-gray-600">
+                                    <strong className="text-gray-900">{updateTarget.name}</strong> ({updateTarget.employeeId}) · {dailyDateLabel}
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setUpdateTarget(null)}
+                                className="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                            >
+                                <X className="h-5 w-5" />
+                            </button>
+                        </div>
+
+                        <div className="mt-4 space-y-4">
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label htmlFor="update-checkin-time" className="block text-xs font-bold uppercase tracking-wider text-gray-700">
+                                        Check In Time
+                                    </label>
+                                    <input
+                                        id="update-checkin-time"
+                                        type="time"
+                                        value={updateTarget.checkInTime}
+                                        onChange={(e) => setUpdateTarget({ ...updateTarget, checkInTime: e.target.value })}
+                                        className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-900 focus:border-[#0a2a5e] focus:outline-none focus:ring-1 focus:ring-[#0a2a5e]"
+                                    />
+                                </div>
+                                <div>
+                                    <label htmlFor="update-checkout-time" className="block text-xs font-bold uppercase tracking-wider text-gray-700">
+                                        Check Out Time
+                                    </label>
+                                    <input
+                                        id="update-checkout-time"
+                                        type="time"
+                                        value={updateTarget.checkOutTime}
+                                        onChange={(e) => setUpdateTarget({ ...updateTarget, checkOutTime: e.target.value })}
+                                        className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-900 focus:border-[#0a2a5e] focus:outline-none focus:ring-1 focus:ring-[#0a2a5e]"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label htmlFor="update-checkin-address" className="block text-xs font-bold uppercase tracking-wider text-gray-700">
+                                    Check In Location / Address
+                                </label>
+                                <input
+                                    id="update-checkin-address"
+                                    type="text"
+                                    value={updateTarget.checkInAddress}
+                                    onChange={(e) => setUpdateTarget({ ...updateTarget, checkInAddress: e.target.value })}
+                                    placeholder="e.g. Head Office, Sector 62, Noida"
+                                    className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-900 focus:border-[#0a2a5e] focus:outline-none focus:ring-1 focus:ring-[#0a2a5e]"
+                                />
+                            </div>
+
+                            <div>
+                                <label htmlFor="update-checkout-address" className="block text-xs font-bold uppercase tracking-wider text-gray-700">
+                                    Check Out Location / Address (Optional)
+                                </label>
+                                <input
+                                    id="update-checkout-address"
+                                    type="text"
+                                    value={updateTarget.checkOutAddress}
+                                    onChange={(e) => setUpdateTarget({ ...updateTarget, checkOutAddress: e.target.value })}
+                                    placeholder="e.g. Head Office, Sector 62, Noida"
+                                    className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-900 focus:border-[#0a2a5e] focus:outline-none focus:ring-1 focus:ring-[#0a2a5e]"
+                                />
+                            </div>
+
+                            <div>
+                                <label htmlFor="update-reason-note" className="block text-xs font-bold uppercase tracking-wider text-gray-700">
+                                    Admin Note / Reason (Optional)
+                                </label>
+                                <input
+                                    id="update-reason-note"
+                                    type="text"
+                                    value={updateTarget.note}
+                                    onChange={(e) => setUpdateTarget({ ...updateTarget, note: e.target.value })}
+                                    placeholder="e.g. Manual time correction"
+                                    className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-900 focus:border-[#0a2a5e] focus:outline-none focus:ring-1 focus:ring-[#0a2a5e]"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="mt-6 flex justify-end gap-2.5 border-t border-gray-100 pt-4">
+                            <button
+                                type="button"
+                                onClick={() => setUpdateTarget(null)}
+                                className="rounded-md border border-gray-300 px-4 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                disabled={Boolean(markingKey)}
+                                onClick={() => void handleUpdateRecord()}
+                                className="inline-flex items-center gap-1.5 rounded-md bg-[#0a2a5e] px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-[#071f47] disabled:opacity-60"
+                            >
+                                {markingKey ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+                                Save Changes
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* View full attendance details modal */}
+            {viewDetailTarget && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                    <div className="w-full max-w-2xl overflow-hidden rounded-xl bg-white shadow-2xl">
+                        {/* Modal Header */}
+                        <div
+                            className="flex items-center justify-between px-6 py-4 text-white"
+                            style={{
+                                background: "linear-gradient(135deg, #06124f 0%, #0a2a5e 55%, #0d3a7a 100%)",
+                            }}
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-lg font-bold text-white shadow-inner">
+                                    {viewDetailTarget.fullName.charAt(0)}
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-bold text-white">{viewDetailTarget.fullName}</h3>
+                                    <p className="text-xs font-medium text-white/80">
+                                        {viewDetailTarget.employeeId} · {viewDetailTarget.department || "General"} · {viewDetailTarget.designation || "Employee"}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <StatusBadge status={viewDetailTarget.status} />
+                                <button
+                                    type="button"
+                                    onClick={() => setViewDetailTarget(null)}
+                                    className="rounded-full p-1.5 text-white/80 hover:bg-white/20 hover:text-white"
+                                >
+                                    <X className="h-5 w-5" />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div className="max-h-[75vh] overflow-y-auto p-6 space-y-6">
+                            {/* Summary Bar */}
+                            <div className="grid grid-cols-3 gap-3 rounded-lg border border-gray-100 bg-gray-50/80 p-3.5 text-center">
+                                <div>
+                                    <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Date</p>
+                                    <p className="mt-0.5 text-sm font-bold text-gray-900">{formatTableDate(viewDetailTarget.date)}</p>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Working Hours</p>
+                                    <p className="mt-0.5 text-sm font-black text-[#0a2a5e]">{viewDetailTarget.hours ?? "—"}</p>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Work Entries</p>
+                                    <p className="mt-0.5 text-sm font-bold text-emerald-700">
+                                        {viewDetailTarget.workEntryCount ?? 0} entries
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Check-in & Check-out Cards */}
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                {/* Check-In Card */}
+                                <div className="rounded-xl border border-emerald-100 bg-emerald-50/30 p-4">
+                                    <div className="flex items-center justify-between border-b border-emerald-100/60 pb-2.5">
+                                        <div className="flex items-center gap-2">
+                                            <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
+                                            <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-900">Check In</h4>
+                                        </div>
+                                        <span className="text-xs font-black text-emerald-700">{viewDetailTarget.checkIn || "Not checked in"}</span>
+                                    </div>
+
+                                    <div className="mt-3 space-y-3">
+                                        {viewDetailTarget.checkInProof?.photoUrl ? (
+                                            <div className="flex justify-center">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setPhotoLightbox({ src: viewDetailTarget.checkInProof!.photoUrl!, alt: `${viewDetailTarget.fullName} Check In` })}
+                                                    className="group relative overflow-hidden rounded-lg border-2 border-emerald-200 shadow-sm transition hover:border-emerald-500"
+                                                >
+                                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                    <img
+                                                        src={viewDetailTarget.checkInProof.photoUrl}
+                                                        alt="Check In Photo"
+                                                        className="h-28 w-28 object-cover transition duration-200 group-hover:scale-105"
+                                                    />
+                                                    <span className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition">
+                                                        <Search className="h-5 w-5 text-white" />
+                                                    </span>
+                                                </button>
+                                            </div>
+                                        ) : null}
+
+                                        <div>
+                                            <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Location Address</p>
+                                            <p className="mt-1 text-xs font-medium text-gray-800 leading-relaxed">
+                                                {viewDetailTarget.checkInProof?.address || viewDetailTarget.note || "Location not recorded"}
+                                            </p>
+                                        </div>
+
+                                        {viewDetailTarget.checkInProof?.latitude != null && (
+                                            <div className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-600">
+                                                <MapPin className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
+                                                <span>
+                                                    Lat: {viewDetailTarget.checkInProof.latitude}, Long: {viewDetailTarget.checkInProof.longitude}
+                                                    {viewDetailTarget.checkInProof.accuracy != null ? ` (±${viewDetailTarget.checkInProof.accuracy}m)` : ""}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Check-Out Card */}
+                                <div className="rounded-xl border border-blue-100 bg-blue-50/30 p-4">
+                                    <div className="flex items-center justify-between border-b border-blue-100/60 pb-2.5">
+                                        <div className="flex items-center gap-2">
+                                            <span className="flex h-2.5 w-2.5 rounded-full bg-blue-500" />
+                                            <h4 className="text-xs font-bold uppercase tracking-wider text-blue-900">Check Out</h4>
+                                        </div>
+                                        <span className="text-xs font-black text-blue-700">{viewDetailTarget.checkOut || "Not checked out"}</span>
+                                    </div>
+
+                                    <div className="mt-3 space-y-3">
+                                        {viewDetailTarget.checkOutProof?.photoUrl ? (
+                                            <div className="flex justify-center">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setPhotoLightbox({ src: viewDetailTarget.checkOutProof!.photoUrl!, alt: `${viewDetailTarget.fullName} Check Out` })}
+                                                    className="group relative overflow-hidden rounded-lg border-2 border-blue-200 shadow-sm transition hover:border-blue-500"
+                                                >
+                                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                    <img
+                                                        src={viewDetailTarget.checkOutProof.photoUrl}
+                                                        alt="Check Out Photo"
+                                                        className="h-28 w-28 object-cover transition duration-200 group-hover:scale-105"
+                                                    />
+                                                    <span className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition">
+                                                        <Search className="h-5 w-5 text-white" />
+                                                    </span>
+                                                </button>
+                                            </div>
+                                        ) : null}
+
+                                        <div>
+                                            <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Location Address</p>
+                                            <p className="mt-1 text-xs font-medium text-gray-800 leading-relaxed">
+                                                {viewDetailTarget.checkOutProof?.address || "Location not recorded"}
+                                            </p>
+                                        </div>
+
+                                        {viewDetailTarget.checkOutProof?.latitude != null && (
+                                            <div className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-600">
+                                                <MapPin className="h-3.5 w-3.5 shrink-0 text-blue-600" />
+                                                <span>
+                                                    Lat: {viewDetailTarget.checkOutProof.latitude}, Long: {viewDetailTarget.checkOutProof.longitude}
+                                                    {viewDetailTarget.checkOutProof.accuracy != null ? ` (±${viewDetailTarget.checkOutProof.accuracy}m)` : ""}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Note & Remarks */}
+                            {viewDetailTarget.note && (
+                                <div className="rounded-lg border border-amber-200 bg-amber-50/60 p-3.5">
+                                    <p className="text-[10px] font-bold uppercase tracking-wider text-amber-900">Notes / System Remarks</p>
+                                    <p className="mt-1 text-xs font-semibold text-amber-800">{viewDetailTarget.note}</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="flex items-center justify-between border-t border-gray-100 bg-gray-50 px-6 py-3.5">
+                            <Link
+                                href={`/admin-dashboard/work-entries?month=${monthInputValue}&employeeId=${encodeURIComponent(viewDetailTarget.employeeId)}`}
+                                className="text-xs font-bold text-[#06b6d4] hover:underline"
+                            >
+                                View Employee Work Entries &rarr;
+                            </Link>
+                            <button
+                                type="button"
+                                onClick={() => setViewDetailTarget(null)}
+                                className="rounded-md bg-[#0a2a5e] px-5 py-2 text-xs font-bold text-white shadow-sm hover:bg-[#071f47]"
+                            >
+                                Close
                             </button>
                         </div>
                     </div>
