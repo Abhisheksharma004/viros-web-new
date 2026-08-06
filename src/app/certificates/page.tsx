@@ -135,61 +135,62 @@ export default function CertificatesPage() {
                         {displayCertificates.map((cert, index) => (
                             <div
                                 key={cert.id}
-                                className={`group relative bg-white rounded-[2rem] overflow-hidden shadow-lg transition-all duration-700 hover:-translate-y-2 hover:shadow-2xl hover:shadow-[#06b6d4]/20 flex flex-col ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`}
+                                className={`group relative bg-white rounded-3xl overflow-hidden shadow-xl transition-all duration-700 hover:-translate-y-2 hover:shadow-2xl hover:shadow-[#06b6d4]/20 flex flex-col p-7 sm:p-8 border border-slate-100/80 backdrop-blur-sm ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`}
                                 style={{ transitionDelay: `${index * 150}ms` }}
                             >
                                 {/* Gradient Border on Hover */}
-                                <div className="absolute inset-0 p-[1px] rounded-[2rem] bg-gradient-to-br from-transparent via-transparent to-transparent group-hover:from-[#06b6d4] group-hover:via-[#06124f] group-hover:to-[#06b6d4] transition-all duration-700 z-0 opacity-0 group-hover:opacity-100" />
+                                <div className="absolute inset-0 p-[1.5px] rounded-3xl bg-gradient-to-br from-[#06b6d4]/30 via-slate-200 to-[#06124f]/20 group-hover:from-[#06b6d4] group-hover:via-[#06124f] group-hover:to-[#06b6d4] transition-all duration-500 z-0 pointer-events-none" />
 
-                                {/* Card Background */}
-                                <div className="absolute inset-[1px] bg-white rounded-[2rem] z-0" />
-
-                                {/* Image Area */}
-                                <div
-                                    className="relative h-64 overflow-hidden z-10 m-[1px] rounded-t-[2rem] cursor-pointer"
-                                    onClick={() => {
-                                        setSelectedImage(cert.image_url || cert.image || "");
-                                        setSelectedCert(cert);
-                                    }}
-                                >
-                                    <div className="absolute inset-0 bg-gradient-to-t from-[#06124f] via-transparent to-transparent z-10 opacity-80" />
-                                    <Image
-                                        src={cert.image_url || cert.image || "https://images.unsplash.com/photo-1606326608606-aa0b62935f2b?auto=format&fit=crop&w=800&q=80"}
-                                        alt={cert.title}
-                                        fill
-                                        className="object-cover transition-transform duration-700 group-hover:scale-110"
-                                    />
-                                    <div className="absolute top-4 right-4 z-20">
-                                        <div className="inline-block px-4 py-1.5 bg-white/10 backdrop-blur-md rounded-full border border-white/20 text-white text-xs font-bold tracking-wider uppercase shadow-lg">
-                                            {cert.year}
+                                {/* Inner Content */}
+                                <div className="relative z-10 flex flex-col h-full justify-between">
+                                    <div>
+                                        {/* Card Header: Certificate Badge & Year */}
+                                        <div className="flex items-center justify-between mb-6">
+                                            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#06b6d4]/15 to-[#06124f]/10 border border-[#06b6d4]/30 text-[#06124f] flex items-center justify-center shadow-xs group-hover:scale-110 transition-transform duration-300">
+                                                <svg className="w-6 h-6 text-[#06b6d4]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                                                </svg>
+                                            </div>
+                                            {cert.year && (
+                                                <span className="px-3.5 py-1.5 bg-gradient-to-r from-[#06b6d4]/10 to-[#06124f]/10 text-[#06124f] border border-[#06b6d4]/25 rounded-full text-xs font-extrabold tracking-wider shadow-2xs">
+                                                    {cert.year}
+                                                </span>
+                                            )}
                                         </div>
-                                    </div>
 
-                                    {/* Hover Overlay Icon */}
-                                    <div className="absolute inset-0 z-20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-[#06124f]/40 backdrop-blur-[2px]">
-                                        <div className="w-14 h-14 rounded-full bg-white/90 backdrop-blur text-[#06124f] flex items-center justify-center shadow-xl transform scale-50 group-hover:scale-100 transition-all duration-500 cubic-bezier(0.34, 1.56, 0.64, 1)">
-                                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 0 11-6 0 3 3 0 016 0z" />
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                            </svg>
+                                        {/* Issuer Tag & Title */}
+                                        <div className="mb-4">
+                                            <p className="text-[#06b6d4] font-extrabold text-xs mb-2 uppercase tracking-widest">
+                                                {cert.issuer}
+                                            </p>
+                                            <h3 className="text-2xl font-black text-[#06124f] leading-tight tracking-tight group-hover:text-[#06b6d4] transition-colors duration-300">
+                                                {cert.title}
+                                            </h3>
                                         </div>
-                                    </div>
-                                </div>
 
-                                {/* Content */}
-                                <div className="p-8 flex flex-col flex-grow relative z-10">
-                                    <div className="mb-4">
-                                        <p className="text-[#06b6d4] font-bold text-xs mb-2 uppercase tracking-widest">
-                                            {cert.issuer}
+                                        {/* Accent Line */}
+                                        <div className="w-12 h-1 bg-slate-100 rounded-full mb-4 group-hover:w-full group-hover:bg-gradient-to-r group-hover:from-[#06b6d4] group-hover:to-[#06124f] transition-all duration-500" />
+
+                                        {/* Description */}
+                                        <p className="text-slate-600 text-sm leading-relaxed mb-6 font-normal">
+                                            {cert.description}
                                         </p>
-                                        <h3 className="text-2xl font-black text-[#06124f] leading-tight group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-[#06124f] group-hover:to-[#06b6d4] transition-all duration-300">
-                                            {cert.title}
-                                        </h3>
                                     </div>
-                                    <div className="w-12 h-1 bg-gray-100 rounded-full mb-4 group-hover:w-full group-hover:bg-gradient-to-r group-hover:from-[#06b6d4] group-hover:to-[#06124f] transition-all duration-700" />
-                                    <p className="text-gray-500 text-sm leading-relaxed flex-grow font-medium">
-                                        {cert.description}
-                                    </p>
+
+                                    {/* View Certificate Action Button */}
+                                    <button
+                                        onClick={() => {
+                                            setSelectedImage(cert.image_url || cert.image || "");
+                                            setSelectedCert(cert);
+                                        }}
+                                        className="w-full py-3.5 px-6 bg-gradient-to-r from-[#06124f] via-[#06124f] to-[#06b6d4] text-white font-bold rounded-xl shadow-md hover:shadow-xl hover:shadow-[#06b6d4]/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2.5 group/btn touch-manipulation cursor-pointer mt-2"
+                                    >
+                                        <svg className="w-5 h-5 text-[#06b6d4] group-hover/btn:text-white group-hover/btn:scale-110 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 0 11-6 0 3 3 0 016 0z" />
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                        </svg>
+                                        <span>View Certificate</span>
+                                    </button>
                                 </div>
                             </div>
                         ))}

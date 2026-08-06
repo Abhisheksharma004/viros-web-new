@@ -9,7 +9,7 @@ export default function ContactPageClient() {
     const [content, setContent] = useState<any>(null);
     const [departments, setDepartments] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    
+
     // Form state
     const [formData, setFormData] = useState({
         name: '',
@@ -20,7 +20,7 @@ export default function ContactPageClient() {
         message: ''
     });
     const [submitting, setSubmitting] = useState(false);
-    
+
     // Toast state
     const [showToast, setShowToast] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
@@ -60,7 +60,7 @@ export default function ContactPageClient() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         // Validation
         if (!formData.name || !formData.email || !formData.phone || !formData.message) {
             setToastMessage('Please fill in all required fields');
@@ -86,7 +86,7 @@ export default function ContactPageClient() {
                 setToastMessage('Message sent successfully! We\'ll get back to you soon.');
                 setToastType('success');
                 setShowToast(true);
-                
+
                 // Reset form
                 setFormData({
                     name: '',
@@ -119,10 +119,10 @@ export default function ContactPageClient() {
     const data = content || {
         hero_title: "Let's Start a Conversation",
         hero_description: "Have a question about our products or services? We're here to help you find the perfect solution for your business.",
-        general_phone: "+91 98765 43210",
-        general_email_support: "support@viros-entrepreneurs.com",
-        general_email_info: "info@viros-entrepreneurs.com",
-        address: "123 Tech Park, IT Zone\nMumbai, Maharashtra\nIndia - 400001",
+        general_phone: "+91 837792-9141",
+        general_email_support: "customercare@virosentrepreneurs.com",
+        general_email_info: "info@virosentrepreneurs.com",
+        address: "25/2, Block B, Molarband Extension Badarpur, New Delhi, Delhi 110044",
         care_title: "Customer Care & Dispatch Related Inquiries",
         care_description: "We are committed to providing the best experience. If your query includes dispatch issues or hasn't been resolved, please contact our dedicated team.",
         care_email: "customercare@virosentrepreneurs.com",
@@ -267,62 +267,62 @@ export default function ContactPageClient() {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div className="space-y-2">
                                             <label className="text-sm font-bold text-gray-700 ml-1">Your Name <span className="text-red-500">*</span></label>
-                                            <input 
-                                                type="text" 
+                                            <input
+                                                type="text"
                                                 name="name"
                                                 value={formData.name}
                                                 onChange={handleInputChange}
                                                 required
                                                 disabled={submitting}
-                                                className="w-full px-4 py-3 rounded-xl bg-white border-2 border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-[#06b6d4] focus:ring-4 focus:ring-[#06b6d4]/10 outline-none transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed" 
-                                                placeholder="John Doe" 
+                                                className="w-full px-4 py-3 rounded-xl bg-white border-2 border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-[#06b6d4] focus:ring-4 focus:ring-[#06b6d4]/10 outline-none transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                                placeholder="John Doe"
                                             />
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-sm font-bold text-gray-700 ml-1">Phone Number <span className="text-red-500">*</span></label>
-                                            <input 
-                                                type="tel" 
+                                            <input
+                                                type="tel"
                                                 name="phone"
                                                 value={formData.phone}
                                                 onChange={handleInputChange}
                                                 required
                                                 disabled={submitting}
-                                                className="w-full px-4 py-3 rounded-xl bg-white border-2 border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-[#06b6d4] focus:ring-4 focus:ring-[#06b6d4]/10 outline-none transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed" 
-                                                placeholder="+91 98765 43210" 
+                                                className="w-full px-4 py-3 rounded-xl bg-white border-2 border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-[#06b6d4] focus:ring-4 focus:ring-[#06b6d4]/10 outline-none transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                                placeholder="+91 98765 43210"
                                             />
                                         </div>
                                     </div>
 
                                     <div className="space-y-2">
                                         <label className="text-sm font-bold text-gray-700 ml-1">Email Address <span className="text-red-500">*</span></label>
-                                        <input 
-                                            type="email" 
+                                        <input
+                                            type="email"
                                             name="email"
                                             value={formData.email}
                                             onChange={handleInputChange}
                                             required
                                             disabled={submitting}
-                                            className="w-full px-4 py-3 rounded-xl bg-white border-2 border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-[#06b6d4] focus:ring-4 focus:ring-[#06b6d4]/10 outline-none transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed" 
-                                            placeholder="john@company.com" 
+                                            className="w-full px-4 py-3 rounded-xl bg-white border-2 border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-[#06b6d4] focus:ring-4 focus:ring-[#06b6d4]/10 outline-none transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                            placeholder="john@company.com"
                                         />
                                     </div>
 
                                     <div className="space-y-2">
                                         <label className="text-sm font-bold text-gray-700 ml-1">Company Name <span className="text-gray-400 font-normal">(Optional)</span></label>
-                                        <input 
-                                            type="text" 
+                                        <input
+                                            type="text"
                                             name="company"
                                             value={formData.company}
                                             onChange={handleInputChange}
                                             disabled={submitting}
-                                            className="w-full px-4 py-3 rounded-xl bg-white border-2 border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-[#06b6d4] focus:ring-4 focus:ring-[#06b6d4]/10 outline-none transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed" 
-                                            placeholder="Your Company" 
+                                            className="w-full px-4 py-3 rounded-xl bg-white border-2 border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-[#06b6d4] focus:ring-4 focus:ring-[#06b6d4]/10 outline-none transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                            placeholder="Your Company"
                                         />
                                     </div>
 
                                     <div className="space-y-2">
                                         <label className="text-sm font-bold text-gray-700 ml-1">Subject</label>
-                                        <select 
+                                        <select
                                             name="subject"
                                             value={formData.subject}
                                             onChange={handleInputChange}
@@ -338,21 +338,21 @@ export default function ContactPageClient() {
 
                                     <div className="space-y-2">
                                         <label className="text-sm font-bold text-gray-700 ml-1">Message <span className="text-red-500">*</span></label>
-                                        <textarea 
-                                            rows={5} 
+                                        <textarea
+                                            rows={5}
                                             name="message"
                                             value={formData.message}
                                             onChange={handleInputChange}
                                             required
                                             disabled={submitting}
-                                            className="w-full px-4 py-3 rounded-xl bg-white border-2 border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-[#06b6d4] focus:ring-4 focus:ring-[#06b6d4]/10 outline-none transition-all resize-none shadow-sm disabled:opacity-50 disabled:cursor-not-allowed" 
-                                            placeholder="Tell us how we can help..." 
+                                            className="w-full px-4 py-3 rounded-xl bg-white border-2 border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-[#06b6d4] focus:ring-4 focus:ring-[#06b6d4]/10 outline-none transition-all resize-none shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                            placeholder="Tell us how we can help..."
                                         />
                                     </div>
 
                                     <div className="pt-4">
-                                        <button 
-                                            type="submit" 
+                                        <button
+                                            type="submit"
                                             disabled={submitting}
                                             className="w-full py-4 bg-linear-to-r from-[#06124f] to-[#06b6d4] text-white font-bold text-lg rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-3"
                                         >

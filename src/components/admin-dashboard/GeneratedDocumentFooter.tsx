@@ -1,5 +1,5 @@
 const DEFAULT_EMAIL = "sales@virosentrepreneurs.com";
-const DEFAULT_PHONE = "9871029141";
+const DEFAULT_PHONE = "+91-987102-9141";
 
 type GeneratedDocumentFooterProps = {
     kind?: "letter" | "offer";

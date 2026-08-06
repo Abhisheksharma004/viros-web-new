@@ -15,6 +15,7 @@ export default function AboutPage() {
   const [values, setValues] = useState<any[]>([]);
   const [milestones, setMilestones] = useState<any[]>([]);
   const [team, setTeam] = useState<any[]>([]);
+  const [viewMode, setViewMode] = useState<'marquee' | 'grid'>('marquee');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -86,6 +87,39 @@ export default function AboutPage() {
     { year: "2023", title: "Innovation & Software", description: "Launched our custom software development wing." },
     { year: "2024", title: "Market Leadership", description: "Recognized as a top barcode solutions provider with over 500+ satisfied clients." }
   ];
+
+  // Fallback data for team if database is empty
+  const fallbackTeam = [
+    {
+      id: 1,
+      name: "Mr. Bibhransh Yadav",
+      role: "Managing Director (MD)",
+      image: "/team/bibhransh.jpg",
+      bio: "Passionate entrepreneur and technology enthusiast with strong expertise in AIDC (Automatic Identification and Data Capture), barcode technology, and enterprise tech solutions.",
+      linkedin: "#",
+      instagram: "#"
+    },
+    {
+      id: 2,
+      name: "Rachna Rajput",
+      role: "Account Manager",
+      image: "/team/rachna.jpg",
+      bio: "Account Manager with extensive experience in inventory management, stock control, purchase coordination, and day-to-day accounting operations.",
+      linkedin: "#",
+      instagram: "#"
+    },
+    {
+      id: 3,
+      name: "Shekhar",
+      role: "System Administrator",
+      image: "/team/shekhar.jpg",
+      bio: "System administrator specializing in securing, maintaining, and scaling core IT infrastructure and network operations at Viros.",
+      linkedin: "#",
+      instagram: "#"
+    }
+  ];
+
+  const displayTeam = team.length > 0 ? team : fallbackTeam;
 
   if (isLoading) {
     return (
@@ -409,224 +443,91 @@ export default function AboutPage() {
       </section>
 
       {/* Enhanced Team Section - Mobile Responsive */}
-      <section className="py-12 sm:py-16 md:py-20 lg:py-24 bg-linear-to-br from-gray-50/50 to-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
-          <div className="text-center mb-12 sm:mb-16 md:mb-20">
-            <div className="mb-6 sm:mb-8">
-              <span className="inline-flex items-center px-4 py-2 sm:px-6 sm:py-3 bg-[#06124f]/10 text-[#06124f] text-xs sm:text-sm font-bold rounded-full">
-                <svg className="w-3 h-3 sm:w-4 sm:h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <section className="py-16 sm:py-20 md:py-24 lg:py-28 bg-gradient-to-b from-gray-50/70 via-slate-50/50 to-white relative overflow-hidden">
+        {/* Subtle Background Glow Spheres */}
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-gradient-to-r from-[#06b6d4]/10 via-[#06124f]/5 to-[#06b6d4]/10 blur-3xl rounded-full pointer-events-none" />
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12 relative z-10">
+          <div className="text-center mb-10 sm:mb-14">
+            <div className="mb-4 sm:mb-6">
+              <span className="inline-flex items-center px-4 py-2 sm:px-6 sm:py-2.5 bg-gradient-to-r from-[#06b6d4]/15 via-[#06124f]/10 to-[#06b6d4]/15 backdrop-blur-md text-[#06124f] text-xs sm:text-sm font-extrabold rounded-full border border-[#06b6d4]/30 shadow-md">
+                <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2 text-[#06b6d4]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
                 Leadership Team
               </span>
             </div>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-[#06124f] mb-4 sm:mb-6 md:mb-8">
-              Meet the Visionaries
+            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-[#06124f] mb-4 sm:mb-6 tracking-tight">
+              Meet the <span className="bg-gradient-to-r from-[#06124f] via-[#06124f] to-[#06b6d4] bg-clip-text text-transparent">Visionaries</span>
             </h2>
-            <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed px-4 sm:px-0">
+            <p className="text-base sm:text-lg md:text-xl text-slate-600 max-w-4xl mx-auto leading-relaxed px-4 sm:px-0 font-normal">
               Our experienced leadership team combines deep expertise in barcode technology, business operations, and customer success to deliver comprehensive solutions across industries.
             </p>
+
+            {/* View Mode Toggle Switch */}
+            <div className="mt-8 flex justify-center items-center space-x-3">
+              <button
+                onClick={() => setViewMode('marquee')}
+                className={`px-5 py-2.5 text-xs sm:text-sm font-bold rounded-full transition-all duration-300 flex items-center space-x-2 touch-manipulation ${
+                  viewMode === 'marquee'
+                    ? 'bg-[#06124f] text-white shadow-lg shadow-[#06124f]/25 scale-105'
+                    : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                </svg>
+                <span>Continuous Scroll</span>
+              </button>
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`px-5 py-2.5 text-xs sm:text-sm font-bold rounded-full transition-all duration-300 flex items-center space-x-2 touch-manipulation ${
+                  viewMode === 'grid'
+                    ? 'bg-[#06124f] text-white shadow-lg shadow-[#06124f]/25 scale-105'
+                    : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                </svg>
+                <span>Grid View</span>
+              </button>
+            </div>
           </div>
 
-          {/* Marquee Container */}
-          <div className="relative overflow-hidden">
-            {/* Gradient Overlays for Fade Effect */}
-            <div className="absolute left-0 top-0 bottom-0 w-20 sm:w-32 bg-linear-to-r from-gray-50 to-transparent z-10 pointer-events-none" />
-            <div className="absolute right-0 top-0 bottom-0 w-20 sm:w-32 bg-linear-to-l from-gray-50 to-transparent z-10 pointer-events-none" />
+          {viewMode === 'marquee' ? (
+            /* Marquee Container with Fade Edges */
+            <div className="relative overflow-hidden py-4">
+              {/* Gradient Side Masks */}
+              <div className="absolute left-0 top-0 bottom-0 w-16 sm:w-32 bg-gradient-to-r from-gray-50 via-gray-50/90 to-transparent z-20 pointer-events-none" />
+              <div className="absolute right-0 top-0 bottom-0 w-16 sm:w-32 bg-gradient-to-l from-gray-50 via-gray-50/90 to-transparent z-20 pointer-events-none" />
 
-            {/* Marquee Animation Container */}
-            <div className="animate-marquee flex">
-              {/* First Set of Team Members */}
-              {team.map((member, index) => (
-                <div
-                  key={`first-${index}`}
-                  className={`shrink-0 w-80 sm:w-96 mx-4 sm:mx-6 transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-                    }`}
-                  style={{ transitionDelay: `${index * 100}ms` }}
-                >
-                  {/* Enhanced Card Container */}
-                  <div className="group relative bg-white rounded-3xl p-6 sm:p-8 shadow-xl hover:shadow-2xl transition-all duration-500 border border-gray-100/50 backdrop-blur-sm group-hover:-translate-y-2 h-full">
-                    {/* Decorative Background Pattern */}
-                    <div className="absolute inset-0 bg-linear-to-br from-[#06b6d4]/5 via-transparent to-[#06124f]/5 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-
-                    {/* Profile Image with Enhanced Design */}
-                    <div className="relative mb-6 mx-auto w-32 h-32 sm:w-36 sm:h-36">
-                      {/* Animated Background Ring */}
-                      <div className="absolute inset-0 bg-linear-to-br from-[#06b6d4] via-[#06b6d4] to-[#06124f] rounded-full p-1 group-hover:scale-105 transition-all duration-500 shadow-lg group-hover:shadow-xl group-hover:shadow-[#06b6d4]/25">
-                        <div className="w-full h-full rounded-full overflow-hidden bg-white p-1">
-                          <div className="w-full h-full rounded-full overflow-hidden relative">
-                            <Image
-                              src={member.image}
-                              alt={member.name}
-                              fill
-                              className="object-cover group-hover:scale-110 transition-transform duration-700"
-                            />
-                            {/* Overlay on hover */}
-                            <div className="absolute inset-0 bg-linear-to-t from-[#06124f]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Floating Badge */}
-                      <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-linear-to-br from-[#06b6d4] to-[#06124f] rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                      </div>
-                    </div>
-
-                    {/* Content Section */}
-                    <div className="text-center relative z-10">
-                      {/* Name with Enhanced Typography */}
-                      <h3 className="text-xl sm:text-2xl font-black text-[#06124f] mb-3 group-hover:text-[#06b6d4] transition-colors duration-300">
-                        {member.name}
-                      </h3>
-
-                      {/* Role Badge */}
-                      <div className="mb-4">
-                        <span className="inline-flex items-center px-3 py-1 sm:px-4 sm:py-2 bg-linear-to-r from-[#06b6d4]/10 to-[#06124f]/10 text-[#06124f] text-sm font-bold rounded-full border border-[#06b6d4]/20 group-hover:border-[#06b6d4]/40 transition-all duration-300">
-                          {member.role}
-                        </span>
-                      </div>
-
-                      {/* Bio with Better Styling */}
-                      <p className="text-gray-600 leading-relaxed mb-6 text-sm group-hover:text-gray-700 transition-colors duration-300 line-clamp-3">
-                        {member.bio}
-                      </p>
-
-                      {/* Enhanced Social Links */}
-                      <div className="flex justify-center space-x-3">
-                        <a
-                          href={member.linkedin}
-                          className="group/social relative p-3 rounded-2xl bg-linear-to-br from-[#06124f]/10 to-[#06124f]/5 text-[#06124f] hover:bg-linear-to-br hover:from-[#06124f] hover:to-[#06124f]/90 hover:text-white transition-all duration-300 touch-manipulation shadow-md hover:shadow-lg transform hover:-translate-y-1"
-                          aria-label={`${member.name} LinkedIn Profile`}
-                        >
-                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-                          </svg>
-                        </a>
-
-                        <a
-                          href={member.instagram}
-                          className="group/social relative p-3 rounded-2xl bg-linear-to-br from-[#06b6d4]/10 to-[#06b6d4]/5 text-[#06b6d4] hover:bg-linear-to-br hover:from-[#06b6d4] hover:to-[#06b6d4]/90 hover:text-white transition-all duration-300 touch-manipulation shadow-md hover:shadow-lg transform hover:-translate-y-1"
-                          aria-label={`${member.name} Twitter Profile`}
-                        >
-                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z" />
-                          </svg>
-                        </a>
-
-                        {/* Contact Button */}
-                        <button className="group/social relative p-3 rounded-2xl bg-linear-to-br from-gray-100 to-gray-50 text-gray-600 hover:bg-linear-to-br hover:from-[#06124f]/10 hover:to-[#06b6d4]/10 hover:text-[#06124f] transition-all duration-300 touch-manipulation shadow-md hover:shadow-lg transform hover:-translate-y-1">
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Decorative Corner Elements */}
-                    <div className="absolute top-4 right-4 w-2 h-2 bg-linear-to-br from-[#06b6d4] to-[#06124f] rounded-full opacity-20 group-hover:opacity-60 transition-opacity duration-300" />
-                    <div className="absolute bottom-4 left-4 w-1 h-1 bg-linear-to-br from-[#06124f] to-[#06b6d4] rounded-full opacity-20 group-hover:opacity-60 transition-opacity duration-300" />
+              {/* Marquee Animation Track */}
+              <div className="animate-marquee flex hover:[animation-play-state:paused]">
+                {/* First Loop */}
+                {displayTeam.map((member, index) => (
+                  <div key={`first-${index}`} className="shrink-0 w-80 sm:w-[350px] mx-3 sm:mx-4">
+                    <TeamCard member={member} isVisible={isVisible} index={index} />
                   </div>
-                </div>
-              ))}
-
-              {/* Duplicate Set for Seamless Loop */}
-              {team.map((member, index) => (
-                <div
-                  key={`second-${index}`}
-                  className="shrink-0 w-80 sm:w-96 mx-4 sm:mx-6"
-                >
-                  {/* Enhanced Card Container */}
-                  <div className="group relative bg-white rounded-3xl p-6 sm:p-8 shadow-xl hover:shadow-2xl transition-all duration-500 border border-gray-100/50 backdrop-blur-sm group-hover:-translate-y-2 h-full">
-                    {/* Decorative Background Pattern */}
-                    <div className="absolute inset-0 bg-linear-to-br from-[#06b6d4]/5 via-transparent to-[#06124f]/5 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-
-                    {/* Profile Image with Enhanced Design */}
-                    <div className="relative mb-6 mx-auto w-32 h-32 sm:w-36 sm:h-36">
-                      {/* Animated Background Ring */}
-                      <div className="absolute inset-0 bg-linear-to-br from-[#06b6d4] via-[#06b6d4] to-[#06124f] rounded-full p-1 group-hover:scale-105 transition-all duration-500 shadow-lg group-hover:shadow-xl group-hover:shadow-[#06b6d4]/25">
-                        <div className="w-full h-full rounded-full overflow-hidden bg-white p-1">
-                          <div className="w-full h-full rounded-full overflow-hidden relative">
-                            <Image
-                              src={member.image}
-                              alt={member.name}
-                              fill
-                              className="object-cover group-hover:scale-110 transition-transform duration-700"
-                            />
-                            {/* Overlay on hover */}
-                            <div className="absolute inset-0 bg-linear-to-t from-[#06124f]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Floating Badge */}
-                      <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-linear-to-br from-[#06b6d4] to-[#06124f] rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                      </div>
-                    </div>
-
-                    {/* Content Section */}
-                    <div className="text-center relative z-10">
-                      {/* Name with Enhanced Typography */}
-                      <h3 className="text-xl sm:text-2xl font-black text-[#06124f] mb-3 group-hover:text-[#06b6d4] transition-colors duration-300">
-                        {member.name}
-                      </h3>
-
-                      {/* Role Badge */}
-                      <div className="mb-4">
-                        <span className="inline-flex items-center px-3 py-1 sm:px-4 sm:py-2 bg-linear-to-r from-[#06b6d4]/10 to-[#06124f]/10 text-[#06124f] text-sm font-bold rounded-full border border-[#06b6d4]/20 group-hover:border-[#06b6d4]/40 transition-all duration-300">
-                          {member.role}
-                        </span>
-                      </div>
-
-                      {/* Bio with Better Styling */}
-                      <p className="text-gray-600 leading-relaxed mb-6 text-sm group-hover:text-gray-700 transition-colors duration-300 line-clamp-3">
-                        {member.bio}
-                      </p>
-
-                      {/* Enhanced Social Links */}
-                      <div className="flex justify-center space-x-3">
-                        <a
-                          href={member.linkedin}
-                          className="group/social relative p-3 rounded-2xl bg-linear-to-br from-[#06124f]/10 to-[#06124f]/5 text-[#06124f] hover:bg-linear-to-br hover:from-[#06124f] hover:to-[#06124f]/90 hover:text-white transition-all duration-300 touch-manipulation shadow-md hover:shadow-lg transform hover:-translate-y-1"
-                          aria-label={`${member.name} LinkedIn Profile`}
-                        >
-                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-                          </svg>
-                        </a>
-
-                        <a
-                          href={member.instagram}
-                          className="group/social relative p-3 rounded-2xl bg-linear-to-br from-[#06b6d4]/10 to-[#06b6d4]/5 text-[#06b6d4] hover:bg-linear-to-br hover:from-[#06b6d4] hover:to-[#06b6d4]/90 hover:text-white transition-all duration-300 touch-manipulation shadow-md hover:shadow-lg transform hover:-translate-y-1"
-                          aria-label={`${member.name} Twitter Profile`}
-                        >
-                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z" />
-                          </svg>
-                        </a>
-
-                        {/* Contact Button */}
-                        <button className="group/social relative p-3 rounded-2xl bg-linear-to-br from-gray-100 to-gray-50 text-gray-600 hover:bg-linear-to-br hover:from-[#06124f]/10 hover:to-[#06b6d4]/10 hover:text-[#06124f] transition-all duration-300 touch-manipulation shadow-md hover:shadow-lg transform hover:-translate-y-1">
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2v10a2 2 0 002 2z" />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Decorative Corner Elements */}
-                    <div className="absolute top-4 right-4 w-2 h-2 bg-linear-to-br from-[#06b6d4] to-[#06124f] rounded-full opacity-20 group-hover:opacity-60 transition-opacity duration-300" />
-                    <div className="absolute bottom-4 left-4 w-1 h-1 bg-linear-to-br from-[#06124f] to-[#06b6d4] rounded-full opacity-20 group-hover:opacity-60 transition-opacity duration-300" />
+                ))}
+                {/* Duplicate Loop for Seamless Infinite Scroll */}
+                {displayTeam.map((member, index) => (
+                  <div key={`second-${index}`} className="shrink-0 w-80 sm:w-[350px] mx-3 sm:mx-4">
+                    <TeamCard member={member} isVisible={isVisible} index={index} />
                   </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            /* Grid View */
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 max-w-6xl mx-auto py-4">
+              {displayTeam.map((member, index) => (
+                <div key={`grid-${index}`} className="h-full">
+                  <TeamCard member={member} isVisible={isVisible} index={index} />
                 </div>
               ))}
             </div>
-          </div>
+          )}
         </div>
       </section>
 
@@ -682,6 +583,134 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
+    </div>
+  );
+}
+
+function TeamCard({ member, isVisible, index }: { member: any; isVisible: boolean; index: number }) {
+  const [imageError, setImageError] = useState(false);
+
+  return (
+    <div
+      className={`group relative h-full transition-all duration-700 ${
+        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+      }`}
+      style={{ transitionDelay: `${(index % 6) * 100}ms` }}
+    >
+      {/* Outer Glow & Gradient Border Frame */}
+      <div className="relative h-full rounded-[28px] p-[1.5px] bg-gradient-to-b from-[#06b6d4]/40 via-slate-200 to-[#06124f]/30 group-hover:from-[#06b6d4] group-hover:via-[#06124f] group-hover:to-[#06b6d4] transition-all duration-500 shadow-xl group-hover:shadow-2xl group-hover:shadow-[#06b6d4]/20">
+        
+        {/* Inner Card Container with Backdrop Blur */}
+        <div className="relative h-full rounded-[26px] bg-white/95 backdrop-blur-md p-6 sm:p-8 flex flex-col justify-between overflow-hidden group-hover:-translate-y-2 transition-all duration-500">
+          
+          {/* Subtle Accent Glow In Background */}
+          <div className="absolute top-0 right-0 w-36 h-36 bg-gradient-to-bl from-[#06b6d4]/10 via-transparent to-transparent rounded-bl-full pointer-events-none group-hover:from-[#06b6d4]/25 transition-all duration-500" />
+          <div className="absolute bottom-0 left-0 w-28 h-28 bg-gradient-to-tr from-[#06124f]/5 via-transparent to-transparent rounded-tr-full pointer-events-none group-hover:from-[#06124f]/15 transition-all duration-500" />
+
+          {/* Top Barcode Graphic Cues */}
+          <div className="absolute top-4 left-6 flex items-center space-x-1 opacity-25 group-hover:opacity-60 transition-opacity duration-300 pointer-events-none">
+            <div className="w-1 h-3.5 bg-[#06124f] rounded-full" />
+            <div className="w-0.5 h-3.5 bg-[#06b6d4] rounded-full" />
+            <div className="w-1.5 h-3.5 bg-[#06124f] rounded-full" />
+            <div className="w-0.5 h-3.5 bg-[#06b6d4] rounded-full" />
+            <div className="w-1 h-3.5 bg-[#06124f] rounded-full" />
+          </div>
+
+          {/* Top Badge: Active Member Indicator */}
+          <div className="absolute top-4 right-6 opacity-40 group-hover:opacity-100 transition-opacity duration-300">
+            <span className="w-2 h-2 rounded-full bg-[#06b6d4] inline-block shadow-sm animate-pulse" />
+          </div>
+
+          <div>
+            {/* Avatar Section */}
+            <div className="relative mb-6 mt-2 mx-auto w-32 h-32 sm:w-36 sm:h-36 group/avatar">
+              {/* Pulsing Aura Behind Avatar */}
+              <div className="absolute -inset-2 bg-gradient-to-tr from-[#06124f] via-[#06b6d4] to-[#06124f] rounded-full blur-md opacity-40 group-hover/avatar:opacity-80 group-hover:scale-105 transition-all duration-500" />
+
+              {/* Avatar Border Frame */}
+              <div className="relative w-full h-full rounded-full p-1 bg-gradient-to-tr from-[#06124f] via-[#06b6d4] to-[#06124f] shadow-lg group-hover/avatar:shadow-2xl group-hover/avatar:shadow-[#06b6d4]/40 transition-all duration-500">
+                <div className="w-full h-full rounded-full overflow-hidden bg-white p-1 ring-2 ring-white">
+                  <div className="w-full h-full rounded-full overflow-hidden relative bg-slate-100 flex items-center justify-center">
+                    {member.image && !imageError ? (
+                      <Image
+                        src={member.image}
+                        alt={member.name}
+                        fill
+                        className="object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+                        onError={() => setImageError(true)}
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-[#06124f] via-[#06124f] to-[#06b6d4] text-white flex items-center justify-center font-black text-3xl shadow-inner">
+                        {member.name ? member.name.charAt(0).toUpperCase() : 'V'}
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#06124f]/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Floating Verified Badge */}
+              <div className="absolute bottom-0 right-0 w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-br from-[#06b6d4] to-[#06124f] text-white rounded-full flex items-center justify-center shadow-lg border-2 border-white group-hover:scale-110 transition-transform duration-300">
+                <svg className="w-4.5 h-4.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+            </div>
+
+            {/* Content Details */}
+            <div className="text-center relative z-10">
+              <h3 className="text-xl sm:text-2xl font-black text-[#06124f] mb-2 tracking-tight group-hover:text-[#06b6d4] transition-colors duration-300">
+                {member.name}
+              </h3>
+
+              {/* Role Pill Badge */}
+              <div className="mb-4 flex justify-center">
+                <span className="inline-flex items-center px-4 py-1.5 bg-gradient-to-r from-[#06b6d4]/10 via-[#06124f]/5 to-[#06b6d4]/10 text-[#06124f] text-xs sm:text-sm font-bold rounded-full border border-[#06b6d4]/25 group-hover:border-[#06b6d4]/50 group-hover:shadow-xs transition-all duration-300">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#06b6d4] mr-2 animate-pulse" />
+                  {member.role}
+                </span>
+              </div>
+
+              {/* Member Bio */}
+              <p className="text-slate-600 text-sm leading-relaxed mb-6 line-clamp-3 min-h-[4rem] group-hover:text-slate-800 transition-colors duration-300 font-normal">
+                {member.bio}
+              </p>
+            </div>
+          </div>
+
+          {/* Social Links Footer */}
+          <div className="relative z-10 pt-4 border-t border-slate-100 flex justify-center items-center space-x-3">
+            {member.linkedin && (
+              <a
+                href={member.linkedin}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group/btn relative p-3 rounded-2xl bg-slate-100/90 text-[#06124f] hover:bg-[#06124f] hover:text-white transition-all duration-300 shadow-xs hover:shadow-lg hover:shadow-[#06124f]/25 hover:-translate-y-1 touch-manipulation"
+                aria-label={`${member.name} LinkedIn`}
+              >
+                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+                </svg>
+              </a>
+            )}
+
+            {member.instagram && (
+              <a
+                href={member.instagram}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group/btn relative p-3 rounded-2xl bg-slate-100/90 text-pink-600 hover:bg-gradient-to-tr hover:from-[#f09433] hover:via-[#dc2743] hover:to-[#bc1888] hover:text-white transition-all duration-300 shadow-xs hover:shadow-lg hover:shadow-pink-500/25 hover:-translate-y-1 touch-manipulation"
+                aria-label={`${member.name} Instagram`}
+              >
+                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+                </svg>
+              </a>
+            )}
+          </div>
+
+        </div>
+      </div>
     </div>
   );
 }
