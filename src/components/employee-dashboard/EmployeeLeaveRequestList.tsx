@@ -127,8 +127,13 @@ export function leaveHistoryEmptyMessage(
     return "No matching leave in your history.";
 }
 
-function canWithdrawLeave(status: LeaveStatus) {
-    return status === "pending" || status === "l1_approved";
+export function canWithdrawLeave(status: LeaveStatus, endDate?: string, today?: string) {
+    if (status === "pending" || status === "l1_approved") return true;
+    if (status === "approved") {
+        if (!endDate || !today) return true;
+        return isLeavePeriodStillActive(endDate, today);
+    }
+    return false;
 }
 
 function RejectionStageNote({
@@ -276,7 +281,7 @@ function LeaveRequestMobileCard({
                 rejectionReason={row.rejection_reason}
             />
 
-            {showWithdrawAction && canWithdrawLeave(row.status) && onWithdraw ? (
+            {showWithdrawAction && canWithdrawLeave(row.status, row.end_date, getTodayIso()) && onWithdraw ? (
                 <button
                     type="button"
                     disabled={withdrawBusyId === row.id}
@@ -498,7 +503,7 @@ export function LeaveRequestsSection({
                                         </td>
                                         {showWithdrawAction ? (
                                             <td className="whitespace-nowrap px-4 py-3.5 text-right">
-                                                {canWithdrawLeave(row.status) && onWithdraw ? (
+                                                {canWithdrawLeave(row.status, row.end_date, getTodayIso()) && onWithdraw ? (
                                                     <button
                                                         type="button"
                                                         disabled={withdrawBusyId === row.id}

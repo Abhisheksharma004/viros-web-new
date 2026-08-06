@@ -13,6 +13,7 @@ import {
 } from "@/components/employee-dashboard/EmployeeLeaveRequestList";
 import {
     AlertCircle,
+    AlertTriangle,
     Calendar,
     CalendarDays,
     CheckCircle2,
@@ -25,6 +26,7 @@ import {
     RotateCcw,
     Send,
     Umbrella,
+    Undo2,
     X,
 } from "lucide-react";
 
@@ -48,6 +50,7 @@ type LeavePolicy = {
     applicable_from_joining: boolean;
     months_after_joining: number;
     max_days_per_request: number;
+    max_days_per_month: number;
     min_days_per_request: number;
     enforce_remaining_balance_cap: boolean;
     must_use_full_balance_when_low: boolean;
@@ -379,6 +382,11 @@ function LeaveApplyModal({
             requestedDays,
             balanceRemaining,
             existingRequests: existingRequests.map((r) => ({
+                id: r.id,
+                policy_id: r.policy_id,
+                policy_code: r.policy_code,
+                days: r.days,
+                day_type: r.day_type,
                 start_date: r.start_date,
                 end_date: r.end_date,
                 status: r.status,
@@ -746,6 +754,9 @@ export default function EmployeeLeaveRequestPage() {
     const [successAlertOpen, setSuccessAlertOpen] = useState(false);
     const [withdrawSuccessOpen, setWithdrawSuccessOpen] = useState(false);
     const [withdrawBusyId, setWithdrawBusyId] = useState<number | null>(null);
+    const [withdrawConfirmTarget, setWithdrawConfirmTarget] = useState<LeaveRequestRow | null>(null);
+    const [isWithdrawing, setIsWithdrawing] = useState(false);
+
     /** Opens apply-leave modal; pass policyId from a balance card to pre-select that leave type. */
     const openLeaveApplyModal = useCallback((policyId?: number) => {
         if (policyId != null && Number.isFinite(policyId) && policyId > 0) {
@@ -794,38 +805,39 @@ export default function EmployeeLeaveRequestPage() {
         void fetchLeaveData();
     }, [fetchLeaveData]);
 
-    const withdrawLeave = useCallback(
-        async (row: LeaveRequestRow) => {
-            const confirmed = window.confirm(
-                `Withdraw leave request ${row.request_id}?\n\nThis cannot be undone.`,
-            );
-            if (!confirmed) return;
+    const promptWithdrawLeave = useCallback((row: LeaveRequestRow) => {
+        setWithdrawConfirmTarget(row);
+    }, []);
 
-            try {
-                setWithdrawBusyId(row.id);
-                const resp = await fetch(`/api/employee/leave/${row.id}`, { method: "DELETE" });
-                const data = await resp.json().catch(() => ({}));
-                if (!resp.ok) {
-                    throw new Error(
-                        typeof data.message === "string"
-                            ? data.message
-                            : "Failed to withdraw leave",
-                    );
-                }
-                setWithdrawSuccessOpen(true);
-                void fetchLeaveData();
-            } catch (error) {
-                console.error("Withdraw leave failed:", error);
-                const msg =
-                    error instanceof Error ? error.message : "Failed to withdraw leave";
-                setPageAlertMessages([msg]);
-                setPageAlertOpen(true);
-            } finally {
-                setWithdrawBusyId(null);
+    const handleConfirmWithdraw = useCallback(async () => {
+        if (!withdrawConfirmTarget || isWithdrawing) return;
+        const target = withdrawConfirmTarget;
+        try {
+            setIsWithdrawing(true);
+            setWithdrawBusyId(target.id);
+            const resp = await fetch(`/api/employee/leave/${target.id}`, { method: "DELETE" });
+            const data = await resp.json().catch(() => ({}));
+            if (!resp.ok) {
+                throw new Error(
+                    typeof data.message === "string"
+                        ? data.message
+                        : "Failed to withdraw leave",
+                );
             }
-        },
-        [fetchLeaveData],
-    );
+            setWithdrawConfirmTarget(null);
+            setWithdrawSuccessOpen(true);
+            void fetchLeaveData();
+        } catch (error) {
+            console.error("Withdraw leave failed:", error);
+            const msg =
+                error instanceof Error ? error.message : "Failed to withdraw leave";
+            setPageAlertMessages([msg]);
+            setPageAlertOpen(true);
+        } finally {
+            setIsWithdrawing(false);
+            setWithdrawBusyId(null);
+        }
+    }, [withdrawConfirmTarget, isWithdrawing, fetchLeaveData]);
 
     const balanceCards = useMemo(() => {
         return balances
@@ -871,6 +883,52 @@ export default function EmployeeLeaveRequestPage() {
                 subtitle="Your leave request has been cancelled."
                 onClose={() => setWithdrawSuccessOpen(false)}
             />
+
+            {withdrawConfirmTarget && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs animate-in fade-in duration-200">
+                    <div className="w-full max-w-md overflow-hidden rounded-md bg-white p-6 shadow-xl ring-1 ring-gray-900/10">
+                        <div className="flex items-start gap-4">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+                                <AlertTriangle className="h-5 w-5" />
+                            </div>
+                            <div>
+                                <h3 className="text-base font-bold text-gray-900">
+                                    Withdraw Leave Request {withdrawConfirmTarget.request_id}?
+                                </h3>
+                                <p className="mt-1.5 text-sm text-gray-600 leading-relaxed">
+                                    Are you sure you want to withdraw your leave request for{" "}
+                                    <span className="font-semibold text-gray-900">{withdrawConfirmTarget.policy_name}</span>?
+                                    This action cannot be undone and your leave days will be restored.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                            <button
+                                type="button"
+                                onClick={() => setWithdrawConfirmTarget(null)}
+                                disabled={isWithdrawing}
+                                className="inline-flex h-10 touch-manipulation items-center justify-center rounded-md border border-gray-300 bg-white px-4 text-sm font-bold text-gray-700 hover:bg-gray-50 active:bg-gray-100 disabled:opacity-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => void handleConfirmWithdraw()}
+                                disabled={isWithdrawing}
+                                className="inline-flex h-10 touch-manipulation items-center justify-center gap-2 rounded-md bg-red-600 px-4 text-sm font-bold text-white hover:bg-red-700 active:bg-red-800 disabled:opacity-50"
+                            >
+                                {isWithdrawing ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                    <Undo2 className="h-4 w-4" />
+                                )}
+                                Yes, withdraw request
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
             {settings && (
                 <LeaveApplyModal
                     open={modalOpen}
@@ -1032,7 +1090,7 @@ export default function EmployeeLeaveRequestPage() {
                         onNewRequest={() => openLeaveApplyModal()}
                         policiesAvailable={policies.length > 0}
                         withdrawBusyId={withdrawBusyId}
-                        onWithdraw={(r) => void withdrawLeave(r)}
+                        onWithdraw={(r) => promptWithdrawLeave(r)}
                     />
                 </>
             )}

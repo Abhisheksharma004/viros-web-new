@@ -38,6 +38,7 @@ type LeavePolicyRow = {
     applicableMonths: number[];
     allMonthsApplicable: boolean;
     maxDaysPerRequest: number;
+    maxDaysPerMonth: number;
     minDaysPerRequest: number;
     enforceRemainingBalanceCap: boolean;
     mustUseFullBalanceWhenLow: boolean;
@@ -73,6 +74,7 @@ type PolicyApiRow = {
     applicable_from_joining: boolean;
     months_after_joining: number;
     max_days_per_request: number;
+    max_days_per_month: number;
     min_days_per_request: number;
     enforce_remaining_balance_cap: boolean;
     must_use_full_balance_when_low: boolean;
@@ -116,6 +118,7 @@ function apiToPolicy(row: PolicyApiRow): LeavePolicyRow {
         applicableFromJoining: row.applicable_from_joining,
         monthsAfterJoining: row.months_after_joining,
         maxDaysPerRequest: row.max_days_per_request,
+        maxDaysPerMonth: row.max_days_per_month ?? 2,
         minDaysPerRequest: row.min_days_per_request,
         enforceRemainingBalanceCap: row.enforce_remaining_balance_cap,
         mustUseFullBalanceWhenLow: row.must_use_full_balance_when_low,
@@ -170,6 +173,7 @@ function formToApiBody(form: typeof emptyPolicyForm) {
             ? Math.max(0, Number(form.monthsAfterJoining) || 0)
             : 0,
         max_days_per_request: Math.max(0, Number(form.maxDaysPerRequest) || 0),
+        max_days_per_month: Math.max(0, Number(form.maxDaysPerMonth) || 0),
         min_days_per_request: Math.max(0, Number(form.minDaysPerRequest) || 0),
         enforce_remaining_balance_cap: form.enforceRemainingBalanceCap,
         must_use_full_balance_when_low: form.mustUseFullBalanceWhenLow,
@@ -206,6 +210,7 @@ function policyToApiBody(row: LeavePolicyRow) {
         applicable_from_joining: row.applicableFromJoining,
         months_after_joining: row.monthsAfterJoining,
         max_days_per_request: row.maxDaysPerRequest,
+        max_days_per_month: row.maxDaysPerMonth,
         min_days_per_request: row.minDaysPerRequest,
         enforce_remaining_balance_cap: row.enforceRemainingBalanceCap,
         must_use_full_balance_when_low: row.mustUseFullBalanceWhenLow,
@@ -297,6 +302,7 @@ const emptyPolicyForm = {
     applicableMonths: [] as number[],
     allMonthsApplicable: true,
     maxDaysPerRequest: "5",
+    maxDaysPerMonth: "0",
     minDaysPerRequest: "0.5",
     enforceRemainingBalanceCap: true,
     mustUseFullBalanceWhenLow: false,
@@ -520,6 +526,7 @@ export default function Page() {
             applicableMonths: row.allMonthsApplicable ? [] : [...row.applicableMonths],
             allMonthsApplicable: row.allMonthsApplicable,
             maxDaysPerRequest: String(row.maxDaysPerRequest),
+            maxDaysPerMonth: String(row.maxDaysPerMonth ?? 0),
             minDaysPerRequest: String(row.minDaysPerRequest),
             enforceRemainingBalanceCap: row.enforceRemainingBalanceCap,
             mustUseFullBalanceWhenLow: row.mustUseFullBalanceWhenLow,
@@ -1476,6 +1483,30 @@ export default function Page() {
                                             />
                                             <p className="mt-1 text-[10px] text-gray-500">
                                                 Single application limit (0 = no limit)
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <label htmlFor="max-days-per-month" className={labelClass}>
+                                                Max days per month
+                                            </label>
+                                            <input
+                                                id="max-days-per-month"
+                                                type="number"
+                                                min={0}
+                                                step={0.5}
+                                                value={form.maxDaysPerMonth}
+                                                onChange={(e) =>
+                                                    updateFormState((f) => ({
+                                                        ...f,
+                                                        maxDaysPerMonth: e.target.value,
+                                                    }))
+                                                }
+                                                disabled={readOnly}
+                                                placeholder="e.g. 2 (0 = no limit)"
+                                                className={inputClass}
+                                            />
+                                            <p className="mt-1 text-[10px] text-gray-500">
+                                                Total monthly limit (default 2 days)
                                             </p>
                                         </div>
                                         <div>

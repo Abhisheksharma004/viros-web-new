@@ -11,6 +11,7 @@ export type LeavePolicyForValidation = {
     half_day_allowed: boolean;
     max_consecutive_days: number;
     max_days_per_request: number;
+    max_days_per_month?: number;
     min_days_per_request: number;
     accrual_cycle: string;
     enforce_remaining_balance_cap: boolean;
@@ -29,8 +30,19 @@ export type LeaveSettingsForValidation = {
     count_weekends_in_leave: boolean;
 };
 
+export type ExistingLeaveRequestForValidation = {
+    id?: number;
+    policy_id?: number;
+    policy_code?: string;
+    days?: number;
+    day_type?: LeaveDayType;
+    start_date: string;
+    end_date: string;
+    status: string;
+};
+
 export type ValidateLeaveInput = {
-    policy: LeavePolicyForValidation;
+    policy: LeavePolicyForValidation & { id?: number; code?: string; days_per_year?: number };
     settings: LeaveSettingsForValidation;
     joiningDate: string | null;
     startDate: string;
@@ -38,13 +50,10 @@ export type ValidateLeaveInput = {
     dayType: LeaveDayType;
     requestedDays: number;
     balanceRemaining: number;
-    existingRequests: {
-        start_date: string;
-        end_date: string;
-        status: string;
-    }[];
+    existingRequests: ExistingLeaveRequestForValidation[];
     attachmentName?: string;
     reason?: string;
+    currentRequestId?: number;
 };
 
 function isoToday() {
@@ -132,6 +141,7 @@ export function collectLeaveRequestErrors(input: ValidateLeaveInput): string[] {
         existingRequests,
         attachmentName,
         reason,
+        currentRequestId,
     } = input;
 
     const errors: string[] = [];
@@ -210,6 +220,102 @@ export function collectLeaveRequestErrors(input: ValidateLeaveInput): string[] {
         );
     }
 
+    // -------------------------------------------------------------
+    // CUMULATIVE LEAVE USAGE VALIDATION (Strict 2 Days Per Month Limit)
+    // -------------------------------------------------------------
+    const startMonth = startDate.slice(0, 7); // e.g. "2026-08"
+
+    const getRequestDays = (r: ExistingLeaveRequestForValidation) => {
+        if (typeof r.days === "number" && r.days > 0) return r.days;
+        return countLeaveDays(r.start_date, r.end_date, r.day_type || "full", {
+            weekdaysOnly: policy.weekdays_only,
+            excludeWeekends: !settings.count_weekends_in_leave,
+        });
+    };
+
+    // 1. Total monthly leave across all active requests for the same month
+    const allActiveMonthlyRequests = (existingRequests || []).filter((r) => {
+        if (currentRequestId && r.id === currentRequestId) return false;
+        if (r.status === "cancelled" || r.status === "rejected") return false;
+        return r.start_date && r.start_date.slice(0, 7) === startMonth;
+    });
+
+    const totalUsedInMonth = Math.round(
+        allActiveMonthlyRequests.reduce((sum, r) => sum + getRequestDays(r), 0) * 100
+    ) / 100;
+
+    // Monthly leave limit validation: 0 means no limit
+    let maxAllowedLeavesPerMonth = 0;
+    if (typeof policy.max_days_per_month === "number" && policy.max_days_per_month > 0) {
+        maxAllowedLeavesPerMonth = policy.max_days_per_month;
+    } else if (
+        policy.accrual_cycle === "monthly" &&
+        typeof policy.days_per_year === "number" &&
+        policy.days_per_year > 0
+    ) {
+        maxAllowedLeavesPerMonth = Math.round((policy.days_per_year / 12) * 100) / 100;
+    }
+
+    if (maxAllowedLeavesPerMonth > 0) {
+        const totalMonthlyCombined = Math.round((totalUsedInMonth + requestedDays) * 100) / 100;
+        if (totalMonthlyCombined > maxAllowedLeavesPerMonth) {
+            if (totalUsedInMonth >= maxAllowedLeavesPerMonth) {
+                errors.push(
+                    `You have already used ${totalUsedInMonth} of ${maxAllowedLeavesPerMonth} allowed leaves for this month. You cannot apply for additional leave.`,
+                );
+            } else {
+                const maxAvailableMonth = Math.max(
+                    0,
+                    Math.round((maxAllowedLeavesPerMonth - totalUsedInMonth) * 100) / 100,
+                );
+                errors.push(
+                    `You have already used ${totalUsedInMonth} of ${maxAllowedLeavesPerMonth} allowed leaves for this month. You cannot apply for ${requestedDays} additional day(s) (maximum ${maxAvailableMonth} day(s) remaining for this month).`,
+                );
+            }
+        }
+    }
+
+    // --- Yearly Period Validation ---
+    const startYear = startDate.slice(0, 4); // YYYY
+    const yearlyRequests = (existingRequests || []).filter((r) => {
+        if (currentRequestId && r.id === currentRequestId) return false;
+        if (r.status === "cancelled" || r.status === "rejected") return false;
+        if (policy.id !== undefined && r.policy_id !== undefined && r.policy_id !== policy.id) return false;
+        return r.start_date && r.start_date.slice(0, 4) === startYear;
+    });
+
+    const alreadyUsedInYear =
+        Math.round(yearlyRequests.reduce((sum, r) => sum + getRequestDays(r), 0) * 100) / 100;
+
+    let yearlyAllowedLimit = 0;
+    if (
+        policy.accrual_cycle !== "none" &&
+        typeof policy.days_per_year === "number" &&
+        policy.days_per_year > 0
+    ) {
+        yearlyAllowedLimit = Number(policy.days_per_year);
+    }
+
+    if (yearlyAllowedLimit > 0) {
+        const totalYearlyDays = Math.round((alreadyUsedInYear + requestedDays) * 100) / 100;
+        if (totalYearlyDays > yearlyAllowedLimit) {
+            if (alreadyUsedInYear >= yearlyAllowedLimit) {
+                errors.push(
+                    `You have already used ${alreadyUsedInYear} of ${yearlyAllowedLimit} allowed leaves for this year. You cannot apply for additional leave.`,
+                );
+            } else {
+                const maxAvailableYear = Math.max(
+                    0,
+                    Math.round((yearlyAllowedLimit - alreadyUsedInYear) * 100) / 100,
+                );
+                errors.push(
+                    `You have already used ${alreadyUsedInYear} of ${yearlyAllowedLimit} allowed leaves for this year. You cannot apply for ${requestedDays} additional day(s) (maximum ${maxAvailableYear} day(s) remaining for this year).`,
+                );
+            }
+        }
+    }
+
+    // Remaining Balance Cap Check
     if (policy.accrual_cycle !== "none" && policy.enforce_remaining_balance_cap) {
         if (requestedDays > balanceRemaining) {
             errors.push(`You only have ${balanceRemaining} day(s) remaining for this leave type.`);
@@ -229,15 +335,9 @@ export function collectLeaveRequestErrors(input: ValidateLeaveInput): string[] {
         errors.push("An attachment is required for this leave type.");
     }
 
+    // Max Requests Count Limits
     if (policy.max_requests_per_month > 0) {
-        const startMonth = startDate.slice(0, 7);
-        const count = existingRequests.filter(
-            (r) =>
-                r.status !== "cancelled" &&
-                r.status !== "rejected" &&
-                r.start_date.slice(0, 7) === startMonth,
-        ).length;
-        if (count >= policy.max_requests_per_month) {
+        if (allActiveMonthlyRequests.length >= policy.max_requests_per_month) {
             errors.push(
                 `Maximum ${policy.max_requests_per_month} request(s) per month for this leave type.`,
             );
@@ -245,10 +345,7 @@ export function collectLeaveRequestErrors(input: ValidateLeaveInput): string[] {
     }
 
     if (policy.max_requests_per_year > 0) {
-        const count = existingRequests.filter(
-            (r) => r.status !== "cancelled" && r.status !== "rejected",
-        ).length;
-        if (count >= policy.max_requests_per_year) {
+        if (yearlyRequests.length >= policy.max_requests_per_year) {
             errors.push(
                 `Maximum ${policy.max_requests_per_year} request(s) per year for this leave type.`,
             );
@@ -256,7 +353,7 @@ export function collectLeaveRequestErrors(input: ValidateLeaveInput): string[] {
     }
 
     if (policy.min_gap_days_between_requests > 0) {
-        const last = existingRequests.find(
+        const last = allActiveMonthlyRequests.find(
             (r) =>
                 r.status === "pending" ||
                 r.status === "l1_approved" ||

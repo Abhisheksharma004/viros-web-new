@@ -29,6 +29,7 @@ export type AdminLeavePolicyRow = RowDataPacket & {
     applicable_from_joining: number;
     months_after_joining: number;
     max_days_per_request: number;
+    max_days_per_month: number;
     min_days_per_request: number;
     enforce_remaining_balance_cap: number;
     must_use_full_balance_when_low: number;
@@ -111,6 +112,7 @@ async function runEnsureAdminLeavePoliciesTable() {
             applicable_from_joining TINYINT(1) NOT NULL DEFAULT 0,
             months_after_joining INT NOT NULL DEFAULT 0,
             max_days_per_request DECIMAL(6,2) NOT NULL DEFAULT 1,
+            max_days_per_month DECIMAL(6,2) NOT NULL DEFAULT 0,
             min_days_per_request DECIMAL(6,2) NOT NULL DEFAULT 0,
             enforce_remaining_balance_cap TINYINT(1) NOT NULL DEFAULT 1,
             must_use_full_balance_when_low TINYINT(1) NOT NULL DEFAULT 0,
@@ -126,6 +128,14 @@ async function runEnsureAdminLeavePoliciesTable() {
             UNIQUE KEY uq_admin_leave_policies_code (code)
         )
     `);
+
+    try {
+        await pool.query(
+            `ALTER TABLE ${POLICIES_TABLE} ADD COLUMN max_days_per_month DECIMAL(6,2) NOT NULL DEFAULT 0 AFTER max_days_per_request`,
+        );
+    } catch {
+        // Column may already exist
+    }
 }
 
 export function parseNotificationEmailsJson(raw: unknown): string[] {
@@ -149,53 +159,34 @@ export function parseNotificationEmailsJson(raw: unknown): string[] {
         if (seen.has(email)) continue;
         seen.add(email);
         out.push(email);
-        if (out.length >= MAX_NOTIFICATION_EMAILS) break;
     }
-    return out;
+    return out.slice(0, MAX_NOTIFICATION_EMAILS);
 }
 
 export function serializeNotificationEmails(emails: string[]): string {
-    return JSON.stringify(parseNotificationEmailsJson(emails));
-}
-
-async function migrateLeaveOrgSettingsColumns() {
-    const [cols] = await pool.query<RowDataPacket[]>(`SHOW COLUMNS FROM ${SETTINGS_TABLE}`);
-    const names = new Set(cols.map((c) => String(c.Field)));
-    if (!names.has("notification_emails")) {
-        await pool.query(
-            `ALTER TABLE ${SETTINGS_TABLE}
-             ADD COLUMN notification_emails JSON NOT NULL DEFAULT ('[]')
-             AFTER count_weekends_in_leave`,
-        );
-    }
+    return JSON.stringify(emails.slice(0, MAX_NOTIFICATION_EMAILS));
 }
 
 async function runEnsureAdminLeaveOrgSettingsTable() {
     await pool.query(`
         CREATE TABLE IF NOT EXISTS ${SETTINGS_TABLE} (
-            id INT PRIMARY KEY,
+            id INT PRIMARY KEY DEFAULT 1,
             fiscal_year_start_month INT NOT NULL DEFAULT 4,
-            default_min_notice_days INT NOT NULL DEFAULT 2,
+            default_min_notice_days INT NOT NULL DEFAULT 0,
             max_consecutive_days_default INT NOT NULL DEFAULT 15,
             allow_half_day TINYINT(1) NOT NULL DEFAULT 1,
             count_weekends_in_leave TINYINT(1) NOT NULL DEFAULT 0,
-            notification_emails JSON NOT NULL DEFAULT ('[]'),
+            notification_emails JSON NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
         )
     `);
-    await migrateLeaveOrgSettingsColumns();
-    const [rows] = await pool.query<RowDataPacket[]>(
-        `SELECT id FROM ${SETTINGS_TABLE} WHERE id = ? LIMIT 1`,
-        [SETTINGS_ROW_ID],
+
+    await pool.query(
+        `INSERT IGNORE INTO ${SETTINGS_TABLE}
+         (id, fiscal_year_start_month, default_min_notice_days, max_consecutive_days_default, allow_half_day, count_weekends_in_leave, notification_emails)
+         VALUES (1, 4, 0, 15, 1, 0, '[]')`,
     );
-    if (rows.length === 0) {
-        await pool.query(
-            `INSERT INTO ${SETTINGS_TABLE}
-             (id, fiscal_year_start_month, default_min_notice_days, max_consecutive_days_default, allow_half_day, count_weekends_in_leave, notification_emails)
-             VALUES (?, 4, 2, 15, 1, 0, '[]')`,
-            [SETTINGS_ROW_ID],
-        );
-    }
 }
 
 export async function ensureAdminLeavePoliciesTable() {
@@ -247,6 +238,7 @@ export function mapPolicyRowToApi(row: AdminLeavePolicyRow) {
         applicable_from_joining: Boolean(row.applicable_from_joining),
         months_after_joining: Number(row.months_after_joining) || 0,
         max_days_per_request: Number(row.max_days_per_request) || 0,
+        max_days_per_month: Number(row.max_days_per_month) || 0,
         min_days_per_request: Number(row.min_days_per_request) || 0,
         enforce_remaining_balance_cap: Boolean(row.enforce_remaining_balance_cap),
         must_use_full_balance_when_low: Boolean(row.must_use_full_balance_when_low),
@@ -306,6 +298,7 @@ export function parsePolicyBody(body: Record<string, unknown>) {
             ? Math.max(0, parseNum(body.months_after_joining))
             : 0,
         maxDaysPerRequest: Math.max(0.5, parseNum(body.max_days_per_request, 0.5)),
+        maxDaysPerMonth: Math.max(0, parseNum(body.max_days_per_month, 0)),
         minDaysPerRequest: Math.max(0, parseNum(body.min_days_per_request)),
         enforceRemainingBalanceCap: parseBool(body.enforce_remaining_balance_cap),
         mustUseFullBalanceWhenLow,
@@ -340,7 +333,7 @@ export const POLICY_INSERT_COLUMNS = `
     carry_forward_enabled, carry_forward_max, half_day_allowed, document_required,
     min_notice_days, max_consecutive_days, requires_approval, paid, is_active,
     all_months_applicable, applicable_months, applicable_from_joining, months_after_joining,
-    max_days_per_request, min_days_per_request, enforce_remaining_balance_cap,
+    max_days_per_request, max_days_per_month, min_days_per_request, enforce_remaining_balance_cap,
     must_use_full_balance_when_low, full_balance_threshold_days,
     max_requests_per_month, max_requests_per_year, min_gap_days_between_requests,
     weekdays_only, allow_backdated_leave, max_advance_booking_days
@@ -367,6 +360,7 @@ export function policyInsertValues(parsed: ReturnType<typeof parsePolicyBody>) {
         parsed.applicableFromJoining ? 1 : 0,
         parsed.monthsAfterJoining,
         parsed.maxDaysPerRequest,
+        parsed.maxDaysPerMonth,
         parsed.minDaysPerRequest,
         parsed.enforceRemainingBalanceCap ? 1 : 0,
         parsed.mustUseFullBalanceWhenLow ? 1 : 0,
@@ -385,7 +379,7 @@ export const POLICY_UPDATE_SET = `
     carry_forward_enabled = ?, carry_forward_max = ?, half_day_allowed = ?, document_required = ?,
     min_notice_days = ?, max_consecutive_days = ?, requires_approval = ?, paid = ?, is_active = ?,
     all_months_applicable = ?, applicable_months = ?, applicable_from_joining = ?, months_after_joining = ?,
-    max_days_per_request = ?, min_days_per_request = ?, enforce_remaining_balance_cap = ?,
+    max_days_per_request = ?, max_days_per_month = ?, min_days_per_request = ?, enforce_remaining_balance_cap = ?,
     must_use_full_balance_when_low = ?, full_balance_threshold_days = ?,
     max_requests_per_month = ?, max_requests_per_year = ?, min_gap_days_between_requests = ?,
     weekdays_only = ?, allow_backdated_leave = ?, max_advance_booking_days = ?

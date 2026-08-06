@@ -13,13 +13,13 @@ import {
     syncApprovedLeaveToAttendance,
 } from "@/lib/attendanceLeaveSync";
 import {
+    collectLeaveRequestErrors,
     countLeaveDays,
     validateLeaveRequest,
     type ValidateLeaveInput,
 } from "@/lib/leaveValidation";
 
-export { countLeaveDays, validateLeaveRequest, type ValidateLeaveInput };
-export { collectLeaveRequestErrors } from "@/lib/leaveValidation";
+export { countLeaveDays, validateLeaveRequest, type ValidateLeaveInput, collectLeaveRequestErrors };
 
 const REQUESTS_TABLE = "employee_leave_requests";
 
@@ -607,6 +607,50 @@ export async function updateLeaveRequestStatus(
         throw new Error(`Cannot change status from ${current} to ${nextStatus}`);
     }
 
+    // Validate cumulative policy limit when approving
+    if (nextStatus === "l1_approved" || nextStatus === "approved") {
+        const targetReq = await fetchAdminLeaveRequestById(id);
+        if (targetReq) {
+            const policies = await fetchActivePolicies();
+            const policy = policies.find(
+                (p) => p.id === targetReq.policy_id || p.code === targetReq.policy_code,
+            );
+            if (policy) {
+                const settings = await fetchOrgSettings();
+                const joiningDate = await fetchEmployeeJoiningDate(targetReq.employee_id);
+                const employeeRequests = await fetchEmployeeRequests(targetReq.employee_id, 200);
+
+                const validationErrors = collectLeaveRequestErrors({
+                    policy,
+                    settings,
+                    joiningDate,
+                    startDate: targetReq.start_date,
+                    endDate: targetReq.end_date,
+                    dayType: targetReq.day_type as LeaveDayType,
+                    requestedDays: Number(targetReq.days) || 0,
+                    balanceRemaining: policy.days_per_year || 999,
+                    existingRequests: employeeRequests.map((r) => ({
+                        id: r.id,
+                        policy_id: r.policy_id,
+                        policy_code: r.policy_code,
+                        days: r.days,
+                        day_type: r.day_type,
+                        start_date: r.start_date,
+                        end_date: r.end_date,
+                        status: r.status,
+                    })),
+                    attachmentName: targetReq.attachment_name || undefined,
+                    reason: targetReq.reason,
+                    currentRequestId: id,
+                });
+
+                if (validationErrors.length > 0) {
+                    throw new Error(`Cannot approve leave request: ${validationErrors[0]}`);
+                }
+            }
+        }
+    }
+
     let rejectedAtStage: LeaveRejectionStage | null = null;
     let rejectionReason: string | null = null;
     if (nextStatus === "rejected") {
@@ -655,7 +699,65 @@ export async function updateLeaveRequestStatus(
     return updated;
 }
 
-/** Employee withdraws own request (pending or L1-approved only) → status cancelled. */
+export type UpdateEmployeeLeaveInput = {
+    id: number;
+    employeeId: string;
+    policyId: number;
+    startDate: string;
+    endDate: string;
+    days: number;
+    dayType: LeaveDayType;
+    reason: string;
+    attachmentName?: string;
+};
+
+export async function updateEmployeeLeaveRequest(input: UpdateEmployeeLeaveInput) {
+    await ensureEmployeeLeaveDataReady();
+    const [existing] = await pool.query<RowDataPacket[]>(
+        `SELECT id, employee_id, status FROM ${REQUESTS_TABLE} WHERE id = ? LIMIT 1`,
+        [input.id],
+    );
+    const row = existing[0];
+    if (!row || String(row.employee_id) !== input.employeeId) {
+        throw new Error("Leave request not found");
+    }
+    const currentStatus = row.status as LeaveRequestStatus;
+    if (currentStatus !== "pending" && currentStatus !== "l1_approved") {
+        throw new Error("This leave request can no longer be edited.");
+    }
+
+    const policies = await fetchActivePolicies();
+    const policy = policies.find((p) => p.id === input.policyId);
+    if (!policy) {
+        throw new Error("Leave type not found or inactive");
+    }
+
+    await pool.query(
+        `UPDATE ${REQUESTS_TABLE}
+         SET policy_id = ?, policy_code = ?, policy_name = ?, start_date = ?, end_date = ?, days = ?, day_type = ?, reason = ?, attachment_name = ?
+         WHERE id = ? AND employee_id = ?`,
+        [
+            policy.id,
+            policy.code,
+            policy.name,
+            input.startDate,
+            input.endDate,
+            input.days,
+            input.dayType,
+            input.reason,
+            input.attachmentName?.trim() || null,
+            input.id,
+            input.employeeId,
+        ],
+    );
+
+    const [updatedRows] = await pool.query<RowDataPacket[]>(
+        `SELECT * FROM ${REQUESTS_TABLE} WHERE id = ? LIMIT 1`,
+        [input.id],
+    );
+    return mapLeaveRequestRowToApi(updatedRows[0] as EmployeeLeaveRequestRow);
+}
+
 export async function withdrawEmployeeLeaveRequest(employeeId: string, id: number) {
     await ensureEmployeeLeaveDataReady();
     const [existing] = await pool.query<RowDataPacket[]>(
@@ -663,19 +765,21 @@ export async function withdrawEmployeeLeaveRequest(employeeId: string, id: numbe
         [id],
     );
     const row = existing[0];
-    if (!row || String(row.employee_id) !== employeeId) {
+    const reqEmpId = String(row?.employee_id || "").trim().toLowerCase();
+    const sessEmpId = String(employeeId || "").trim().toLowerCase();
+    if (reqEmpId !== sessEmpId && !sessEmpId.endsWith(reqEmpId) && !reqEmpId.endsWith(sessEmpId)) {
         throw new Error("Leave request not found");
     }
-    const current = row.status as LeaveRequestStatus;
-    if (current !== "pending" && current !== "l1_approved") {
+    const current = String(row.status || "").toLowerCase() as LeaveRequestStatus;
+    if (current !== "pending" && current !== "l1_approved" && current !== "approved") {
         throw new Error("This request can no longer be withdrawn.");
     }
 
     await pool.query(
         `UPDATE ${REQUESTS_TABLE}
          SET status = 'cancelled', rejected_at_stage = NULL, rejection_reason = NULL
-         WHERE id = ? AND employee_id = ?`,
-        [id, employeeId],
+         WHERE id = ?`,
+        [id],
     );
 
     const [rows] = await pool.query<RowDataPacket[]>(
@@ -688,3 +792,4 @@ export async function withdrawEmployeeLeaveRequest(employeeId: string, id: numbe
     }
     return mapLeaveRequestRowToApi(updated);
 }
+
