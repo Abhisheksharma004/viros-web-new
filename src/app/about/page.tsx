@@ -119,7 +119,9 @@ export default function AboutPage() {
     }
   ];
 
-  const displayTeam = team.length > 0 ? team : fallbackTeam;
+  const displayTeam = [...(team.length > 0 ? team : fallbackTeam)].sort(
+    (a, b) => (Number(a.display_order) || 0) - (Number(b.display_order) || 0)
+  );
 
   if (isLoading) {
     return (

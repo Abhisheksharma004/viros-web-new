@@ -349,9 +349,9 @@ export default function AboutManagementPage() {
                         <div key={stat.id} className="p-4 border border-gray-100 rounded-xl bg-gray-50/50 group hover:border-[#06b6d4] transition-all">
                             <div className="flex justify-between items-start mb-2">
                                 <span className="text-2xl font-bold text-[#06124f]">{stat.value}</span>
-                                <div className="flex space-x-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                                    <button onClick={() => setShowModal({ type: 'stat', data: stat })} className="p-1.5 hover:text-blue-600 hover:bg-blue-50 rounded" aria-label="Edit Stat"><Edit2 className="w-4 h-4" /></button>
-                                    <button onClick={() => handleDelete('stat', stat.id)} className="p-1.5 hover:text-red-600 hover:bg-red-50 rounded" aria-label="Delete Stat"><Trash2 className="w-4 h-4" /></button>
+                                <div className="flex items-center gap-1">
+                                    <button onClick={() => setShowModal({ type: 'stat', data: stat })} className="flex items-center gap-1 px-2 py-1 text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors" aria-label="Edit Stat"><Edit2 className="w-3.5 h-3.5" /> Edit</button>
+                                    <button onClick={() => handleDelete('stat', stat.id)} className="flex items-center gap-1 px-2 py-1 text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded-md transition-colors" aria-label="Delete Stat"><Trash2 className="w-3.5 h-3.5" /> Delete</button>
                                 </div>
                             </div>
                             <p className="text-sm font-medium text-gray-600">{stat.label}</p>
@@ -373,9 +373,9 @@ export default function AboutManagementPage() {
                         <div key={v.id} className="p-5 border rounded-xl hover:border-[#06b6d4] group bg-white shadow-xs transition-all">
                             <div className="flex justify-between items-start mb-4">
                                 <div className="text-3xl p-3 bg-gray-50 rounded-lg">{v.icon}</div>
-                                <div className="flex gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                                    <button onClick={() => setShowModal({ type: 'value', data: v })} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg" aria-label="Edit Value"><Edit2 size={16} /></button>
-                                    <button onClick={() => handleDelete('value', v.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg" aria-label="Delete Value"><Trash2 size={16} /></button>
+                                <div className="flex items-center gap-1.5">
+                                    <button onClick={() => setShowModal({ type: 'value', data: v })} className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors" aria-label="Edit Value"><Edit2 className="w-3.5 h-3.5" /> Edit</button>
+                                    <button onClick={() => handleDelete('value', v.id)} className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded-md transition-colors" aria-label="Delete Value"><Trash2 className="w-3.5 h-3.5" /> Delete</button>
                                 </div>
                             </div>
                             <h3 className="font-bold text-lg mb-2 text-gray-900">{v.title}</h3>
@@ -413,7 +413,12 @@ export default function AboutManagementPage() {
                                     )}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <h3 className="font-bold text-gray-900 truncate">{member.name}</h3>
+                                    <div className="flex items-center justify-between gap-1">
+                                        <h3 className="font-bold text-gray-900 truncate">{member.name}</h3>
+                                        <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded bg-[#06b6d4]/10 text-[#06b6d4] border border-[#06b6d4]/20">
+                                            #{member.display_order || 0}
+                                        </span>
+                                    </div>
                                     <p className="text-sm text-[#06b6d4] font-semibold">{member.role}</p>
                                 </div>
                             </div>
@@ -423,9 +428,9 @@ export default function AboutManagementPage() {
                                     {member.linkedin && <LinkIcon className="w-4 h-4 text-blue-600" />}
                                     {member.instagram && <LinkIcon className="w-4 h-4 text-pink-600" />}
                                 </div>
-                                <div className="flex space-x-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                                    <button onClick={() => setShowModal({ type: 'team', data: member })} className="p-1.5 hover:text-blue-600 hover:bg-blue-50 rounded" aria-label="Edit Team Member"><Edit2 className="w-4 h-4" /></button>
-                                    <button onClick={() => handleDelete('team', member.id)} className="p-1.5 hover:text-red-600 hover:bg-red-50 rounded" aria-label="Delete Team Member"><Trash2 className="w-4 h-4" /></button>
+                                <div className="flex items-center gap-2">
+                                    <button onClick={() => setShowModal({ type: 'team', data: member })} className="flex items-center gap-1 px-2.5 py-1 text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors" aria-label="Edit Team Member"><Edit2 className="w-3.5 h-3.5" /> Edit</button>
+                                    <button onClick={() => handleDelete('team', member.id)} className="flex items-center gap-1 px-2.5 py-1 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-md transition-colors" aria-label="Delete Team Member"><Trash2 className="w-3.5 h-3.5" /> Delete</button>
                                 </div>
                             </div>
                         </div>
@@ -446,9 +451,9 @@ export default function AboutManagementPage() {
                         <div key={f.id} className="p-4 border rounded-xl hover:border-[#06b6d4] group transition-all">
                             <div className="flex justify-between items-start mb-3">
                                 <div className="p-2 bg-gray-50 rounded-lg">{f.icon}</div>
-                                <div className="flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                                    <button onClick={() => setShowModal({ type: 'feature', data: f })} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded" aria-label="Edit Feature"><Edit2 size={14} /></button>
-                                    <button onClick={() => handleDelete('feature', f.id)} className="p-1.5 text-red-600 hover:bg-red-50 rounded" aria-label="Delete Feature"><Trash2 size={14} /></button>
+                                <div className="flex items-center gap-1">
+                                    <button onClick={() => setShowModal({ type: 'feature', data: f })} className="flex items-center gap-1 px-2 py-1 text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors" aria-label="Edit Feature"><Edit2 size={13} /> Edit</button>
+                                    <button onClick={() => handleDelete('feature', f.id)} className="flex items-center gap-1 px-2 py-1 text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded-md transition-colors" aria-label="Delete Feature"><Trash2 size={13} /> Delete</button>
                                 </div>
                             </div>
                             <h3 className="font-bold text-sm mb-1 text-gray-900">{f.title}</h3>
@@ -474,9 +479,9 @@ export default function AboutManagementPage() {
                                 <h3 className="font-bold mb-1 text-gray-900">{m.title}</h3>
                                 <p className="text-sm text-gray-600">{m.description}</p>
                             </div>
-                            <div className="flex gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                                <button onClick={() => setShowModal({ type: 'milestone', data: m })} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded" aria-label="Edit Milestone"><Edit2 size={16} /></button>
-                                <button onClick={() => handleDelete('milestone', m.id)} className="p-1.5 text-red-600 hover:bg-red-50 rounded" aria-label="Delete Milestone"><Trash2 size={16} /></button>
+                            <div className="flex items-center gap-2">
+                                <button onClick={() => setShowModal({ type: 'milestone', data: m })} className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors" aria-label="Edit Milestone"><Edit2 size={14} /> Edit</button>
+                                <button onClick={() => handleDelete('milestone', m.id)} className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded-md transition-colors" aria-label="Delete Milestone"><Trash2 size={14} /> Delete</button>
                             </div>
                         </div>
                     ))}
@@ -633,6 +638,17 @@ function ModalForm({ type, data, onCancel, onSuccess }: any) {
                 <>
                     <input className="w-full p-2 border rounded-lg text-gray-900" placeholder="Name" value={formData.name || ""} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, name: e.target.value })} required />
                     <input className="w-full p-2 border rounded-lg text-gray-900" placeholder="Role" value={formData.role || ""} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, role: e.target.value })} required />
+                    <div>
+                        <label className="block text-xs font-semibold text-gray-600 mb-1">Series / Display Order (e.g. 1, 2, 3...)</label>
+                        <input
+                            type="number"
+                            min="1"
+                            className="w-full p-2 border rounded-lg text-gray-900"
+                            placeholder="Display Order (e.g. 1, 2, 3)"
+                            value={formData.display_order ?? ""}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, display_order: e.target.value === "" ? 0 : Number(e.target.value) })}
+                        />
+                    </div>
                     <input className="w-full p-2 border rounded-lg text-gray-900" placeholder="Image URL" value={formData.image || ""} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, image: e.target.value })} />
                     <textarea className="w-full p-2 border rounded-lg text-gray-900" placeholder="Bio" value={formData.bio || ""} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, bio: e.target.value })} />
                     <input className="w-full p-2 border rounded-lg text-gray-900" placeholder="LinkedIn URL" value={formData.linkedin || ""} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, linkedin: e.target.value })} />
