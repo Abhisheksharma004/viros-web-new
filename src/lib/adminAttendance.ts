@@ -19,7 +19,9 @@ import {
 import {
     fetchLeaveRequestsOverlappingMonth,
     mergeLeaveRequestsIntoAttendanceRecords,
+    type LeaveRequestForAttendance,
 } from "@/lib/attendanceLeaveSync";
+import { mapLeaveRequestRowToApi, type EmployeeLeaveRequestRow } from "@/lib/employeeLeave";
 import {
     fetchCorporateEventsForMonth,
     mergeCorporateEventsIntoAttendanceRecords,
@@ -277,9 +279,51 @@ export async function getAdminDailyAttendance(dateIso: string): Promise<AdminDai
     const corpEvents = await fetchCorporateEventsForMonth(year, month);
     const eventsOnDate = corpEvents.filter((ev) => date >= ev.start_date && date <= ev.end_date);
 
+    const [leaveRows] = await pool.query<
+        (RowDataPacket & {
+            employee_id: string;
+            policy_name: string;
+            request_id: string;
+            day_type: "full" | "half";
+            status: string;
+            rejected_at_stage: string | null;
+        })[]
+    >(
+        `SELECT employee_id, policy_name, request_id, day_type, status, rejected_at_stage
+         FROM employee_leave_requests
+         WHERE status IN ('pending', 'l1_approved', 'approved')
+           AND start_date <= ?
+           AND end_date >= ?`,
+        [date, date],
+    );
+
+    const leaveMap = new Map(leaveRows.map((r) => [r.employee_id.trim(), r]));
+
     return rows.map((row) => {
         const shiftDetail = shiftMap.get(row.employee_id) ?? null;
         const daily = mapJoinRowToDaily(row, date, shiftDetail, shiftMap.has(row.employee_id));
+        const leaveReq = leaveMap.get(row.employee_id);
+
+        if (leaveReq) {
+            const hasPunch = Boolean(
+                daily.checkIn || daily.checkOut || daily.checkInProof || daily.checkOutProof,
+            );
+            if (!hasPunch) {
+                const targetStatus = leaveReq.day_type === "full" ? "leave" : "half-day";
+                const statusLabel =
+                    leaveReq.status === "approved"
+                        ? "Approved Leave"
+                        : leaveReq.status === "l1_approved"
+                          ? "L1 Approved Leave"
+                          : "Pending Leave";
+                const leaveNote = `${statusLabel}: ${leaveReq.policy_name} (${leaveReq.request_id})`;
+
+                daily.status = targetStatus as AttendanceStatus;
+                daily.note = daily.note ? `${leaveNote} | ${daily.note}` : leaveNote;
+                daily.canMarkPresent = true;
+                daily.canMarkAbsent = false;
+            }
+        }
 
         if (eventsOnDate.length > 0) {
             const eventTitle = eventsOnDate.map((ev) => ev.title).join(" | ");
@@ -322,82 +366,152 @@ export async function getAdminMonthlySummary(
     const isFutureMonth = ty && tm ? year > ty || (year === ty && month > tm) : false;
     const isCurrentMonth = ty && tm ? year === ty && month === tm : false;
     const cutoffDay = isFutureMonth ? 0 : isCurrentMonth && td ? Math.min(td, lastDay) : lastDay;
+    const cutoffIso = `${year}-${String(month).padStart(2, "0")}-${String(cutoffDay).padStart(2, "0")}`;
 
-    const countScheduleUntil = (workingDays: number[]) => {
-        let totalWorkingDays = 0;
-        let weekOff = 0;
-        for (let d = 1; d <= cutoffDay; d++) {
-            const iso = `${year}-${String(month).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-            if (isDateWorkingDay(iso, workingDays)) {
-                totalWorkingDays += 1;
-            } else {
-                weekOff += 1;
-            }
-        }
-        return { totalWorkingDays, weekOff };
-    };
-
-    const [rows] = await pool.query<
+    const [empRows] = await pool.query<
         (RowDataPacket & {
             employee_id: string;
             full_name: string;
             department: string | null;
-            present: number;
-            late: number;
-            absent: number;
-            leave_count: number;
-            half_day: number;
         })[]
     >(
-        `SELECT
-            e.employee_id,
-            e.full_name,
-            e.department,
-            COALESCE(SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END), 0) AS present,
-            COALESCE(SUM(CASE WHEN a.status = 'late' THEN 1 ELSE 0 END), 0) AS late,
-            COALESCE(SUM(CASE WHEN a.status = 'absent' THEN 1 ELSE 0 END), 0) AS absent,
-            COALESCE(SUM(CASE WHEN a.status = 'leave' THEN 1 ELSE 0 END), 0) AS leave_count,
-            COALESCE(SUM(CASE WHEN a.status = 'half-day' THEN 1 ELSE 0 END), 0) AS half_day
-         FROM admin_employees e
-         LEFT JOIN ${ATTENDANCE_TABLE} a
-            ON a.employee_id = e.employee_id
-            AND a.attendance_date >= ?
-            AND a.attendance_date <= ?
-         WHERE e.employee_status = 'Active'
-         GROUP BY e.employee_id, e.full_name, e.department
-         ORDER BY e.full_name ASC`,
+        `SELECT employee_id, full_name, department
+         FROM admin_employees
+         WHERE employee_status = 'Active'
+         ORDER BY full_name ASC`,
+    );
+
+    const [attRows] = await pool.query<EmployeeAttendanceRow[]>(
+        `SELECT id, employee_id, attendance_date, status,
+                DATE_FORMAT(check_in_at, '%Y-%m-%d %H:%i:%s') AS check_in_at,
+                DATE_FORMAT(check_out_at, '%Y-%m-%d %H:%i:%s') AS check_out_at,
+                check_in_photo, check_out_photo,
+                check_in_latitude, check_in_longitude, check_in_accuracy, check_in_address,
+                check_out_latitude, check_out_longitude, check_out_accuracy, check_out_address,
+                late_seconds, working_seconds, note
+         FROM ${ATTENDANCE_TABLE}
+         WHERE attendance_date >= ? AND attendance_date <= ?
+         ORDER BY attendance_date DESC`,
         [start, end],
     );
 
-    const shiftMap = await getActiveShiftWorkingDaysMap();
+    const attByEmp = new Map<string, EmployeeAttendanceRow[]>();
+    for (const r of attRows) {
+        const empIdKey = r.employee_id.trim().toLowerCase();
+        const list = attByEmp.get(empIdKey) ?? [];
+        list.push(r);
+        attByEmp.set(empIdKey, list);
+    }
 
-    return rows.map((row) => {
-        const workingDays = shiftMap.get(row.employee_id) ?? DEFAULT_SHIFT_WORKING_DAYS;
-        const monthSchedule = countMonthScheduleDays(year, month, workingDays);
-        const toDateSchedule =
-            cutoffDay === lastDay ? monthSchedule : countScheduleUntil(workingDays);
-        const present = Number(row.present) || 0;
-        const late = Number(row.late) || 0;
-        const leave = Number(row.leave_count) || 0;
-        const halfDay = Number(row.half_day) || 0;
+    const [allLeaveRows] = await pool.query<EmployeeLeaveRequestRow[]>(
+        `SELECT * FROM employee_leave_requests
+         WHERE status IN ('pending', 'l1_approved', 'approved')
+           AND start_date <= ?
+           AND end_date >= ?
+         ORDER BY start_date ASC, id ASC`,
+        [end, start],
+    );
+
+    const leaveByEmp = new Map<string, LeaveRequestForAttendance[]>();
+    for (const row of allLeaveRows) {
+        const empIdKey = row.employee_id.trim().toLowerCase();
+        const apiRow = mapLeaveRequestRowToApi(row);
+        const list = leaveByEmp.get(empIdKey) ?? [];
+        list.push(apiRow);
+        leaveByEmp.set(empIdKey, list);
+    }
+
+    const shiftMap = await getActiveShiftsMap();
+    const corpEvents = await fetchCorporateEventsForMonth(year, month);
+
+    return empRows.map((emp) => {
+        const empId = emp.employee_id.trim();
+        const empIdKey = empId.toLowerCase();
+        const shiftDetail = shiftMap.get(empId) ?? null;
+        const workingDays = shiftDetail?.workingDays ?? DEFAULT_SHIFT_WORKING_DAYS;
+
+        const empAtt = attByEmp.get(empIdKey) ?? [];
+        const dbRecords = empAtt.map((row) => {
+            const rec = mapRowToDayRecord(row);
+            if (rec.status === "present" && row.check_in_at && shiftDetail) {
+                const checkInDate = parseISTDateTime(row.check_in_at);
+                if (checkInDate) {
+                    const [sh, sm] = shiftDetail.startTime.split(":").map(Number);
+                    const safeH = Number.isNaN(sh) ? 9 : sh;
+                    const safeM = Number.isNaN(sm) ? 0 : sm;
+                    const startMins = safeH * 60 + safeM;
+                    const graceMins = startMins + Math.max(0, shiftDetail.graceMinutes);
+                    const checkInMins = checkInDate.getHours() * 60 + checkInDate.getMinutes();
+
+                    if (checkInMins > startMins && checkInMins <= graceMins) {
+                        rec.status = "grace" as AttendanceStatus;
+                    }
+                }
+            }
+            if (rec.status === "present" && row.note?.toLowerCase().includes("grace")) {
+                rec.status = "grace" as AttendanceStatus;
+            }
+            return rec;
+        });
+
+        const empLeaves = leaveByEmp.get(empIdKey) ?? [];
+        const withLeave = mergeLeaveRequestsIntoAttendanceRecords(dbRecords, empLeaves);
+        const recordsWithShift = mergeMonthRecordsWithShift(year, month, withLeave, workingDays, {
+            todayIso,
+            markPastAbsent: true,
+        });
+        const records = mergeCorporateEventsIntoAttendanceRecords(recordsWithShift, corpEvents);
+
+        let present = 0;
+        let late = 0;
+        let absent = 0;
+        let leave = 0;
+        let halfDay = 0;
+
+        let totalWorkingDaysToDate = 0;
+        let weekOffToDate = 0;
+        let weekOffMonth = 0;
+        let totalWorkingDaysInMonth = 0;
+
+        for (const rec of records) {
+            const isToDate = rec.date <= cutoffIso;
+            if (rec.status === "weekend") {
+                weekOffMonth += 1;
+                if (isToDate) weekOffToDate += 1;
+                continue;
+            }
+            if (rec.status === "holiday") {
+                continue;
+            }
+
+            totalWorkingDaysInMonth += 1;
+            if (isToDate) {
+                totalWorkingDaysToDate += 1;
+                if (rec.status === "present" || (rec.status as string) === "grace") present += 1;
+                else if (rec.status === "late") late += 1;
+                else if (rec.status === "leave") leave += 1;
+                else if (rec.status === "half-day") halfDay += 1;
+                else if (rec.status === "absent") absent += 1;
+                else present += 1;
+            }
+        }
+
         const totalPresent = present + late + leave + halfDay;
-        // Monthly summary doesn't materialize every day record (unlike employee detail view).
-        // So we treat missing working-day entries as absent for a more accurate month rollup.
-        const computedAbsent = Math.max(0, toDateSchedule.totalWorkingDays - totalPresent);
+
         return {
-            employeeId: row.employee_id,
-            fullName: row.full_name,
-            department: row.department ?? "",
+            employeeId: emp.employee_id,
+            fullName: emp.full_name,
+            department: emp.department ?? "",
             present,
             late,
-            absent: computedAbsent,
+            absent,
             leave,
             halfDay,
             totalPresent,
-            totalWorkingDaysInMonth: monthSchedule.totalWorkingDays,
-            totalWorkingDaysToDate: toDateSchedule.totalWorkingDays,
-            weekOff: monthSchedule.weekOff,
-            weekOffToDate: toDateSchedule.weekOff,
+            totalWorkingDaysInMonth,
+            totalWorkingDaysToDate,
+            weekOff: weekOffMonth,
+            weekOffToDate,
         };
     });
 }

@@ -126,12 +126,13 @@ function time12hTo24h(timeStr?: string): string {
 
 const STATUS_STYLES: Record<string, { label: string; className: string }> = {
     present: { label: "Present", className: "bg-emerald-100 text-emerald-900 ring-emerald-600/30" },
-    grace: { label: "Checked in during grace time", className: "bg-purple-100 text-purple-900 ring-purple-600/30" },
+    grace: { label: "Grace", className: "bg-purple-100 text-purple-900 ring-purple-600/30" },
     late: { label: "Late", className: "bg-amber-100 text-amber-900 ring-amber-600/30" },
     absent: { label: "Absent", className: "bg-red-100 text-red-900 ring-red-600/30" },
     leave: { label: "Leave", className: "bg-blue-100 text-blue-900 ring-blue-600/30" },
     "half-day": { label: "Half day", className: "bg-teal-100 text-teal-900 ring-teal-600/30" },
     weekend: { label: "Off day", className: "bg-gray-100 text-gray-600 ring-gray-400/30" },
+    holiday: { label: "Holiday", className: "bg-purple-100 text-purple-900 ring-purple-600/30" },
 };
 
 const TH =
@@ -156,21 +157,25 @@ function StatusBadge({ status, note }: { status: string; note?: string }) {
         className: "bg-gray-100 text-gray-700 ring-gray-500/20",
     };
 
-    const isHolidayOrEvent =
-        status === "holiday" ||
-        (status === "weekend" && note && note !== "Off day") ||
-        (Boolean(note) && !note?.startsWith("Marked") && !note?.startsWith("Updated"));
+    const isHoliday = status === "holiday" || (status === "weekend" && note && note !== "Off day");
 
-    const label = isHolidayOrEvent && note ? (note.split(" | ")[0] || note) : cfg.label;
-    const className = isHolidayOrEvent
+    const badgeLabel = isHoliday && note ? (note.split(" | ")[0] || note) : cfg.label;
+    const badgeClass = isHoliday
         ? "bg-purple-100 text-purple-900 ring-purple-600/30 font-bold"
         : cfg.className;
 
+    const fullTooltip = note
+        ? note.toLowerCase().includes(cfg.label.toLowerCase())
+            ? note
+            : `${cfg.label} — ${note}`
+        : cfg.label;
+
     return (
         <span
-            className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-bold ring-1 ring-inset ${className}`}
+            title={fullTooltip}
+            className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-bold ring-1 ring-inset ${badgeClass}`}
         >
-            {label}
+            {badgeLabel}
         </span>
     );
 }

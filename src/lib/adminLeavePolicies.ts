@@ -229,7 +229,7 @@ export function mapPolicyRowToApi(row: AdminLeavePolicyRow) {
         half_day_allowed: Boolean(row.half_day_allowed),
         document_required: Boolean(row.document_required),
         min_notice_days: Number(row.min_notice_days) || 0,
-        max_consecutive_days: Number(row.max_consecutive_days) || 1,
+        max_consecutive_days: Number(row.max_consecutive_days) || 0,
         requires_approval: Boolean(row.requires_approval),
         paid: Boolean(row.paid),
         is_active: Boolean(row.is_active),
@@ -256,7 +256,7 @@ export function mapOrgSettingsRowToApi(row: AdminLeaveOrgSettingsRow) {
     return {
         fiscal_year_start_month: Number(row.fiscal_year_start_month) || 4,
         default_min_notice_days: Number(row.default_min_notice_days) || 0,
-        max_consecutive_days_default: Number(row.max_consecutive_days_default) || 1,
+        max_consecutive_days_default: Number(row.max_consecutive_days_default) || 15,
         allow_half_day: Boolean(row.allow_half_day),
         count_weekends_in_leave: Boolean(row.count_weekends_in_leave),
         notification_emails: parseNotificationEmailsJson(row.notification_emails),
@@ -287,7 +287,7 @@ export function parsePolicyBody(body: Record<string, unknown>) {
         halfDayAllowed: parseBool(body.half_day_allowed),
         documentRequired: parseBool(body.document_required),
         minNoticeDays: Math.max(0, parseNum(body.min_notice_days)),
-        maxConsecutiveDays: Math.max(1, parseNum(body.max_consecutive_days, 1)),
+        maxConsecutiveDays: Math.max(0, parseNum(body.max_consecutive_days, 0)),
         requiresApproval: parseBool(body.requires_approval),
         paid: parseBool(body.paid),
         isActive: parseBool(body.is_active),
@@ -297,7 +297,7 @@ export function parsePolicyBody(body: Record<string, unknown>) {
         monthsAfterJoining: applicableFromJoining
             ? Math.max(0, parseNum(body.months_after_joining))
             : 0,
-        maxDaysPerRequest: Math.max(0.5, parseNum(body.max_days_per_request, 0.5)),
+        maxDaysPerRequest: Math.max(0, parseNum(body.max_days_per_request, 0)),
         maxDaysPerMonth: Math.max(0, parseNum(body.max_days_per_month, 0)),
         minDaysPerRequest: Math.max(0, parseNum(body.min_days_per_request)),
         enforceRemainingBalanceCap: parseBool(body.enforce_remaining_balance_cap),

@@ -202,13 +202,13 @@ export function collectLeaveRequestErrors(input: ValidateLeaveInput): string[] {
         errors.push("Invalid date range or no working days in selection.");
     }
 
-    if (requestedDays > policy.max_consecutive_days) {
+    if (policy.max_consecutive_days > 0 && requestedDays > policy.max_consecutive_days) {
         errors.push(
             `Maximum ${policy.max_consecutive_days} consecutive day(s) allowed for this leave type.`,
         );
     }
 
-    if (requestedDays > policy.max_days_per_request) {
+    if (policy.max_days_per_request > 0 && requestedDays > policy.max_days_per_request) {
         errors.push(
             `Maximum ${policy.max_days_per_request} day(s) per request for this leave type.`,
         );
