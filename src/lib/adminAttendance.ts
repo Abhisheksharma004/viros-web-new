@@ -468,6 +468,27 @@ export async function getAdminMonthlySummary(
         let leave = 0;
         let halfDay = 0;
 
+        let firstActiveDate: string | null = null;
+        let lastActiveDate: string | null = null;
+
+        for (const rec of records) {
+            const isToDate = rec.date <= cutoffIso;
+            if (!isToDate) continue;
+
+            const isActive =
+                rec.status === "present" ||
+                (rec.status as string) === "grace" ||
+                rec.status === "late" ||
+                rec.status === "leave" ||
+                rec.status === "half-day";
+
+            if (isActive) {
+                if (!firstActiveDate) firstActiveDate = rec.date;
+                lastActiveDate = rec.date;
+            }
+        }
+
+        let weekOffBetween = 0;
         let totalWorkingDaysToDate = 0;
         let weekOffToDate = 0;
         let weekOffMonth = 0;
@@ -477,7 +498,24 @@ export async function getAdminMonthlySummary(
             const isToDate = rec.date <= cutoffIso;
             if (rec.status === "weekend") {
                 weekOffMonth += 1;
-                if (isToDate) weekOffToDate += 1;
+                if (isToDate) {
+                    weekOffToDate += 1;
+                    const isFirstDayOfMonth = rec.date === start;
+                    const isLastDayOfMonth = rec.date === end;
+                    const isBetween =
+                        firstActiveDate !== null &&
+                        lastActiveDate !== null &&
+                        rec.date >= firstActiveDate &&
+                        rec.date <= lastActiveDate;
+
+                    if (
+                        isBetween ||
+                        (isFirstDayOfMonth && firstActiveDate !== null) ||
+                        (isLastDayOfMonth && lastActiveDate !== null)
+                    ) {
+                        weekOffBetween += 1;
+                    }
+                }
                 continue;
             }
             if (rec.status === "holiday") {
@@ -496,7 +534,8 @@ export async function getAdminMonthlySummary(
             }
         }
 
-        const totalPresent = present + late + leave + halfDay;
+        const workedDays = present + late + leave + halfDay;
+        const totalPresent = workedDays + weekOffBetween;
 
         return {
             employeeId: emp.employee_id,
@@ -512,6 +551,7 @@ export async function getAdminMonthlySummary(
             totalWorkingDaysToDate,
             weekOff: weekOffMonth,
             weekOffToDate,
+            totalDaysInMonth: lastDay,
         };
     });
 }

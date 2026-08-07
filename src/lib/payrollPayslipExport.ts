@@ -460,8 +460,8 @@ export async function downloadPayslipPdf(payment: PayslipPaymentRecord): Promise
     });
     y = (doc as AutoTableDoc & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 6;
 
-    // —— Attendance summary ——
-    y = sectionTitle(doc, y, "Attendance Summary");
+    // —— Days Distribution ——
+    y = sectionTitle(doc, y, "Days Distribution");
     const halfDays = att?.halfDay ?? 0;
     const weekOff = att?.weekOff ?? 0;
     autoTable(doc, {
@@ -470,25 +470,25 @@ export async function downloadPayslipPdf(payment: PayslipPaymentRecord): Promise
         margin: { left: 14, right: 14 },
         head: [
             [
+                "Working Days",
+                "Week Off",
                 "Present",
+                "Half Day",
                 "Absent",
-                "Half Days",
                 "Paid Leaves",
                 "Unpaid Leaves",
-                "Week Off",
-                "Working Days",
                 "Paid Days",
             ],
         ],
         body: [
             [
+                String(payment.working_days_in_month),
+                String(weekOff),
                 String(payment.total_present),
-                String(payment.total_absent),
                 String(halfDays),
+                String(payment.total_absent),
                 String(payment.paid_leave),
                 String(payment.unpaid_leave),
-                String(weekOff),
-                String(payment.working_days_in_month),
                 String(payment.paid_days),
             ],
         ],

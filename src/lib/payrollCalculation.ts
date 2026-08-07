@@ -7,6 +7,8 @@ export type AttendanceForPayroll = {
     halfDay: number;
     absent: number;
     totalWorkingDaysInMonth: number;
+    totalPresent?: number;
+    totalDaysInMonth?: number;
 };
 
 export type PayrollBreakdown = {
@@ -72,6 +74,9 @@ export function computePerDaySalary(gross: number, totalWorkingDaysInMonth: numb
 
 export function computePaidDays(att: AttendanceForPayroll | null | undefined): number {
     if (!att) return 0;
+    if (typeof att.totalPresent === "number" && att.totalPresent >= 0) {
+        return att.totalPresent;
+    }
     return (
         safeNumber(att.present) +
         safeNumber(att.late) +
@@ -91,6 +96,8 @@ export function normalizeAttendanceForPayroll(
         halfDay: safeNumber(att.halfDay),
         absent: safeNumber(att.absent),
         totalWorkingDaysInMonth: safeNumber(att.totalWorkingDaysInMonth),
+        totalPresent: typeof att.totalPresent === "number" ? safeNumber(att.totalPresent) : undefined,
+        totalDaysInMonth: typeof att.totalDaysInMonth === "number" ? safeNumber(att.totalDaysInMonth) : undefined,
     };
 }
 
@@ -107,10 +114,12 @@ export function computePayrollBreakdown(
 ): PayrollBreakdown {
     const normalized = normalizeAttendanceForPayroll(att);
     const monthWorkingDays = normalized?.totalWorkingDaysInMonth ?? 0;
-    const perDaySalary = computePerDaySalary(gross, monthWorkingDays);
+    const totalDaysInMonth = normalized?.totalDaysInMonth ?? monthWorkingDays;
+    const daysForSalaryRate = (normalized?.totalPresent !== undefined && totalDaysInMonth > 0) ? totalDaysInMonth : monthWorkingDays;
+    const perDaySalary = computePerDaySalary(gross, daysForSalaryRate);
     const paidDays = computePaidDays(normalized);
     const earnedGross = roundMoney(paidDays * perDaySalary);
-    const totalPresent = normalized ? normalized.present + normalized.late : 0;
+    const totalPresent = normalized?.totalPresent ?? (normalized ? normalized.present + normalized.late + normalized.leave + normalized.halfDay : 0);
     const totalAbsent = normalized?.absent ?? 0;
     const paidLeave = normalized?.leave ?? 0;
     const unpaidLeave = 0;
