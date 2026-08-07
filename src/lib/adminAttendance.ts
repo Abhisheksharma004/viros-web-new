@@ -471,6 +471,9 @@ export async function getAdminMonthlySummary(
         let firstActiveDate: string | null = null;
         let lastActiveDate: string | null = null;
 
+        const activeDateSet = new Set<string>();
+        const includedWeekOffSet = new Set<string>();
+
         for (const rec of records) {
             const isToDate = rec.date <= cutoffIso;
             if (!isToDate) continue;
@@ -483,6 +486,7 @@ export async function getAdminMonthlySummary(
                 rec.status === "half-day";
 
             if (isActive) {
+                activeDateSet.add(rec.date);
                 if (!firstActiveDate) firstActiveDate = rec.date;
                 lastActiveDate = rec.date;
             }
@@ -493,6 +497,18 @@ export async function getAdminMonthlySummary(
         let weekOffToDate = 0;
         let weekOffMonth = 0;
         let totalWorkingDaysInMonth = 0;
+
+        const getPrevIsoDate = (iso: string) => {
+            const d = new Date(`${iso}T12:00:00`);
+            d.setDate(d.getDate() - 1);
+            return d.toISOString().slice(0, 10);
+        };
+
+        const getNextIsoDate = (iso: string) => {
+            const d = new Date(`${iso}T12:00:00`);
+            d.setDate(d.getDate() + 1);
+            return d.toISOString().slice(0, 10);
+        };
 
         for (const rec of records) {
             const isToDate = rec.date <= cutoffIso;
@@ -508,12 +524,21 @@ export async function getAdminMonthlySummary(
                         rec.date >= firstActiveDate &&
                         rec.date <= lastActiveDate;
 
+                    const prevDate = getPrevIsoDate(rec.date);
+                    const nextDate = getNextIsoDate(rec.date);
+                    const isAdjoiningActive =
+                        activeDateSet.has(prevDate) ||
+                        includedWeekOffSet.has(prevDate) ||
+                        activeDateSet.has(nextDate);
+
                     if (
                         isBetween ||
+                        isAdjoiningActive ||
                         (isFirstDayOfMonth && firstActiveDate !== null) ||
                         (isLastDayOfMonth && lastActiveDate !== null)
                     ) {
                         weekOffBetween += 1;
+                        includedWeekOffSet.add(rec.date);
                     }
                 }
                 continue;
