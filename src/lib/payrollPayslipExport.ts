@@ -67,7 +67,7 @@ const BORDER = 200;
 /** PDF-safe currency (Helvetica does not render the rupee sign correctly). */
 function formatAmount(amount: number): string {
     const n = Number.isFinite(amount) ? amount : 0;
-    const fixed = n.toFixed(1);
+    const fixed = n.toFixed(2);
     const [intPart, decPart] = fixed.split(".");
     const withCommas = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     return `Rs. ${withCommas}.${decPart}`;
@@ -96,7 +96,7 @@ function formatReportDate(): string {
 function monthShortName(payrollMonth: string): string {
     if (!/^\d{4}-\d{2}$/.test(payrollMonth)) return payrollMonth;
     const d = new Date(`${payrollMonth}-01T12:00:00`);
-    return d.toLocaleDateString("en-IN", { month: "long" });
+    return d.toLocaleDateString("en-IN", { month: "short", year: "numeric" });
 }
 
 function formatPaymentMode(mode: string): string {
@@ -121,17 +121,24 @@ function appliedDeductionTotal(payment: PayslipPaymentRecord): number {
         (payment.esi || 0) +
         (payment.tds || 0) +
         (payment.leave_deduction || 0) +
+        (payment.absent_deduction || 0) +
         (payment.advance_deduction || 0)
     );
 }
 
 type AutoTableDoc = import("jspdf").jsPDF;
 
-function sectionTitle(doc: AutoTableDoc, y: number, title: string): number {
+function sectionTitle(doc: AutoTableDoc, y: number, title: string, rightText?: string): number {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
     doc.setTextColor(0, 0, 0);
     doc.text(title, 14, y);
+    if (rightText) {
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(9.5);
+        doc.setTextColor(60, 60, 60);
+        doc.text(rightText, 196, y, { align: "right" });
+    }
     return y + 6;
 }
 
@@ -170,7 +177,7 @@ function drawPayslipTitleBand(doc: AutoTableDoc, y: number, title: string): numb
 }
 
 /** Dedicated file so PDF never reuses a stale cached `/logo.png` from another project. */
-const PAYSLIP_LOGO_PATH = "/payslip-logo.png";
+const PAYSLIP_LOGO_PATH = "/logonn.png";
 
 type PayslipLogoAsset = {
     dataUrl: string;
@@ -297,7 +304,7 @@ export async function downloadPayslipPdf(payment: PayslipPaymentRecord): Promise
     y = drawPayslipTitleBand(doc, y, `Pay Slip for ${monthTitle}`);
 
     // —— Employee details ——
-    y = sectionTitle(doc, y, "Employee Details");
+    y = sectionTitle(doc, y, "Employee Details", `Payslip ID: ${payment.payslip_number}`);
     autoTable(doc, {
         startY: y,
         theme: "plain",
@@ -529,21 +536,21 @@ export async function downloadPayslipPdf(payment: PayslipPaymentRecord): Promise
         body: [
             [
                 "Earned (attendance)",
-                formatPaidDate(payment.paid_at),
+                monthShortName(payment.payroll_month),
                 formatAmount(payment.earned_gross),
                 `${payment.paid_days} paid days`,
             ],
             [
                 "Deductions",
-                formatPaidDate(payment.paid_at),
+                monthShortName(payment.payroll_month),
                 formatAmount(totalDeductions),
-                paymentNote || "PF/ESI/TDS/Advance",
+                paymentNote || "PF/ESI/TDS/Advance/Absent",
             ],
             [
                 "Net salary paid",
                 formatPaidDate(payment.paid_at),
                 formatAmount(payment.net_payable),
-                `${formatPaymentMode(payment.payment_mode)} · ${payment.payslip_number}`,
+                formatPaymentMode(payment.payment_mode),
             ],
         ],
         headStyles: {

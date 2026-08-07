@@ -120,10 +120,10 @@ export function computePayrollBreakdown(
     const paidDays = computePaidDays(normalized);
     const earnedGross = roundMoney(paidDays * perDaySalary);
     const totalPresent = normalized?.totalPresent ?? (normalized ? normalized.present + normalized.late + normalized.leave + normalized.halfDay : 0);
-    const totalAbsent = normalized?.absent ?? 0;
+    const totalAbsent = daysForSalaryRate > 0 ? Math.max(0, daysForSalaryRate - paidDays) : (normalized?.absent ?? 0);
     const paidLeave = normalized?.leave ?? 0;
     const unpaidLeave = 0;
-    const absentDeduction = computeAbsentDeduction(perDaySalary, totalAbsent);
+    const absentDeduction = daysForSalaryRate > 0 ? roundMoney(gross - earnedGross) : computeAbsentDeduction(perDaySalary, totalAbsent);
     const leaveDeduction = roundMoney(unpaidLeave * perDaySalary);
     const totalPayable = Math.max(0, roundMoney(earnedGross - advanceDeduction));
 
