@@ -5,10 +5,12 @@ import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { formatPayrollMonthDisplay } from "@/lib/payrollCalculation";
 import { downloadPayslipPdf, type PayslipPaymentRecord } from "@/lib/payrollPayslipExport";
+import Toast from "@/components/Toast";
 import {
     ArrowLeft,
     Download,
     Loader2,
+    Mail,
     Search,
 } from "lucide-react";
 
@@ -62,6 +64,8 @@ function PayrollHistoryContent() {
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState("");
     const [downloadingId, setDownloadingId] = useState<number | null>(null);
+    const [sendingEmailId, setSendingEmailId] = useState<number | null>(null);
+    const [feedback, setFeedback] = useState("");
 
     const inputClass =
         "w-full rounded-md border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-[#06b6d4] focus:ring-2 focus:ring-[#06b6d4]/20";
@@ -140,43 +144,84 @@ function PayrollHistoryContent() {
         }
     };
 
+    const handleSendEmail = async (payment: PayrollPaymentApi) => {
+        setSendingEmailId(payment.id);
+        setFeedback("");
+        try {
+            const resp = await fetch(`/api/admin/payroll/payments/${payment.id}/email`, {
+                method: "POST",
+            });
+            const data = await resp.json().catch(() => ({}));
+            if (!resp.ok) {
+                throw new Error(
+                    typeof data.message === "string"
+                        ? data.message
+                        : "Failed to send payslip email",
+                );
+            }
+            setFeedback(
+                typeof data.message === "string"
+                    ? data.message
+                    : `Payslip ${payment.payslip_number} emailed to ${payment.employee_name}.`,
+            );
+        } catch (error) {
+            console.error("Payslip email failed:", error);
+            setFeedback(
+                error instanceof Error ? error.message : "Failed to send email",
+            );
+        } finally {
+            setSendingEmailId(null);
+        }
+    };
+
     return (
         <div className="mx-auto max-w-7xl space-y-5">
-            <div className="flex flex-col gap-3 rounded-md border border-gray-100 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-4 rounded-md border border-gray-100 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex flex-wrap items-center gap-3">
                     <Link
                         href="/admin-dashboard/payroll"
-                        className="inline-flex items-center gap-1 rounded-md border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                        className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 bg-white px-3.5 py-2 text-xs font-semibold text-gray-700 shadow-xs hover:bg-gray-50 hover:text-gray-900 transition-all"
                     >
-                        <ArrowLeft className="h-3 w-3" aria-hidden />
+                        <ArrowLeft className="h-3.5 w-3.5 text-gray-500" aria-hidden />
                         Back to payroll
                     </Link>
-                    <div className="sm:w-44">
-                        <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-500">
-                            Payroll month
+                    <div className="hidden h-6 w-px bg-gray-200 sm:block" />
+                    <div>
+                        <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-400">
+                            Payroll Month
                         </label>
                         <input
                             type="month"
                             value={payrollMonth}
                             onChange={(e) => setPayrollMonth(e.target.value)}
-                            className={inputClass}
+                            className="mt-0.5 rounded-md border border-gray-200 bg-gray-50/50 px-3 py-1.5 text-sm font-semibold text-gray-900 outline-none transition-all focus:border-[#06b6d4] focus:bg-white focus:ring-2 focus:ring-[#06b6d4]/20 hover:border-gray-300 cursor-pointer"
                         />
                     </div>
-                    <p className="text-sm text-gray-600 sm:pt-5">
-                        {formatPayrollMonthDisplay(payrollMonth)}
-                    </p>
                 </div>
-                <div className="relative w-full sm:w-64">
+                <div className="relative w-full sm:w-72">
                     <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                     <input
                         type="search"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         placeholder="Search employee or payslip…"
-                        className={`${inputClass} pl-9`}
+                        className="w-full rounded-md border border-gray-200 bg-gray-50/50 pl-9 pr-4 py-2 text-sm text-gray-900 outline-none transition-all focus:border-[#06b6d4] focus:bg-white focus:ring-2 focus:ring-[#06b6d4]/20"
                     />
                 </div>
             </div>
+
+            {feedback ? (
+                <Toast
+                    message={feedback}
+                    type={
+                        feedback.toLowerCase().includes("fail") || feedback.toLowerCase().includes("error")
+                            ? "error"
+                            : "success"
+                    }
+                    onClose={() => setFeedback("")}
+                    duration={4500}
+                />
+            ) : null}
 
             {loadError ? (
                 <p className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
@@ -277,21 +322,37 @@ function PayrollHistoryContent() {
                                         <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-600">
                                             {formatPaidAt(payment.paid_at)}
                                         </td>
-                                        <td className="px-4 py-4 text-right sm:px-6">
-                                            <button
-                                                type="button"
-                                                onClick={() => void handleDownload(payment)}
-                                                disabled={downloadingId === payment.id}
-                                                className="inline-flex items-center gap-1 rounded-md border border-gray-200 px-3 py-1.5 text-xs font-semibold text-[#0a2a5e] hover:bg-gray-50 disabled:opacity-60"
-                                            >
-                                                {downloadingId === payment.id ? (
-                                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                                ) : (
-                                                    <Download className="h-3.5 w-3.5" />
-                                                )}
-                                                PDF
-                                            </button>
-                                        </td>
+                                         <td className="px-4 py-4 text-right sm:px-6">
+                                             <div className="inline-flex items-center gap-1.5">
+                                                 <button
+                                                     type="button"
+                                                     onClick={() => void handleDownload(payment)}
+                                                     disabled={downloadingId === payment.id}
+                                                     className="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-[#0a2a5e] shadow-2xs hover:bg-gray-50 disabled:opacity-60 transition-all"
+                                                 >
+                                                     {downloadingId === payment.id ? (
+                                                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                                     ) : (
+                                                         <Download className="h-3.5 w-3.5" />
+                                                     )}
+                                                     PDF
+                                                 </button>
+                                                 <button
+                                                     type="button"
+                                                     onClick={() => void handleSendEmail(payment)}
+                                                     disabled={sendingEmailId === payment.id}
+                                                     className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 shadow-2xs hover:bg-emerald-100 disabled:opacity-60 transition-all"
+                                                     title={`Send payslip email to ${payment.employee_name}`}
+                                                 >
+                                                     {sendingEmailId === payment.id ? (
+                                                         <Loader2 className="h-3.5 w-3.5 animate-spin text-emerald-700" />
+                                                     ) : (
+                                                         <Mail className="h-3.5 w-3.5 text-emerald-700" />
+                                                     )}
+                                                     Send Email
+                                                 </button>
+                                             </div>
+                                         </td>
                                     </tr>
                                 ))
                             )}

@@ -15,6 +15,7 @@ import {
     statutoryFromComponents,
 } from "@/lib/payrollCalculation";
 import { downloadPayslipPdf, type PayslipPaymentRecord } from "@/lib/payrollPayslipExport";
+import Toast from "@/components/Toast";
 import {
     Banknote,
     Calculator,
@@ -126,6 +127,12 @@ export default function PayrollPage() {
     const [payingEmployeeId, setPayingEmployeeId] = useState<string | null>(null);
     const [downloadingPaymentId, setDownloadingPaymentId] = useState<number | null>(null);
     const [viewDetail, setViewDetail] = useState<PayrollTableRow | null>(null);
+    const [payConfirmTarget, setPayConfirmTarget] = useState<PayrollTableRow | null>(null);
+
+    const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<string[]>([]);
+    const [showBulkConfirmModal, setShowBulkConfirmModal] = useState(false);
+    const [isBulkPaying, setIsBulkPaying] = useState(false);
+    const [bulkProgress, setBulkProgress] = useState<{ current: number; total: number } | null>(null);
 
     const inputClass =
         "w-full rounded-md border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-[#06b6d4] focus:ring-2 focus:ring-[#06b6d4]/20 disabled:bg-gray-50";
@@ -269,16 +276,9 @@ export default function PayrollPage() {
         });
     }, [activeSalaries, attendanceRows, advances, payrollMonth, paymentsByEmployee]);
 
-    const handlePaySalary = useCallback(
+    const executePaySalary = useCallback(
         async (row: PayrollTableRow) => {
             if (row.payment || payingEmployeeId) return;
-            if (
-                !window.confirm(
-                    `Pay ${formatInr(row.totalPayable)} to ${row.employeeName} for ${formatPayrollMonthDisplay(payrollMonth)}?\n\nAdvance recovery will be applied automatically.`,
-                )
-            ) {
-                return;
-            }
 
             setFeedback("");
             setPayingEmployeeId(row.employeeId);
@@ -303,9 +303,10 @@ export default function PayrollPage() {
                 const payment = data.payment as PayrollPaymentApi | undefined;
                 setFeedback(
                     payment
-                        ? `Payment recorded for ${row.employeeName} — ${formatInr(payment.net_payable)}. Payslip: ${payment.payslip_number}`
+                        ? `Payment successfully recorded for ${row.employeeName} (${formatInr(payment.net_payable)}). Payslip ID: ${payment.payslip_number}`
                         : `Payment recorded for ${row.employeeName}.`,
                 );
+                setPayConfirmTarget(null);
                 await fetchPayrollData();
             } catch (error) {
                 console.error("Payroll payment failed:", error);
@@ -318,6 +319,100 @@ export default function PayrollPage() {
         },
         [fetchPayrollData, payingEmployeeId, payrollMonth],
     );
+
+    const payableUnpaidRows = useMemo(
+        () => payrollTableRows.filter((r) => !r.payment && r.totalPayable > 0),
+        [payrollTableRows],
+    );
+
+    const selectedRows = useMemo(
+        () =>
+            payrollTableRows.filter(
+                (r) => selectedEmployeeIds.includes(r.employeeId) && !r.payment && r.totalPayable > 0,
+            ),
+        [payrollTableRows, selectedEmployeeIds],
+    );
+
+    const isAllSelected = useMemo(
+        () =>
+            payableUnpaidRows.length > 0 &&
+            payableUnpaidRows.every((r) => selectedEmployeeIds.includes(r.employeeId)),
+        [payableUnpaidRows, selectedEmployeeIds],
+    );
+
+    const isSomeSelected = useMemo(
+        () =>
+            selectedEmployeeIds.length > 0 &&
+            !isAllSelected &&
+            payableUnpaidRows.some((r) => selectedEmployeeIds.includes(r.employeeId)),
+        [selectedEmployeeIds, isAllSelected, payableUnpaidRows],
+    );
+
+    const selectedTotalPayable = useMemo(
+        () => selectedRows.reduce((sum, r) => sum + r.totalPayable, 0),
+        [selectedRows],
+    );
+
+    const handleToggleSelectAll = useCallback(() => {
+        if (isAllSelected) {
+            setSelectedEmployeeIds([]);
+        } else {
+            setSelectedEmployeeIds(payableUnpaidRows.map((r) => r.employeeId));
+        }
+    }, [isAllSelected, payableUnpaidRows]);
+
+    const handleToggleSelectRow = useCallback((employeeId: string) => {
+        setSelectedEmployeeIds((prev) =>
+            prev.includes(employeeId)
+                ? prev.filter((id) => id !== employeeId)
+                : [...prev, employeeId],
+        );
+    }, []);
+
+    const executeBulkPay = useCallback(async () => {
+        if (selectedRows.length === 0 || isBulkPaying) return;
+
+        setIsBulkPaying(true);
+        setBulkProgress({ current: 0, total: selectedRows.length });
+
+        let successCount = 0;
+        let totalPaidSum = 0;
+
+        for (let i = 0; i < selectedRows.length; i++) {
+            const row = selectedRows[i];
+            setBulkProgress({ current: i + 1, total: selectedRows.length });
+
+            try {
+                const resp = await fetch("/api/admin/payroll/payments", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        employee_id: row.employeeId,
+                        payroll_month: payrollMonth,
+                        payment_mode: "bank_transfer",
+                    }),
+                });
+
+                if (resp.ok) {
+                    const data = await resp.json().catch(() => ({}));
+                    const payment = data.payment as PayrollPaymentApi | undefined;
+                    successCount++;
+                    totalPaidSum += payment?.net_payable ?? row.totalPayable;
+                }
+            } catch (error) {
+                console.error(`Bulk payment error for ${row.employeeName}:`, error);
+            }
+        }
+
+        setIsBulkPaying(false);
+        setBulkProgress(null);
+        setShowBulkConfirmModal(false);
+        setSelectedEmployeeIds([]);
+        setFeedback(
+            `Bulk payment successfully recorded for ${successCount} employee(s) (Total: ${formatInr(totalPaidSum)}).`,
+        );
+        await fetchPayrollData();
+    }, [selectedRows, isBulkPaying, payrollMonth, fetchPayrollData]);
 
     const handleDownloadPayslip = useCallback(async (payment: PayrollPaymentApi) => {
         setDownloadingPaymentId(payment.id);
@@ -390,52 +485,59 @@ export default function PayrollPage() {
     return (
         <div className="mx-auto max-w-7xl space-y-5">
             {/* Toolbar */}
-            <div className="flex flex-col gap-3 rounded-md border border-gray-100 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex flex-wrap items-center gap-3">
-                    <div className="sm:w-44">
-                        <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-500">
-                            Payroll month
+            <div className="flex flex-col gap-4 rounded-md border border-gray-100 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[#06b6d4]/10 text-[#06b6d4]">
+                        <CalendarDays className="h-5 w-5" />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-gray-400">
+                            Payroll Month
                         </label>
                         <input
                             type="month"
                             value={payrollMonth}
                             onChange={(e) => setPayrollMonth(e.target.value)}
-                            className={inputClass}
+                            className="mt-0.5 rounded-md border border-gray-200 bg-gray-50/50 px-3 py-1.5 text-sm font-semibold text-gray-900 outline-none transition-all focus:border-[#06b6d4] focus:bg-white focus:ring-2 focus:ring-[#06b6d4]/20 hover:border-gray-300 cursor-pointer"
                         />
                     </div>
-                    <p className="text-sm text-gray-600 sm:pt-5">
-                        {formatPayrollMonthDisplay(payrollMonth)}
-                    </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                     <Link
                         href={`/admin-dashboard/payroll/history?month=${encodeURIComponent(payrollMonth)}`}
-                        className="inline-flex items-center gap-1 rounded-md border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                        className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 bg-white px-3.5 py-2 text-xs font-semibold text-gray-700 shadow-xs hover:bg-gray-50 hover:text-gray-900 transition-all"
                     >
-                        <History className="h-3 w-3" aria-hidden />
+                        <History className="h-3.5 w-3.5 text-gray-500" aria-hidden />
                         Payment history
                     </Link>
                     <Link
                         href="/admin-dashboard/salary"
-                        className="inline-flex items-center gap-1 rounded-md border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                        className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 bg-white px-3.5 py-2 text-xs font-semibold text-gray-700 shadow-xs hover:bg-gray-50 hover:text-gray-900 transition-all"
                     >
                         Salary setup
-                        <ExternalLink className="h-3 w-3" aria-hidden />
+                        <ExternalLink className="h-3.5 w-3.5 text-gray-400" aria-hidden />
                     </Link>
                     <Link
                         href="/admin-dashboard/advance-payment"
-                        className="inline-flex items-center gap-1 rounded-md border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                        className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 bg-white px-3.5 py-2 text-xs font-semibold text-gray-700 shadow-xs hover:bg-gray-50 hover:text-gray-900 transition-all"
                     >
                         Advance payment
-                        <ExternalLink className="h-3 w-3" aria-hidden />
+                        <ExternalLink className="h-3.5 w-3.5 text-gray-400" aria-hidden />
                     </Link>
                 </div>
             </div>
 
             {feedback ? (
-                <p className="rounded-md border border-[#06b6d4]/20 bg-[#06b6d4]/5 px-4 py-2.5 text-sm font-medium text-[#0a2a5e]">
-                    {feedback}
-                </p>
+                <Toast
+                    message={feedback}
+                    type={
+                        feedback.toLowerCase().includes("fail") || feedback.toLowerCase().includes("error")
+                            ? "error"
+                            : "success"
+                    }
+                    onClose={() => setFeedback("")}
+                    duration={4500}
+                />
             ) : null}
 
             {loadError ? (
@@ -482,20 +584,23 @@ export default function PayrollPage() {
                 ].map((item) => (
                     <div
                         key={item.label}
-                        className="rounded-md border border-gray-200 bg-white p-5 shadow-sm"
+                        className="rounded-md border border-gray-100 bg-white p-4 shadow-sm"
                     >
-                        <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                                <p className="text-[11px] font-bold uppercase tracking-wide text-gray-500">
+                        <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0 flex-1">
+                                <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
                                     {item.label}
                                 </p>
-                                <p className={`mt-2 text-3xl font-black tabular-nums ${item.tone}`}>
+                                <p
+                                    className={`mt-1.5 text-xl font-extrabold tracking-tight tabular-nums truncate ${item.tone}`}
+                                    title={item.value}
+                                >
                                     {item.value}
                                 </p>
-                                <p className="mt-1 text-xs text-gray-500">{item.sub}</p>
+                                <p className="mt-1 text-xs text-gray-500 truncate">{item.sub}</p>
                             </div>
-                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-slate-100 text-[#3d7ab8]">
-                                <item.icon className="h-5 w-5" aria-hidden />
+                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-slate-50 text-[#3d7ab8]">
+                                <item.icon className="h-4.5 w-4.5" aria-hidden />
                             </span>
                         </div>
                     </div>
@@ -504,24 +609,54 @@ export default function PayrollPage() {
 
             {/* Payroll table */}
             <div className="overflow-hidden rounded-md border border-gray-100 bg-white shadow-sm">
-                <div className="border-b border-gray-100 px-4 py-4 sm:px-6">
-                    <p className="text-sm font-semibold text-gray-900">Payroll breakdown</p>
-                    <p className="mt-1 text-sm text-gray-500">
-                        {isLoading
-                            ? "Loading…"
-                            : `Showing ${payrollTableRows.length} employee(s) · ${formatPayrollMonthDisplay(payrollMonth)}${
-                                  isCurrentPayrollMonth(payrollMonth)
-                                      ? " · salary till today (present + paid leave × per day)"
-                                      : ""
-                              }`}
-                    </p>
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-gray-100 px-4 py-4 sm:px-6">
+                    <div>
+                        <p className="text-sm font-semibold text-gray-900">Payroll breakdown</p>
+                        <p className="mt-0.5 text-xs text-gray-500">
+                            {isLoading
+                                ? "Loading…"
+                                : `Showing ${payrollTableRows.length} employee(s) · ${formatPayrollMonthDisplay(payrollMonth)}${
+                                      isCurrentPayrollMonth(payrollMonth)
+                                          ? " · salary till today (present + paid leave × per day)"
+                                          : ""
+                                  }`}
+                        </p>
+                    </div>
+                    {selectedRows.length > 0 ? (
+                        <button
+                            type="button"
+                            onClick={() => setShowBulkConfirmModal(true)}
+                            className="inline-flex items-center gap-2 rounded-md bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 transition-all animate-in fade-in duration-150"
+                        >
+                            <Banknote className="h-4 w-4" />
+                            Pay Selected ({selectedRows.length}) · {formatInr(selectedTotalPayable)}
+                        </button>
+                    ) : null}
                 </div>
 
                 <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-[#0a2a5e]/8">
                             <tr>
-                                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-[#0a2a5e] sm:px-6">
+                                <th className="w-10 px-4 py-3 text-center sm:px-6">
+                                    <input
+                                        type="checkbox"
+                                        checked={isAllSelected}
+                                        ref={(el) => {
+                                            if (el) el.indeterminate = isSomeSelected;
+                                        }}
+                                        onChange={handleToggleSelectAll}
+                                        disabled={payableUnpaidRows.length === 0}
+                                        aria-label="Select all unpaid employees for bulk payment"
+                                        title={
+                                            payableUnpaidRows.length === 0
+                                                ? "No unpaid employees available"
+                                                : "Select all unpaid employees"
+                                        }
+                                        className="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer disabled:opacity-40"
+                                    />
+                                </th>
+                                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-[#0a2a5e]">
                                     Employee
                                 </th>
                                 <th className="px-4 py-3 text-center text-xs font-bold uppercase tracking-wide text-[#0a2a5e]">
@@ -559,7 +694,7 @@ export default function PayrollPage() {
                         <tbody className="divide-y divide-gray-100">
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan={11} className="px-6 py-10 text-center text-sm text-gray-500">
+                                    <td colSpan={12} className="px-6 py-10 text-center text-sm text-gray-500">
                                         <span className="inline-flex items-center gap-2">
                                             <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
                                             Loading payroll data…
@@ -568,7 +703,7 @@ export default function PayrollPage() {
                                 </tr>
                             ) : payrollTableRows.length === 0 ? (
                                 <tr>
-                                    <td colSpan={11} className="px-6 py-10 text-center text-sm text-gray-500">
+                                    <td colSpan={12} className="px-6 py-10 text-center text-sm text-gray-500">
                                         No active salary setups.{" "}
                                         <Link
                                             href="/admin-dashboard/salary"
@@ -584,10 +719,24 @@ export default function PayrollPage() {
                                         <tr
                                             key={row.employeeId}
                                             className={`hover:bg-gray-50/80 ${
-                                                idx % 2 === 1 ? "bg-gray-50/60" : "bg-white"
+                                                selectedEmployeeIds.includes(row.employeeId)
+                                                    ? "bg-emerald-50/30"
+                                                    : idx % 2 === 1
+                                                      ? "bg-gray-50/60"
+                                                      : "bg-white"
                                             }`}
                                         >
-                                            <td className="px-4 py-4 sm:px-6">
+                                            <td className="w-10 px-4 py-4 text-center sm:px-6">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedEmployeeIds.includes(row.employeeId)}
+                                                    onChange={() => handleToggleSelectRow(row.employeeId)}
+                                                    disabled={!!row.payment || row.totalPayable <= 0}
+                                                    aria-label={`Select ${row.employeeName} for bulk payment`}
+                                                    className="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer disabled:opacity-30"
+                                                />
+                                            </td>
+                                            <td className="px-4 py-4">
                                                 <p className="text-sm font-semibold text-gray-900">
                                                     {row.employeeName}
                                                 </p>
@@ -659,7 +808,7 @@ export default function PayrollPage() {
                                                     ) : (
                                                         <button
                                                             type="button"
-                                                            onClick={() => void handlePaySalary(row)}
+                                                            onClick={() => setPayConfirmTarget(row)}
                                                             disabled={
                                                                 payingEmployeeId === row.employeeId ||
                                                                 row.totalPayable <= 0
@@ -684,7 +833,8 @@ export default function PayrollPage() {
                                         </tr>
                                     ))}
                                     <tr className="bg-gray-50 font-semibold">
-                                        <td className="px-4 py-4 text-sm text-[#0a2a5e] sm:px-6">
+                                        <td className="w-10 px-4 py-4 sm:px-6" />
+                                        <td className="px-4 py-4 text-sm text-[#0a2a5e]">
                                             Total ({payrollTableRows.length})
                                         </td>
                                         <td className="whitespace-nowrap px-4 py-4 text-center text-sm tabular-nums text-gray-900">
@@ -818,6 +968,20 @@ export default function PayrollPage() {
                             </div>
                         </div>
                         <div className="flex shrink-0 flex-wrap justify-end gap-2 border-t border-gray-100 bg-gray-50/80 px-5 py-4">
+                            {!viewDetail.payment && viewDetail.totalPayable > 0 ? (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        const target = viewDetail;
+                                        setViewDetail(null);
+                                        setPayConfirmTarget(target);
+                                    }}
+                                    className="inline-flex items-center gap-1.5 rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700"
+                                >
+                                    <Banknote className="h-4 w-4" />
+                                    Pay salary
+                                </button>
+                            ) : null}
                             {viewDetail.payment ? (
                                 <button
                                     type="button"
@@ -853,6 +1017,187 @@ export default function PayrollPage() {
                                 className="rounded-md bg-[#0a2a5e] px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
                             >
                                 Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            ) : null}
+
+            {/* Custom Payment Confirmation Popup Modal */}
+            {payConfirmTarget ? (
+                <div
+                    className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+                    role="dialog"
+                    aria-modal="true"
+                >
+                    <div
+                        className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
+                        onClick={() => !payingEmployeeId && setPayConfirmTarget(null)}
+                    />
+                    <div className="relative w-full max-w-md rounded-md border border-gray-100 bg-white p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+                        <button
+                            type="button"
+                            onClick={() => setPayConfirmTarget(null)}
+                            disabled={!!payingEmployeeId}
+                            className="absolute right-4 top-4 rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 disabled:opacity-50"
+                        >
+                            <X className="h-5 w-5" />
+                        </button>
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                                <Wallet className="h-6 w-6" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-bold text-gray-900">Confirm Salary Payment</h3>
+                                <p className="text-xs font-medium text-gray-500">
+                                    {formatPayrollMonthDisplay(payrollMonth)}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="mt-4 rounded-md border border-emerald-100 bg-emerald-50/50 p-4 space-y-2">
+                            <div className="flex items-center justify-between text-xs">
+                                <span className="text-gray-500">Employee</span>
+                                <span className="font-semibold text-gray-900">
+                                    {payConfirmTarget.employeeName} ({payConfirmTarget.employeeId})
+                                </span>
+                            </div>
+                            <div className="flex items-center justify-between text-xs">
+                                <span className="text-gray-500">Department</span>
+                                <span className="font-semibold text-gray-900">
+                                    {payConfirmTarget.department || "—"}
+                                </span>
+                            </div>
+                            <div className="pt-2 border-t border-emerald-100 flex items-center justify-between">
+                                <span className="text-xs font-semibold text-gray-700">Total Payable Amount</span>
+                                <span className="text-xl font-black text-emerald-700">
+                                    {formatInr(payConfirmTarget.totalPayable)}
+                                </span>
+                            </div>
+                        </div>
+
+                        <p className="mt-3 text-xs text-gray-500 leading-relaxed">
+                            Advance recovery and tax/statutory deductions will be applied automatically and recorded on the payslip.
+                        </p>
+
+                        <div className="mt-6 flex justify-end gap-2.5">
+                            <button
+                                type="button"
+                                onClick={() => setPayConfirmTarget(null)}
+                                disabled={!!payingEmployeeId}
+                                className="rounded-md border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => void executePaySalary(payConfirmTarget)}
+                                disabled={!!payingEmployeeId}
+                                className="inline-flex items-center gap-2 rounded-md bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-600/20 hover:bg-emerald-700 disabled:opacity-60 transition-all"
+                            >
+                                {payingEmployeeId === payConfirmTarget.employeeId ? (
+                                    <>
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                        Processing…
+                                    </>
+                                ) : (
+                                    <>
+                                        <CheckCircle2 className="h-4 w-4" />
+                                        Confirm & Pay
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            ) : null}
+
+            {/* Custom Bulk Payment Confirmation Popup Modal */}
+            {showBulkConfirmModal ? (
+                <div
+                    className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+                    role="dialog"
+                    aria-modal="true"
+                >
+                    <div
+                        className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
+                        onClick={() => !isBulkPaying && setShowBulkConfirmModal(false)}
+                    />
+                    <div className="relative w-full max-w-lg rounded-md border border-gray-100 bg-white p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+                        <button
+                            type="button"
+                            onClick={() => setShowBulkConfirmModal(false)}
+                            disabled={isBulkPaying}
+                            className="absolute right-4 top-4 rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 disabled:opacity-50"
+                        >
+                            <X className="h-5 w-5" />
+                        </button>
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                                <Wallet className="h-6 w-6" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-bold text-gray-900">Confirm Bulk Salary Payment</h3>
+                                <p className="text-xs font-medium text-gray-500">
+                                    {formatPayrollMonthDisplay(payrollMonth)} · {selectedRows.length} employee(s) selected
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="mt-4 max-h-48 overflow-y-auto rounded-md border border-gray-200 bg-gray-50/50 p-3 space-y-2">
+                            {selectedRows.map((r) => (
+                                <div
+                                    key={r.employeeId}
+                                    className="flex items-center justify-between text-xs py-1 border-b border-gray-200/60 last:border-0"
+                                >
+                                    <div>
+                                        <span className="font-semibold text-gray-900">{r.employeeName}</span>
+                                        <span className="ml-1.5 text-gray-500">({r.employeeId})</span>
+                                    </div>
+                                    <span className="font-bold tabular-nums text-emerald-700">
+                                        {formatInr(r.totalPayable)}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="mt-3 flex items-center justify-between rounded-md border border-emerald-100 bg-emerald-50/50 p-3">
+                            <span className="text-xs font-semibold text-gray-700">Total Bulk Payout Amount</span>
+                            <span className="text-xl font-black text-emerald-700">
+                                {formatInr(selectedTotalPayable)}
+                            </span>
+                        </div>
+
+                        <p className="mt-3 text-xs text-gray-500 leading-relaxed">
+                            Advance recovery and statutory tax deductions will be recorded automatically for each selected employee.
+                        </p>
+
+                        <div className="mt-6 flex justify-end gap-2.5">
+                            <button
+                                type="button"
+                                onClick={() => setShowBulkConfirmModal(false)}
+                                disabled={isBulkPaying}
+                                className="rounded-md border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => void executeBulkPay()}
+                                disabled={isBulkPaying}
+                                className="inline-flex items-center gap-2 rounded-md bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-600/20 hover:bg-emerald-700 disabled:opacity-60 transition-all"
+                            >
+                                {isBulkPaying ? (
+                                    <>
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                        Processing ({bulkProgress?.current ?? 0}/{bulkProgress?.total ?? 0})…
+                                    </>
+                                ) : (
+                                    <>
+                                        <CheckCircle2 className="h-4 w-4" />
+                                        Confirm & Pay ({selectedRows.length})
+                                    </>
+                                )}
                             </button>
                         </div>
                     </div>
