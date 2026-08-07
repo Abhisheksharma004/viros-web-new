@@ -46,8 +46,10 @@ export type PayslipPaymentRecord = {
             branch: string;
         };
         attendanceDetail?: {
-            halfDay: number;
-            weekOff: number;
+            present?: number;
+            totalPresent?: number;
+            halfDay?: number;
+            weekOff?: number;
         };
     } | null;
 };
@@ -462,8 +464,17 @@ export async function downloadPayslipPdf(payment: PayslipPaymentRecord): Promise
 
     // —— Days Distribution ——
     y = sectionTitle(doc, y, "Days Distribution");
-    const halfDays = att?.halfDay ?? 0;
     const weekOff = att?.weekOff ?? 0;
+
+    // Actual physical present days (present + late)
+    const actualPresent = att?.present !== undefined ? att.present : payment.total_present;
+
+    // Paid Days = Attendance-calculated totalPresent (which includes earned week offs)
+    const paidDays = att?.totalPresent !== undefined ? att.totalPresent : payment.paid_days;
+
+    // Earned Paid Week Offs calculated from attendance
+    const paidWeekOff = Math.max(0, paidDays - actualPresent - payment.paid_leave);
+
     autoTable(doc, {
         startY: y,
         theme: "grid",
@@ -473,7 +484,7 @@ export async function downloadPayslipPdf(payment: PayslipPaymentRecord): Promise
                 "Working Days",
                 "Week Off",
                 "Present",
-                "Half Day",
+                "Paid Week Off",
                 "Absent",
                 "Paid Leaves",
                 "Unpaid Leaves",
@@ -484,12 +495,12 @@ export async function downloadPayslipPdf(payment: PayslipPaymentRecord): Promise
             [
                 String(payment.working_days_in_month),
                 String(weekOff),
-                String(payment.total_present),
-                String(halfDays),
+                String(actualPresent),
+                String(paidWeekOff),
                 String(payment.total_absent),
                 String(payment.paid_leave),
                 String(payment.unpaid_leave),
-                String(payment.paid_days),
+                String(paidDays),
             ],
         ],
         headStyles: {

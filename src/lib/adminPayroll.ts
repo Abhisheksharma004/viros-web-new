@@ -88,6 +88,8 @@ export type PayrollPaymentSnapshot = {
         branch: string;
     };
     attendanceDetail?: {
+        present?: number;
+        totalPresent?: number;
         halfDay: number;
         weekOff: number;
     };
@@ -315,6 +317,8 @@ export async function getPaymentForPayslip(paymentId: number) {
         );
         if (att) {
             attendanceDetail = {
+                present: att.present + att.late,
+                totalPresent: att.totalPresent,
                 halfDay: att.halfDay,
                 weekOff: att.weekOff,
             };
@@ -528,6 +532,8 @@ export async function recordPayrollPayment(params: {
             advanceRecovery,
             employee: employeeMeta,
             attendanceDetail: {
+                present: (att?.present ?? 0) + (att?.late ?? 0),
+                totalPresent: att?.totalPresent ?? breakdown.totalPresent,
                 halfDay: att?.halfDay ?? 0,
                 weekOff: att?.weekOff ?? 0,
             },
