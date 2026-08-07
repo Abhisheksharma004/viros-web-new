@@ -192,7 +192,33 @@ function resolvePayslipLogoUrl(): string {
 }
 
 async function loadPayslipLogoAsset(): Promise<PayslipLogoAsset | null> {
-    if (typeof window === "undefined") return null;
+    if (typeof window === "undefined") {
+        try {
+            const fs = await import("fs");
+            const path = await import("path");
+            const candidates = ["logonn.png", "payslip-logo.png", "logo.png", "blogo.jpeg"];
+            for (const cand of candidates) {
+                const fullPath = path.join(process.cwd(), "public", cand);
+                if (fs.existsSync(fullPath)) {
+                    const buf = fs.readFileSync(fullPath);
+                    const ext = cand.split(".").pop()?.toLowerCase();
+                    const format: PayslipLogoAsset["format"] = ext === "jpg" || ext === "jpeg" ? "JPEG" : "PNG";
+                    const dataUrl = `data:image/${format === "JPEG" ? "jpeg" : "png"};base64,${buf.toString("base64")}`;
+                    const widthPx = buf.length > 24 ? buf.readUInt32BE(16) : 400;
+                    const heightPx = buf.length > 24 ? buf.readUInt32BE(20) : 150;
+                    return {
+                        dataUrl,
+                        format,
+                        widthPx: widthPx > 0 ? widthPx : 400,
+                        heightPx: heightPx > 0 ? heightPx : 150,
+                    };
+                }
+            }
+            return null;
+        } catch {
+            return null;
+        }
+    }
 
     const logoUrl = resolvePayslipLogoUrl();
 
@@ -265,7 +291,7 @@ function drawPayslipHeaderFallback(doc: AutoTableDoc): void {
     doc.text("Entrepreneurs", 196, 19, { align: "right" });
 }
 
-export async function downloadPayslipPdf(payment: PayslipPaymentRecord): Promise<void> {
+async function buildPayslipJsPdfDocInternal(payment: PayslipPaymentRecord) {
     const [{ jsPDF }, autoTableModule] = await Promise.all([
         import("jspdf"),
         import("jspdf-autotable"),
@@ -567,10 +593,27 @@ export async function downloadPayslipPdf(payment: PayslipPaymentRecord): Promise
     y = (doc as AutoTableDoc & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 8;
 
     // —— Footer ——
+    doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
-    doc.setTextColor(120, 120, 120);
+    doc.setTextColor(110, 110, 110);
+    doc.text("For More Inquiry Contact this Email : hr@virosentrepreneurs.com", 14, y);
+    y += 4.5;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8.5);
+    doc.setTextColor(100, 100, 100);
     doc.text("Generated using VIROS HRMS Payroll", 14, y);
     doc.text(`Report date: ${formatReportDate()}`, 196, y, { align: "right" });
 
+    return doc;
+}
+
+export async function downloadPayslipPdf(payment: PayslipPaymentRecord): Promise<void> {
+    const doc = await buildPayslipJsPdfDocInternal(payment);
     doc.save(`payslip-${payment.employee_name.replace(/\s+/g, "_")}_${payment.payroll_month}.pdf`);
+}
+
+export async function generatePayslipPdfBuffer(payment: PayslipPaymentRecord): Promise<Buffer> {
+    const doc = await buildPayslipJsPdfDocInternal(payment);
+    const arrayBuffer = doc.output("arraybuffer");
+    return Buffer.from(arrayBuffer);
 }
