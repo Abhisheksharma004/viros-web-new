@@ -6,8 +6,11 @@ export async function POST(request: Request) {
         const body = (await request.json()) as Record<string, unknown>;
         const employeeId = typeof body.employee_id === "string" ? body.employee_id.trim() : "";
         const month = typeof body.month === "string" ? body.month.trim() : "";
+        const ccEmails = body.cc_emails;
 
-        const result = await sendExpenseEmail(employeeId, month);
+        const result = await sendExpenseEmail(employeeId, month, {
+            ccEmails: typeof ccEmails === "string" || Array.isArray(ccEmails) ? (ccEmails as string | string[]) : undefined,
+        });
         if (!result.success) {
             return NextResponse.json({ message: result.message }, { status: 400 });
         }

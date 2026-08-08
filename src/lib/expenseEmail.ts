@@ -20,6 +20,7 @@ function formatInr(amount: number): string {
 export async function sendExpenseEmail(
     employeeId: string,
     month: string,
+    options?: { ccEmails?: string[] | string },
 ): Promise<{ success: boolean; message: string }> {
     if (!employeeId.trim()) {
         return { success: false, message: "Employee ID is required." };
@@ -45,6 +46,20 @@ export async function sendExpenseEmail(
 
     const employeeName =
         mapped.find((e: EmployeeExpenseRow) => e.employee_name && e.employee_name.trim())?.employee_name || employeeId;
+
+    // Parse CC emails
+    const ccList: string[] = [];
+    if (options?.ccEmails) {
+        const raw = Array.isArray(options.ccEmails) ? options.ccEmails : options.ccEmails.split(/[,;\s]+/);
+        raw.forEach((em) => {
+            if (typeof em === "string" && em.trim().includes("@")) {
+                const cleaned = em.trim().toLowerCase();
+                if (!ccList.includes(cleaned)) {
+                    ccList.push(cleaned);
+                }
+            }
+        });
+    }
 
     // 2. Query employee registered email addresses
     const recipientEmails: string[] = [];
@@ -133,6 +148,7 @@ export async function sendExpenseEmail(
         await transporter.sendMail({
             from: `"VIROS HRMS" <${from}>`,
             to: recipientEmails,
+            ...(ccList.length > 0 ? { cc: ccList } : {}),
             subject,
             html,
             attachments: [

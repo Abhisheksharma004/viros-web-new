@@ -107,6 +107,15 @@ export default function ExpenseManagementPage() {
     const [payConfirmTarget, setPayConfirmTarget] = useState<{ batch: AdminExpenseBatchSummary; paymentStatus: "paid" | "hold" | "unpaid" } | null>(null);
     const [approveAllConfirmTarget, setApproveAllConfirmTarget] = useState<AdminExpenseBatchSummary | null>(null);
     const [deleteConfirmTarget, setDeleteConfirmTarget] = useState<EmployeeExpenseRow | null>(null);
+    const [ccEmails, setCcEmails] = useState<string>("");
+    const [showCcSettingsModal, setShowCcSettingsModal] = useState<boolean>(false);
+
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            const saved = localStorage.getItem("expense_cc_emails");
+            if (saved) setCcEmails(saved);
+        }
+    }, []);
 
     const monthLabel = useMemo(() => formatMonthLabel(month), [month]);
 
@@ -479,6 +488,7 @@ export default function ExpenseManagementPage() {
                 body: JSON.stringify({
                     employee_id: batch.employeeId,
                     month: batch.month || month,
+                    cc_emails: ccEmails,
                 }),
             });
             const data = (await resp.json().catch(() => ({}))) as { message?: string };
@@ -817,6 +827,20 @@ export default function ExpenseManagementPage() {
                         </button>
                         <button
                             type="button"
+                            onClick={() => setShowCcSettingsModal(true)}
+                            className="inline-flex items-center justify-center gap-2 rounded-md border border-sky-200 bg-sky-50/60 px-4 py-2.5 text-sm font-bold text-sky-900 shadow-sm transition hover:bg-sky-100"
+                            title="Configure default CC email addresses"
+                        >
+                            <Mail className="h-4 w-4 text-sky-600" aria-hidden />
+                            CC Emails
+                            {ccEmails.trim() ? (
+                                <span className="ml-1 rounded-full bg-sky-600 px-2 py-0.5 text-[10px] font-extrabold text-white">
+                                    Set
+                                </span>
+                            ) : null}
+                        </button>
+                        <button
+                            type="button"
                             onClick={refreshCurrentTab}
                             disabled={loading || exportBusy !== null}
                             className="inline-flex items-center justify-center gap-2 rounded-md border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-800 shadow-sm transition hover:bg-gray-50 disabled:opacity-60"
@@ -963,12 +987,13 @@ export default function ExpenseManagementPage() {
                                                             type="button"
                                                             disabled={updatingId === row.id}
                                                             onClick={() => void markExpensePayment(row, row.payment_status === "paid" ? "hold" : "paid")}
-                                                            className={`inline-flex h-10 items-center justify-center gap-1.5 rounded-md px-3 text-xs font-bold shadow-sm transition active:scale-[0.98] disabled:opacity-60 ${
+                                                            className={`inline-flex h-10 w-10 items-center justify-center rounded-md border shadow-sm transition active:scale-[0.98] disabled:opacity-60 ${
                                                                 row.payment_status === "paid"
-                                                                    ? "border border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100"
-                                                                    : "border border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700"
+                                                                    ? "border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100"
+                                                                    : "border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700"
                                                             }`}
-                                                            title={row.payment_status === "paid" ? "Click to mark Hold" : "Click to mark Paid"}
+                                                            title={row.payment_status === "paid" ? "Paid (Click to mark Hold)" : "Click to mark Paid"}
+                                                            aria-label={row.payment_status === "paid" ? "Paid" : "Pay"}
                                                         >
                                                             {updatingId === row.id ? (
                                                                 <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
@@ -977,7 +1002,6 @@ export default function ExpenseManagementPage() {
                                                             ) : (
                                                                 <CreditCard className="h-4 w-4 text-white" aria-hidden />
                                                             )}
-                                                            {row.payment_status === "paid" ? "Paid" : "Pay"}
                                                         </button>
                                                     ) : null}
                                                     {row.status === "pending" ? (
@@ -1742,6 +1766,24 @@ export default function ExpenseManagementPage() {
                             Official Expense Reimbursement Statement PDF document will be emailed directly to the employee&apos;s registered email address(es).
                         </p>
 
+                        <div className="mt-3">
+                            <label className="block text-xs font-bold text-gray-700 mb-1">
+                                CC Email Addresses <span className="text-gray-400 font-normal">(Optional, comma separated)</span>
+                            </label>
+                            <input
+                                type="text"
+                                value={ccEmails}
+                                onChange={(e) => {
+                                    setCcEmails(e.target.value);
+                                    if (typeof window !== "undefined") {
+                                        localStorage.setItem("expense_cc_emails", e.target.value);
+                                    }
+                                }}
+                                placeholder="e.g. accounts@viros.com, hr@viros.com"
+                                className="w-full h-10 rounded-xl border border-gray-200 bg-gray-50/50 px-3 text-xs font-medium text-gray-900 outline-none focus:border-sky-500 focus:bg-white focus:ring-2 focus:ring-sky-500/20 transition"
+                            />
+                        </div>
+
                         <div className="mt-6 flex justify-end gap-2.5">
                             <button
                                 type="button"
@@ -1994,6 +2036,65 @@ export default function ExpenseManagementPage() {
                                         Confirm & Delete
                                     </>
                                 )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            ) : null}
+
+            {/* Standalone CC Email Settings Modal */}
+            {showCcSettingsModal ? (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" role="dialog" aria-modal="true">
+                    <div className="absolute inset-0 bg-black/50 backdrop-blur-xs transition-opacity" onClick={() => setShowCcSettingsModal(false)} />
+                    <div className="relative w-full max-w-md rounded-2xl border border-gray-100 bg-white p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+                        <button
+                            type="button"
+                            onClick={() => setShowCcSettingsModal(false)}
+                            className="absolute right-4 top-4 rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                        >
+                            <X className="h-5 w-5" />
+                        </button>
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sky-600">
+                                <Mail className="h-6 w-6" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-bold text-gray-900">CC Email Settings</h3>
+                                <p className="text-xs font-medium text-gray-500">Configure default CC recipients for expense emails</p>
+                            </div>
+                        </div>
+
+                        <div className="mt-4 space-y-3">
+                            <div>
+                                <label className="block text-xs font-bold uppercase tracking-wide text-gray-700 mb-1.5">
+                                    CC Email Addresses (Comma Separated)
+                                </label>
+                                <input
+                                    type="text"
+                                    value={ccEmails}
+                                    onChange={(e) => {
+                                        setCcEmails(e.target.value);
+                                        if (typeof window !== "undefined") {
+                                            localStorage.setItem("expense_cc_emails", e.target.value);
+                                        }
+                                    }}
+                                    placeholder="e.g. accounts@viros.com, hr@viros.com"
+                                    className="w-full h-11 rounded-xl border border-gray-200 bg-gray-50/50 px-3.5 text-sm font-medium text-gray-900 outline-none focus:border-[#0a2a5e] focus:bg-white focus:ring-2 focus:ring-[#0a2a5e]/20 transition"
+                                />
+                                <p className="mt-1.5 text-xs text-gray-500 leading-relaxed">
+                                    These CC email addresses will automatically receive copies of all Expense Reimbursement Statement PDFs sent via email.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="mt-6 flex justify-end gap-2.5">
+                            <button
+                                type="button"
+                                onClick={() => setShowCcSettingsModal(false)}
+                                className="inline-flex items-center gap-2 rounded-xl bg-[#0a2a5e] px-5 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-[#0a2a5e]/90 transition-all"
+                            >
+                                <Check className="h-4 w-4" />
+                                Save & Close
                             </button>
                         </div>
                     </div>
