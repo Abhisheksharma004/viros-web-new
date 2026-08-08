@@ -1,4 +1,4 @@
-import type { AdminBatchReviewStatus, ExpenseStatus } from "@/lib/employeeExpenses";
+import type { ExpenseStatus } from "@/lib/employeeExpenses";
 
 export function formatExpenseDate(iso: string) {
     const d = new Date(iso + "T12:00:00");
@@ -16,6 +16,13 @@ export function formatExpenseDateTime(iso: string) {
         hour: "2-digit",
         minute: "2-digit",
     });
+}
+
+export function formatExpenseMonthDisplay(monthStr: string): string {
+    if (!/^\d{4}-\d{2}$/.test(monthStr)) return monthStr;
+    const [year, month] = monthStr.split("-");
+    const d = new Date(Number(year), Number(month) - 1, 1);
+    return d.toLocaleDateString("en-IN", { month: "long", year: "numeric" });
 }
 
 export function formatCurrency(amount: number) {
@@ -88,6 +95,46 @@ export function getExpenseStatusLabel(status: ExpenseStatus) {
     }
 }
 
+export type EmployeeExpensePaymentStatus = "unpaid" | "hold" | "paid";
+
+export type AdminBatchReviewStatus =
+    | "pending_review"
+    | "partial"
+    | "all_approved"
+    | "all_rejected"
+    | "mixed";
+
+export function deriveAdminBatchReviewStatus(summary: {
+    pendingCount: number;
+    approvedCount: number;
+    rejectedCount: number;
+}): AdminBatchReviewStatus {
+    const { pendingCount, approvedCount, rejectedCount } = summary;
+    if (pendingCount > 0 && approvedCount === 0 && rejectedCount === 0) return "pending_review";
+    if (pendingCount > 0) return "partial";
+    if (approvedCount > 0 && rejectedCount === 0) return "all_approved";
+    if (rejectedCount > 0 && approvedCount === 0) return "all_rejected";
+    return "mixed";
+}
+
+export type AdminBatchPaymentStatus = "paid" | "partially_paid" | "hold" | "unpaid" | "not_applicable";
+
+export function deriveAdminBatchPaymentStatus(summary: {
+    totalCount: number;
+    approvedCount: number;
+    rejectedCount: number;
+    paidCount: number;
+    holdCount?: number;
+    unpaidCount: number;
+}): AdminBatchPaymentStatus {
+    const { totalCount, approvedCount, rejectedCount, paidCount } = summary;
+    if (rejectedCount === totalCount && totalCount > 0) return "not_applicable";
+    if (paidCount > 0 && paidCount >= approvedCount && approvedCount > 0) return "paid";
+    if (paidCount > 0) return "partially_paid";
+    if (approvedCount > 0) return "hold";
+    return "unpaid";
+}
+
 export function getAdminBatchReviewStatusLabel(status: AdminBatchReviewStatus) {
     switch (status) {
         case "pending_review":
@@ -115,6 +162,58 @@ export function getAdminBatchReviewStatusStyles(status: AdminBatchReviewStatus) 
             return "bg-red-50 text-red-800 ring-1 ring-red-600/15";
         default:
             return "bg-violet-50 text-violet-800 ring-1 ring-violet-600/15";
+    }
+}
+
+export function getAdminBatchPaymentStatusLabel(status: AdminBatchPaymentStatus) {
+    switch (status) {
+        case "paid":
+            return "Paid";
+        case "partially_paid":
+            return "Partially paid";
+        case "hold":
+            return "Hold";
+        case "not_applicable":
+            return "N/A";
+        default:
+            return "Unpaid";
+    }
+}
+
+export function getAdminBatchPaymentStatusStyles(status: AdminBatchPaymentStatus) {
+    switch (status) {
+        case "paid":
+            return "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-600/15";
+        case "partially_paid":
+            return "bg-sky-50 text-sky-800 ring-1 ring-sky-600/15";
+        case "hold":
+            return "bg-amber-50 text-amber-800 ring-1 ring-amber-600/15";
+        case "not_applicable":
+            return "bg-gray-100 text-gray-500 ring-1 ring-gray-200";
+        default:
+            return "bg-slate-100 text-slate-700 ring-1 ring-slate-300/50";
+    }
+}
+
+export function getExpensePaymentStatusLabel(status: EmployeeExpensePaymentStatus) {
+    switch (status) {
+        case "paid":
+            return "Paid";
+        case "hold":
+            return "Hold";
+        default:
+            return "Unpaid";
+    }
+}
+
+export function getExpensePaymentStatusStyles(status: EmployeeExpensePaymentStatus) {
+    switch (status) {
+        case "paid":
+            return "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-600/15";
+        case "hold":
+            return "bg-amber-50 text-amber-800 ring-1 ring-amber-600/15";
+        default:
+            return "bg-slate-100 text-slate-700 ring-1 ring-slate-300/50";
     }
 }
 

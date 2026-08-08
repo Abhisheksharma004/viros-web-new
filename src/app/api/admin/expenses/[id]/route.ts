@@ -46,6 +46,18 @@ export async function PATCH(request: Request, context: RouteContext) {
         const body = (await request.json()) as Record<string, unknown>;
         const action = typeof body.action === "string" ? body.action.trim() : "";
 
+        if (typeof body.payment_status === "string") {
+            const paymentStatusRaw = body.payment_status.trim();
+            if (paymentStatusRaw === "paid" || paymentStatusRaw === "hold" || paymentStatusRaw === "unpaid") {
+                const { updateExpensePaymentStatusForAdmin } = await import("@/lib/employeeExpenses");
+                const updated = await updateExpensePaymentStatusForAdmin(recordId, paymentStatusRaw as "paid" | "hold" | "unpaid");
+                if (!updated) {
+                    return NextResponse.json({ message: "Expense not found" }, { status: 404 });
+                }
+                return NextResponse.json(updated);
+            }
+        }
+
         if (action === "rework") {
             const reworkReason =
                 typeof body.rework_reason === "string" ? body.rework_reason.trim() : "";

@@ -6,6 +6,16 @@ import {
     getExpenseIdPeriod,
 } from "@/lib/employeeExpenseId";
 import { toDateOnlyString } from "@/lib/dateOnly";
+import {
+    deriveAdminBatchPaymentStatus,
+    deriveAdminBatchReviewStatus,
+} from "@/lib/employeeExpenseUi";
+import type {
+    AdminBatchPaymentStatus,
+    AdminBatchReviewStatus,
+    EmployeeExpensePaymentStatus,
+} from "@/lib/employeeExpenseUi";
+export type { AdminBatchPaymentStatus, AdminBatchReviewStatus, EmployeeExpensePaymentStatus } from "@/lib/employeeExpenseUi";
 
 const TABLE = "employee_expenses";
 
@@ -61,6 +71,8 @@ function sqlCategoryEnumDefinition() {
     return EXPENSE_CATEGORIES.map((c) => `'${c.replace(/'/g, "''")}'`).join(", ");
 }
 
+
+
 export type EmployeeExpenseRow = {
     id: number;
     expense_id: string;
@@ -76,6 +88,7 @@ export type EmployeeExpenseRow = {
     payment_mode: string;
     receipt_reference: string | null;
     status: ExpenseStatus;
+    payment_status: EmployeeExpensePaymentStatus;
     reject_reason: string | null;
     created_at: string;
 };
@@ -95,6 +108,7 @@ type DbRow = RowDataPacket & {
     payment_mode: string;
     receipt_reference: string | null;
     status: string;
+    payment_status: string | null;
     reject_reason: string | null;
     created_at: Date | string;
 };
@@ -102,7 +116,7 @@ type DbRow = RowDataPacket & {
 type ColumnNameRow = RowDataPacket & { COLUMN_NAME: string };
 
 const EXPENSE_ROW_SELECT = `id, expense_id, employee_id, employee_name, expense_date, category, from_address, to_address,
-                title, amount, approved_amount, payment_mode, receipt_reference, status, reject_reason, created_at`;
+                title, amount, approved_amount, payment_mode, receipt_reference, status, payment_status, reject_reason, created_at`;
 
 let ensureTablePromise: Promise<void> | null = null;
 
@@ -174,6 +188,10 @@ async function runEnsure() {
             column: "approved_amount",
             sql: `ALTER TABLE ${TABLE} ADD COLUMN approved_amount DECIMAL(12, 2) NULL AFTER amount`,
         },
+        {
+            column: "payment_status",
+            sql: `ALTER TABLE ${TABLE} ADD COLUMN payment_status ENUM('unpaid', 'hold', 'paid') NOT NULL DEFAULT 'unpaid' AFTER status`,
+        },
     ];
 
     for (const migration of migrations) {
@@ -189,6 +207,10 @@ async function runEnsure() {
 
     await pool.query(
         `ALTER TABLE ${TABLE} MODIFY COLUMN status ENUM('draft', 'rework', 'pending', 'approved', 'rejected') NOT NULL DEFAULT 'draft'`,
+    );
+
+    await pool.query(
+        `ALTER TABLE ${TABLE} MODIFY COLUMN payment_status ENUM('unpaid', 'hold', 'paid') NOT NULL DEFAULT 'unpaid'`,
     );
 
     await pool.query(
@@ -331,6 +353,12 @@ export function mapExpenseRow(row: DbRow): EmployeeExpenseRow {
         status: (EXPENSE_STATUSES.includes(row.status as ExpenseStatus)
             ? row.status
             : "draft") as ExpenseStatus,
+        payment_status:
+            row.payment_status === "paid"
+                ? "paid"
+                : row.status === "approved"
+                  ? "hold"
+                  : "unpaid",
         reject_reason: row.reject_reason?.trim() || null,
         created_at: toIsoDateTime(row.created_at),
     };
@@ -825,6 +853,10 @@ export type AdminExpenseEmployeeSummary = {
     approvedAmount: number;
     rejectedCount: number;
     rejectedAmount: number;
+    paidCount: number;
+    paidAmount: number;
+    unpaidCount: number;
+    unpaidAmount: number;
 };
 
 export async function listAdminExpenseEmployeeSummaries(
@@ -884,6 +916,10 @@ export async function listAdminExpenseEmployeeSummaries(
             approved_amount: string | number;
             rejected_count: number;
             rejected_amount: string | number;
+            paid_count: number;
+            paid_amount: string | number;
+            unpaid_count: number;
+            unpaid_amount: string | number;
         })[]
     >(
         `SELECT
@@ -896,7 +932,11 @@ export async function listAdminExpenseEmployeeSummaries(
             SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) AS approved_count,
             COALESCE(SUM(CASE WHEN status = 'approved' THEN COALESCE(approved_amount, amount) ELSE 0 END), 0) AS approved_amount,
             SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) AS rejected_count,
-            COALESCE(SUM(CASE WHEN status = 'rejected' THEN amount ELSE 0 END), 0) AS rejected_amount
+            COALESCE(SUM(CASE WHEN status = 'rejected' THEN amount ELSE 0 END), 0) AS rejected_amount,
+            SUM(CASE WHEN payment_status = 'paid' THEN 1 ELSE 0 END) AS paid_count,
+            COALESCE(SUM(CASE WHEN payment_status = 'paid' THEN COALESCE(approved_amount, amount) ELSE 0 END), 0) AS paid_amount,
+            SUM(CASE WHEN (payment_status IS NULL OR payment_status = 'unpaid') AND status != 'rejected' THEN 1 ELSE 0 END) AS unpaid_count,
+            COALESCE(SUM(CASE WHEN (payment_status IS NULL OR payment_status = 'unpaid') AND status != 'rejected' THEN COALESCE(approved_amount, amount) ELSE 0 END), 0) AS unpaid_amount
          FROM ${TABLE}
          ${whereSql}
          GROUP BY employee_id
@@ -915,32 +955,17 @@ export async function listAdminExpenseEmployeeSummaries(
         approvedAmount: Number(row.approved_amount) || 0,
         rejectedCount: Number(row.rejected_count) || 0,
         rejectedAmount: Number(row.rejected_amount) || 0,
+        paidCount: Number(row.paid_count) || 0,
+        paidAmount: Number(row.paid_amount) || 0,
+        unpaidCount: Number(row.unpaid_count) || 0,
+        unpaidAmount: Number(row.unpaid_amount) || 0,
     }));
-}
-
-export type AdminBatchReviewStatus =
-    | "pending_review"
-    | "partial"
-    | "all_approved"
-    | "all_rejected"
-    | "mixed";
-
-export function deriveAdminBatchReviewStatus(summary: {
-    pendingCount: number;
-    approvedCount: number;
-    rejectedCount: number;
-}): AdminBatchReviewStatus {
-    const { pendingCount, approvedCount, rejectedCount } = summary;
-    if (pendingCount > 0 && approvedCount === 0 && rejectedCount === 0) return "pending_review";
-    if (pendingCount > 0) return "partial";
-    if (approvedCount > 0 && rejectedCount === 0) return "all_approved";
-    if (rejectedCount > 0 && approvedCount === 0) return "all_rejected";
-    return "mixed";
 }
 
 export type AdminExpenseBatchSummary = AdminExpenseEmployeeSummary & {
     month: string;
     batchStatus: AdminBatchReviewStatus;
+    paymentStatus: AdminBatchPaymentStatus;
 };
 
 export function mapEmployeeSummaryToBatch(
@@ -951,6 +976,7 @@ export function mapEmployeeSummaryToBatch(
         ...summary,
         month,
         batchStatus: deriveAdminBatchReviewStatus(summary),
+        paymentStatus: deriveAdminBatchPaymentStatus(summary),
     };
 }
 
@@ -960,6 +986,56 @@ export async function listAdminExpenseBatchSummaries(
     const month = filters?.month?.trim() || "";
     const summaries = await listAdminExpenseEmployeeSummaries(filters);
     return summaries.map((summary) => mapEmployeeSummaryToBatch(summary, month));
+}
+
+export async function updateExpensePaymentStatusForAdmin(
+    recordId: number,
+    paymentStatus: EmployeeExpensePaymentStatus,
+): Promise<EmployeeExpenseRow | null> {
+    await ensureEmployeeExpensesTable();
+    if (!Number.isFinite(recordId) || recordId <= 0) return null;
+    if (paymentStatus !== "unpaid" && paymentStatus !== "hold" && paymentStatus !== "paid") return null;
+
+    await pool.query(
+        `UPDATE ${TABLE} SET payment_status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+        [paymentStatus, recordId],
+    );
+
+    const [rows] = await pool.query<DbRow[]>(
+        `SELECT ${EXPENSE_ROW_SELECT} FROM ${TABLE} WHERE id = ? LIMIT 1`,
+        [recordId],
+    );
+    const row = rows[0];
+    if (!row) return null;
+    return mapExpenseRow(row);
+}
+
+export async function reviewEmployeeExpenseBatchPayment(
+    employeeId: string,
+    month: string,
+    paymentStatus: EmployeeExpensePaymentStatus,
+): Promise<{ updatedCount: number }> {
+    await ensureEmployeeExpensesTable();
+    if (!employeeId.trim()) throw new Error("Employee id is required");
+    if (!/^\d{4}-\d{2}$/.test(month)) throw new Error("Valid month (YYYY-MM) is required");
+    if (paymentStatus !== "unpaid" && paymentStatus !== "hold" && paymentStatus !== "paid") {
+        throw new Error("Invalid payment status");
+    }
+
+    const [updateResult] = await pool.query<ResultSetHeader>(
+        `UPDATE ${TABLE}
+         SET payment_status = ?, updated_at = CURRENT_TIMESTAMP
+         WHERE employee_id = ?
+           AND DATE_FORMAT(expense_date, '%Y-%m') = ?
+           AND status = 'approved'`,
+        [paymentStatus, employeeId, month],
+    );
+
+    if (updateResult.affectedRows === 0) {
+        throw new Error("No approved expenses found in this batch to mark payment status");
+    }
+
+    return { updatedCount: updateResult.affectedRows };
 }
 
 export async function reviewEmployeeExpenseBatch(
@@ -990,12 +1066,12 @@ export async function reviewEmployeeExpenseBatch(
         const [updateResult] = await conn.query<ResultSetHeader>(
             action === "approve"
                 ? `UPDATE ${TABLE}
-                   SET status = 'approved', approved_amount = amount, reject_reason = NULL, updated_at = CURRENT_TIMESTAMP
+                   SET status = 'approved', payment_status = IF(payment_status = 'paid', 'paid', 'hold'), approved_amount = amount, reject_reason = NULL, updated_at = CURRENT_TIMESTAMP
                    WHERE employee_id = ?
                      AND DATE_FORMAT(expense_date, '%Y-%m') = ?
                      AND status = 'pending'`
                 : `UPDATE ${TABLE}
-                   SET status = 'rejected', approved_amount = NULL, reject_reason = ?, updated_at = CURRENT_TIMESTAMP
+                   SET status = 'rejected', payment_status = 'unpaid', approved_amount = NULL, reject_reason = ?, updated_at = CURRENT_TIMESTAMP
                    WHERE employee_id = ?
                      AND DATE_FORMAT(expense_date, '%Y-%m') = ?
                      AND status = 'pending'`,
@@ -1065,7 +1141,7 @@ export async function updateExpenseStatusForAdmin(
             throw new Error("Rejection reason is required");
         }
         await pool.query(
-            `UPDATE ${TABLE} SET status = ?, reject_reason = ?, approved_amount = NULL WHERE id = ?`,
+            `UPDATE ${TABLE} SET status = ?, reject_reason = ?, approved_amount = NULL, payment_status = 'unpaid' WHERE id = ?`,
             [status, rejectReason, recordId],
         );
     } else if (status === "approved") {
@@ -1079,12 +1155,12 @@ export async function updateExpenseStatusForAdmin(
         }
         const rounded = Math.round(approvedAmount * 100) / 100;
         await pool.query(
-            `UPDATE ${TABLE} SET status = ?, reject_reason = NULL, approved_amount = ? WHERE id = ?`,
+            `UPDATE ${TABLE} SET status = ?, reject_reason = NULL, approved_amount = ?, payment_status = IF(payment_status = 'paid', 'paid', 'hold') WHERE id = ?`,
             [status, rounded, recordId],
         );
     } else {
         await pool.query(
-            `UPDATE ${TABLE} SET status = ?, reject_reason = NULL, approved_amount = NULL WHERE id = ?`,
+            `UPDATE ${TABLE} SET status = ?, reject_reason = NULL, approved_amount = NULL, payment_status = 'unpaid' WHERE id = ?`,
             [status, recordId],
         );
     }

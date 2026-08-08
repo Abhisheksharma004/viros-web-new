@@ -2,7 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+    Check,
     CheckCheck,
+    CreditCard,
+    Download,
     Eye,
     FileSpreadsheet,
     FileText,
@@ -10,12 +13,15 @@ import {
     IndianRupee,
     LayoutList,
     Loader2,
+    Mail,
     RefreshCw,
     RotateCcw,
     Search,
     Trash2,
+    X,
     XCircle,
 } from "lucide-react";
+import Toast from "@/components/Toast";
 import type {
     AdminExpenseBatchSummary,
     AdminExpenseEmployeeSummary,
@@ -27,14 +33,19 @@ import {
     exportAdminExpenseEmployeeSummaryToPdf,
     exportAdminExpensesToExcel,
     exportAdminExpensesToPdf,
+    exportEmployeeWiseExpensesToPdf,
     mapEmployeeSummariesToExportRows,
     mapExpensesToExportRows,
 } from "@/lib/adminExpenseExport";
 import {
     formatCurrency,
     formatExpenseDate,
+    getAdminBatchPaymentStatusLabel,
+    getAdminBatchPaymentStatusStyles,
     getAdminBatchReviewStatusLabel,
     getAdminBatchReviewStatusStyles,
+    getExpensePaymentStatusLabel,
+    getExpensePaymentStatusStyles,
     getExpenseStatusLabel,
     getExpenseStatusStyles,
     resolveExpenseApprovedAmount,
@@ -89,6 +100,13 @@ export default function ExpenseManagementPage() {
     const [reworkError, setReworkError] = useState("");
     const [deletingId, setDeletingId] = useState<number | null>(null);
     const [exportBusy, setExportBusy] = useState<"excel" | "pdf" | null>(null);
+    const [pdfDownloadingId, setPdfDownloadingId] = useState<string | null>(null);
+    const [emailSendingId, setEmailSendingId] = useState<string | null>(null);
+    const [toastState, setToastState] = useState<{ message: string; type: "success" | "error" } | null>(null);
+    const [emailConfirmTarget, setEmailConfirmTarget] = useState<AdminExpenseBatchSummary | null>(null);
+    const [payConfirmTarget, setPayConfirmTarget] = useState<{ batch: AdminExpenseBatchSummary; paymentStatus: "paid" | "hold" | "unpaid" } | null>(null);
+    const [approveAllConfirmTarget, setApproveAllConfirmTarget] = useState<AdminExpenseBatchSummary | null>(null);
+    const [deleteConfirmTarget, setDeleteConfirmTarget] = useState<EmployeeExpenseRow | null>(null);
 
     const monthLabel = useMemo(() => formatMonthLabel(month), [month]);
 
@@ -296,25 +314,24 @@ export default function ExpenseManagementPage() {
         void setExpenseStatus(rejectModal, "rejected", { rejectionReason: reason });
     };
 
-    const deleteExpense = async (row: EmployeeExpenseRow) => {
-        const confirmed = window.confirm(
-            `Permanently delete expense ${row.expense_id} (${formatCurrency(row.amount)}) for ${row.employee_name || row.employee_id}?\n\nThis cannot be undone.`,
-        );
-        if (!confirmed) return;
-
+    const executeDeleteExpense = async (row: EmployeeExpenseRow) => {
         setDeletingId(row.id);
         setError("");
         try {
             const resp = await fetch(`/api/admin/expenses/${row.id}`, { method: "DELETE" });
-            const data = await resp.json().catch(() => ({}));
+            const data = (await resp.json().catch(() => ({}))) as { message?: string };
             if (!resp.ok) {
                 throw new Error(typeof data.message === "string" ? data.message : "Failed to delete expense");
             }
             setExpenses((prev) => prev.filter((e) => e.id !== row.id));
             if (viewExpense?.id === row.id) setViewExpense(null);
+            setDeleteConfirmTarget(null);
             refreshAfterUpdate();
+            setToastState({ message: `Expense claim ${row.expense_id} permanently deleted.`, type: "success" });
         } catch (e) {
-            setError(e instanceof Error ? e.message : "Failed to delete expense");
+            const msg = e instanceof Error ? e.message : "Failed to delete expense";
+            setError(msg);
+            setToastState({ message: msg, type: "error" });
         } finally {
             setDeletingId(null);
         }
@@ -369,12 +386,6 @@ export default function ExpenseManagementPage() {
         action: "approve" | "reject",
         rejectionReason?: string,
     ) => {
-        if (action === "approve") {
-            const confirmed = window.confirm(
-                `Approve all ${batch.pendingCount} pending expense${batch.pendingCount === 1 ? "" : "s"} for ${batch.employeeName || batch.employeeId}?\n\nTotal claimed: ${formatCurrency(batch.pendingAmount)}\nEach expense will be approved at its full claimed amount.`,
-            );
-            if (!confirmed) return;
-        }
         const batchKey = `${batch.employeeId}-${batch.month}`;
         setBatchUpdatingId(batchKey);
         setError("");
@@ -403,13 +414,118 @@ export default function ExpenseManagementPage() {
                 setRejectReason("");
                 setRejectError("");
             }
+            setApproveAllConfirmTarget(null);
             refreshAfterUpdate();
+            setToastState({
+                message: action === "approve"
+                    ? `All pending claims approved for ${batch.employeeName || batch.employeeId}.`
+                    : `Batch rejected for ${batch.employeeName || batch.employeeId}.`,
+                type: "success",
+            });
         } catch (e) {
             const message = e instanceof Error ? e.message : "Failed to update batch";
             if (batchRejectModal) setRejectError(message);
             else setError(message);
+            setToastState({ message, type: "error" });
         } finally {
             setBatchUpdatingId(null);
+        }
+    };
+
+    const markBatchPayment = async (
+        batch: AdminExpenseBatchSummary,
+        paymentStatus: "paid" | "hold" | "unpaid",
+    ) => {
+        const batchKey = `${batch.employeeId}-${batch.month || month}`;
+        setBatchUpdatingId(batchKey);
+        setError("");
+        try {
+            const resp = await fetch("/api/admin/expenses/batch", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    action: paymentStatus === "paid" ? "mark_paid" : "mark_unpaid",
+                    employee_id: batch.employeeId,
+                    month: batch.month || month,
+                }),
+            });
+            const data = (await resp.json().catch(() => ({}))) as { message?: string };
+            if (!resp.ok) {
+                throw new Error(typeof data.message === "string" ? data.message : "Failed to update payment status");
+            }
+            setPayConfirmTarget(null);
+            refreshAfterUpdate();
+            setToastState({
+                message: `Payment status updated to ${paymentStatus === "paid" ? "Paid" : "Hold"} for ${batch.employeeName || batch.employeeId}.`,
+                type: "success",
+            });
+        } catch (e) {
+            const msg = e instanceof Error ? e.message : "Failed to update payment status";
+            setError(msg);
+            setToastState({ message: msg, type: "error" });
+        } finally {
+            setBatchUpdatingId(null);
+        }
+    };
+
+    const sendBatchEmail = async (batch: AdminExpenseBatchSummary) => {
+        const batchKey = `${batch.employeeId}-${batch.month || month}`;
+        setEmailSendingId(batchKey);
+        setError("");
+        try {
+            const resp = await fetch("/api/admin/expenses/email", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    employee_id: batch.employeeId,
+                    month: batch.month || month,
+                }),
+            });
+            const data = (await resp.json().catch(() => ({}))) as { message?: string };
+            if (!resp.ok) {
+                throw new Error(typeof data.message === "string" ? data.message : "Failed to send email");
+            }
+            setEmailConfirmTarget(null);
+            setToastState({
+                message: data.message || `Expense Reimbursement Statement PDF emailed successfully to ${batch.employeeName || batch.employeeId}.`,
+                type: "success",
+            });
+        } catch (e) {
+            const msg = e instanceof Error ? e.message : "Failed to send email";
+            setError(msg);
+            setToastState({ message: msg, type: "error" });
+        } finally {
+            setEmailSendingId(null);
+        }
+    };
+
+    const markExpensePayment = async (
+        row: EmployeeExpenseRow,
+        paymentStatus: "paid" | "hold" | "unpaid",
+    ) => {
+        setUpdatingId(row.id);
+        setError("");
+        try {
+            const resp = await fetch(`/api/admin/expenses/${row.id}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ payment_status: paymentStatus }),
+            });
+            const data = (await resp.json().catch(() => ({}))) as { message?: string };
+            if (!resp.ok) {
+                throw new Error(typeof data.message === "string" ? data.message : "Failed to update payment status");
+            }
+            setExpenses((prev) =>
+                prev.map((e) => (e.id === row.id ? { ...e, payment_status: paymentStatus } : e)),
+            );
+            if (viewExpense?.id === row.id) {
+                setViewExpense((prev) => (prev ? { ...prev, payment_status: paymentStatus } : null));
+            }
+            refreshAfterUpdate();
+        } catch (e) {
+            setError(e instanceof Error ? e.message : "Failed to update payment status");
+        } finally {
+            setUpdatingId(null);
         }
     };
 
@@ -439,6 +555,64 @@ export default function ExpenseManagementPage() {
     const openEmployeeExpenses = (employeeId: string) => {
         setEmployeeFilter(employeeId);
         setTab("lines");
+    };
+
+    const downloadEmployeePdf = async (row: AdminExpenseBatchSummary) => {
+        const key = `${row.employeeId}-${row.month || month}`;
+        setPdfDownloadingId(key);
+        try {
+            const params = new URLSearchParams();
+            params.set("employeeId", row.employeeId);
+            params.set("month", row.month || month);
+            params.set("limit", "500");
+
+            const resp = await fetch(`/api/admin/expenses?${params.toString()}`, { cache: "no-store" });
+            const data = (await resp.json().catch(() => ({}))) as {
+                expenses?: EmployeeExpenseRow[];
+                message?: string;
+            };
+
+            if (!resp.ok) {
+                throw new Error(typeof data.message === "string" ? data.message : "Failed to load employee expenses");
+            }
+
+            const empExpenses = Array.isArray(data.expenses) ? data.expenses : [];
+            if (empExpenses.length === 0) {
+                window.alert(`No submitted expenses found for ${row.employeeName || row.employeeId}.`);
+                return;
+            }
+
+            await exportEmployeeWiseExpensesToPdf(
+                empExpenses,
+                {
+                    employeeId: row.employeeId,
+                    employeeName: row.employeeName || row.employeeId,
+                },
+                formatMonthLabel(row.month || month),
+            );
+        } catch (e) {
+            window.alert(e instanceof Error ? e.message : "Failed to download PDF");
+        } finally {
+            setPdfDownloadingId(null);
+        }
+    };
+
+    const downloadSingleExpensePdf = async (row: EmployeeExpenseRow) => {
+        setPdfDownloadingId(`single-${row.id}`);
+        try {
+            await exportEmployeeWiseExpensesToPdf(
+                [row],
+                {
+                    employeeId: row.employee_id,
+                    employeeName: row.employee_name || row.employee_id,
+                },
+                formatExpenseDate(row.expense_date),
+            );
+        } catch (e) {
+            window.alert(e instanceof Error ? e.message : "Failed to download PDF");
+        } finally {
+            setPdfDownloadingId(null);
+        }
     };
 
     const clearEmployeeFilter = () => setEmployeeFilter("");
@@ -700,6 +874,7 @@ export default function ExpenseManagementPage() {
                                         <th className="px-6 py-3">Amount</th>
                                         <th className="px-6 py-3">Approved amt.</th>
                                         <th className="px-6 py-3">Status</th>
+                                        <th className="px-6 py-3">Payment status</th>
                                         <th className="px-6 py-3 text-right">Action</th>
                                     </tr>
                                 </thead>
@@ -753,6 +928,11 @@ export default function ExpenseManagementPage() {
                                                     {getExpenseStatusLabel(row.status)}
                                                 </span>
                                             </td>
+                                            <td className="px-6 py-4">
+                                                <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${getExpensePaymentStatusStyles(row.payment_status)}`}>
+                                                    {getExpensePaymentStatusLabel(row.payment_status)}
+                                                </span>
+                                            </td>
                                             <td className="px-6 py-4 text-right">
                                                 <div className="inline-flex items-center justify-end gap-2">
                                                     <button
@@ -764,6 +944,42 @@ export default function ExpenseManagementPage() {
                                                     >
                                                         <Eye className="h-4 w-4" aria-hidden />
                                                     </button>
+                                                    <button
+                                                        type="button"
+                                                        disabled={pdfDownloadingId === `single-${row.id}`}
+                                                        onClick={() => void downloadSingleExpensePdf(row)}
+                                                        className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-red-200 bg-white text-red-700 shadow-sm transition hover:bg-red-50 disabled:opacity-60"
+                                                        title="Download PDF"
+                                                        aria-label="Download PDF"
+                                                    >
+                                                        {pdfDownloadingId === `single-${row.id}` ? (
+                                                            <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                                                        ) : (
+                                                            <Download className="h-4 w-4" aria-hidden />
+                                                        )}
+                                                    </button>
+                                                    {row.status === "approved" ? (
+                                                        <button
+                                                            type="button"
+                                                            disabled={updatingId === row.id}
+                                                            onClick={() => void markExpensePayment(row, row.payment_status === "paid" ? "hold" : "paid")}
+                                                            className={`inline-flex h-10 items-center justify-center gap-1.5 rounded-md px-3 text-xs font-bold shadow-sm transition active:scale-[0.98] disabled:opacity-60 ${
+                                                                row.payment_status === "paid"
+                                                                    ? "border border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100"
+                                                                    : "border border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700"
+                                                            }`}
+                                                            title={row.payment_status === "paid" ? "Click to mark Hold" : "Click to mark Paid"}
+                                                        >
+                                                            {updatingId === row.id ? (
+                                                                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                                                            ) : row.payment_status === "paid" ? (
+                                                                <Check className="h-4 w-4 text-emerald-600" aria-hidden />
+                                                            ) : (
+                                                                <CreditCard className="h-4 w-4 text-white" aria-hidden />
+                                                            )}
+                                                            {row.payment_status === "paid" ? "Paid" : "Pay"}
+                                                        </button>
+                                                    ) : null}
                                                     {row.status === "pending" ? (
                                                         <>
                                                             <button
@@ -805,7 +1021,7 @@ export default function ExpenseManagementPage() {
                                                     <button
                                                         type="button"
                                                         disabled={updatingId === row.id || deletingId === row.id}
-                                                        onClick={() => void deleteExpense(row)}
+                                                        onClick={() => setDeleteConfirmTarget(row)}
                                                         className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-red-200 bg-red-50 text-red-700 shadow-sm hover:bg-red-100 disabled:opacity-60"
                                                         title="Delete expense"
                                                         aria-label="Delete expense"
@@ -850,6 +1066,7 @@ export default function ExpenseManagementPage() {
                                         <th className="px-6 py-3 text-center">Expenses</th>
                                         <th className="px-6 py-3 text-right">Batch total</th>
                                         <th className="px-6 py-3">Batch status</th>
+                                        <th className="px-6 py-3">Payment status</th>
                                         <th className="px-6 py-3 text-center">Pending</th>
                                         <th className="px-6 py-3 text-right">Actions</th>
                                     </tr>
@@ -881,6 +1098,13 @@ export default function ExpenseManagementPage() {
                                                         {getAdminBatchReviewStatusLabel(row.batchStatus)}
                                                     </span>
                                                 </td>
+                                                <td className="px-6 py-4">
+                                                    <span
+                                                        className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${getAdminBatchPaymentStatusStyles(row.paymentStatus)}`}
+                                                    >
+                                                        {getAdminBatchPaymentStatusLabel(row.paymentStatus)}
+                                                    </span>
+                                                </td>
                                                 <td className="px-6 py-4 text-center">
                                                     <p className="font-bold text-amber-800">{row.pendingCount}</p>
                                                     <p className="text-xs text-amber-700/80">
@@ -888,37 +1112,93 @@ export default function ExpenseManagementPage() {
                                                     </p>
                                                 </td>
                                                 <td className="px-6 py-4 text-right">
-                                                    <div className="inline-flex flex-wrap items-center justify-end gap-2">
+                                                    <div className="inline-flex flex-wrap items-center justify-end gap-1.5">
                                                         <button
                                                             type="button"
                                                             onClick={() => openEmployeeExpenses(row.employeeId)}
-                                                            className="inline-flex h-10 items-center justify-center gap-1.5 rounded-md border border-[#0a2a5e]/15 bg-white px-3 text-xs font-semibold text-[#0a2a5e] shadow-sm transition hover:bg-[#06b6d4]/5"
+                                                            className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-[#0a2a5e]/15 bg-white text-[#0a2a5e] shadow-sm transition hover:bg-[#06b6d4]/5"
+                                                            title="View lines"
+                                                            aria-label="View lines"
                                                         >
                                                             <Eye className="h-4 w-4" aria-hidden />
-                                                            View lines
                                                         </button>
+                                                        <button
+                                                            type="button"
+                                                            disabled={pdfDownloadingId === `${row.employeeId}-${row.month || month}`}
+                                                            onClick={() => void downloadEmployeePdf(row)}
+                                                            className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-red-200 bg-white text-red-700 shadow-sm transition hover:bg-red-50 disabled:opacity-60"
+                                                            title="Download PDF"
+                                                            aria-label="Download PDF"
+                                                        >
+                                                            {pdfDownloadingId === `${row.employeeId}-${row.month || month}` ? (
+                                                                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                                                            ) : (
+                                                                <Download className="h-4 w-4 text-red-600" aria-hidden />
+                                                            )}
+                                                        </button>
+                                                        {row.approvedCount > 0 ? (
+                                                            <button
+                                                                type="button"
+                                                                disabled={isUpdating}
+                                                                onClick={() => setPayConfirmTarget({ batch: row, paymentStatus: row.paymentStatus === "paid" ? "hold" : "paid" })}
+                                                                className={`inline-flex h-10 w-10 items-center justify-center rounded-md border shadow-sm transition active:scale-[0.98] disabled:opacity-60 ${
+                                                                    row.paymentStatus === "paid"
+                                                                        ? "border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100"
+                                                                        : "border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700"
+                                                                }`}
+                                                                title={row.paymentStatus === "paid" ? "Paid (Click to mark Hold)" : "Pay approved reimbursement"}
+                                                                aria-label={row.paymentStatus === "paid" ? "Paid" : "Pay"}
+                                                            >
+                                                                {isUpdating ? (
+                                                                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                                                                ) : row.paymentStatus === "paid" ? (
+                                                                    <Check className="h-4 w-4 text-emerald-600" aria-hidden />
+                                                                ) : (
+                                                                    <CreditCard className="h-4 w-4 text-white" aria-hidden />
+                                                                )}
+                                                            </button>
+                                                        ) : null}
+                                                        {row.paymentStatus === "paid" ? (
+                                                            <button
+                                                                type="button"
+                                                                disabled={emailSendingId === `${row.employeeId}-${row.month || month}`}
+                                                                onClick={() => setEmailConfirmTarget(row)}
+                                                                className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-sky-200 bg-white text-sky-700 shadow-sm transition hover:bg-sky-50 disabled:opacity-60"
+                                                                title="Send Expense Statement PDF via Email"
+                                                                aria-label="Send Expense Statement PDF via Email"
+                                                            >
+                                                                {emailSendingId === `${row.employeeId}-${row.month || month}` ? (
+                                                                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                                                                ) : (
+                                                                    <Mail className="h-4 w-4 text-sky-600" aria-hidden />
+                                                                )}
+                                                            </button>
+                                                        ) : null}
                                                         {canReviewBatch ? (
                                                             <>
                                                                 <button
                                                                     type="button"
                                                                     disabled={isUpdating}
-                                                                    onClick={() => void reviewBatch(row, "approve")}
-                                                                    className="inline-flex h-10 items-center justify-center gap-1.5 rounded-md bg-emerald-600 px-3 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-60"
+                                                                    onClick={() => setApproveAllConfirmTarget(row)}
+                                                                    className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-emerald-600 bg-emerald-600 text-white shadow-sm transition hover:bg-emerald-700 active:scale-[0.98] disabled:opacity-60"
+                                                                    title="Approve all pending claims"
+                                                                    aria-label="Approve all pending claims"
                                                                 >
                                                                     {isUpdating ? (
                                                                         <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
                                                                     ) : (
                                                                         <CheckCheck className="h-4 w-4" aria-hidden />
                                                                     )}
-                                                                    Approve all
                                                                 </button>
                                                                 <button
                                                                     type="button"
                                                                     disabled={isUpdating}
                                                                     onClick={() => openBatchRejectModal(row)}
-                                                                    className="inline-flex h-10 items-center justify-center rounded-md bg-red-600 px-3 text-xs font-bold text-white shadow-sm hover:bg-red-700 disabled:opacity-60"
+                                                                    className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-red-600 bg-red-600 text-white shadow-sm transition hover:bg-red-700 active:scale-[0.98] disabled:opacity-60"
+                                                                    title="Reject all pending claims"
+                                                                    aria-label="Reject all pending claims"
                                                                 >
-                                                                    Reject all
+                                                                    <XCircle className="h-4 w-4" aria-hidden />
                                                                 </button>
                                                             </>
                                                         ) : null}
@@ -1058,7 +1338,7 @@ export default function ExpenseManagementPage() {
                             <button
                                 type="button"
                                 disabled={updatingId === viewExpense.id || deletingId === viewExpense.id}
-                                onClick={() => void deleteExpense(viewExpense)}
+                                onClick={() => setDeleteConfirmTarget(viewExpense)}
                                 className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md border border-red-200 bg-red-50 px-5 text-sm font-bold text-red-700 hover:bg-red-100 disabled:opacity-60 sm:w-auto"
                             >
                                 {deletingId === viewExpense.id ? (
@@ -1067,6 +1347,19 @@ export default function ExpenseManagementPage() {
                                     <Trash2 className="h-4 w-4" aria-hidden />
                                 )}
                                 Delete
+                            </button>
+                            <button
+                                type="button"
+                                disabled={pdfDownloadingId === `single-${viewExpense.id}`}
+                                onClick={() => void downloadSingleExpensePdf(viewExpense)}
+                                className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md border border-red-200 bg-red-50 px-5 text-sm font-bold text-red-700 hover:bg-red-100 disabled:opacity-60 sm:w-auto"
+                            >
+                                {pdfDownloadingId === `single-${viewExpense.id}` ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                                ) : (
+                                    <Download className="h-4 w-4" aria-hidden />
+                                )}
+                                Download PDF
                             </button>
                             <button
                                 type="button"
@@ -1405,6 +1698,315 @@ export default function ExpenseManagementPage() {
                         </div>
                     </div>
                 </div>
+            ) : null}
+
+            {/* Email Confirmation Popup Modal */}
+            {emailConfirmTarget ? (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" role="dialog" aria-modal="true">
+                    <div className="absolute inset-0 bg-black/50 backdrop-blur-xs transition-opacity" onClick={() => !emailSendingId && setEmailConfirmTarget(null)} />
+                    <div className="relative w-full max-w-md rounded-2xl border border-gray-100 bg-white p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+                        <button
+                            type="button"
+                            onClick={() => setEmailConfirmTarget(null)}
+                            disabled={Boolean(emailSendingId)}
+                            className="absolute right-4 top-4 rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 disabled:opacity-50"
+                        >
+                            <X className="h-5 w-5" />
+                        </button>
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sky-600">
+                                <Mail className="h-6 w-6" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-bold text-gray-900">Confirm Expense Email</h3>
+                                <p className="text-xs font-medium text-gray-500">{monthLabel}</p>
+                            </div>
+                        </div>
+
+                        <div className="mt-4 rounded-xl border border-sky-100 bg-sky-50/50 p-4 space-y-2">
+                            <div className="flex items-center justify-between text-xs">
+                                <span className="text-gray-500">Employee</span>
+                                <span className="font-semibold text-gray-900">{emailConfirmTarget.employeeName || emailConfirmTarget.employeeId} ({emailConfirmTarget.employeeId})</span>
+                            </div>
+                            <div className="flex items-center justify-between text-xs">
+                                <span className="text-gray-500">Approved Claims</span>
+                                <span className="font-semibold text-gray-900">{emailConfirmTarget.approvedCount} record(s)</span>
+                            </div>
+                            <div className="pt-2 border-t border-sky-100 flex items-center justify-between">
+                                <span className="text-xs font-semibold text-gray-700">Reimbursement Paid</span>
+                                <span className="text-xl font-black text-sky-700">{formatCurrency(emailConfirmTarget.approvedAmount)}</span>
+                            </div>
+                        </div>
+
+                        <p className="mt-3 text-xs text-gray-500 leading-relaxed">
+                            Official Expense Reimbursement Statement PDF document will be emailed directly to the employee&apos;s registered email address(es).
+                        </p>
+
+                        <div className="mt-6 flex justify-end gap-2.5">
+                            <button
+                                type="button"
+                                onClick={() => setEmailConfirmTarget(null)}
+                                disabled={Boolean(emailSendingId)}
+                                className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => void sendBatchEmail(emailConfirmTarget)}
+                                disabled={Boolean(emailSendingId)}
+                                className="inline-flex items-center gap-2 rounded-xl bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-sky-600/20 hover:bg-sky-700 disabled:opacity-60 transition-all"
+                            >
+                                {emailSendingId ? (
+                                    <>
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                        Sending…
+                                    </>
+                                ) : (
+                                    <>
+                                        <Mail className="h-4 w-4" />
+                                        Confirm & Send Email
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            ) : null}
+
+            {/* Payment Confirmation Popup Modal */}
+            {payConfirmTarget ? (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" role="dialog" aria-modal="true">
+                    <div className="absolute inset-0 bg-black/50 backdrop-blur-xs transition-opacity" onClick={() => !batchUpdatingId && setPayConfirmTarget(null)} />
+                    <div className="relative w-full max-w-md rounded-2xl border border-gray-100 bg-white p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+                        <button
+                            type="button"
+                            onClick={() => setPayConfirmTarget(null)}
+                            disabled={Boolean(batchUpdatingId)}
+                            className="absolute right-4 top-4 rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 disabled:opacity-50"
+                        >
+                            <X className="h-5 w-5" />
+                        </button>
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                                <CreditCard className="h-6 w-6" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-bold text-gray-900">
+                                    {payConfirmTarget.paymentStatus === "paid" ? "Confirm Payment" : "Revert to Hold"}
+                                </h3>
+                                <p className="text-xs font-medium text-gray-500">{monthLabel}</p>
+                            </div>
+                        </div>
+
+                        <div className="mt-4 rounded-xl border border-emerald-100 bg-emerald-50/50 p-4 space-y-2">
+                            <div className="flex items-center justify-between text-xs">
+                                <span className="text-gray-500">Employee</span>
+                                <span className="font-semibold text-gray-900">{payConfirmTarget.batch.employeeName || payConfirmTarget.batch.employeeId} ({payConfirmTarget.batch.employeeId})</span>
+                            </div>
+                            <div className="flex items-center justify-between text-xs">
+                                <span className="text-gray-500">Approved Claims</span>
+                                <span className="font-semibold text-gray-900">{payConfirmTarget.batch.approvedCount} record(s)</span>
+                            </div>
+                            <div className="pt-2 border-t border-emerald-100 flex items-center justify-between">
+                                <span className="text-xs font-semibold text-gray-700">Total Approved Amount</span>
+                                <span className="text-xl font-black text-emerald-700">{formatCurrency(payConfirmTarget.batch.approvedAmount)}</span>
+                            </div>
+                        </div>
+
+                        <p className="mt-3 text-xs text-gray-500 leading-relaxed">
+                            {payConfirmTarget.paymentStatus === "paid"
+                                ? "This action will mark all approved reimbursement claims for this employee as Paid."
+                                : "This action will revert payment status to Hold."}
+                        </p>
+
+                        <div className="mt-6 flex justify-end gap-2.5">
+                            <button
+                                type="button"
+                                onClick={() => setPayConfirmTarget(null)}
+                                disabled={Boolean(batchUpdatingId)}
+                                className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => void markBatchPayment(payConfirmTarget.batch, payConfirmTarget.paymentStatus)}
+                                disabled={Boolean(batchUpdatingId)}
+                                className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-600/20 hover:bg-emerald-700 disabled:opacity-60 transition-all"
+                            >
+                                {batchUpdatingId ? (
+                                    <>
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                        Updating…
+                                    </>
+                                ) : (
+                                    <>
+                                        <Check className="h-4 w-4" />
+                                        {payConfirmTarget.paymentStatus === "paid" ? "Confirm & Mark Paid" : "Confirm & Set Hold"}
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            ) : null}
+
+            {/* Approve All Confirmation Popup Modal */}
+            {approveAllConfirmTarget ? (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" role="dialog" aria-modal="true">
+                    <div className="absolute inset-0 bg-black/50 backdrop-blur-xs transition-opacity" onClick={() => !batchUpdatingId && setApproveAllConfirmTarget(null)} />
+                    <div className="relative w-full max-w-md rounded-2xl border border-gray-100 bg-white p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+                        <button
+                            type="button"
+                            onClick={() => setApproveAllConfirmTarget(null)}
+                            disabled={Boolean(batchUpdatingId)}
+                            className="absolute right-4 top-4 rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 disabled:opacity-50"
+                        >
+                            <X className="h-5 w-5" />
+                        </button>
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                                <CheckCheck className="h-6 w-6" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-bold text-gray-900">Confirm Batch Approval</h3>
+                                <p className="text-xs font-medium text-gray-500">{monthLabel}</p>
+                            </div>
+                        </div>
+
+                        <div className="mt-4 rounded-xl border border-emerald-100 bg-emerald-50/50 p-4 space-y-2">
+                            <div className="flex items-center justify-between text-xs">
+                                <span className="text-gray-500">Employee</span>
+                                <span className="font-semibold text-gray-900">{approveAllConfirmTarget.employeeName || approveAllConfirmTarget.employeeId} ({approveAllConfirmTarget.employeeId})</span>
+                            </div>
+                            <div className="flex items-center justify-between text-xs">
+                                <span className="text-gray-500">Pending Claims</span>
+                                <span className="font-semibold text-gray-900">{approveAllConfirmTarget.pendingCount} record(s)</span>
+                            </div>
+                            <div className="pt-2 border-t border-emerald-100 flex items-center justify-between">
+                                <span className="text-xs font-semibold text-gray-700">Total Pending Amount</span>
+                                <span className="text-xl font-black text-emerald-700">{formatCurrency(approveAllConfirmTarget.pendingAmount)}</span>
+                            </div>
+                        </div>
+
+                        <p className="mt-3 text-xs text-gray-500 leading-relaxed">
+                            All pending claims will be approved at full claimed value, and payment status will become Hold.
+                        </p>
+
+                        <div className="mt-6 flex justify-end gap-2.5">
+                            <button
+                                type="button"
+                                onClick={() => setApproveAllConfirmTarget(null)}
+                                disabled={Boolean(batchUpdatingId)}
+                                className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => void reviewBatch(approveAllConfirmTarget, "approve")}
+                                disabled={Boolean(batchUpdatingId)}
+                                className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-600/20 hover:bg-emerald-700 disabled:opacity-60 transition-all"
+                            >
+                                {batchUpdatingId ? (
+                                    <>
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                        Approving…
+                                    </>
+                                ) : (
+                                    <>
+                                        <CheckCheck className="h-4 w-4" />
+                                        Confirm & Approve All
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            ) : null}
+
+            {/* Delete Expense Confirmation Popup Modal */}
+            {deleteConfirmTarget ? (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" role="dialog" aria-modal="true">
+                    <div className="absolute inset-0 bg-black/50 backdrop-blur-xs transition-opacity" onClick={() => !deletingId && setDeleteConfirmTarget(null)} />
+                    <div className="relative w-full max-w-md rounded-2xl border border-gray-100 bg-white p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+                        <button
+                            type="button"
+                            onClick={() => setDeleteConfirmTarget(null)}
+                            disabled={Boolean(deletingId)}
+                            className="absolute right-4 top-4 rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 disabled:opacity-50"
+                        >
+                            <X className="h-5 w-5" />
+                        </button>
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600">
+                                <Trash2 className="h-6 w-6" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-bold text-gray-900">Delete Expense Claim</h3>
+                                <p className="text-xs font-medium text-gray-500">{deleteConfirmTarget.expense_id}</p>
+                            </div>
+                        </div>
+
+                        <div className="mt-4 rounded-xl border border-red-100 bg-red-50/50 p-4 space-y-2">
+                            <div className="flex items-center justify-between text-xs">
+                                <span className="text-gray-500">Employee</span>
+                                <span className="font-semibold text-gray-900">{deleteConfirmTarget.employee_name || deleteConfirmTarget.employee_id}</span>
+                            </div>
+                            <div className="flex items-center justify-between text-xs">
+                                <span className="text-gray-500">Title / Purpose</span>
+                                <span className="font-semibold text-gray-900">{deleteConfirmTarget.title}</span>
+                            </div>
+                            <div className="pt-2 border-t border-red-100 flex items-center justify-between">
+                                <span className="text-xs font-semibold text-gray-700">Claim Amount</span>
+                                <span className="text-xl font-black text-red-700">{formatCurrency(deleteConfirmTarget.amount)}</span>
+                            </div>
+                        </div>
+
+                        <p className="mt-3 text-xs text-gray-500 leading-relaxed">
+                            This will permanently delete this expense claim from the database. This action cannot be undone.
+                        </p>
+
+                        <div className="mt-6 flex justify-end gap-2.5">
+                            <button
+                                type="button"
+                                onClick={() => setDeleteConfirmTarget(null)}
+                                disabled={Boolean(deletingId)}
+                                className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => void executeDeleteExpense(deleteConfirmTarget)}
+                                disabled={Boolean(deletingId)}
+                                className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-red-600/20 hover:bg-red-700 disabled:opacity-60 transition-all"
+                            >
+                                {deletingId ? (
+                                    <>
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                        Deleting…
+                                    </>
+                                ) : (
+                                    <>
+                                        <Trash2 className="h-4 w-4" />
+                                        Confirm & Delete
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            ) : null}
+
+            {toastState ? (
+                <Toast
+                    message={toastState.message}
+                    type={toastState.type}
+                    onClose={() => setToastState(null)}
+                    duration={4500}
+                />
             ) : null}
         </div>
     );

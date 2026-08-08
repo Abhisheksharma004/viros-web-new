@@ -4,11 +4,22 @@ import { reviewEmployeeExpenseBatch } from "@/lib/employeeExpenses";
 export async function POST(request: Request) {
     try {
         const body = (await request.json()) as Record<string, unknown>;
-        const action = body.action === "reject" ? "reject" : body.action === "approve" ? "approve" : null;
         const employeeId = typeof body.employee_id === "string" ? body.employee_id.trim() : "";
         const month = typeof body.month === "string" ? body.month.trim() : "";
         const rejectReason =
             typeof body.reject_reason === "string" ? body.reject_reason.trim() : "";
+
+        if (body.action === "mark_paid" || body.action === "mark_unpaid") {
+            const { reviewEmployeeExpenseBatchPayment } = await import("@/lib/employeeExpenses");
+            const paymentStatus = body.action === "mark_paid" ? "paid" : "hold";
+            const result = await reviewEmployeeExpenseBatchPayment(employeeId, month, paymentStatus);
+            return NextResponse.json({
+                message: `${result.updatedCount} approved expense${result.updatedCount === 1 ? "" : "s"} marked as ${paymentStatus}`,
+                updatedCount: result.updatedCount,
+            });
+        }
+
+        const action = body.action === "reject" ? "reject" : body.action === "approve" ? "approve" : null;
 
         if (!action) {
             return NextResponse.json({ message: "Action must be approve or reject" }, { status: 400 });
