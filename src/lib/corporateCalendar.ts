@@ -59,8 +59,8 @@ export async function ensureCorporateCalendarTable() {
             start_time TIME NULL,
             end_time TIME NULL,
             is_all_day TINYINT(1) NOT NULL DEFAULT 1,
-            location VARCHAR(255) NULL DEFAULT 'Office HQ',
-            audience VARCHAR(100) NOT NULL DEFAULT 'All Employees',
+            location VARCHAR(255) NULL DEFAULT '',
+            audience VARCHAR(100) NOT NULL DEFAULT '',
             color_tag VARCHAR(50) NOT NULL DEFAULT 'blue',
             description TEXT NULL,
             is_mandatory TINYINT(1) NOT NULL DEFAULT 0,
@@ -107,8 +107,8 @@ export function mapRowToApi(row: CorporateCalendarRow): CorporateEventApi {
         start_time: row.start_time ? String(row.start_time).slice(0, 5) : null,
         end_time: row.end_time ? String(row.end_time).slice(0, 5) : null,
         is_all_day: Boolean(row.is_all_day),
-        location: String(row.location ?? "Office HQ"),
-        audience: String(row.audience ?? "All Employees"),
+        location: String(row.location ?? "").trim(),
+        audience: String(row.audience ?? "").trim(),
         color_tag: String(row.color_tag ?? "blue"),
         description: String(row.description ?? ""),
         is_mandatory: Boolean(row.is_mandatory),
@@ -159,8 +159,8 @@ export async function createCorporateEvent(data: {
             data.start_time || null,
             data.end_time || null,
             data.is_all_day ? 1 : 0,
-            data.location?.trim() || "Office HQ",
-            data.audience?.trim() || "All Employees",
+            data.location?.trim() || "",
+            data.audience?.trim() || "",
             data.color_tag || "blue",
             data.description?.trim() || null,
             data.is_mandatory ? 1 : 0,
@@ -200,8 +200,8 @@ export async function updateCorporateEvent(
             data.start_time || null,
             data.end_time || null,
             data.is_all_day ? 1 : 0,
-            data.location?.trim() || "Office HQ",
-            data.audience?.trim() || "All Employees",
+            data.location?.trim() || "",
+            data.audience?.trim() || "",
             data.color_tag || "blue",
             data.description?.trim() || null,
             data.is_mandatory ? 1 : 0,
@@ -218,4 +218,24 @@ export async function deleteCorporateEvent(id: number): Promise<boolean> {
         [id]
     );
     return res.affectedRows > 0;
+}
+
+export async function getUpcomingCorporateEventsAlerts(): Promise<CorporateEventApi[]> {
+    await ensureCorporateCalendarTable();
+
+    const today = new Date();
+    const todayStr = today.toISOString().slice(0, 10);
+
+    const in2Days = new Date(today);
+    in2Days.setDate(in2Days.getDate() + 2);
+    const in2DaysStr = in2Days.toISOString().slice(0, 10);
+
+    const [rows] = await pool.query<CorporateCalendarRow[]>(
+        `SELECT * FROM ${TABLE} 
+         WHERE start_date <= ? AND end_date >= ?
+         ORDER BY start_date ASC, id ASC`,
+        [in2DaysStr, todayStr]
+    );
+
+    return rows.map(mapRowToApi);
 }

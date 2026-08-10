@@ -37,10 +37,11 @@ import {
 import type { EmployeeSession } from "@/lib/employeeSession";
 import { buildBirthdayWishCards } from "@/lib/employeeBirthdayCards";
 import { fetchEmployeeBirthdayAlerts } from "@/lib/employeeBirthdays";
+import { getUpcomingCorporateEventsAlerts, type CorporateEventApi } from "@/lib/corporateCalendar";
 
 export type DashboardActivityType = "success" | "info" | "warning";
 
-export type DashboardHeroSlideVariant = "default" | "birthday-today" | "birthday-soon";
+export type DashboardHeroSlideVariant = "default" | "birthday-today" | "birthday-soon" | "corporate-event";
 
 export type DashboardHeroSlide = {
     id: string;
@@ -55,6 +56,8 @@ export type DashboardHeroSlide = {
     birthdayInitials?: string;
     /** Short line below subtitle on birthday slides */
     birthdayHint?: string;
+    /** Corporate Event object for corporate event slides */
+    corporateEvent?: CorporateEventApi;
 };
 
 export type DashboardTaskItem = {
@@ -113,6 +116,7 @@ export type EmployeeDashboardPayload = {
     updates: DashboardUpdateItem[];
     recentActivity: DashboardActivityItem[];
     heroSlides: DashboardHeroSlide[];
+    corporateEvents: CorporateEventApi[];
 };
 
 function birthdayCardsToHeroSlides(
@@ -131,6 +135,24 @@ function birthdayCardsToHeroSlides(
         metrics: [],
         birthdayInitials: card.initials,
         birthdayHint: card.hint,
+    }));
+}
+
+function corporateEventsToHeroSlides(
+    events: CorporateEventApi[],
+): DashboardHeroSlide[] {
+    return events.map((event) => ({
+        id: `corp-event-${event.id}`,
+        variant: "corporate-event" as const,
+        eyebrow: `Corporate Event · ${(event.event_type || "company_event").replace(/_/g, " ").toUpperCase()}`,
+        title: event.title,
+        subtitle: event.description || `${event.location || "Office HQ"} · ${event.audience}`,
+        badge: {
+            text: event.start_date,
+            variant: "cyan" as const,
+        },
+        metrics: [],
+        corporateEvent: event,
     }));
 }
 
@@ -549,7 +571,9 @@ export async function buildEmployeeDashboard(
             ],
         },
     ];
-    const heroSlides: DashboardHeroSlide[] = [...birthdaySlides, ...summarySlides];
+    const corporateEvents = await getUpcomingCorporateEventsAlerts();
+    const eventSlides = corporateEventsToHeroSlides(corporateEvents);
+    const heroSlides: DashboardHeroSlide[] = [...birthdaySlides, ...eventSlides, ...summarySlides];
 
     return {
         employeeName: session.name,
@@ -587,6 +611,7 @@ export async function buildEmployeeDashboard(
             checkInTime,
         }),
         heroSlides,
+        corporateEvents,
     };
 }
 

@@ -31,8 +31,8 @@ export async function POST(req: Request) {
         const start_time = typeof body.start_time === "string" ? body.start_time.trim() : null;
         const end_time = typeof body.end_time === "string" ? body.end_time.trim() : null;
         const is_all_day = Boolean(body.is_all_day ?? true);
-        const location = typeof body.location === "string" ? body.location.trim() : "Office HQ";
-        const audience = typeof body.audience === "string" ? body.audience.trim() : "All Employees";
+        const location = typeof body.location === "string" ? body.location.trim() : "";
+        const audience = typeof body.audience === "string" ? body.audience.trim() : "";
         const color_tag = typeof body.color_tag === "string" ? body.color_tag.trim() : "blue";
         const description = typeof body.description === "string" ? body.description.trim() : "";
         const is_mandatory = Boolean(body.is_mandatory);

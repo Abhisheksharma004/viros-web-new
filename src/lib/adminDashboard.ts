@@ -7,6 +7,7 @@ import { ensureEmployeeExpensesTable } from "@/lib/employeeExpenses";
 import { ensureEmployeeLeaveDataReady } from "@/lib/employeeLeave";
 import { buildBirthdayWishCards, type BirthdayWishCardData } from "@/lib/employeeBirthdayCards";
 import { fetchAdminBirthdayAlerts } from "@/lib/employeeBirthdays";
+import { getUpcomingCorporateEventsAlerts, type CorporateEventApi } from "@/lib/corporateCalendar";
 
 export type AdminDashboardRecentEmployee = {
     employeeId: string;
@@ -42,11 +43,13 @@ export type AdminDashboardOverview = {
         pendingLeaveCount: number;
         pendingExpenseCount: number;
         newsletterSubscribers: number;
+        corporateEventsCount: number;
     };
     recentEmployees: AdminDashboardRecentEmployee[];
     departments: AdminDashboardDepartmentSlice[];
     recentActivity: AdminDashboardActivity[];
     birthdayCards: BirthdayWishCardData[];
+    corporateEvents: CorporateEventApi[];
 };
 
 const DEPT_COLORS = ["#0a2a5e", "#00bcd4", "#8b5cf6", "#f59e0b", "#10b981", "#ef4444", "#6366f1", "#ec4899"];
@@ -262,6 +265,7 @@ export async function buildAdminDashboardOverview(): Promise<AdminDashboardOverv
 
     const birthdayAlerts = await fetchAdminBirthdayAlerts();
     const birthdayCards = buildBirthdayWishCards(birthdayAlerts);
+    const corporateEvents = await getUpcomingCorporateEventsAlerts();
 
     return {
         stats: {
@@ -273,10 +277,12 @@ export async function buildAdminDashboardOverview(): Promise<AdminDashboardOverv
             pendingLeaveCount: Number((leavePendingRows[0][0] as RowDataPacket)?.c) || 0,
             pendingExpenseCount: Number((expensePendingRows[0][0] as RowDataPacket)?.c) || 0,
             newsletterSubscribers: Number((newsletterRows[0][0] as RowDataPacket)?.c) || 0,
+            corporateEventsCount: corporateEvents.length,
         },
         recentEmployees,
         departments,
         recentActivity,
         birthdayCards,
+        corporateEvents,
     };
 }

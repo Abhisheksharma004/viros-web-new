@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { DashboardHeroSlide } from "@/lib/employeeDashboard";
 import BirthdayWishCard from "@/components/employee-dashboard/BirthdayWishCard";
+import CorporateEventCard from "@/components/admin-dashboard/CorporateEventCard";
 import HeroVortexBackground from "@/components/employee-dashboard/HeroVortexBackground";
 
 const HERO_GRADIENT = "linear-gradient(135deg, #06124f 0%, #0a2a5e 55%, #0d3a7a 100%)";
@@ -108,6 +109,10 @@ function HeroSlideCard({ slide, isActive }: { slide: DashboardHeroSlide; isActiv
         return <BirthdaySlideLayout slide={slide} isActive={isActive} />;
     }
 
+    if (slide.variant === "corporate-event" && slide.corporateEvent) {
+        return <CorporateEventCard event={slide.corporateEvent} vortexActive={isActive} className="h-full rounded-md sm:rounded-md" />;
+    }
+
     return <DefaultSlideCard slide={slide} isActive={isActive} />;
 }
 
@@ -119,6 +124,9 @@ function birthdayDotClass(slide: DashboardHeroSlide, isActive: boolean) {
     if (slide.variant === "birthday-soon") {
         const d = BIRTHDAY_DOT["birthday-soon"];
         return isActive ? `w-6 ${d.active}` : `w-2 ${d.idle}`;
+    }
+    if (slide.variant === "corporate-event") {
+        return isActive ? "w-6 bg-cyan-300" : "w-2 bg-cyan-300/40";
     }
     return isActive ? DOT_ACTIVE : DOT_IDLE;
 }

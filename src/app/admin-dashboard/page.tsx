@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2, RefreshCw } from "lucide-react";
-import BirthdayWishCard from "@/components/employee-dashboard/BirthdayWishCard";
+import DashboardHeroSlider from "@/components/employee-dashboard/DashboardHeroSlider";
 import type { AdminDashboardOverview } from "@/lib/adminDashboard";
+import type { DashboardHeroSlide } from "@/lib/employeeDashboard";
 
 const statIcons = {
     portal: (
@@ -32,6 +33,7 @@ const statIcons = {
 const quickActions = [
     { title: "Add Employee", href: "/admin-dashboard/employees", icon: "👤" },
     { title: "Employee Access", href: "/admin-dashboard/employee-access", icon: "🔑" },
+    { title: "Corporate Calendar", href: "/admin-dashboard/corporate-calendar", icon: "🗓️" },
     { title: "Employee Shift", href: "/admin-dashboard/shift", icon: "⏰" },
     { title: "Leave Requests", href: "/admin-dashboard/leave-request", icon: "📅" },
     { title: "Expenses", href: "/admin-dashboard/expense-management", icon: "💰" },
@@ -118,6 +120,50 @@ export default function AdminDashboardPage() {
         return Math.max(1, ...data.departments.map((d) => d.count));
     }, [data]);
 
+    const alertSlides = useMemo(() => {
+        if (!data) return [];
+        const slides: DashboardHeroSlide[] = [];
+
+        if (data.birthdayCards && data.birthdayCards.length > 0) {
+            for (const card of data.birthdayCards) {
+                slides.push({
+                    id: card.id,
+                    variant: card.variant,
+                    eyebrow: card.eyebrow,
+                    title: card.title,
+                    subtitle: card.subtitle,
+                    badge: {
+                        text: card.badgeText,
+                        variant: card.variant === "birthday-today" ? "rose" : "cyan",
+                    },
+                    metrics: [],
+                    birthdayInitials: card.initials,
+                    birthdayHint: card.hint,
+                });
+            }
+        }
+
+        if (data.corporateEvents && data.corporateEvents.length > 0) {
+            for (const event of data.corporateEvents) {
+                slides.push({
+                    id: `admin-event-${event.id}`,
+                    variant: "corporate-event",
+                    eyebrow: `Corporate Event · ${(event.event_type || "company_event").replace(/_/g, " ").toUpperCase()}`,
+                    title: event.title,
+                    subtitle: event.description || `${event.location || ""} ${event.audience ? `· ${event.audience}` : ""}`.trim(),
+                    badge: {
+                        text: event.start_date,
+                        variant: "cyan",
+                    },
+                    metrics: [],
+                    corporateEvent: event,
+                });
+            }
+        }
+
+        return slides;
+    }, [data]);
+
     if (loading) {
         return (
             <div className="flex items-center justify-center gap-2 py-24 text-sm text-gray-500">
@@ -160,27 +206,8 @@ export default function AdminDashboardPage() {
                 </span>
             </div>
 
-            {data.birthdayCards.length > 0 ? (
-                <div
-                    className={`grid gap-4 ${
-                        data.birthdayCards.length === 1 ? "grid-cols-1" : "grid-cols-1 lg:grid-cols-2"
-                    }`}
-                >
-                    {data.birthdayCards.map((card) => (
-                        <BirthdayWishCard
-                            key={card.id}
-                            id={card.id}
-                            variant={card.variant}
-                            eyebrow={card.eyebrow}
-                            title={card.title}
-                            subtitle={card.subtitle}
-                            badgeText={card.badgeText}
-                            hint={card.hint}
-                            initials={card.initials}
-                            className="min-h-[10.25rem] rounded-md sm:min-h-[11rem] sm:rounded-md"
-                        />
-                    ))}
-                </div>
+            {alertSlides.length > 0 ? (
+                <DashboardHeroSlider slides={alertSlides} />
             ) : null}
 
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">

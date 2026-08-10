@@ -2,12 +2,13 @@
 
 import { useEffect, useRef } from "react";
 
-export type HeroVortexTheme = "default" | "birthday-today" | "birthday-soon";
+export type HeroVortexTheme = "default" | "birthday-today" | "birthday-soon" | "corporate-event";
 
 const PALETTE: Record<HeroVortexTheme, string[]> = {
     default: ["#38bdf8", "#60a5fa", "#818cf8", "#22d3ee"],
     "birthday-today": ["#fb923c", "#f472b6", "#fbbf24", "#fb7185"],
     "birthday-soon": ["#c084fc", "#e879f9", "#a78bfa", "#f472b6"],
+    "corporate-event": ["#60a5fa", "#38bdf8", "#818cf8", "#a78bfa"],
 };
 
 type HeroVortexBackgroundProps = {

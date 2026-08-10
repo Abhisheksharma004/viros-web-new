@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import DashboardHeroSlider from "@/components/employee-dashboard/DashboardHeroSlider";
+import CorporateEventCard from "@/components/admin-dashboard/CorporateEventCard";
 import type {
     DashboardActivityItem,
     DashboardHeroSlide,
