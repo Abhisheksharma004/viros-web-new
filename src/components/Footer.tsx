@@ -3,9 +3,11 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from 'react';
+import { useCookieConsent } from "@/context/CookieContext";
 
 
 export default function Footer() {
+    const { openPreferencesModal } = useCookieConsent();
     const currentYear = new Date().getFullYear();
     const [contactInfo, setContactInfo] = useState({
         address: '',
@@ -287,10 +289,20 @@ export default function Footer() {
                         <div className="text-gray-500 text-sm text-center md:text-left">
                             <p>&copy; {currentYear} {footerContent.copyright_text}</p>
                             <p className="text-xs text-gray-500 mt-1">{footerContent.developer_text}</p>
-                            <div className="mt-2 space-x-4">
+                            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs sm:text-sm">
                                 <Link href="/privacy-policy" className="hover:text-[#06b6d4] transition-colors">Privacy Policy</Link>
                                 <span className="text-gray-700">|</span>
                                 <Link href="/terms-of-service" className="hover:text-[#06b6d4] transition-colors">Terms of Service</Link>
+                                <span className="text-gray-700">|</span>
+                                <Link href="/cookie-policy" className="hover:text-[#06b6d4] transition-colors">Cookie Policy</Link>
+                                <span className="text-gray-700">|</span>
+                                <button
+                                    type="button"
+                                    onClick={openPreferencesModal}
+                                    className="hover:text-[#06b6d4] transition-colors cursor-pointer text-left"
+                                >
+                                    Cookie Preferences
+                                </button>
                             </div>
                         </div>
 

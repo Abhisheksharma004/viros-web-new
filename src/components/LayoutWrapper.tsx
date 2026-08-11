@@ -4,6 +4,10 @@ import { usePathname } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import StructuredData from "@/components/StructuredData";
+import { CookieProvider } from "@/context/CookieContext";
+import CookieConsentBanner from "@/components/CookieConsentBanner";
+import CookiePreferencesModal from "@/components/CookiePreferencesModal";
+import CookieScriptManager from "@/components/CookieScriptManager";
 
 export default function LayoutWrapper({
   children,
@@ -23,7 +27,8 @@ export default function LayoutWrapper({
   const mobileHideNavAndFooter = pathname === "/admin-login";
 
   return (
-    <>
+    <CookieProvider>
+      <CookieScriptManager />
       {!hideNavAndFooter && (
         <div className={mobileHideNavAndFooter ? "hidden lg:block" : ""}>
           <StructuredData />
@@ -38,6 +43,9 @@ export default function LayoutWrapper({
           <Footer />
         </div>
       )}
-    </>
+      <CookieConsentBanner />
+      <CookiePreferencesModal />
+    </CookieProvider>
   );
 }
+
