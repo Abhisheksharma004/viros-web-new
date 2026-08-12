@@ -271,14 +271,17 @@ function EmployeeStatusViewBadge({ status }: { status: string }) {
     const trimmed = status.trim();
     const isActive = trimmed === "Active";
     const isOnLeave = trimmed === "On Leave";
-    const isInactive = trimmed === "Inactive" || trimmed === "Resigned";
+    const isResigned = trimmed === "Resigned";
+    const isInactive = trimmed === "Inactive";
     const tone = isActive
         ? "bg-green-50 text-green-800 ring-1 ring-green-600/15"
         : isOnLeave
           ? "bg-amber-50 text-amber-800 ring-1 ring-amber-600/15"
-          : isInactive
-            ? "bg-gray-100 text-gray-700 ring-1 ring-gray-200"
-            : "bg-blue-50 text-blue-800 ring-1 ring-blue-600/15";
+          : isResigned
+            ? "bg-rose-50 text-rose-700 ring-1 ring-rose-600/20"
+            : isInactive
+              ? "bg-gray-100 text-gray-700 ring-1 ring-gray-200"
+              : "bg-blue-50 text-blue-800 ring-1 ring-blue-600/15";
 
     return (
         <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${tone}`}>
@@ -729,9 +732,11 @@ export default function AdminEmployeesPage() {
                                                         ? "bg-green-50 text-green-700"
                                                         : employee.status === "On Leave"
                                                           ? "bg-amber-50 text-amber-700"
-                                                          : employee.status === "Inactive" || employee.status === "Resigned"
-                                                            ? "bg-gray-100 text-gray-700"
-                                                            : "bg-blue-50 text-blue-700"
+                                                          : employee.status === "Resigned"
+                                                            ? "bg-rose-50 text-rose-700"
+                                                            : employee.status === "Inactive"
+                                                              ? "bg-gray-100 text-gray-700"
+                                                              : "bg-blue-50 text-blue-700"
                                                 }`}
                                             >
                                                 {employee.status}

@@ -80,6 +80,54 @@ async function runEnsureAdminEmployeesTable() {
             UNIQUE KEY uq_admin_employees_employee_id (employee_id)
         )
     `);
+
+    try {
+        await pool.query(`
+            UPDATE admin_employee_access ea
+            JOIN admin_employees e ON e.employee_id = ea.employee_id
+            SET ea.portal_status = 'Inactive'
+            WHERE e.employee_status = 'Resigned'
+        `);
+        await pool.query(`
+            UPDATE admin_employee_salaries s
+            JOIN admin_employees e ON e.employee_id = s.employee_id
+            SET s.is_active = 0
+            WHERE e.employee_status = 'Resigned'
+        `);
+        await pool.query(`
+            UPDATE admin_employee_shifts sh
+            JOIN admin_employees e ON e.employee_id = sh.employee_id
+            SET sh.is_active = 0
+            WHERE e.employee_status = 'Resigned'
+        `);
+    } catch {
+        // Table might not exist yet during initial boot
+    }
+}
+
+export async function syncDeactivationForResignedEmployee(employeeId: string) {
+    if (!employeeId || !employeeId.trim()) return;
+    const normalizedId = employeeId.trim();
+
+    try {
+        const { ensureAdminEmployeeAccessTable } = await import("@/lib/adminEmployeeAccess");
+        const { ensureAdminEmployeeSalariesTable } = await import("@/lib/adminEmployeeSalaries");
+        const { ensureAdminEmployeeShiftsTable } = await import("@/lib/adminEmployeeShifts");
+
+        await Promise.all([
+            ensureAdminEmployeeAccessTable(),
+            ensureAdminEmployeeSalariesTable(),
+            ensureAdminEmployeeShiftsTable(),
+        ]);
+
+        await Promise.all([
+            pool.query(`UPDATE admin_employee_access SET portal_status = 'Inactive' WHERE employee_id = ?`, [normalizedId]),
+            pool.query(`UPDATE admin_employee_salaries SET is_active = 0 WHERE employee_id = ?`, [normalizedId]),
+            pool.query(`UPDATE admin_employee_shifts SET is_active = 0 WHERE employee_id = ?`, [normalizedId]),
+        ]);
+    } catch (error) {
+        console.error(`Error syncing deactivation for resigned employee ${normalizedId}:`, error);
+    }
 }
 
 export function strFromBody(body: Record<string, unknown>, key: string): string | null {

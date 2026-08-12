@@ -1,7 +1,7 @@
 import type { ResultSetHeader, RowDataPacket } from "mysql2";
 import { NextResponse } from "next/server";
 import pool from "@/lib/db";
-import { employeeFormToSqlValues, ensureAdminEmployeesTable, strFromBody } from "@/lib/adminEmployees";
+import { employeeFormToSqlValues, ensureAdminEmployeesTable, strFromBody, syncDeactivationForResignedEmployee } from "@/lib/adminEmployees";
 
 type EmployeeListRow = RowDataPacket & {
     id: number;
@@ -41,6 +41,7 @@ export async function POST(request: Request) {
 
         const employeeId = strFromBody(body, "employeeId");
         const fullName = strFromBody(body, "fullName");
+        const employeeStatus = strFromBody(body, "employeeStatus") ?? "Active";
 
         if (!employeeId || !fullName) {
             return NextResponse.json({ message: "Employee ID and full name are required" }, { status: 400 });
@@ -64,6 +65,10 @@ export async function POST(request: Request) {
             ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
             values
         );
+
+        if (employeeStatus === "Resigned" && employeeId) {
+            await syncDeactivationForResignedEmployee(employeeId);
+        }
 
         const insertId = (result as ResultSetHeader).insertId;
         const [rows] = await pool.query(

@@ -6,6 +6,7 @@ import {
     employeeRowToFormState,
     ensureAdminEmployeesTable,
     strFromBody,
+    syncDeactivationForResignedEmployee,
 } from "@/lib/adminEmployees";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -46,6 +47,8 @@ export async function PUT(request: Request, { params }: Ctx) {
         const body = (await request.json()) as Record<string, unknown>;
         const employeeId = strFromBody(body, "employeeId");
         const fullName = strFromBody(body, "fullName");
+        const employeeStatus = strFromBody(body, "employeeStatus") ?? "Active";
+
         if (!employeeId || !fullName) {
             return NextResponse.json({ message: "Employee ID and full name are required" }, { status: 400 });
         }
@@ -72,6 +75,10 @@ export async function PUT(request: Request, { params }: Ctx) {
         const affected = (result as ResultSetHeader).affectedRows;
         if (!affected) {
             return NextResponse.json({ message: "Employee not found" }, { status: 404 });
+        }
+
+        if (employeeStatus === "Resigned" && employeeId) {
+            await syncDeactivationForResignedEmployee(employeeId);
         }
 
         const [rows] = await pool.query(
