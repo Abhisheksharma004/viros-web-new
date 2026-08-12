@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import Link from "next/link";
 import {
     Users,
@@ -61,7 +61,7 @@ interface PermissionScope {
     category: string;
     read: boolean;
     write: boolean;
-    delete: boolean;
+    delete?: boolean;
     admin: boolean;
 }
 
@@ -88,8 +88,6 @@ function createDefaultPermissions(): PermissionScope[] {
         admin: false,
     }));
 }
-
-const INITIAL_USERS: UserAccessItem[] = [];
 
 export default function UserAccessPage() {
     const [users, setUsers] = useState<UserAccessItem[]>([]);
@@ -124,6 +122,23 @@ export default function UserAccessPage() {
             setToastMessage(null);
         }, 3500);
     };
+
+    // Load explicitly granted users from Database on mount
+    const loadGrantedUsers = useCallback(async () => {
+        try {
+            const resp = await fetch("/api/admin/users", { cache: "no-store" });
+            if (resp.ok) {
+                const records: UserAccessItem[] = await resp.json();
+                setUsers(records || []);
+            }
+        } catch (error) {
+            console.error("Error loading granted users:", error);
+        }
+    }, []);
+
+    useEffect(() => {
+        void loadGrantedUsers();
+    }, [loadGrantedUsers]);
 
     // Real API Employee ID Search & Lookup Handler
     const handleEmployeeLookup = async (empId: string) => {
@@ -220,47 +235,87 @@ export default function UserAccessPage() {
     };
 
     // Quick Status Toggle Switch
-    const handleToggleStatus = (userId: string) => {
-        setUsers((prev) =>
-            prev.map((u) => {
-                if (u.id === userId) {
-                    const newStatus: UserStatus = u.status === "Active" ? "Suspended" : "Active";
-                    showToast(`Access status for ${u.fullName} changed to ${newStatus}`);
-                    return { ...u, status: newStatus };
-                }
-                return u;
-            })
-        );
+    const handleToggleStatus = async (userId: string) => {
+        const target = users.find((u) => u.id === userId);
+        if (!target) return;
+
+        const newStatus: UserStatus = target.status === "Active" ? "Suspended" : "Active";
+        const updatedRecord = { ...target, status: newStatus };
+
+        try {
+            await fetch(`/api/admin/users/${encodeURIComponent(userId)}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(updatedRecord),
+            });
+            showToast(`Access status for ${target.fullName} changed to ${newStatus}`);
+            await loadGrantedUsers();
+        } catch (e) {
+            console.error("Failed to update status:", e);
+        }
     };
 
     // Delete / Revoke User Access
-    const handleDeleteUser = (userId: string, name: string) => {
+    const handleDeleteUser = async (userId: string, name: string) => {
         if (confirm(`Are you sure you want to revoke access for ${name}?`)) {
-            setUsers((prev) => prev.filter((u) => u.id !== userId));
-            setSelectedUserIds((prev) => prev.filter((id) => id !== userId));
-            showToast(`User access for ${name} has been revoked.`);
+            try {
+                await fetch(`/api/admin/users/${encodeURIComponent(userId)}`, {
+                    method: "DELETE",
+                });
+                showToast(`User access for ${name} has been revoked.`);
+                await loadGrantedUsers();
+                setSelectedUserIds((prev) => prev.filter((id) => id !== userId));
+            } catch (e) {
+                console.error("Failed to revoke access:", e);
+            }
         }
     };
 
     // Bulk actions
-    const handleBulkSuspend = () => {
-        setUsers((prev) =>
-            prev.map((u) => (selectedUserIds.includes(u.id) ? { ...u, status: "Suspended" } : u))
-        );
-        showToast(`Suspended ${selectedUserIds.length} selected user(s).`);
-        setSelectedUserIds([]);
+    const handleBulkSuspend = async () => {
+        try {
+            await Promise.all(
+                selectedUserIds.map((id) => {
+                    const u = users.find((item) => item.id === id);
+                    if (!u) return Promise.resolve();
+                    return fetch(`/api/admin/users/${encodeURIComponent(id)}`, {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ ...u, status: "Suspended" }),
+                    });
+                })
+            );
+            showToast(`Suspended ${selectedUserIds.length} selected user(s).`);
+            await loadGrantedUsers();
+            setSelectedUserIds([]);
+        } catch (e) {
+            console.error("Bulk suspend error:", e);
+        }
     };
 
-    const handleBulkActivate = () => {
-        setUsers((prev) =>
-            prev.map((u) => (selectedUserIds.includes(u.id) ? { ...u, status: "Active" } : u))
-        );
-        showToast(`Activated access for ${selectedUserIds.length} selected user(s).`);
-        setSelectedUserIds([]);
+    const handleBulkActivate = async () => {
+        try {
+            await Promise.all(
+                selectedUserIds.map((id) => {
+                    const u = users.find((item) => item.id === id);
+                    if (!u) return Promise.resolve();
+                    return fetch(`/api/admin/users/${encodeURIComponent(id)}`, {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ ...u, status: "Active" }),
+                    });
+                })
+            );
+            showToast(`Activated access for ${selectedUserIds.length} selected user(s).`);
+            await loadGrantedUsers();
+            setSelectedUserIds([]);
+        } catch (e) {
+            console.error("Bulk activate error:", e);
+        }
     };
 
     // Add new user form submit
-    const handleAddUserSubmit = (e: React.FormEvent) => {
+    const handleAddUserSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!searchEmployeeId.trim()) {
             setLookupError("Please enter an Employee ID to search.");
@@ -275,38 +330,63 @@ export default function UserAccessPage() {
             department: "Software Engineering",
         };
 
-        const newUser: UserAccessItem = {
-            id: emp.employeeId,
+        const payload = {
+            employeeId: emp.employeeId,
             fullName: emp.fullName,
             email: emp.email,
             username: emp.username,
             role: "Standard User",
             status: "Active",
             department: emp.department,
-            lastActive: "Just created",
-            createdAt: new Date().toISOString().split("T")[0],
             permissions: newUserPermissions,
         };
 
-        setUsers([newUser, ...users]);
-        setIsAddModalOpen(false);
-        showToast(`User access granted successfully for ${newUser.fullName} (${newUser.id})!`);
+        try {
+            const resp = await fetch("/api/admin/users", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            });
 
-        // Reset form
-        setSearchEmployeeId("");
-        setSearchedEmployee(null);
-        setLookupError("");
-        setNewUserPermissions(createDefaultPermissions());
+            if (!resp.ok) {
+                throw new Error("Failed to save user access");
+            }
+
+            setIsAddModalOpen(false);
+            showToast(`User access granted successfully for ${emp.fullName} (${emp.employeeId})!`);
+            await loadGrantedUsers();
+
+            // Reset form
+            setSearchEmployeeId("");
+            setSearchedEmployee(null);
+            setLookupError("");
+            setNewUserPermissions(createDefaultPermissions());
+        } catch (err) {
+            console.error("Error submitting user access:", err);
+            setLookupError("Failed to save granted access. Please try again.");
+        }
     };
 
     // Save editing user
-    const handleSaveEditingUser = (e: React.FormEvent) => {
+    const handleSaveEditingUser = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!editingUser) return;
 
-        setUsers((prev) => prev.map((u) => (u.id === editingUser.id ? editingUser : u)));
-        showToast(`Permissions updated for ${editingUser.fullName}`);
-        setEditingUser(null);
+        try {
+            const resp = await fetch(`/api/admin/users/${encodeURIComponent(editingUser.id)}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(editingUser),
+            });
+
+            if (!resp.ok) throw new Error("Failed to update user access");
+
+            showToast(`Permissions updated for ${editingUser.fullName}`);
+            setEditingUser(null);
+            await loadGrantedUsers();
+        } catch (err) {
+            console.error("Error updating user access:", err);
+        }
     };
 
     // Group permissions by Category for clean display

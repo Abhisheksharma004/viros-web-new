@@ -1,9 +1,10 @@
 "use client";
 
+import React, { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { menuItems as adminMenuItems } from "@/components/admin-dashboard/Sidebar";
 
 /** Longest matching sub-route wins so nested paths highlight one item only. */
 function pickActiveSubHref(pathname: string | null, subs: { href: string }[]): string | null {
@@ -232,6 +233,37 @@ const menuItems = [
     },
 ].filter((item) => SHOW_PAYROLL_NAV || item.title !== "Payroll");
 
+const MODULE_ROUTE_MAP: Record<string, string> = {
+    "Dashboard": "/employee-dashboard",
+    "Add Company": "/employee-dashboard/granted/add-company",
+    "Add Asset": "/employee-dashboard/granted/add-asset",
+    "AMC Report": "/employee-dashboard/granted/amc-report",
+    "Without AMC Report": "/employee-dashboard/granted/without-amc-report",
+    "User Access": "/employee-dashboard/granted/users",
+    "All Employees": "/employee-dashboard/granted/employees",
+    "Employee Access": "/employee-dashboard/granted/employee-access",
+    "Attendance": "/employee-dashboard/granted/attendance",
+    "Leave Policy": "/employee-dashboard/granted/leave-policy",
+    "Corporate Calendar": "/employee-dashboard/granted/corporate-calendar",
+    "Leave Request": "/employee-dashboard/granted/leave-request",
+    "Salary Setup": "/employee-dashboard/granted/salary",
+    "Advance Payment": "/employee-dashboard/granted/advance-payment",
+    "Payroll": "/employee-dashboard/granted/payroll",
+    "Expense Management": "/employee-dashboard/granted/expense-management",
+    "Emp. Shift": "/employee-dashboard/granted/shift",
+    "Emp. Work Report": "/employee-dashboard/granted/work-entries",
+    "Task Management": "/employee-dashboard/granted/tasks",
+    "Department": "/employee-dashboard/granted/department",
+    "Roles": "/employee-dashboard/granted/roles",
+    "Activity Log": "/employee-dashboard/granted/activity",
+    "Archived Employee": "/employee-dashboard/granted/delete-employee",
+    "Proposal": "/employee-dashboard/granted/proposal",
+    "Letter": "/employee-dashboard/granted/letter",
+    "Offer Letter": "/employee-dashboard/granted/offer-letter",
+    "Products": "/employee-dashboard/granted/products",
+    "Warranty": "/employee-dashboard/granted/warranty",
+};
+
 export default function EmployeeSidebar({
     isOpen,
     onClose,
@@ -241,6 +273,45 @@ export default function EmployeeSidebar({
 }) {
     const pathname = usePathname();
     const [openSections, setOpenSections] = useState<string[]>([]);
+    const [grantedModules, setGrantedModules] = useState<Array<{ name: string; href: string; category: string }>>([]);
+
+    // Group granted modules by Admin Category with expandable sub-items matching Admin Sidebar
+    const grantedCategories = useMemo(() => {
+        if (!grantedModules || grantedModules.length === 0) return [];
+        const grantedSet = new Set(grantedModules.map((m) => m.name.toLowerCase()));
+
+        const categories: Array<{
+            title: string;
+            icon: React.ReactNode;
+            subItems: Array<{
+                title: string;
+                icon: React.ReactNode;
+                href: string;
+            }>;
+        }> = [];
+
+        for (const item of adminMenuItems) {
+            if (item.title === "Dashboard" || !item.subItems) continue;
+
+            const validSubs = item.subItems
+                .filter((sub) => grantedSet.has(sub.title.toLowerCase()))
+                .map((sub) => ({
+                    title: sub.title,
+                    icon: sub.icon,
+                    href: MODULE_ROUTE_MAP[sub.title] || "/employee-dashboard",
+                }));
+
+            if (validSubs.length > 0) {
+                categories.push({
+                    title: item.title,
+                    icon: item.icon,
+                    subItems: validSubs,
+                });
+            }
+        }
+
+        return categories;
+    }, [grantedModules]);
 
     useEffect(() => {
         for (const item of menuItems) {
@@ -249,8 +320,38 @@ export default function EmployeeSidebar({
                 return;
             }
         }
+        for (const cat of grantedCategories) {
+            if (pickActiveSubHref(pathname, cat.subItems)) {
+                setOpenSections([cat.title]);
+                return;
+            }
+        }
         setOpenSections([]);
-    }, [pathname]);
+    }, [pathname, grantedCategories]);
+
+    useEffect(() => {
+        async function loadPermissions() {
+            try {
+                const resp = await fetch("/api/employee/permissions", { cache: "no-store" });
+                if (resp.ok) {
+                    const data = await resp.json();
+                    if (Array.isArray(data.permissions)) {
+                        const activeMods = data.permissions
+                            .filter((p: { read?: boolean; write?: boolean; admin?: boolean }) => p.read || p.write || p.admin)
+                            .map((p: { module: string; category: string }) => ({
+                                name: p.module,
+                                category: p.category,
+                                href: MODULE_ROUTE_MAP[p.module] || "/employee-dashboard",
+                            }));
+                        setGrantedModules(activeMods);
+                    }
+                }
+            } catch (e) {
+                console.error("Error loading granted permissions for employee sidebar:", e);
+            }
+        }
+        void loadPermissions();
+    }, []);
 
     const toggleSection = (title: string) => {
         setOpenSections((prev) => (prev.includes(title) ? [] : [title]));
@@ -294,7 +395,7 @@ export default function EmployeeSidebar({
                     </button>
                 </div>
 
-                <nav className="p-4 space-y-1 overflow-y-auto h-[calc(100vh-80px)]">
+                <nav className="admin-sidebar-scroll h-[calc(100vh-80px)] space-y-1 overflow-y-auto p-4 pr-2">
                     {menuItems.map((item) => {
                         if (!item.subItems) {
                             return (
@@ -379,6 +480,72 @@ export default function EmployeeSidebar({
                             </div>
                         );
                     })}
+
+                    {/* DYNAMIC GRANTED ADMIN MODULES GROUPED BY PARENT CATEGORY DROPDOWNS */}
+                    {grantedCategories.map((item) => {
+                                const sectionOpen = openSections.includes(item.title);
+                                const sectionActive = isSectionActive(item.subItems);
+
+                                return (
+                                    <div key={item.title}>
+                                        <button
+                                            onClick={() => toggleSection(item.title)}
+                                            className={`
+                                                w-full flex items-center justify-between px-4 py-3 rounded-md
+                                                transition-all duration-200
+                                                ${sectionActive
+                                                    ? "bg-[#06b6d4] text-white shadow-lg"
+                                                    : "text-white/70 hover:bg-white/10 hover:text-white"}
+                                            `}
+                                        >
+                                            <div className="flex items-center space-x-3">
+                                                {item.icon}
+                                                <span className="font-medium">{item.title}</span>
+                                            </div>
+                                            <svg
+                                                className={`w-4 h-4 shrink-0 transition-transform duration-300 ease-in-out motion-reduce:transition-none ${sectionOpen ? "rotate-180" : ""}`}
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                            </svg>
+                                        </button>
+
+                                        <div
+                                            className={`grid transition-[grid-template-rows] duration-300 ease-in-out motion-reduce:transition-none ${
+                                                sectionOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+                                            }`}
+                                        >
+                                            <div className="min-h-0 overflow-hidden">
+                                                <div className="ml-4 mt-1 space-y-1 pb-0.5">
+                                                    {item.subItems.map((sub) => {
+                                                        const activeHref = pickActiveSubHref(pathname, item.subItems);
+                                                        const subIsActive = activeHref === sub.href;
+                                                        return (
+                                                            <Link
+                                                                key={sub.title}
+                                                                href={sub.href}
+                                                                onClick={onClose}
+                                                                className={`
+                                                                    flex items-center space-x-3 px-4 py-2 rounded-md
+                                                                    transition-colors duration-200
+                                                                    ${subIsActive
+                                                                        ? "bg-[#06b6d4] text-white shadow-lg"
+                                                                        : "text-white/60 hover:bg-white/10 hover:text-white"}
+                                                                `}
+                                                            >
+                                                                {sub.icon}
+                                                                <span className="text-sm">{sub.title}</span>
+                                                            </Link>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
                 </nav>
             </aside>
         </>
