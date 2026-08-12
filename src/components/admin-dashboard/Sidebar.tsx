@@ -13,7 +13,7 @@ function pickActiveSubHref(pathname: string | null, subs: { href: string }[]): s
     return candidates.reduce((a, b) => (a.href.length >= b.href.length ? a : b)).href;
 }
 
-const menuItems = [
+export const menuItems = [
     {
         title: "Dashboard",
         icon: (
