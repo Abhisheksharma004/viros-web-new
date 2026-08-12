@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect, useCallback } from "react";
+import { useModulePermission } from "@/context/ModulePermissionContext";
 import Link from "next/link";
 import {
     Users,
@@ -90,6 +91,7 @@ function createDefaultPermissions(): PermissionScope[] {
 }
 
 export default function UserAccessPage() {
+    const { write: canWrite, delete: canDelete, admin: isAdmin } = useModulePermission();
     const [users, setUsers] = useState<UserAccessItem[]>([]);
     const [searchQuery, setSearchQuery] = useState("");
     const [roleFilter, setRoleFilter] = useState<string>("All");
@@ -431,19 +433,21 @@ export default function UserAccessPage() {
                     </p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <button
-                        onClick={() => {
-                            setSearchEmployeeId("");
-                            setSearchedEmployee(null);
-                            setLookupError("");
-                            setNewUserPermissions(createDefaultPermissions());
-                            setIsAddModalOpen(true);
-                        }}
-                        className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-semibold text-white bg-gradient-to-r from-[#06124f] to-[#0a2a5e] hover:opacity-90 transition-opacity shadow-sm"
-                    >
-                        <UserPlus className="h-4 w-4" />
-                        Grant User Access
-                    </button>
+                    {(canWrite || isAdmin) && (
+                        <button
+                            onClick={() => {
+                                setSearchEmployeeId("");
+                                setSearchedEmployee(null);
+                                setLookupError("");
+                                setNewUserPermissions(createDefaultPermissions());
+                                setIsAddModalOpen(true);
+                            }}
+                            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-semibold text-white bg-gradient-to-r from-[#06124f] to-[#0a2a5e] hover:opacity-90 transition-opacity shadow-sm"
+                        >
+                            <UserPlus className="h-4 w-4" />
+                            Grant User Access
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -651,9 +655,7 @@ export default function UserAccessPage() {
                                 <th scope="col" className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
                                     System Role
                                 </th>
-                                <th scope="col" className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                                    Granted Scopes
-                                </th>
+
                                 <th scope="col" className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
                                     Access Status
                                 </th>
@@ -668,7 +670,7 @@ export default function UserAccessPage() {
                         <tbody className="divide-y divide-gray-100 bg-white">
                             {filteredUsers.length === 0 ? (
                                 <tr>
-                                    <td colSpan={7} className="px-6 py-12 text-center text-sm text-gray-500">
+                                    <td colSpan={6} className="px-6 py-12 text-center text-sm text-gray-500">
                                         <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-400 mb-2">
                                             <AlertCircle className="h-5 w-5" />
                                         </div>
@@ -703,25 +705,11 @@ export default function UserAccessPage() {
                                             </td>
 
                                             <td className="px-6 py-4 text-sm">
-                                                <div className="flex items-center gap-3">
-                                                    <div
-                                                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white shadow-xs"
-                                                        style={{ background: "linear-gradient(135deg, #06124f, #0a2a5e)" }}
-                                                    >
-                                                        {initials}
-                                                    </div>
-                                                    <div>
-                                                        <div className="font-semibold text-gray-900 text-sm flex items-center gap-1.5">
-                                                            {user.fullName}
-                                                            <span className="text-xs font-mono text-gray-400 font-normal">
-                                                                ({user.id})
-                                                            </span>
-                                                        </div>
-                                                        <div className="text-xs text-gray-500">{user.email}</div>
-                                                        <div className="text-xs text-gray-400 font-mono">
-                                                            @{user.username} · {user.department}
-                                                        </div>
-                                                    </div>
+                                                <div className="font-semibold text-gray-900 text-sm">
+                                                    {user.fullName}
+                                                </div>
+                                                <div className="text-xs font-mono text-gray-400 mt-0.5">
+                                                    {user.id}
                                                 </div>
                                             </td>
 
@@ -744,32 +732,7 @@ export default function UserAccessPage() {
                                                 </span>
                                             </td>
 
-                                            <td className="px-6 py-4 text-sm">
-                                                <div className="flex flex-wrap items-center gap-1.5 max-w-[240px]">
-                                                    {user.role === "Super Admin" ? (
-                                                        <span className="rounded bg-[#0a2a5e]/10 px-2.5 py-1 text-xs font-bold text-[#0a2a5e]">
-                                                            Full Access (All Modules)
-                                                        </span>
-                                                    ) : (
-                                                        user.permissions
-                                                            .filter((p) => p.read || p.write || p.admin)
-                                                            .slice(0, 3)
-                                                            .map((p, idx) => (
-                                                                <span
-                                                                    key={idx}
-                                                                    className="rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600"
-                                                                >
-                                                                    {p.module}
-                                                                </span>
-                                                            ))
-                                                    )}
-                                                    {user.role !== "Super Admin" && activePermissionsCount > 3 && (
-                                                        <span className="text-xs font-bold text-gray-400">
-                                                            +{activePermissionsCount - 3} more
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </td>
+
 
                                             <td className="px-6 py-4 text-sm">
                                                 <div className="flex items-center gap-2.5">
@@ -819,23 +782,27 @@ export default function UserAccessPage() {
                                                         <Eye className="h-4 w-4" />
                                                     </button>
 
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setEditingUser({ ...user })}
-                                                        className="rounded-md p-2 text-[#0a2a5e] hover:bg-[#0a2a5e]/10 transition"
-                                                        title="Edit Permissions"
-                                                    >
-                                                        <Key className="h-4 w-4" />
-                                                    </button>
+                                                    {(canWrite || isAdmin) && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setEditingUser({ ...user })}
+                                                            className="rounded-md p-2 text-[#0a2a5e] hover:bg-[#0a2a5e]/10 transition"
+                                                            title="Edit Permissions"
+                                                        >
+                                                            <Key className="h-4 w-4" />
+                                                        </button>
+                                                    )}
 
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleDeleteUser(user.id, user.fullName)}
-                                                        className="rounded-md p-2 text-gray-400 hover:bg-rose-50 hover:text-rose-600 transition"
-                                                        title="Revoke Access"
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </button>
+                                                    {(canDelete || isAdmin) && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleDeleteUser(user.id, user.fullName)}
+                                                            className="rounded-md p-2 text-gray-400 hover:bg-rose-50 hover:text-rose-600 transition"
+                                                            title="Revoke Access"
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </td>
                                         </tr>
@@ -1037,14 +1004,31 @@ export default function UserAccessPage() {
                                                                 <label className="flex items-center gap-1.5 cursor-pointer select-none">
                                                                     <input
                                                                         type="checkbox"
+                                                                        checked={Boolean(perm.delete)}
+                                                                        onChange={(e) => {
+                                                                            const updated = [...newUserPermissions];
+                                                                            updated[realIdx].delete = e.target.checked;
+                                                                            setNewUserPermissions(updated);
+                                                                        }}
+                                                                        className="h-4 w-4 rounded border-gray-300 text-rose-600 focus:ring-rose-500 cursor-pointer"
+                                                                    />
+                                                                    <span className="font-semibold text-gray-800 text-xs sm:text-sm">Delete</span>
+                                                                </label>
+                                                                <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                                                                    <input
+                                                                        type="checkbox"
                                                                         checked={perm.admin}
                                                                         onChange={(e) => {
                                                                             const updated = [...newUserPermissions];
                                                                             updated[realIdx].admin = e.target.checked;
-                                                                            if (e.target.checked) updated[realIdx].read = true;
+                                                                            if (e.target.checked) {
+                                                                                updated[realIdx].read = true;
+                                                                                updated[realIdx].write = true;
+                                                                                updated[realIdx].delete = true;
+                                                                            }
                                                                             setNewUserPermissions(updated);
                                                                         }}
-                                                                        className="h-4 w-4 rounded border-gray-300 text-[#0a2a5e] focus:ring-[#0a2a5e] cursor-pointer"
+                                                                        className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500 cursor-pointer"
                                                                     />
                                                                     <span className="font-semibold text-gray-800 text-xs sm:text-sm">Admin</span>
                                                                 </label>
@@ -1200,14 +1184,31 @@ export default function UserAccessPage() {
                                                                 <label className="flex items-center gap-1.5 cursor-pointer select-none">
                                                                     <input
                                                                         type="checkbox"
+                                                                        checked={Boolean(perm.delete)}
+                                                                        onChange={(e) => {
+                                                                            const updated = [...editingUser.permissions];
+                                                                            updated[realIdx].delete = e.target.checked;
+                                                                            setEditingUser({ ...editingUser, permissions: updated });
+                                                                        }}
+                                                                        className="h-4 w-4 rounded border-gray-300 text-rose-600 focus:ring-rose-500 cursor-pointer"
+                                                                    />
+                                                                    <span className="font-semibold text-gray-800 text-xs sm:text-sm">Delete</span>
+                                                                </label>
+                                                                <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                                                                    <input
+                                                                        type="checkbox"
                                                                         checked={perm.admin}
                                                                         onChange={(e) => {
                                                                             const updated = [...editingUser.permissions];
                                                                             updated[realIdx].admin = e.target.checked;
-                                                                            if (e.target.checked) updated[realIdx].read = true;
+                                                                            if (e.target.checked) {
+                                                                                updated[realIdx].read = true;
+                                                                                updated[realIdx].write = true;
+                                                                                updated[realIdx].delete = true;
+                                                                            }
                                                                             setEditingUser({ ...editingUser, permissions: updated });
                                                                         }}
-                                                                        className="h-4 w-4 rounded border-gray-300 text-[#0a2a5e] focus:ring-[#0a2a5e] cursor-pointer"
+                                                                        className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500 cursor-pointer"
                                                                     />
                                                                     <span className="font-semibold text-gray-800 text-xs sm:text-sm">Admin</span>
                                                                 </label>

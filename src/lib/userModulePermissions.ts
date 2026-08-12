@@ -61,6 +61,7 @@ export async function ensureUserAccessTables(): Promise<void> {
                     category VARCHAR(128) NOT NULL,
                     can_read TINYINT(1) NOT NULL DEFAULT 0,
                     can_write TINYINT(1) NOT NULL DEFAULT 0,
+                    can_delete TINYINT(1) NOT NULL DEFAULT 0,
                     can_admin TINYINT(1) NOT NULL DEFAULT 0,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -68,6 +69,15 @@ export async function ensureUserAccessTables(): Promise<void> {
                     KEY idx_emp_id (employee_id)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             `);
+
+            // Migration check for can_delete column
+            const [cols] = await pool.query<RowDataPacket[]>(
+                `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = 'can_delete'`,
+                [PERMISSIONS_TABLE]
+            );
+            if (!cols || cols.length === 0) {
+                await pool.query(`ALTER TABLE ${PERMISSIONS_TABLE} ADD COLUMN can_delete TINYINT(1) NOT NULL DEFAULT 0 AFTER can_write`);
+            }
         })().catch((err) => {
             tablesEnsuredPromise = null;
             throw err;
@@ -91,7 +101,7 @@ export async function getAllGrantedUserAccessRecords(): Promise<UserAccessRecord
     }
 
     const [perms] = await pool.query<RowDataPacket[]>(
-        `SELECT employee_id, module_name, category, can_read, can_write, can_admin
+        `SELECT employee_id, module_name, category, can_read, can_write, can_delete, can_admin
          FROM ${PERMISSIONS_TABLE}`
     );
 
@@ -105,7 +115,7 @@ export async function getAllGrantedUserAccessRecords(): Promise<UserAccessRecord
                 category: p.category,
                 read: Boolean(p.can_read),
                 write: Boolean(p.can_write),
-                delete: Boolean(p.can_write),
+                delete: Boolean(p.can_delete),
                 admin: Boolean(p.can_admin),
             });
         }
@@ -174,13 +184,14 @@ export async function saveUserAccessPermissions(record: {
             const placeholders: string[] = [];
 
             for (const p of record.permissions) {
-                placeholders.push("(?, ?, ?, ?, ?, ?)");
+                placeholders.push("(?, ?, ?, ?, ?, ?, ?)");
                 values.push(
                     record.employeeId,
                     p.module,
                     p.category,
                     p.read ? 1 : 0,
                     p.write ? 1 : 0,
+                    p.delete ? 1 : 0,
                     p.admin ? 1 : 0
                 );
             }
@@ -188,7 +199,7 @@ export async function saveUserAccessPermissions(record: {
             if (placeholders.length > 0) {
                 await conn.query(
                     `INSERT INTO ${PERMISSIONS_TABLE} 
-                        (employee_id, module_name, category, can_read, can_write, can_admin)
+                        (employee_id, module_name, category, can_read, can_write, can_delete, can_admin)
                      VALUES ${placeholders.join(", ")}`,
                     values
                 );
@@ -245,9 +256,9 @@ export async function getEmployeeGrantedPermissions(employeeId: string): Promise
     }
 
     const [perms] = await pool.query<RowDataPacket[]>(
-        `SELECT module_name, category, can_read, can_write, can_admin
+        `SELECT module_name, category, can_read, can_write, can_delete, can_admin
          FROM ${PERMISSIONS_TABLE}
-         WHERE employee_id = ? AND (can_read = 1 OR can_write = 1 OR can_admin = 1)`,
+         WHERE employee_id = ? AND (can_read = 1 OR can_write = 1 OR can_delete = 1 OR can_admin = 1)`,
         [employeeId]
     );
 
@@ -257,6 +268,7 @@ export async function getEmployeeGrantedPermissions(employeeId: string): Promise
               category: p.category,
               read: Boolean(p.can_read),
               write: Boolean(p.can_write),
+              delete: Boolean(p.can_delete),
               admin: Boolean(p.can_admin),
           }))
         : [];

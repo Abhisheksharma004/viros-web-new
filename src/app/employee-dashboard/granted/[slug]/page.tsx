@@ -59,6 +59,10 @@ const SLUG_TITLE_MAP: Record<string, { title: string; category: string }> = {
     "warranty": { title: "Warranty", category: "Inventory" },
 };
 
+import { ModulePermissionProvider, type GrantedPermissionScope } from "@/context/ModulePermissionContext";
+
+// ... (keep SLUG_TITLE_MAP)
+
 export default function GrantedModulePage({
     params: paramsPromise,
 }: {
@@ -70,6 +74,12 @@ export default function GrantedModulePage({
 
     const [isLoading, setIsLoading] = useState(true);
     const [hasAccess, setHasAccess] = useState(false);
+    const [permissionScope, setPermissionScope] = useState<GrantedPermissionScope>({
+        read: false,
+        write: false,
+        delete: false,
+        admin: false,
+    });
 
     useEffect(() => {
         async function checkModuleAccess() {
@@ -82,8 +92,14 @@ export default function GrantedModulePage({
                         const perm = data.permissions.find(
                             (p: { module: string }) => p.module.toLowerCase() === moduleConfig.title.toLowerCase()
                         );
-                        if (perm && (perm.read || perm.write || perm.admin)) {
+                        if (perm && (perm.read || perm.write || perm.delete || perm.admin)) {
                             setHasAccess(true);
+                            setPermissionScope({
+                                read: Boolean(perm.read),
+                                write: Boolean(perm.write || perm.admin),
+                                delete: Boolean(perm.delete || perm.admin),
+                                admin: Boolean(perm.admin),
+                            });
                         } else {
                             setHasAccess(false);
                         }
@@ -134,89 +150,96 @@ export default function GrantedModulePage({
         );
     }
 
-    // Render granted Admin Module Page components directly inside Employee Portal layout
-    switch (slug) {
-        case "attendance":
-            return <AdminAttendancePage />;
-        case "amc-report":
-            return <WorkRecordsReportPage variant="amc" />;
-        case "without-amc-report":
-            return <WorkRecordsReportPage variant="without_amc" />;
-        case "employees":
-            return <EmployeesPage />;
-        case "users":
-            return <UserAccessPage />;
-        case "employee-access":
-            return <EmployeeAccessPage />;
-        case "leave-policy":
-            return <LeavePolicyPage />;
-        case "corporate-calendar":
-            return <CorporateCalendarPage />;
-        case "leave-request":
-            return <LeaveRequestPage />;
-        case "salary":
-            return <SalaryPage />;
-        case "advance-payment":
-            return <AdvancePaymentPage />;
-        case "payroll":
-            return <PayrollPage />;
-        case "expense-management":
-            return <ExpenseManagementPage />;
-        case "shift":
-            return <ShiftPage />;
-        case "work-entries":
-            return <WorkEntriesPage />;
-        case "tasks":
-            return <TasksPage />;
-        case "department":
-            return <DepartmentPage />;
-        case "roles":
-            return <RolesPage />;
-        case "activity":
-            return <ActivityPage />;
-        case "delete-employee":
-            return <DeleteEmployeePage />;
-        case "proposal":
-            return <ProposalPage />;
-        case "letter":
-            return <LetterPage />;
-        case "offer-letter":
-            return <OfferLetterPage />;
-        case "products":
-            return <ProductsPage />;
-        case "warranty":
-            return <WarrantyPage />;
-        default:
-            return (
-                <div className="space-y-6">
-                    <div className="flex items-center justify-between border-b border-gray-200 pb-4">
-                        <div>
-                            <div className="flex items-center gap-2">
-                                <span className="rounded bg-teal-50 px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider text-teal-700">
-                                    {moduleConfig.category}
-                                </span>
-                                <span className="flex items-center gap-1 text-xs font-semibold text-emerald-600">
-                                    <CheckCircle2 className="h-3.5 w-3.5" />
-                                    Granted Access
-                                </span>
+    const renderComponent = () => {
+        switch (slug) {
+            case "attendance":
+                return <AdminAttendancePage />;
+            case "amc-report":
+                return <WorkRecordsReportPage variant="amc" />;
+            case "without-amc-report":
+                return <WorkRecordsReportPage variant="without_amc" />;
+            case "employees":
+                return <EmployeesPage />;
+            case "users":
+                return <UserAccessPage />;
+            case "employee-access":
+                return <EmployeeAccessPage />;
+            case "leave-policy":
+                return <LeavePolicyPage />;
+            case "corporate-calendar":
+                return <CorporateCalendarPage />;
+            case "leave-request":
+                return <LeaveRequestPage />;
+            case "salary":
+                return <SalaryPage />;
+            case "advance-payment":
+                return <AdvancePaymentPage />;
+            case "payroll":
+                return <PayrollPage />;
+            case "expense-management":
+                return <ExpenseManagementPage />;
+            case "shift":
+                return <ShiftPage />;
+            case "work-entries":
+                return <WorkEntriesPage />;
+            case "tasks":
+                return <TasksPage />;
+            case "department":
+                return <DepartmentPage />;
+            case "roles":
+                return <RolesPage />;
+            case "activity":
+                return <ActivityPage />;
+            case "delete-employee":
+                return <DeleteEmployeePage />;
+            case "proposal":
+                return <ProposalPage />;
+            case "letter":
+                return <LetterPage />;
+            case "offer-letter":
+                return <OfferLetterPage />;
+            case "products":
+                return <ProductsPage />;
+            case "warranty":
+                return <WarrantyPage />;
+            default:
+                return (
+                    <div className="space-y-6">
+                        <div className="flex items-center justify-between border-b border-gray-200 pb-4">
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <span className="rounded bg-teal-50 px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider text-teal-700">
+                                        {moduleConfig.category}
+                                    </span>
+                                    <span className="flex items-center gap-1 text-xs font-semibold text-emerald-600">
+                                        <CheckCircle2 className="h-3.5 w-3.5" />
+                                        Granted Access
+                                    </span>
+                                </div>
+                                <h1 className="mt-1 text-2xl font-bold text-gray-900">{moduleConfig.title}</h1>
                             </div>
-                            <h1 className="mt-1 text-2xl font-bold text-gray-900">{moduleConfig.title}</h1>
+                            <Link
+                                href="/employee-dashboard"
+                                className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+                            >
+                                <ArrowLeft className="h-3.5 w-3.5" />
+                                Dashboard
+                            </Link>
                         </div>
-                        <Link
-                            href="/employee-dashboard"
-                            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
-                        >
-                            <ArrowLeft className="h-3.5 w-3.5" />
-                            Dashboard
-                        </Link>
-                    </div>
 
-                    <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-                        <p className="text-gray-600 text-sm">
-                            Viewing <strong className="text-gray-900">{moduleConfig.title}</strong> module inside Employee Portal.
-                        </p>
+                        <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+                            <p className="text-gray-600 text-sm">
+                                Viewing <strong className="text-gray-900">{moduleConfig.title}</strong> module inside Employee Portal.
+                            </p>
+                        </div>
                     </div>
-                </div>
-            );
-    }
+                );
+        }
+    };
+
+    return (
+        <ModulePermissionProvider permission={permissionScope}>
+            {renderComponent()}
+        </ModulePermissionProvider>
+    );
 }

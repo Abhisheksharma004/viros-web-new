@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, Check, Eye, Loader2, Pencil, Trash2, X } from "lucide-react";
 import Toast from "@/components/Toast";
+import { useModulePermission } from "@/context/ModulePermissionContext";
 
 type RowActionBusy = { recordId: number; kind: "view" | "edit" | "delete" } | null;
 
@@ -293,6 +294,7 @@ function EmployeeStatusViewBadge({ status }: { status: string }) {
 }
 
 export default function AdminEmployeesPage() {
+    const { write: canWrite, delete: canDelete, admin: isAdmin } = useModulePermission();
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [editingRecordId, setEditingRecordId] = useState<number | null>(null);
     const [isViewOnly, setIsViewOnly] = useState(false);
@@ -661,14 +663,16 @@ export default function AdminEmployeesPage() {
                     <span className="hidden md:block" aria-hidden />
                 )}
 
-                <button
-                    type="button"
-                    onClick={openAddModal}
-                    disabled={isEmployeesLoading}
-                    className="inline-flex items-center justify-center rounded-md bg-[#0a2a5e] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                    Add Employee
-                </button>
+                {(canWrite || isAdmin) && (
+                    <button
+                        type="button"
+                        onClick={openAddModal}
+                        disabled={isEmployeesLoading}
+                        className="inline-flex items-center justify-center rounded-md bg-[#0a2a5e] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                        Add Employee
+                    </button>
+                )}
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -758,6 +762,7 @@ export default function AdminEmployeesPage() {
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="inline-flex flex-wrap items-center justify-end gap-1.5">
+                                                {/* View button — always visible if user has read access */}
                                                 <button
                                                     type="button"
                                                     onClick={() => openViewEmployee(employee)}
@@ -773,36 +778,44 @@ export default function AdminEmployeesPage() {
                                                         <Eye className="h-4 w-4" aria-hidden />
                                                     )}
                                                 </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => openEditEmployee(employee)}
-                                                    disabled={actionBusy !== null || isSubmitting}
-                                                    className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-gray-200 bg-white text-[#0a2a5e] shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-                                                    title="Edit employee"
-                                                    aria-label="Edit employee"
-                                                >
-                                                    {actionBusy?.recordId === employee.recordId &&
-                                                        actionBusy.kind === "edit" ? (
-                                                        <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                                                    ) : (
-                                                        <Pencil className="h-4 w-4" aria-hidden />
-                                                    )}
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setDeleteConfirmTarget(employee)}
-                                                    disabled={actionBusy !== null || isSubmitting}
-                                                    className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-red-200 bg-red-50 text-red-700 shadow-sm transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
-                                                    title="Delete employee"
-                                                    aria-label="Delete employee"
-                                                >
-                                                    {actionBusy?.recordId === employee.recordId &&
-                                                        actionBusy.kind === "delete" ? (
-                                                        <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                                                    ) : (
-                                                        <Trash2 className="h-4 w-4" aria-hidden />
-                                                    )}
-                                                </button>
+
+                                                {/* Edit button — only if write or admin */}
+                                                {(canWrite || isAdmin) && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => openEditEmployee(employee)}
+                                                        disabled={actionBusy !== null || isSubmitting}
+                                                        className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-gray-200 bg-white text-[#0a2a5e] shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                                        title="Edit employee"
+                                                        aria-label="Edit employee"
+                                                    >
+                                                        {actionBusy?.recordId === employee.recordId &&
+                                                            actionBusy.kind === "edit" ? (
+                                                            <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                                                        ) : (
+                                                            <Pencil className="h-4 w-4" aria-hidden />
+                                                        )}
+                                                    </button>
+                                                )}
+
+                                                {/* Delete button — only if delete or admin */}
+                                                {(canDelete || isAdmin) && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setDeleteConfirmTarget(employee)}
+                                                        disabled={actionBusy !== null || isSubmitting}
+                                                        className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-red-200 bg-red-50 text-red-700 shadow-sm transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+                                                        title="Delete employee"
+                                                        aria-label="Delete employee"
+                                                    >
+                                                        {actionBusy?.recordId === employee.recordId &&
+                                                            actionBusy.kind === "delete" ? (
+                                                            <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                                                        ) : (
+                                                            <Trash2 className="h-4 w-4" aria-hidden />
+                                                        )}
+                                                    </button>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>
