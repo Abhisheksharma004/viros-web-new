@@ -278,7 +278,7 @@ export const ADVANCE_PAYMENT_SELECT_JOIN = `
            a.purpose, a.notes, a.created_at, a.updated_at,
            e.full_name, e.department, e.designation, e.employee_status
     FROM ${TABLE} a
-    INNER JOIN admin_employees e ON e.employee_id = a.employee_id
+    INNER JOIN admin_employees e ON e.employee_id = a.employee_id AND (e.is_deleted = 0 OR e.is_deleted IS NULL)
 `;
 
 export function mapAdvancePaymentRowToApi(row: AdminEmployeeAdvancePaymentRow) {

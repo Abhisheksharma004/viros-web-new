@@ -123,7 +123,7 @@ export const EMPLOYEE_ACCESS_LIST_SELECT = `
 
 export const EMPLOYEE_ACCESS_LIST_FROM = `
     FROM admin_employee_access ea
-    LEFT JOIN admin_employees e ON e.employee_id = ea.employee_id
+    INNER JOIN admin_employees e ON e.employee_id = ea.employee_id AND (e.is_deleted = 0 OR e.is_deleted IS NULL)
 `;
 
 let ensureDepsPromise: Promise<void> | null = null;

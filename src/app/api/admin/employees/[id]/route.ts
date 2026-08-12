@@ -126,10 +126,26 @@ export async function DELETE(_request: Request, { params }: Ctx) {
             return NextResponse.json({ message: "Invalid employee id" }, { status: 400 });
         }
 
-        const [result] = await pool.query("DELETE FROM admin_employees WHERE id = ?", [id]);
+        const [rows] = await pool.query<RowDataPacket[]>(
+            "SELECT employee_id FROM admin_employees WHERE id = ? LIMIT 1",
+            [id]
+        );
+        const employee = rows[0];
+        if (!employee) {
+            return NextResponse.json({ message: "Employee not found" }, { status: 404 });
+        }
+
+        const [result] = await pool.query(
+            "UPDATE admin_employees SET is_deleted = 1, deleted_at = CURRENT_TIMESTAMP WHERE id = ?",
+            [id]
+        );
         const affected = (result as ResultSetHeader).affectedRows;
         if (!affected) {
             return NextResponse.json({ message: "Employee not found" }, { status: 404 });
+        }
+
+        if (employee.employee_id) {
+            await syncDeactivationForResignedEmployee(String(employee.employee_id));
         }
 
         return NextResponse.json({ ok: true });

@@ -120,7 +120,7 @@ export const SALARY_SELECT_JOIN = `
            s.is_active, s.notes,
            e.full_name, e.department, e.designation, e.employee_status
     FROM ${TABLE} s
-    INNER JOIN admin_employees e ON e.employee_id = s.employee_id
+    INNER JOIN admin_employees e ON e.employee_id = s.employee_id AND (e.is_deleted = 0 OR e.is_deleted IS NULL)
 `;
 
 export function mapSalaryRowToApi(row: AdminEmployeeSalaryRow) {

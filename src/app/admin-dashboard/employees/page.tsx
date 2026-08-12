@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Check, Eye, Loader2, Pencil, Trash2, X } from "lucide-react";
+import { AlertTriangle, Check, Eye, Loader2, Pencil, Trash2, X } from "lucide-react";
+import Toast from "@/components/Toast";
 
 type RowActionBusy = { recordId: number; kind: "view" | "edit" | "delete" } | null;
 
@@ -304,6 +305,8 @@ export default function AdminEmployeesPage() {
     const [isEmployeesLoading, setIsEmployeesLoading] = useState(true);
     const [employeesLoadError, setEmployeesLoadError] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [deleteConfirmTarget, setDeleteConfirmTarget] = useState<EmployeeRow | null>(null);
+    const [toastState, setToastState] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
     const filteredRoles = useMemo(
         () => roles.filter((role) => role.department === formValues.department),
@@ -440,7 +443,10 @@ export default function AdminEmployeesPage() {
             setIsAddModalOpen(true);
         } catch (error) {
             console.error("Error loading employee", error);
-            alert(mode === "view" ? "Could not load this employee to view." : "Could not load this employee for editing.");
+            setToastState({
+                message: mode === "view" ? "Could not load this employee to view." : "Could not load this employee for editing.",
+                type: "error",
+            });
         } finally {
             setActionBusy(null);
         }
@@ -454,12 +460,7 @@ export default function AdminEmployeesPage() {
         void loadEmployeeIntoModal(employee, "view");
     };
 
-    const handleDeleteEmployee = async (employee: EmployeeRow) => {
-        const ok = window.confirm(
-            `Remove ${employee.name} (${employee.employeeId}) from the directory? This cannot be undone.`,
-        );
-        if (!ok) return;
-
+    const confirmDeleteEmployee = async (employee: EmployeeRow) => {
         try {
             setActionBusy({ recordId: employee.recordId, kind: "delete" });
             const response = await fetch(`/api/admin/employees/${employee.recordId}`, { method: "DELETE" });
@@ -468,9 +469,15 @@ export default function AdminEmployeesPage() {
                 throw new Error(typeof data.message === "string" ? data.message : "Delete failed");
             }
             setEmployeesData((current) => current.filter((e) => e.recordId !== employee.recordId));
+            setDeleteConfirmTarget(null);
+            setToastState({
+                message: `Employee ${employee.employeeId} moved to Archived Employee directory.`,
+                type: "success",
+            });
         } catch (error) {
             console.error("Error deleting employee", error);
-            alert("Unable to delete this employee. Please try again.");
+            const msg = error instanceof Error ? error.message : "Unable to delete this employee. Please try again.";
+            setToastState({ message: msg, type: "error" });
         } finally {
             setActionBusy(null);
         }
@@ -495,7 +502,10 @@ export default function AdminEmployeesPage() {
             const data = await response.json().catch(() => ({}));
 
             if (response.status === 409) {
-                alert(typeof data.message === "string" ? data.message : "This Employee ID is already in use.");
+                setToastState({
+                    message: typeof data.message === "string" ? data.message : "This Employee ID is already in use.",
+                    type: "error",
+                });
                 return;
             }
 
@@ -520,10 +530,15 @@ export default function AdminEmployeesPage() {
                 }
             }
 
+            setToastState({
+                message: isEdit ? "Employee updated successfully!" : "Employee created successfully!",
+                type: "success",
+            });
             closeModal();
         } catch (error) {
             console.error("Error saving employee", error);
-            alert("Unable to save employee right now. Please try again.");
+            const msg = error instanceof Error ? error.message : "Unable to save employee right now. Please try again.";
+            setToastState({ message: msg, type: "error" });
         } finally {
             setIsSubmitting(false);
         }
@@ -776,7 +791,7 @@ export default function AdminEmployeesPage() {
                                                 </button>
                                                 <button
                                                     type="button"
-                                                    onClick={() => void handleDeleteEmployee(employee)}
+                                                    onClick={() => setDeleteConfirmTarget(employee)}
                                                     disabled={actionBusy !== null || isSubmitting}
                                                     className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-red-200 bg-red-50 text-red-700 shadow-sm transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
                                                     title="Delete employee"
@@ -967,6 +982,61 @@ export default function AdminEmployeesPage() {
                         </form>
                     </div>
                 </div>
+            )}
+
+            {/* Delete Confirmation Modal */}
+            {deleteConfirmTarget && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
+                    <div className="w-full max-w-md bg-white rounded-md p-6 shadow-2xl space-y-4 border border-gray-100 animate-in fade-in zoom-in-95 duration-150">
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-red-100 text-red-600">
+                                <AlertTriangle className="h-5 w-5" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-bold text-gray-900">Delete Employee?</h3>
+                                <p className="text-xs text-gray-500">ID: {deleteConfirmTarget.employeeId}</p>
+                            </div>
+                        </div>
+
+                        <p className="text-sm text-gray-600 leading-relaxed">
+                            Are you sure you want to delete <span className="font-semibold text-gray-900">{deleteConfirmTarget.name || deleteConfirmTarget.employeeId}</span>?
+                            They will be moved to the <span className="font-semibold text-gray-900">Archived Employee</span> section and hidden from active lists.
+                        </p>
+
+                        <div className="flex justify-end gap-3 pt-2">
+                            <button
+                                type="button"
+                                onClick={() => setDeleteConfirmTarget(null)}
+                                disabled={actionBusy !== null}
+                                className="rounded-md border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition disabled:opacity-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => void confirmDeleteEmployee(deleteConfirmTarget)}
+                                disabled={actionBusy !== null}
+                                className="inline-flex items-center gap-2 rounded-md bg-red-600 px-5 py-2 text-sm font-semibold text-white shadow-md hover:bg-red-700 transition disabled:opacity-50"
+                            >
+                                {actionBusy?.kind === "delete" ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                    <Trash2 className="h-4 w-4" />
+                                )}
+                                <span>Confirm Delete</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Toast Notification */}
+            {toastState && (
+                <Toast
+                    message={toastState.message}
+                    type={toastState.type}
+                    onClose={() => setToastState(null)}
+                />
             )}
         </div>
     );

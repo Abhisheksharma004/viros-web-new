@@ -75,11 +75,28 @@ async function runEnsureAdminEmployeesTable() {
             account_number VARCHAR(64) NULL,
             ifsc_code VARCHAR(32) NULL,
             upi_id VARCHAR(128) NULL,
+            is_deleted TINYINT(1) NOT NULL DEFAULT 0,
+            deleted_at TIMESTAMP NULL DEFAULT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             UNIQUE KEY uq_admin_employees_employee_id (employee_id)
         )
     `);
+
+    try {
+        const [cols] = await pool.query<import("mysql2").RowDataPacket[]>(
+            `SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'admin_employees'`
+        );
+        const colNames = new Set(cols.map((c) => String(c.COLUMN_NAME)));
+        if (!colNames.has("is_deleted")) {
+            await pool.query(`ALTER TABLE admin_employees ADD COLUMN is_deleted TINYINT(1) NOT NULL DEFAULT 0 AFTER upi_id`);
+        }
+        if (!colNames.has("deleted_at")) {
+            await pool.query(`ALTER TABLE admin_employees ADD COLUMN deleted_at TIMESTAMP NULL DEFAULT NULL AFTER is_deleted`);
+        }
+    } catch {
+        // ignore migration check errors
+    }
 
     try {
         await pool.query(`

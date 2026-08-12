@@ -127,7 +127,7 @@ export const SHIFT_SELECT_JOIN = `
            s.missed_punch_disable_days, s.location_type, s.location_label, s.working_days, s.is_active,
            e.full_name, e.department, e.designation, e.employee_status
     FROM ${TABLE} s
-    INNER JOIN admin_employees e ON e.employee_id = s.employee_id
+    INNER JOIN admin_employees e ON e.employee_id = s.employee_id AND (e.is_deleted = 0 OR e.is_deleted IS NULL)
 `;
 
 export function mapShiftRowToApi(row: AdminEmployeeShiftRow) {

@@ -20,6 +20,7 @@ export async function GET() {
         const [rows] = await pool.query(
             `SELECT id, employee_id, full_name, designation, department, official_email, employee_status, created_at
              FROM admin_employees
+             WHERE is_deleted = 0
              ORDER BY created_at DESC`
         );
         return NextResponse.json(rows, {

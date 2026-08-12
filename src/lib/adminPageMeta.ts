@@ -6,6 +6,11 @@ export type AdminPageMeta = {
 /** Longest paths first so nested routes match before parents. */
 const ADMIN_PAGE_META_ENTRIES: { path: string; title: string; subtitle?: string }[] = [
     {
+        path: "/admin-dashboard/delete-employee",
+        title: "Archived Employee",
+        subtitle: "View archived employees and recover or permanently delete them.",
+    },
+    {
         path: "/admin-dashboard/reports/newsletter",
         title: "Newsletter",
         subtitle: "Footer newsletter subscribers.",
