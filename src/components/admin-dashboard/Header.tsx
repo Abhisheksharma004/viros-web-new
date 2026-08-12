@@ -1,28 +1,57 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { getAdminPageMeta } from "@/lib/adminPageMeta";
+import type { AdminNotificationRow } from "@/lib/adminNotifications";
+
+function formatNotificationRelativeTime(iso: string): string {
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return "";
+    const diffMs = Date.now() - date.getTime();
+    const diffMin = Math.floor(diffMs / 60_000);
+    if (diffMin < 1) return "Just now";
+    if (diffMin < 60) return `${diffMin} min ago`;
+    const diffHr = Math.floor(diffMin / 60);
+    if (diffHr < 24) return `${diffHr} hr ago`;
+    const diffDay = Math.floor(diffHr / 24);
+    if (diffDay === 1) return "Yesterday";
+    if (diffDay < 7) return `${diffDay} days ago`;
+    return date.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+}
 
 export default function AdminHeader({ onMenuClick }: { onMenuClick: () => void }) {
     const [showProfileMenu, setShowProfileMenu] = useState(false);
     const [showNotifications, setShowNotifications] = useState(false);
     const [adminEmail, setAdminEmail] = useState("");
     const [adminName, setAdminName] = useState("");
+
+    const [notifications, setNotifications] = useState<AdminNotificationRow[]>([]);
+    const [unreadCount, setUnreadCount] = useState(0);
+    const [notificationsLoading, setNotificationsLoading] = useState(false);
+    const [markingAllRead, setMarkingAllRead] = useState(false);
+
     const router = useRouter();
     const pathname = usePathname();
     const pageMeta = getAdminPageMeta(pathname);
 
-    const notifications = [
-        { text: "New employee added: Rahul Sharma", time: "10 min ago", unread: true },
-        { text: "Birthday reminder: Priya tomorrow", time: "1 hour ago", unread: true },
-        { text: "User role updated: Editor → Admin", time: "3 hours ago", unread: false },
-        { text: "Monthly report generated", time: "Yesterday", unread: false },
-    ];
-
-    const unreadCount = notifications.filter((n) => n.unread).length;
     const avatarLetter = (adminName?.[0] || adminEmail?.[0] || "A").toUpperCase();
+
+    const loadNotifications = useCallback(async (silent = false) => {
+        if (!silent) setNotificationsLoading(true);
+        try {
+            const resp = await fetch("/api/admin/notifications", { cache: "no-store" });
+            if (!resp.ok) return;
+            const data = (await resp.json()) as { notifications: AdminNotificationRow[]; unreadCount: number };
+            setNotifications(Array.isArray(data.notifications) ? data.notifications : []);
+            setUnreadCount(typeof data.unreadCount === "number" ? data.unreadCount : 0);
+        } catch (err) {
+            console.error("Error loading admin notifications:", err);
+        } finally {
+            if (!silent) setNotificationsLoading(false);
+        }
+    }, []);
 
     useEffect(() => {
         let active = true;
@@ -30,9 +59,7 @@ export default function AdminHeader({ onMenuClick }: { onMenuClick: () => void }
         const fetchCurrentAdmin = async () => {
             try {
                 const response = await fetch("/api/auth/me", { method: "GET" });
-                if (!response.ok) {
-                    return;
-                }
+                if (!response.ok) return;
                 const data = await response.json();
                 if (active) {
                     setAdminEmail(data.email || "");
@@ -43,12 +70,61 @@ export default function AdminHeader({ onMenuClick }: { onMenuClick: () => void }
             }
         };
 
-        fetchCurrentAdmin();
+        void fetchCurrentAdmin();
+        void loadNotifications();
+
+        const timer = setInterval(() => {
+            if (active) {
+                void loadNotifications(true);
+            }
+        }, 30_000);
 
         return () => {
             active = false;
+            clearInterval(timer);
         };
-    }, []);
+    }, [loadNotifications]);
+
+    useEffect(() => {
+        if (showNotifications) {
+            void loadNotifications(true);
+        }
+    }, [showNotifications, loadNotifications]);
+
+    const handleMarkAllRead = async () => {
+        if (unreadCount === 0 || markingAllRead) return;
+        try {
+            setMarkingAllRead(true);
+            const resp = await fetch("/api/admin/notifications", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ action: "mark_all_read" }),
+            });
+            if (resp.ok) {
+                setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })).slice(0, 10));
+                setUnreadCount(0);
+            }
+        } catch (err) {
+            console.error("Error marking all read:", err);
+        } finally {
+            setMarkingAllRead(false);
+        }
+    };
+
+    const handleNotificationClick = async (n: AdminNotificationRow) => {
+        if (!n.isRead) {
+            setNotifications((prev) =>
+                prev.map((item) => (item.id === n.id ? { ...item, isRead: true } : item)),
+            );
+            setUnreadCount((prev) => Math.max(0, prev - 1));
+            void fetch(`/api/admin/notifications/${n.id}`, { method: "PATCH" }).catch(() => {});
+        }
+
+        setShowNotifications(false);
+        if (n.href) {
+            router.push(n.href);
+        }
+    };
 
     const handleLogout = async () => {
         try {
@@ -89,39 +165,85 @@ export default function AdminHeader({ onMenuClick }: { onMenuClick: () => void }
 
                 {/* Right */}
                 <div className="flex items-center space-x-4">
-
                     {/* Notifications */}
                     <div className="relative">
                         <button
-                            onClick={() => { setShowNotifications(!showNotifications); setShowProfileMenu(false); }}
+                            type="button"
+                            onClick={() => {
+                                setShowNotifications(!showNotifications);
+                                setShowProfileMenu(false);
+                            }}
                             className="relative text-gray-600 hover:text-gray-900"
                         >
                             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                                />
                             </svg>
                             {unreadCount > 0 && (
-                                <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
+                                <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                                    {unreadCount > 9 ? "9+" : unreadCount}
+                                </span>
                             )}
                         </button>
 
                         {showNotifications && (
                             <>
-                                <div className="fixed inset-0 z-10" onClick={() => setShowNotifications(false)} />
-                                <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg border border-gray-200 z-20 overflow-hidden">
+                                <div
+                                    className="fixed inset-0 z-10 bg-black/20 sm:bg-transparent"
+                                    onClick={() => setShowNotifications(false)}
+                                />
+                                <div className="fixed left-1/2 top-[4.75rem] z-20 w-[calc(100vw-1.5rem)] max-w-sm -translate-x-1/2 rounded-md border border-gray-200 bg-white shadow-lg overflow-hidden sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:w-80 sm:max-w-none sm:translate-x-0">
                                     <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
                                         <p className="text-sm font-bold text-gray-900">Notifications</p>
-                                        <span className="text-xs text-[#0a2a5e] font-semibold cursor-pointer hover:underline">Mark all read</span>
+                                        {unreadCount > 0 ? (
+                                            <button
+                                                type="button"
+                                                onClick={() => void handleMarkAllRead()}
+                                                disabled={markingAllRead}
+                                                className="text-xs text-[#0a2a5e] font-semibold hover:underline disabled:opacity-50"
+                                            >
+                                                {markingAllRead ? "Updating…" : "Mark all read"}
+                                            </button>
+                                        ) : null}
                                     </div>
-                                    <div className="divide-y divide-gray-50">
-                                        {notifications.map((n, i) => (
-                                            <div key={i} className={`px-4 py-3 flex items-start gap-3 ${n.unread ? "bg-blue-50/50" : ""}`}>
-                                                <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${n.unread ? "bg-[#0a2a5e]" : "bg-gray-300"}`} />
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="text-sm text-gray-800">{n.text}</p>
-                                                    <p className="text-xs text-gray-400 mt-0.5">{n.time}</p>
-                                                </div>
-                                            </div>
-                                        ))}
+                                    <div className="max-h-80 overflow-y-auto divide-y divide-gray-50">
+                                        {notificationsLoading && notifications.length === 0 ? (
+                                            <p className="px-4 py-6 text-sm text-gray-500 text-center">Loading…</p>
+                                        ) : notifications.length === 0 ? (
+                                            <p className="px-4 py-6 text-sm text-gray-500 text-center">
+                                                No notifications yet
+                                            </p>
+                                        ) : (
+                                            notifications.map((n) => (
+                                                <button
+                                                    key={n.id}
+                                                    type="button"
+                                                    onClick={() => void handleNotificationClick(n)}
+                                                    className={`w-full text-left px-4 py-3 flex items-start gap-3 hover:bg-gray-50 transition-colors ${
+                                                        n.isRead ? "" : "bg-blue-50/50"
+                                                    }`}
+                                                >
+                                                    <div
+                                                        className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${
+                                                            n.isRead ? "bg-gray-300" : "bg-[#0a2a5e]"
+                                                        }`}
+                                                    />
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-sm font-medium text-gray-900">{n.title}</p>
+                                                        <p className="text-sm text-gray-600 mt-0.5 line-clamp-2">
+                                                            {n.message}
+                                                        </p>
+                                                        <p className="text-xs text-gray-400 mt-0.5">
+                                                            {formatNotificationRelativeTime(n.createdAt)}
+                                                        </p>
+                                                    </div>
+                                                </button>
+                                            ))
+                                        )}
                                     </div>
                                 </div>
                             </>
@@ -131,13 +253,17 @@ export default function AdminHeader({ onMenuClick }: { onMenuClick: () => void }
                     {/* Profile */}
                     <div className="relative">
                         <button
-                            onClick={() => { setShowProfileMenu(!showProfileMenu); setShowNotifications(false); }}
+                            type="button"
+                            onClick={() => {
+                                setShowProfileMenu(!showProfileMenu);
+                                setShowNotifications(false);
+                            }}
                             className="flex items-center space-x-2 text-gray-700 hover:text-gray-900"
                         >
-                            <div className="w-8 h-8 bg-linear-to-r from-[#06b6d4] to-[#06124f] rounded-full flex items-center justify-center text-white text-sm font-bold">
+                            <div className="w-8 h-8 bg-gradient-to-r from-[#06b6d4] to-[#06124f] rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0">
                                 {avatarLetter}
                             </div>
-                            <span className="hidden sm:block font-medium">
+                            <span className="hidden sm:block font-medium max-w-[140px] truncate">
                                 {adminName || "Administrator"}
                             </span>
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -150,7 +276,7 @@ export default function AdminHeader({ onMenuClick }: { onMenuClick: () => void }
                                 <div className="fixed inset-0 z-10" onClick={() => setShowProfileMenu(false)} />
                                 <div className="absolute right-0 mt-2 w-52 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-20">
                                     <div className="px-4 py-2.5 border-b border-gray-200">
-                                        <p className="text-sm font-bold text-gray-900">
+                                        <p className="text-sm font-bold text-gray-900 truncate">
                                             {adminName || "Administrator"}
                                         </p>
                                         <p className="text-xs text-gray-400 truncate">{adminEmail || "Super Admin"}</p>
@@ -161,7 +287,12 @@ export default function AdminHeader({ onMenuClick }: { onMenuClick: () => void }
                                         className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100"
                                     >
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                                            />
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                         </svg>
                                         Settings
@@ -172,17 +303,28 @@ export default function AdminHeader({ onMenuClick }: { onMenuClick: () => void }
                                         className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100"
                                     >
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                                            />
                                         </svg>
                                         Website Dashboard
                                     </Link>
                                     <div className="border-t border-gray-200 mt-1 pt-1">
                                         <button
+                                            type="button"
                                             onClick={handleLogout}
                                             className="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50"
                                         >
                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                                <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth={2}
+                                                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                                                />
                                             </svg>
                                             Logout
                                         </button>

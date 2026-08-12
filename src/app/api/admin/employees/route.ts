@@ -72,6 +72,20 @@ export async function POST(request: Request) {
         }
 
         const insertId = (result as ResultSetHeader).insertId;
+
+        try {
+            const { upsertAdminNotification } = await import("@/lib/adminNotifications");
+            await upsertAdminNotification({
+                type: "employee",
+                title: `New Employee Registered`,
+                message: `${fullName} (${employeeId}) joined ${strFromBody(body, "department") || "General"}.`,
+                href: "/admin-dashboard/employees",
+                referenceKey: `admin:emp:${insertId}:created`,
+            });
+        } catch {
+            // non-fatal notification trigger error
+        }
+
         const [rows] = await pool.query(
             `SELECT id, employee_id, full_name, designation, department, official_email, employee_status, created_at
              FROM admin_employees WHERE id = ?`,

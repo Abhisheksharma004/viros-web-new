@@ -93,6 +93,32 @@ export async function POST(request: Request) {
 
         const today = await punchAttendance(employeeId, punch);
 
+        try {
+            const { upsertAdminNotification } = await import("@/lib/adminNotifications");
+            const empName = session.name || employeeId;
+            const timeLabel = punch.time || new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
+
+            if (punch.type === "check-in") {
+                await upsertAdminNotification({
+                    type: "system",
+                    title: `Employee Check-In: ${empName}`,
+                    message: `${empName} (${employeeId}) checked in at ${timeLabel}.`,
+                    href: "/admin-dashboard/attendance",
+                    referenceKey: `admin:att:${employeeId}:${today.record.date}:check-in`,
+                });
+            } else {
+                await upsertAdminNotification({
+                    type: "system",
+                    title: `Employee Check-Out: ${empName}`,
+                    message: `${empName} (${employeeId}) checked out at ${timeLabel}.`,
+                    href: "/admin-dashboard/attendance",
+                    referenceKey: `admin:att:${employeeId}:${today.record.date}:check-out`,
+                });
+            }
+        } catch {
+            // non-fatal trigger error
+        }
+
         if (punch.type === "check-in") {
             void trySendPendingTaskReminder(employeeId).catch((err) => {
                 console.error("[Pending task reminder] Check-in trigger failed:", err);

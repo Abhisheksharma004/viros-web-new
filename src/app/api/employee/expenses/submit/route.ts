@@ -30,6 +30,19 @@ export async function POST(request: Request) {
             getEmployeeMonthClaimInfo(session.employeeId, month),
         ]);
 
+        try {
+            const { upsertAdminNotification } = await import("@/lib/adminNotifications");
+            await upsertAdminNotification({
+                type: "expense",
+                title: `New Expense Submission: ${session.name || session.employeeId}`,
+                message: `${result.submittedCount} claim(s) submitted for ${month} (${new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(result.totalAmount)}).`,
+                href: "/admin-dashboard/expense-management",
+                referenceKey: `admin:expense:${session.employeeId}:${month}:submitted`,
+            });
+        } catch {
+            // non-fatal trigger error
+        }
+
         return NextResponse.json({
             message: `${result.submittedCount} expense${result.submittedCount === 1 ? "" : "s"} submitted for admin approval (${new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(result.totalAmount)})`,
             submittedCount: result.submittedCount,

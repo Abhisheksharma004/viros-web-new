@@ -186,6 +186,19 @@ export async function POST(request: Request) {
             },
         });
 
+        try {
+            const { upsertAdminNotification } = await import("@/lib/adminNotifications");
+            await upsertAdminNotification({
+                type: "leave",
+                title: `Pending Leave Request: ${profile.fullName || session.employeeId}`,
+                message: `${created.request_id} · ${created.policy_name} for ${created.days} day(s) awaiting review.`,
+                href: "/admin-dashboard/leave-request",
+                referenceKey: `admin:leave:${created.id}:pending`,
+            });
+        } catch {
+            // non-fatal trigger error
+        }
+
         return NextResponse.json(created, { status: 201 });
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : "Unknown error";
