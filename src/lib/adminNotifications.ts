@@ -181,7 +181,7 @@ export async function syncAdminNotifications() {
                 employee_name: string | null;
             })[]
         >(
-            `SELECT lr.id, lr.request_id, lr.employee_id, lr.leave_type, lr.days, lr.status, lr.applied_on,
+            `SELECT lr.id, lr.request_id, lr.employee_id, lr.policy_name AS leave_type, lr.days, lr.status, lr.applied_on,
                     COALESCE(e.full_name, lr.employee_id) AS employee_name
              FROM employee_leave_requests lr
              LEFT JOIN admin_employees e ON e.employee_id = lr.employee_id AND (e.is_deleted = 0 OR e.is_deleted IS NULL)

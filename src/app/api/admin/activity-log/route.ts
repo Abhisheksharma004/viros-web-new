@@ -99,7 +99,7 @@ export async function GET(request: Request) {
         // 2. Leave Requests
         try {
             const [leaveRows] = await pool.query<RowDataPacket[]>(
-                `SELECT lr.id, lr.request_id, lr.employee_id, lr.leave_type, lr.status, lr.applied_on,
+                `SELECT lr.id, lr.request_id, lr.employee_id, lr.policy_name AS leave_type, lr.status, lr.applied_on,
                         COALESCE(e.full_name, lr.employee_id) AS employee_name
                  FROM employee_leave_requests lr
                  LEFT JOIN admin_employees e ON e.employee_id = lr.employee_id
