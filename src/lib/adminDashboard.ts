@@ -115,11 +115,16 @@ export async function buildAdminDashboardOverview(): Promise<AdminDashboardOverv
         pool.query<RowDataPacket[]>(
             `SELECT employee_id, full_name, designation, department, employee_status, created_at
              FROM admin_employees
+             WHERE (is_deleted = 0 OR is_deleted IS NULL)
+               AND (employee_status IS NULL OR TRIM(employee_status) = '' OR LOWER(TRIM(employee_status)) NOT LIKE '%resign%')
              ORDER BY created_at DESC
              LIMIT 8`,
         ),
         pool.query<RowDataPacket[]>(
-            `SELECT COUNT(*) AS c FROM admin_employee_access WHERE LOWER(TRIM(portal_status)) = 'active'`,
+            `SELECT COUNT(*) AS c
+             FROM admin_employee_access ea
+             INNER JOIN admin_employees e ON e.employee_id = ea.employee_id AND (e.is_deleted = 0 OR e.is_deleted IS NULL)
+             WHERE LOWER(TRIM(ea.portal_status)) = 'active'`,
         ),
         pool.query<RowDataPacket[]>(`SELECT COUNT(*) AS c FROM admin_departments`),
         pool.query<RowDataPacket[]>(
@@ -127,16 +132,22 @@ export async function buildAdminDashboardOverview(): Promise<AdminDashboardOverv
                 COALESCE(NULLIF(TRIM(department), ''), 'Unassigned') AS name,
                 COUNT(*) AS count
              FROM admin_employees
-             WHERE ${ACTIVE_EMPLOYEE_SQL}
+             WHERE ${ACTIVE_EMPLOYEE_SQL} AND (is_deleted = 0 OR is_deleted IS NULL)
              GROUP BY name
              ORDER BY count DESC, name ASC
              LIMIT 8`,
         ),
         pool.query<RowDataPacket[]>(
-            `SELECT COUNT(*) AS c FROM employee_leave_requests WHERE status IN ('pending', 'l1_approved')`,
+            `SELECT COUNT(*) AS c
+             FROM employee_leave_requests lr
+             INNER JOIN admin_employees e ON e.employee_id = lr.employee_id AND (e.is_deleted = 0 OR e.is_deleted IS NULL)
+             WHERE lr.status IN ('pending', 'l1_approved')`,
         ),
         pool.query<RowDataPacket[]>(
-            `SELECT COUNT(*) AS c FROM employee_expenses WHERE status = 'pending'`,
+            `SELECT COUNT(*) AS c
+             FROM employee_expenses ex
+             INNER JOIN admin_employees e ON e.employee_id = ex.employee_id AND (e.is_deleted = 0 OR e.is_deleted IS NULL)
+             WHERE ex.status = 'pending'`,
         ),
         safeNewsletterQuery(`SELECT COUNT(*) AS c FROM newsletter_subscriptions WHERE status = 'active'`),
         pool.query<RowDataPacket[]>(
@@ -145,14 +156,15 @@ export async function buildAdminDashboardOverview(): Promise<AdminDashboardOverv
                     lr.status,
                     lr.applied_on
              FROM employee_leave_requests lr
-             LEFT JOIN admin_employees e ON e.employee_id = lr.employee_id
+             INNER JOIN admin_employees e ON e.employee_id = lr.employee_id AND (e.is_deleted = 0 OR e.is_deleted IS NULL)
              ORDER BY lr.applied_on DESC
              LIMIT 5`,
         ),
         pool.query<RowDataPacket[]>(
-            `SELECT expense_id, employee_name, title, amount, status, created_at
-             FROM employee_expenses
-             ORDER BY created_at DESC
+            `SELECT ex.expense_id, ex.employee_name, ex.title, ex.amount, ex.status, ex.created_at
+             FROM employee_expenses ex
+             INNER JOIN admin_employees e ON e.employee_id = ex.employee_id AND (e.is_deleted = 0 OR e.is_deleted IS NULL)
+             ORDER BY ex.created_at DESC
              LIMIT 5`,
         ),
         safeNewsletterQuery(
@@ -164,7 +176,7 @@ export async function buildAdminDashboardOverview(): Promise<AdminDashboardOverv
     ]);
 
     const allEmployees = await pool.query<RowDataPacket[]>(
-        `SELECT employee_status FROM admin_employees`,
+        `SELECT employee_status FROM admin_employees WHERE (is_deleted = 0 OR is_deleted IS NULL)`,
     );
     const employeeList = allEmployees[0] as RowDataPacket[];
     const employeeCount = employeeList.length;
@@ -175,19 +187,25 @@ export async function buildAdminDashboardOverview(): Promise<AdminDashboardOverv
 
     const recentEmployees: AdminDashboardRecentEmployee[] = (
         employeeRows[0] as RowDataPacket[]
-    ).slice(0, 5).map((row) => {
-        const fullName = String(row.full_name ?? "").trim() || "Employee";
-        const status = String(row.employee_status ?? "").trim() || "Active";
-        return {
-            employeeId: String(row.employee_id ?? ""),
-            fullName,
-            designation: String(row.designation ?? "").trim() || "—",
-            department: String(row.department ?? "").trim() || "—",
-            status,
-            initials: initialsFromName(fullName),
-            href: "/admin-dashboard/employees",
-        };
-    });
+    )
+        .filter((row) => {
+            const status = String(row.employee_status ?? "").trim().toLowerCase();
+            return !status.includes("resign");
+        })
+        .slice(0, 5)
+        .map((row) => {
+            const fullName = String(row.full_name ?? "").trim() || "Employee";
+            const status = String(row.employee_status ?? "").trim() || "Active";
+            return {
+                employeeId: String(row.employee_id ?? ""),
+                fullName,
+                designation: String(row.designation ?? "").trim() || "—",
+                department: String(row.department ?? "").trim() || "—",
+                status,
+                initials: initialsFromName(fullName),
+                href: "/admin-dashboard/employees",
+            };
+        });
 
     const deptRows = deptGroupRows[0] as RowDataPacket[];
     const departments: AdminDashboardDepartmentSlice[] = deptRows.map((row, index) => ({
