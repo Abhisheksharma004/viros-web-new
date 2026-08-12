@@ -277,12 +277,12 @@ function EmployeeStatusViewBadge({ status }: { status: string }) {
     const tone = isActive
         ? "bg-green-50 text-green-800 ring-1 ring-green-600/15"
         : isOnLeave
-          ? "bg-amber-50 text-amber-800 ring-1 ring-amber-600/15"
-          : isResigned
-            ? "bg-rose-50 text-rose-700 ring-1 ring-rose-600/20"
-            : isInactive
-              ? "bg-gray-100 text-gray-700 ring-1 ring-gray-200"
-              : "bg-blue-50 text-blue-800 ring-1 ring-blue-600/15";
+            ? "bg-amber-50 text-amber-800 ring-1 ring-amber-600/15"
+            : isResigned
+                ? "bg-rose-50 text-rose-700 ring-1 ring-rose-600/20"
+                : isInactive
+                    ? "bg-gray-100 text-gray-700 ring-1 ring-gray-200"
+                    : "bg-blue-50 text-blue-800 ring-1 ring-blue-600/15";
 
     return (
         <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${tone}`}>
@@ -625,8 +625,8 @@ export default function AdminEmployeesPage() {
                             {!formValues.department
                                 ? "Select Department First"
                                 : isMetaLoading
-                                  ? "Loading..."
-                                  : field.label}
+                                    ? "Loading..."
+                                    : field.label}
                         </option>
                         {filteredRoles.map((role) => (
                             <option key={role.id} value={role.name}>
@@ -682,7 +682,7 @@ export default function AdminEmployeesPage() {
 
             <div className="overflow-hidden rounded-md border border-gray-100 bg-white shadow-sm">
                 <div className="border-b border-gray-100 p-6">
-                    <p className="text-sm font-semibold text-gray-900">Employee roster</p>
+                    <p className="text-sm font-semibold text-gray-900">Employee Directory</p>
                     <p className="mt-1 text-sm text-gray-500">
                         {isEmployeesLoading ? "Loading…" : `Showing ${employeesData.length} employee(s).`}
                     </p>
@@ -742,17 +742,16 @@ export default function AdminEmployeesPage() {
                                         <td className="px-6 py-4 text-sm text-gray-700">{employee.email}</td>
                                         <td className="px-6 py-4">
                                             <span
-                                                className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
-                                                    employee.status === "Active"
-                                                        ? "bg-green-50 text-green-700"
-                                                        : employee.status === "On Leave"
-                                                          ? "bg-amber-50 text-amber-700"
-                                                          : employee.status === "Resigned"
+                                                className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${employee.status === "Active"
+                                                    ? "bg-green-50 text-green-700"
+                                                    : employee.status === "On Leave"
+                                                        ? "bg-amber-50 text-amber-700"
+                                                        : employee.status === "Resigned"
                                                             ? "bg-rose-50 text-rose-700"
                                                             : employee.status === "Inactive"
-                                                              ? "bg-gray-100 text-gray-700"
-                                                              : "bg-blue-50 text-blue-700"
-                                                }`}
+                                                                ? "bg-gray-100 text-gray-700"
+                                                                : "bg-blue-50 text-blue-700"
+                                                    }`}
                                             >
                                                 {employee.status}
                                             </span>
@@ -768,7 +767,7 @@ export default function AdminEmployeesPage() {
                                                     aria-label="View employee"
                                                 >
                                                     {actionBusy?.recordId === employee.recordId &&
-                                                    actionBusy.kind === "view" ? (
+                                                        actionBusy.kind === "view" ? (
                                                         <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
                                                     ) : (
                                                         <Eye className="h-4 w-4" aria-hidden />
@@ -783,7 +782,7 @@ export default function AdminEmployeesPage() {
                                                     aria-label="Edit employee"
                                                 >
                                                     {actionBusy?.recordId === employee.recordId &&
-                                                    actionBusy.kind === "edit" ? (
+                                                        actionBusy.kind === "edit" ? (
                                                         <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
                                                     ) : (
                                                         <Pencil className="h-4 w-4" aria-hidden />
@@ -798,7 +797,7 @@ export default function AdminEmployeesPage() {
                                                     aria-label="Delete employee"
                                                 >
                                                     {actionBusy?.recordId === employee.recordId &&
-                                                    actionBusy.kind === "delete" ? (
+                                                        actionBusy.kind === "delete" ? (
                                                         <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
                                                     ) : (
                                                         <Trash2 className="h-4 w-4" aria-hidden />
@@ -868,9 +867,8 @@ export default function AdminEmployeesPage() {
                                                             <EmployeeStatusViewBadge status={display} />
                                                         ) : (
                                                             <p
-                                                                className={`text-sm font-semibold text-gray-900 ${
-                                                                    isWide ? "whitespace-pre-wrap break-words" : "break-words"
-                                                                }`}
+                                                                className={`text-sm font-semibold text-gray-900 ${isWide ? "whitespace-pre-wrap break-words" : "break-words"
+                                                                    }`}
                                                             >
                                                                 {display || "—"}
                                                             </p>
@@ -975,8 +973,8 @@ export default function AdminEmployeesPage() {
                                     {isSubmitting
                                         ? "Saving…"
                                         : editingRecordId !== null
-                                          ? "Update employee"
-                                          : "Save employee"}
+                                            ? "Update employee"
+                                            : "Save employee"}
                                 </button>
                             </div>
                         </form>

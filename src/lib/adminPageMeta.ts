@@ -16,7 +16,7 @@ const ADMIN_PAGE_META_ENTRIES: { path: string; title: string; subtitle?: string 
         subtitle: "Footer newsletter subscribers.",
     },
     {
-        path: "/admin-dashboard/reports/activity",
+        path: "/admin-dashboard/activity",
         title: "Activity Log",
         subtitle: "Admin activity records.",
     },
