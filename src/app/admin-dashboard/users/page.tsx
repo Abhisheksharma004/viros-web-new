@@ -602,18 +602,22 @@ export default function UserAccessPage() {
                             <span>Users Selected</span>
                         </div>
                         <div className="flex items-center gap-2">
-                            <button
-                                onClick={handleBulkActivate}
-                                className="px-4 py-2 rounded-md bg-green-600 text-sm font-semibold text-white hover:bg-green-700 transition"
-                            >
-                                Activate Selected
-                            </button>
-                            <button
-                                onClick={handleBulkSuspend}
-                                className="px-4 py-2 rounded-md bg-rose-600 text-sm font-semibold text-white hover:bg-rose-700 transition"
-                            >
-                                Suspend Selected
-                            </button>
+                            {(canWrite || isAdmin) && (
+                                <>
+                                    <button
+                                        onClick={handleBulkActivate}
+                                        className="px-4 py-2 rounded-md bg-green-600 text-sm font-semibold text-white hover:bg-green-700 transition"
+                                    >
+                                        Activate Selected
+                                    </button>
+                                    <button
+                                        onClick={handleBulkSuspend}
+                                        className="px-4 py-2 rounded-md bg-rose-600 text-sm font-semibold text-white hover:bg-rose-700 transition"
+                                    >
+                                        Suspend Selected
+                                    </button>
+                                </>
+                            )}
                             <button
                                 onClick={() => setSelectedUserIds([])}
                                 className="text-sm font-semibold text-gray-500 hover:text-gray-700 ml-2"
@@ -736,20 +740,22 @@ export default function UserAccessPage() {
 
                                             <td className="px-6 py-4 text-sm">
                                                 <div className="flex items-center gap-2.5">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleToggleStatus(user.id)}
-                                                        className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                                                            user.status === "Active" ? "bg-green-600" : "bg-gray-300"
-                                                        }`}
-                                                        title="Click to toggle access state"
-                                                    >
-                                                        <span
-                                                            className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                                                                user.status === "Active" ? "translate-x-4" : "translate-x-0"
+                                                    {(canWrite || isAdmin) && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleToggleStatus(user.id)}
+                                                            className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                                                                user.status === "Active" ? "bg-green-600" : "bg-gray-300"
                                                             }`}
-                                                        />
-                                                    </button>
+                                                            title="Click to toggle access state"
+                                                        >
+                                                            <span
+                                                                className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                                                                    user.status === "Active" ? "translate-x-4" : "translate-x-0"
+                                                                }`}
+                                                            />
+                                                        </button>
+                                                    )}
                                                     <span
                                                         className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
                                                             user.status === "Active"

@@ -31,6 +31,7 @@ import {
     Wallet,
     X,
 } from "lucide-react";
+import { useModulePermission } from "@/context/ModulePermissionContext";
 
 type SalaryApiRow = {
     id: number;
@@ -115,6 +116,7 @@ function payrollMonthParts(ym: string): { year: number; month: number } | null {
 }
 
 export default function PayrollPage() {
+    const { write: canWrite, admin: isAdmin } = useModulePermission();
     const [payrollMonth, setPayrollMonth] = useState(() => new Date().toISOString().slice(0, 7));
     const [salaries, setSalaries] = useState<SalaryApiRow[]>([]);
     const [advances, setAdvances] = useState<AdvanceApiRow[]>([]);
@@ -622,7 +624,7 @@ export default function PayrollPage() {
                                   }`}
                         </p>
                     </div>
-                    {selectedRows.length > 0 ? (
+                    {(canWrite || isAdmin) && selectedRows.length > 0 ? (
                         <button
                             type="button"
                             onClick={() => setShowBulkConfirmModal(true)}
@@ -805,7 +807,7 @@ export default function PayrollPage() {
                                                                 <Download className="h-4 w-4" />
                                                             )}
                                                         </button>
-                                                    ) : (
+                                                    ) : (canWrite || isAdmin) ? (
                                                         <button
                                                             type="button"
                                                             onClick={() => setPayConfirmTarget(row)}
@@ -827,7 +829,7 @@ export default function PayrollPage() {
                                                                 <Banknote className="h-4 w-4" />
                                                             )}
                                                         </button>
-                                                    )}
+                                                    ) : null}
                                                 </div>
                                             </td>
                                         </tr>

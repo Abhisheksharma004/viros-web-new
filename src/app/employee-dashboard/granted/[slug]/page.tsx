@@ -28,6 +28,7 @@ import LetterPage from "@/app/admin-dashboard/letter/page";
 import OfferLetterPage from "@/app/admin-dashboard/offer-letter/page";
 import ProductsPage from "@/app/admin-dashboard/products/page";
 import WarrantyPage from "@/app/admin-dashboard/warranty/page";
+import WebsiteDashboardPage from "@/app/dashboard/page";
 
 const SLUG_TITLE_MAP: Record<string, { title: string; category: string }> = {
     "amc-report": { title: "AMC Report", category: "Asset Management" },
@@ -57,6 +58,7 @@ const SLUG_TITLE_MAP: Record<string, { title: string; category: string }> = {
     "offer-letter": { title: "Offer Letter", category: "Documents" },
     "products": { title: "Products", category: "Inventory" },
     "warranty": { title: "Warranty", category: "Inventory" },
+    "website-dashboard": { title: "Website Dashboard", category: "Dashboard" },
 };
 
 import { ModulePermissionProvider, type GrantedPermissionScope } from "@/context/ModulePermissionContext";
@@ -202,6 +204,8 @@ export default function GrantedModulePage({
                 return <ProductsPage />;
             case "warranty":
                 return <WarrantyPage />;
+            case "website-dashboard":
+                return <WebsiteDashboardPage />;
             default:
                 return (
                     <div className="space-y-6">

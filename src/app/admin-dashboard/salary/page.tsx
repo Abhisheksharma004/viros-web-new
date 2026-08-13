@@ -13,6 +13,7 @@ import {
     User,
     X,
 } from "lucide-react";
+import { useModulePermission } from "@/context/ModulePermissionContext";
 
 type EmployeeLookupRow = {
     employee_id: string;
@@ -608,6 +609,7 @@ function SalaryBreakdownPanel({
 }
 
 export default function Page() {
+    const { write: canWrite, delete: canDelete, admin: isAdmin } = useModulePermission();
     const [salaries, setSalaries] = useState<SalaryRecord[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState("");
@@ -914,15 +916,17 @@ export default function Page() {
         <div className="mx-auto max-w-7xl space-y-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 {loadError ? <p className="text-xs text-amber-600">{loadError}</p> : <span className="hidden sm:block" aria-hidden />}
-                <button
-                    type="button"
-                    onClick={openAdd}
-                    disabled={isLoading}
-                    className="inline-flex items-center justify-center gap-2 rounded-md bg-[#0a2a5e] px-5 py-3 text-sm font-semibold text-white shadow-sm hover:opacity-90 disabled:opacity-60"
-                >
-                    <Plus className="h-4 w-4" aria-hidden />
-                    Setup salary
-                </button>
+                {(canWrite || isAdmin) && (
+                    <button
+                        type="button"
+                        onClick={openAdd}
+                        disabled={isLoading}
+                        className="inline-flex items-center justify-center gap-2 rounded-md bg-[#0a2a5e] px-5 py-3 text-sm font-semibold text-white shadow-sm hover:opacity-90 disabled:opacity-60"
+                    >
+                        <Plus className="h-4 w-4" aria-hidden />
+                        Setup salary
+                    </button>
+                )}
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -1021,7 +1025,7 @@ export default function Page() {
                                         <p className="text-xs text-gray-500">{row.employeeName}</p>
                                     </td>
                                     <td className="px-4 py-4 text-sm text-gray-700">
-                                        <p className="font-medium text-gray-900">{row.department || "—"}</p>
+                                        <p className="font-medium text-[#0a2a5e]">{row.department || "—"}</p>
                                         <p className="text-xs text-gray-500">{row.designation || "—"}</p>
                                     </td>
                                     <td className="whitespace-nowrap px-4 py-4 text-sm font-medium text-gray-900">
@@ -1057,29 +1061,35 @@ export default function Page() {
                                             >
                                                 <Eye className="h-4 w-4" />
                                             </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => openEdit(row)}
-                                                className="rounded-md p-2 text-gray-500 hover:bg-gray-100"
-                                                title="Edit"
-                                            >
-                                                <Pencil className="h-4 w-4" />
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => toggleActive(row)}
-                                                className="rounded-md px-2 py-2 text-xs font-semibold text-[#06b6d4] hover:bg-[#06b6d4]/10"
-                                            >
-                                                {row.active ? "Off" : "On"}
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => handleDelete(row)}
-                                                className="rounded-md p-2 text-red-500 hover:bg-red-50"
-                                                title="Delete"
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </button>
+                                            {(canWrite || isAdmin) && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => openEdit(row)}
+                                                    className="rounded-md p-2 text-gray-500 hover:bg-gray-100"
+                                                    title="Edit"
+                                                >
+                                                    <Pencil className="h-4 w-4" />
+                                                </button>
+                                            )}
+                                            {(canWrite || isAdmin) && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => toggleActive(row)}
+                                                    className="rounded-md px-2 py-2 text-xs font-semibold text-[#06b6d4] hover:bg-[#06b6d4]/10"
+                                                >
+                                                    {row.active ? "Off" : "On"}
+                                                </button>
+                                            )}
+                                            {(canDelete || isAdmin) && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleDelete(row)}
+                                                    className="rounded-md p-2 text-red-500 hover:bg-red-50"
+                                                    title="Delete"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </button>
+                                            )}
                                         </div>
                                     </td>
                                 </tr>

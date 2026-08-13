@@ -18,6 +18,7 @@ import {
     statusDisplayLabel,
     type LeaveRejectionStage,
 } from "@/lib/leaveRequestDisplay";
+import { useModulePermission } from "@/context/ModulePermissionContext";
 
 type LeaveStatus = "pending" | "l1_approved" | "approved" | "rejected" | "cancelled";
 type StatusFilter = LeaveStatus | "all";
@@ -171,6 +172,7 @@ function periodLabel(row: LeaveRequestRow) {
 }
 
 export default function AdminLeaveRequestPage() {
+    const { write: canWrite, admin: isAdmin } = useModulePermission();
     const [requests, setRequests] = useState<LeaveRequestRow[]>([]);
     const [stats, setStats] = useState<LeaveStats>({
         pending: 0,
@@ -521,7 +523,7 @@ export default function AdminLeaveRequestPage() {
                                                     >
                                                         <Eye className="h-4 w-4" />
                                                     </button>
-                                                    {row.status === "pending" && (
+                                                    {(canWrite || isAdmin) && row.status === "pending" && (
                                                         <>
                                                             <button
                                                                 type="button"
@@ -549,7 +551,7 @@ export default function AdminLeaveRequestPage() {
                                                             </button>
                                                         </>
                                                     )}
-                                                    {row.status === "l1_approved" && (
+                                                    {(canWrite || isAdmin) && row.status === "l1_approved" && (
                                                         <>
                                                             <button
                                                                 type="button"
@@ -577,7 +579,7 @@ export default function AdminLeaveRequestPage() {
                                                             </button>
                                                         </>
                                                     )}
-                                                    {row.status === "approved" && (
+                                                    {(canWrite || isAdmin) && row.status === "approved" && (
                                                         <button
                                                             type="button"
                                                             disabled={busy}

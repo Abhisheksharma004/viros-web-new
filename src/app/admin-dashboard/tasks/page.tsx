@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Eye, Loader2, MessageSquare, Pencil, Plus, Search, Trash2, X } from "lucide-react";
+import { useModulePermission } from "@/context/ModulePermissionContext";
 import {
     PRIORITY_FILTERS,
     STATUS_FILTERS,
@@ -31,6 +32,7 @@ type EmployeeOption = {
 };
 
 export default function AdminTasksPage() {
+    const { write: canWrite, delete: canDelete, admin: isAdmin } = useModulePermission();
     const [tasks, setTasks] = useState<TaskRow[]>([]);
     const [tasksLoading, setTasksLoading] = useState(true);
     const [tasksError, setTasksError] = useState("");
@@ -378,14 +380,16 @@ export default function AdminTasksPage() {
     return (
         <div className="space-y-6 relative">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-4">
-                <button
-                    type="button"
-                    onClick={openAddModal}
-                    className="inline-flex cursor-pointer items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-semibold text-white bg-gradient-to-r from-[#06124f] to-[#0a2a5e] hover:opacity-90 transition-opacity shadow-sm"
-                >
-                    <Plus className="w-4 h-4" aria-hidden />
-                    Add Task
-                </button>
+                {(canWrite || isAdmin) && (
+                    <button
+                        type="button"
+                        onClick={openAddModal}
+                        className="inline-flex cursor-pointer items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-semibold text-white bg-gradient-to-r from-[#06124f] to-[#0a2a5e] hover:opacity-90 transition-opacity shadow-sm"
+                    >
+                        <Plus className="w-4 h-4" aria-hidden />
+                        Add Task
+                    </button>
+                )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
@@ -559,7 +563,7 @@ export default function AdminTasksPage() {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className="mx-auto grid w-[5.25rem] grid-cols-2 gap-1.5">
+                                            <div className="mx-auto flex items-center justify-center gap-1.5">
                                                 <button
                                                     type="button"
                                                     onClick={() => openViewModal(task)}
@@ -583,29 +587,33 @@ export default function AdminTasksPage() {
                                                         </span>
                                                     ) : null}
                                                 </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => openEditModal(task)}
-                                                    className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-gray-200 bg-white text-[#0a2a5e] shadow-sm transition hover:bg-slate-50"
-                                                    title="Edit task"
-                                                    aria-label="Edit task"
-                                                >
-                                                    <Pencil className="h-4 w-4" aria-hidden />
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => void handleDeleteTask(task)}
-                                                    disabled={deletingId === task.recordId}
-                                                    className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-red-200 bg-red-50 text-red-700 shadow-sm transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
-                                                    title="Delete task"
-                                                    aria-label="Delete task"
-                                                >
-                                                    {deletingId === task.recordId ? (
-                                                        <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                                                    ) : (
-                                                        <Trash2 className="h-4 w-4" aria-hidden />
-                                                    )}
-                                                </button>
+                                                {(canWrite || isAdmin) && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => openEditModal(task)}
+                                                        className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-gray-200 bg-white text-[#0a2a5e] shadow-sm transition hover:bg-slate-50"
+                                                        title="Edit task"
+                                                        aria-label="Edit task"
+                                                    >
+                                                        <Pencil className="h-4 w-4" aria-hidden />
+                                                    </button>
+                                                )}
+                                                {(canDelete || isAdmin) && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => void handleDeleteTask(task)}
+                                                        disabled={deletingId === task.recordId}
+                                                        className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-red-200 bg-red-50 text-red-700 shadow-sm transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+                                                        title="Delete task"
+                                                        aria-label="Delete task"
+                                                    >
+                                                        {deletingId === task.recordId ? (
+                                                            <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                                                        ) : (
+                                                            <Trash2 className="h-4 w-4" aria-hidden />
+                                                        )}
+                                                    </button>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>

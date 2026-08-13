@@ -30,6 +30,7 @@ const SLUG_TITLE_MAP: Record<string, { title: string; category: string }> = {
     "offer-letter": { title: "Offer Letter", category: "Documents" },
     "products": { title: "Products", category: "Inventory" },
     "warranty": { title: "Warranty", category: "Inventory" },
+    "website-dashboard": { title: "Website Dashboard", category: "Dashboard" },
 };
 
 export default function GrantedModulePage({

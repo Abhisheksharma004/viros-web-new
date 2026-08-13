@@ -26,6 +26,7 @@ import {
     Target,
 } from "lucide-react";
 import type { CorporateEventApi, CorporateEventType } from "@/lib/corporateCalendar";
+import { useModulePermission } from "@/context/ModulePermissionContext";
 
 const CORPORATE_TYPE_CONFIG: Record<
     CorporateEventType,
@@ -135,6 +136,7 @@ const emptyForm: EventFormState = {
 };
 
 export default function CorporateCalendarPage() {
+    const { write: canWrite, delete: canDelete, admin: isAdmin } = useModulePermission();
     const [events, setEvents] = useState<CorporateEventApi[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
@@ -425,14 +427,16 @@ export default function CorporateCalendarPage() {
                     </p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <button
-                        type="button"
-                        onClick={() => handleOpenCreateModal()}
-                        className="inline-flex h-10 items-center gap-2 rounded-md bg-[#0a2a5e] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#06124f]"
-                    >
-                        <Plus className="h-4 w-4" />
-                        Add Event
-                    </button>
+                    {(canWrite || isAdmin) && (
+                        <button
+                            type="button"
+                            onClick={() => handleOpenCreateModal()}
+                            className="inline-flex h-10 items-center gap-2 rounded-md bg-[#0a2a5e] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#06124f]"
+                        >
+                            <Plus className="h-4 w-4" />
+                            Add Event
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -714,22 +718,26 @@ export default function CorporateCalendarPage() {
                                         </div>
 
                                         <div className="flex items-center gap-2 self-end sm:self-center">
-                                            <button
-                                                type="button"
-                                                onClick={() => handleOpenEditModal(ev)}
-                                                className="inline-flex h-8 items-center gap-1 rounded-md border border-gray-300 bg-white px-3 text-xs font-semibold text-gray-700 hover:bg-gray-50"
-                                            >
-                                                <Edit2 className="h-3.5 w-3.5" />
-                                                Edit
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => setDeleteTarget(ev)}
-                                                className="inline-flex h-8 items-center gap-1 rounded-md border border-red-200 bg-red-50 px-3 text-xs font-semibold text-red-700 hover:bg-red-100"
-                                            >
-                                                <Trash2 className="h-3.5 w-3.5" />
-                                                Delete
-                                            </button>
+                                            {(canWrite || isAdmin) && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleOpenEditModal(ev)}
+                                                    className="inline-flex h-8 items-center gap-1 rounded-md border border-gray-300 bg-white px-3 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                                                >
+                                                    <Edit2 className="h-3.5 w-3.5" />
+                                                    Edit
+                                                </button>
+                                            )}
+                                            {(canDelete || isAdmin) && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setDeleteTarget(ev)}
+                                                    className="inline-flex h-8 items-center gap-1 rounded-md border border-red-200 bg-red-50 px-3 text-xs font-semibold text-red-700 hover:bg-red-100"
+                                                >
+                                                    <Trash2 className="h-3.5 w-3.5" />
+                                                    Delete
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 );

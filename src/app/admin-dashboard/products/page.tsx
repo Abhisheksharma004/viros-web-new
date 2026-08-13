@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useModulePermission } from "@/context/ModulePermissionContext";
 import {
     Package, Layout, Image as ImageIcon, List, Settings, Plus, X,
     Save, Trash2, ChevronRight, Star, Tag, Smartphone, Printer,
@@ -46,6 +47,7 @@ const getYouTubeVideoId = (url: string): string | null => {
 };
 
 export default function ProductsPage() {
+    const { write: canWrite, delete: canDelete, admin: isAdmin } = useModulePermission();
     const [products, setProducts] = useState<Product[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -201,13 +203,15 @@ export default function ProductsPage() {
                     <h1 className="text-3xl font-bold text-gray-900">Products Management</h1>
                     <p className="text-gray-600 mt-1">Add and manage products with Hero Slider integration</p>
                 </div>
-                <button
-                    onClick={openAddModal}
-                    className="inline-flex items-center px-6 py-3 bg-linear-to-r from-[#06124f] to-[#06b6d4] text-white font-semibold rounded-xl shadow-lg hover:shadow-cyan-500/25 transition-all duration-300 hover:-translate-y-0.5"
-                >
-                    <Plus className="w-5 h-5 mr-2" />
-                    Add New Product
-                </button>
+                {(canWrite || isAdmin) && (
+                    <button
+                        onClick={openAddModal}
+                        className="inline-flex items-center px-6 py-3 bg-linear-to-r from-[#06124f] to-[#06b6d4] text-white font-semibold rounded-xl shadow-lg hover:shadow-cyan-500/25 transition-all duration-300 hover:-translate-y-0.5"
+                    >
+                        <Plus className="w-5 h-5 mr-2" />
+                        Add New Product
+                    </button>
+                )}
             </div>
 
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
@@ -284,12 +288,16 @@ export default function ProductsPage() {
                             <div className="flex items-center justify-between pt-4 border-t border-gray-50">
                                 <span className="font-bold text-[#06b6d4]">{product.price_display || "Contact for Quote"}</span>
                                 <div className="flex space-x-1">
-                                    <button onClick={() => openEditModal(product)} className="p-2 text-cyan-600 hover:bg-cyan-50 rounded-lg transition-colors">
-                                        <ChevronRight size={20} />
-                                    </button>
-                                    <button onClick={() => { setSelectedProductId(product.id); setShowDeleteModal(true); }} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors">
-                                        <Trash2 size={20} />
-                                    </button>
+                                    {(canWrite || isAdmin) && (
+                                        <button onClick={() => openEditModal(product)} className="p-2 text-cyan-600 hover:bg-cyan-50 rounded-lg transition-colors">
+                                            <ChevronRight size={20} />
+                                        </button>
+                                    )}
+                                    {(canDelete || isAdmin) && (
+                                        <button onClick={() => { setSelectedProductId(product.id); setShowDeleteModal(true); }} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                                            <Trash2 size={20} />
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         </div>

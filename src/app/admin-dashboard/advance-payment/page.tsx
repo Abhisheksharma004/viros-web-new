@@ -13,6 +13,7 @@ import {
     Wallet,
     X,
 } from "lucide-react";
+import { useModulePermission } from "@/context/ModulePermissionContext";
 
 type AdvanceStatus = "pending" | "recovering" | "recovered" | "cancelled";
 type PaymentMode = "bank_transfer" | "cash" | "cheque";
@@ -295,6 +296,7 @@ function EmployeeDetailsBlock({
 }
 
 export default function AdvancePaymentPage() {
+    const { write: canWrite, delete: canDelete, admin: isAdmin } = useModulePermission();
     const [records, setRecords] = useState<AdvanceRecord[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState("");
@@ -639,15 +641,17 @@ export default function AdvancePaymentPage() {
                             </option>
                         ))}
                     </select>
-                    <button
-                        type="button"
-                        onClick={openAdd}
-                        disabled={isLoading}
-                        className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-md bg-[#0a2a5e] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60 sm:w-auto"
-                    >
-                        <Plus className="h-4 w-4" aria-hidden />
-                        Add advance
-                    </button>
+                    {(canWrite || isAdmin) && (
+                        <button
+                            type="button"
+                            onClick={openAdd}
+                            disabled={isLoading}
+                            className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-md bg-[#0a2a5e] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60 sm:w-auto"
+                        >
+                            <Plus className="h-4 w-4" aria-hidden />
+                            Add advance
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -772,22 +776,26 @@ export default function AdvancePaymentPage() {
                                                 >
                                                     <Eye className="h-4 w-4" />
                                                 </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => openEdit(row)}
-                                                    className="rounded-md p-2 text-gray-500 hover:bg-gray-100"
-                                                    aria-label="Edit advance"
-                                                >
-                                                    <Pencil className="h-4 w-4" />
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleDelete(row)}
-                                                    className="rounded-md p-2 text-red-500 hover:bg-red-50"
-                                                    aria-label="Delete advance"
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </button>
+                                                {(canWrite || isAdmin) && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => openEdit(row)}
+                                                        className="rounded-md p-2 text-gray-500 hover:bg-gray-100"
+                                                        aria-label="Edit advance"
+                                                    >
+                                                        <Pencil className="h-4 w-4" />
+                                                    </button>
+                                                )}
+                                                {(canDelete || isAdmin) && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleDelete(row)}
+                                                        className="rounded-md p-2 text-red-500 hover:bg-red-50"
+                                                        aria-label="Delete advance"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </button>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>

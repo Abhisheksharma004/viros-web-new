@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Check, Eye, Loader2, Pencil, Trash2, X } from "lucide-react";
+import { useModulePermission } from "@/context/ModulePermissionContext";
 
 type RoleStatus = "Active" | "Growing" | "On Hold" | "Planned" | "Inactive";
 
@@ -74,6 +75,7 @@ function RoleStatusViewBadge({ status }: { status: RoleStatus }) {
 }
 
 export default function AdminRolesPage() {
+    const { write: canWrite, delete: canDelete, admin: isAdmin } = useModulePermission();
     const [roles, setRoles] = useState<Role[]>(initialRoles);
     const [departments, setDepartments] = useState<DepartmentOption[]>([]);
     const [roleModalMode, setRoleModalMode] = useState<RoleModalMode>(null);
@@ -299,14 +301,16 @@ export default function AdminRolesPage() {
             <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
                 {loadError ? <p className="text-xs text-amber-600">{loadError}</p> : <span className="hidden md:block" aria-hidden />}
 
-                <button
-                    type="button"
-                    onClick={openAddModal}
-                    disabled={isLoading}
-                    className="inline-flex items-center justify-center rounded-md bg-[#0a2a5e] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                    Add Role
-                </button>
+                {(canWrite || isAdmin) && (
+                    <button
+                        type="button"
+                        onClick={openAddModal}
+                        disabled={isLoading}
+                        className="inline-flex items-center justify-center rounded-md bg-[#0a2a5e] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                        Add Role
+                    </button>
+                )}
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -388,34 +392,38 @@ export default function AdminRolesPage() {
                                                         <Eye className="h-4 w-4" aria-hidden />
                                                     )}
                                                 </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => openEditRole(role)}
-                                                    disabled={actionBusy !== null || isSubmitting}
-                                                    className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-gray-200 bg-white text-[#0a2a5e] shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-                                                    title="Edit role"
-                                                    aria-label="Edit role"
-                                                >
-                                                    {actionBusy?.id === role.id && actionBusy.kind === "edit" ? (
-                                                        <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                                                    ) : (
-                                                        <Pencil className="h-4 w-4" aria-hidden />
-                                                    )}
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => void handleDeleteRole(role)}
-                                                    disabled={actionBusy !== null || isSubmitting}
-                                                    className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-red-200 bg-red-50 text-red-700 shadow-sm transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
-                                                    title="Delete role"
-                                                    aria-label="Delete role"
-                                                >
-                                                    {actionBusy?.id === role.id && actionBusy.kind === "delete" ? (
-                                                        <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                                                    ) : (
-                                                        <Trash2 className="h-4 w-4" aria-hidden />
-                                                    )}
-                                                </button>
+                                                {(canWrite || isAdmin) && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => openEditRole(role)}
+                                                        disabled={actionBusy !== null || isSubmitting}
+                                                        className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-gray-200 bg-white text-[#0a2a5e] shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                                        title="Edit role"
+                                                        aria-label="Edit role"
+                                                    >
+                                                        {actionBusy?.id === role.id && actionBusy.kind === "edit" ? (
+                                                            <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                                                        ) : (
+                                                            <Pencil className="h-4 w-4" aria-hidden />
+                                                        )}
+                                                    </button>
+                                                )}
+                                                {(canDelete || isAdmin) && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => void handleDeleteRole(role)}
+                                                        disabled={actionBusy !== null || isSubmitting}
+                                                        className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-red-200 bg-red-50 text-red-700 shadow-sm transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+                                                        title="Delete role"
+                                                        aria-label="Delete role"
+                                                    >
+                                                        {actionBusy?.id === role.id && actionBusy.kind === "delete" ? (
+                                                            <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                                                        ) : (
+                                                            <Trash2 className="h-4 w-4" aria-hidden />
+                                                        )}
+                                                    </button>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>

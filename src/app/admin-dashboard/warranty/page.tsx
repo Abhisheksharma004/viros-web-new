@@ -3,8 +3,10 @@
 import { useState, useEffect, useRef } from "react";
 import ExcelJS from 'exceljs';
 import { warrantyExpiryLabel } from "@/lib/warrantyStatus";
+import { useModulePermission } from "@/context/ModulePermissionContext";
 
 export default function WarrantyManagementPage() {
+    const { write: canWrite, delete: canDelete, admin: isAdmin } = useModulePermission();
     const [warranties, setWarranties] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -404,24 +406,28 @@ export default function WarrantyManagementPage() {
                     </select>
                 </div>
                 <div className="flex gap-3">
-                    <button
-                        onClick={() => setIsImportModalOpen(true)}
-                        className="w-full sm:w-auto px-6 py-2 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
-                    >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                        </svg>
-                        Import from Excel
-                    </button>
-                    <button
-                        onClick={() => handleOpenModal()}
-                        className="w-full sm:w-auto px-6 py-2 bg-[#06124f] text-white font-bold rounded-lg hover:bg-[#06b6d4] transition-colors flex items-center justify-center gap-2"
-                    >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                        </svg>
-                        Add New Warranty
-                    </button>
+                    {(canWrite || isAdmin) && (
+                        <button
+                            onClick={() => setIsImportModalOpen(true)}
+                            className="w-full sm:w-auto px-6 py-2 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                            </svg>
+                            Import from Excel
+                        </button>
+                    )}
+                    {(canWrite || isAdmin) && (
+                        <button
+                            onClick={() => handleOpenModal()}
+                            className="w-full sm:w-auto px-6 py-2 bg-[#06124f] text-white font-bold rounded-lg hover:bg-[#06b6d4] transition-colors flex items-center justify-center gap-2"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                            </svg>
+                            Add New Warranty
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -500,18 +506,22 @@ export default function WarrantyManagementPage() {
                                             >
                                                 View
                                             </button>
-                                            <button
-                                                onClick={() => handleOpenModal(warranty)}
-                                                className="text-[#06b6d4] hover:text-[#06124f] mr-4 font-semibold"
-                                            >
-                                                Edit
-                                            </button>
-                                            <button
-                                                onClick={() => handleDelete(warranty.id)}
-                                                className="text-red-600 hover:text-red-900 font-semibold"
-                                            >
-                                                Delete
-                                            </button>
+                                            {(canWrite || isAdmin) && (
+                                                <button
+                                                    onClick={() => handleOpenModal(warranty)}
+                                                    className="text-[#06b6d4] hover:text-[#06124f] mr-4 font-semibold"
+                                                >
+                                                    Edit
+                                                </button>
+                                            )}
+                                            {(canDelete || isAdmin) && (
+                                                <button
+                                                    onClick={() => handleDelete(warranty.id)}
+                                                    className="text-red-600 hover:text-red-900 font-semibold"
+                                                >
+                                                    Delete
+                                                </button>
+                                            )}
                                         </td>
                                     </tr>
                                 ))

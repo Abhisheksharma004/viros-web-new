@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Download, Eye, Loader2, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { downloadOfferLetterPdf } from "@/lib/offerLetterPdfExport";
 import { OFFER_LETTER_STATUSES, type OfferLetterStatus } from "@/lib/offerLetterConstants";
+import { useModulePermission } from "@/context/ModulePermissionContext";
 import {
     OFFER_LETTER_INPUT_CLASS,
     formatOfferLetterDate,
@@ -25,6 +26,7 @@ function OfferLetterStatusBadge({ status }: { status: OfferLetterStatus }) {
 }
 
 export default function OfferLetterPage() {
+    const { write: canWrite, delete: canDelete, admin: isAdmin } = useModulePermission();
     const [offerLetters, setOfferLetters] = useState<OfferLetter[]>([]);
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState("");
@@ -136,13 +138,15 @@ export default function OfferLetterPage() {
                         ))}
                     </select>
                 </div>
-                <Link
-                    href="/admin-dashboard/offer-letter/new"
-                    className="inline-flex items-center justify-center gap-2 rounded-md bg-gradient-to-r from-[#06124f] to-[#0a2a5e] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90"
-                >
-                    <Plus className="h-4 w-4" aria-hidden />
-                    New offer letter
-                </Link>
+                {(canWrite || isAdmin) && (
+                    <Link
+                        href="/admin-dashboard/offer-letter/new"
+                        className="inline-flex items-center justify-center gap-2 rounded-md bg-gradient-to-r from-[#06124f] to-[#0a2a5e] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90"
+                    >
+                        <Plus className="h-4 w-4" aria-hidden />
+                        New offer letter
+                    </Link>
+                )}
             </div>
 
             {loadError ? (
@@ -254,26 +258,30 @@ export default function OfferLetterPage() {
                                                 >
                                                     <Eye className="h-4 w-4" />
                                                 </Link>
-                                                <Link
-                                                    href={`/admin-dashboard/offer-letter/${o.id}/edit`}
-                                                    className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-gray-200 bg-white text-[#0a2a5e] hover:bg-slate-50"
-                                                    title="Edit"
-                                                >
-                                                    <Pencil className="h-4 w-4" />
-                                                </Link>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => void handleDelete(o)}
-                                                    disabled={deletingId === o.id}
-                                                    className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 disabled:opacity-60"
-                                                    title="Delete"
-                                                >
-                                                    {deletingId === o.id ? (
-                                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                                    ) : (
-                                                        <Trash2 className="h-4 w-4" />
-                                                    )}
-                                                </button>
+                                                {(canWrite || isAdmin) && (
+                                                    <Link
+                                                        href={`/admin-dashboard/offer-letter/${o.id}/edit`}
+                                                        className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-gray-200 bg-white text-[#0a2a5e] hover:bg-slate-50"
+                                                        title="Edit"
+                                                    >
+                                                        <Pencil className="h-4 w-4" />
+                                                    </Link>
+                                                )}
+                                                {(canDelete || isAdmin) && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => void handleDelete(o)}
+                                                        disabled={deletingId === o.id}
+                                                        className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 disabled:opacity-60"
+                                                        title="Delete"
+                                                    >
+                                                        {deletingId === o.id ? (
+                                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                                        ) : (
+                                                            <Trash2 className="h-4 w-4" />
+                                                        )}
+                                                    </button>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>

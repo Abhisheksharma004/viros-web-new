@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import WorkingDaysPills from "@/components/admin-dashboard/WorkingDaysPills";
 import { adminAttendanceForEmployee } from "@/lib/adminDashboardRoutes";
+import { useModulePermission } from "@/context/ModulePermissionContext";
 
 type EmployeeLookupRow = {
     employee_id: string;
@@ -229,6 +230,7 @@ function EmployeeDetailsBlock({
 }
 
 export default function AdminEmployeeShiftPage() {
+    const { write: canWrite, delete: canDelete, admin: isAdmin } = useModulePermission();
     const [shifts, setShifts] = useState<ShiftRecord[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState("");
@@ -490,15 +492,17 @@ export default function AdminEmployeeShiftPage() {
                         <CalendarCheck className="h-4 w-4" aria-hidden />
                         Attendance
                     </Link>
-                    <button
-                        type="button"
-                        onClick={openAdd}
-                        disabled={isLoading}
-                        className="inline-flex items-center justify-center gap-2 rounded-md bg-[#0a2a5e] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
-                    >
-                        <Plus className="h-4 w-4" aria-hidden />
-                        Add shift
-                    </button>
+                    {(canWrite || isAdmin) && (
+                        <button
+                            type="button"
+                            onClick={openAdd}
+                            disabled={isLoading}
+                            className="inline-flex items-center justify-center gap-2 rounded-md bg-[#0a2a5e] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
+                        >
+                            <Plus className="h-4 w-4" aria-hidden />
+                            Add shift
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -612,8 +616,12 @@ export default function AdminEmployeeShiftPage() {
                                         <td className="px-4 py-4 text-right sm:px-6">
                                             <div className="inline-flex gap-1">
                                                 <button type="button" onClick={() => openView(shift)} className="rounded-md p-2 text-gray-500 hover:bg-gray-100" aria-label="View shift"><Eye className="h-4 w-4" /></button>
-                                                <button type="button" onClick={() => openEdit(shift)} className="rounded-md p-2 text-gray-500 hover:bg-gray-100" aria-label="Edit shift"><Pencil className="h-4 w-4" /></button>
-                                                <button type="button" onClick={() => void handleDelete(shift.id)} className="rounded-md p-2 text-red-500 hover:bg-red-50" aria-label="Delete shift"><Trash2 className="h-4 w-4" /></button>
+                                                {(canWrite || isAdmin) && (
+                                                    <button type="button" onClick={() => openEdit(shift)} className="rounded-md p-2 text-gray-500 hover:bg-gray-100" aria-label="Edit shift"><Pencil className="h-4 w-4" /></button>
+                                                )}
+                                                {(canDelete || isAdmin) && (
+                                                    <button type="button" onClick={() => void handleDelete(shift.id)} className="rounded-md p-2 text-red-500 hover:bg-red-50" aria-label="Delete shift"><Trash2 className="h-4 w-4" /></button>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>

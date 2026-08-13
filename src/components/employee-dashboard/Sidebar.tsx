@@ -262,6 +262,7 @@ const MODULE_ROUTE_MAP: Record<string, string> = {
     "Offer Letter": "/employee-dashboard/granted/offer-letter",
     "Products": "/employee-dashboard/granted/products",
     "Warranty": "/employee-dashboard/granted/warranty",
+    "Website Dashboard": "/employee-dashboard/granted/website-dashboard",
 };
 
 export default function EmployeeSidebar({
@@ -275,42 +276,63 @@ export default function EmployeeSidebar({
     const [openSections, setOpenSections] = useState<string[]>([]);
     const [grantedModules, setGrantedModules] = useState<Array<{ name: string; href: string; category: string }>>([]);
 
-    // Group granted modules by Admin Category with expandable sub-items matching Admin Sidebar
-    const grantedCategories = useMemo(() => {
+    // Dynamic granted admin modules (both expandable categories & single top-level items)
+    const dynamicGrantedItems = useMemo(() => {
         if (!grantedModules || grantedModules.length === 0) return [];
         const grantedSet = new Set(grantedModules.map((m) => m.name.toLowerCase()));
 
-        const categories: Array<{
-            title: string;
-            icon: React.ReactNode;
-            subItems: Array<{
-                title: string;
-                icon: React.ReactNode;
-                href: string;
-            }>;
-        }> = [];
+        const items: Array<
+            | {
+                  type: "category";
+                  title: string;
+                  icon: React.ReactNode;
+                  subItems: Array<{
+                      title: string;
+                      icon: React.ReactNode;
+                      href: string;
+                  }>;
+              }
+            | {
+                  type: "single";
+                  title: string;
+                  icon: React.ReactNode;
+                  href: string;
+              }
+        > = [];
 
         for (const item of adminMenuItems) {
-            if (item.title === "Dashboard" || !item.subItems) continue;
+            if (item.title === "Dashboard") continue;
 
-            const validSubs = item.subItems
-                .filter((sub) => grantedSet.has(sub.title.toLowerCase()))
-                .map((sub) => ({
-                    title: sub.title,
-                    icon: sub.icon,
-                    href: MODULE_ROUTE_MAP[sub.title] || "/employee-dashboard",
-                }));
+            if (item.subItems && item.subItems.length > 0) {
+                const validSubs = item.subItems
+                    .filter((sub) => grantedSet.has(sub.title.toLowerCase()))
+                    .map((sub) => ({
+                        title: sub.title,
+                        icon: sub.icon,
+                        href: MODULE_ROUTE_MAP[sub.title] || "/employee-dashboard",
+                    }));
 
-            if (validSubs.length > 0) {
-                categories.push({
-                    title: item.title,
-                    icon: item.icon,
-                    subItems: validSubs,
-                });
+                if (validSubs.length > 0) {
+                    items.push({
+                        type: "category",
+                        title: item.title,
+                        icon: item.icon,
+                        subItems: validSubs,
+                    });
+                }
+            } else {
+                if (grantedSet.has(item.title.toLowerCase())) {
+                    items.push({
+                        type: "single",
+                        title: item.title,
+                        icon: item.icon,
+                        href: MODULE_ROUTE_MAP[item.title] || item.href || "/employee-dashboard",
+                    });
+                }
             }
         }
 
-        return categories;
+        return items;
     }, [grantedModules]);
 
     useEffect(() => {
@@ -320,14 +342,14 @@ export default function EmployeeSidebar({
                 return;
             }
         }
-        for (const cat of grantedCategories) {
-            if (pickActiveSubHref(pathname, cat.subItems)) {
+        for (const cat of dynamicGrantedItems) {
+            if (cat.type === "category" && pickActiveSubHref(pathname, cat.subItems)) {
                 setOpenSections([cat.title]);
                 return;
             }
         }
         setOpenSections([]);
-    }, [pathname, grantedCategories]);
+    }, [pathname, dynamicGrantedItems]);
 
     useEffect(() => {
         async function loadPermissions() {
@@ -466,7 +488,7 @@ export default function EmployeeSidebar({
                                                     transition-colors duration-200
                                                     ${subIsActive
                                                         ? "bg-[#06b6d4] text-white shadow-lg"
-                                                        : "text-white/60 hover:bg-white/10 hover:text-white"}
+                                                        : "text-[#ffffff]/60 hover:bg-white/10 hover:text-white"}
                                                 `}
                                             >
                                                 {sub.icon}
@@ -481,71 +503,91 @@ export default function EmployeeSidebar({
                         );
                     })}
 
-                    {/* DYNAMIC GRANTED ADMIN MODULES GROUPED BY PARENT CATEGORY DROPDOWNS */}
-                    {grantedCategories.map((item) => {
-                                const sectionOpen = openSections.includes(item.title);
-                                const sectionActive = isSectionActive(item.subItems);
+                    {/* DYNAMIC GRANTED ADMIN MODULES */}
+                    {dynamicGrantedItems.map((item) => {
+                        if (item.type === "single") {
+                            return (
+                                <Link
+                                    key={item.title}
+                                    href={item.href}
+                                    onClick={onClose}
+                                    className={`
+                                        flex items-center space-x-3 px-4 py-3 rounded-md
+                                        transition-all duration-200
+                                        ${isActive(item.href)
+                                            ? "bg-[#06b6d4] text-white shadow-lg"
+                                            : "text-white/70 hover:bg-white/10 hover:text-white"}
+                                    `}
+                                >
+                                    {item.icon}
+                                    <span className="font-medium">{item.title}</span>
+                                </Link>
+                            );
+                        }
 
-                                return (
-                                    <div key={item.title}>
-                                        <button
-                                            onClick={() => toggleSection(item.title)}
-                                            className={`
-                                                w-full flex items-center justify-between px-4 py-3 rounded-md
-                                                transition-all duration-200
-                                                ${sectionActive
-                                                    ? "bg-[#06b6d4] text-white shadow-lg"
-                                                    : "text-white/70 hover:bg-white/10 hover:text-white"}
-                                            `}
-                                        >
-                                            <div className="flex items-center space-x-3">
-                                                {item.icon}
-                                                <span className="font-medium">{item.title}</span>
-                                            </div>
-                                            <svg
-                                                className={`w-4 h-4 shrink-0 transition-transform duration-300 ease-in-out motion-reduce:transition-none ${sectionOpen ? "rotate-180" : ""}`}
-                                                fill="none"
-                                                stroke="currentColor"
-                                                viewBox="0 0 24 24"
-                                            >
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                            </svg>
-                                        </button>
+                        const sectionOpen = openSections.includes(item.title);
+                        const sectionActive = isSectionActive(item.subItems);
 
-                                        <div
-                                            className={`grid transition-[grid-template-rows] duration-300 ease-in-out motion-reduce:transition-none ${
-                                                sectionOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
-                                            }`}
-                                        >
-                                            <div className="min-h-0 overflow-hidden">
-                                                <div className="ml-4 mt-1 space-y-1 pb-0.5">
-                                                    {item.subItems.map((sub) => {
-                                                        const activeHref = pickActiveSubHref(pathname, item.subItems);
-                                                        const subIsActive = activeHref === sub.href;
-                                                        return (
-                                                            <Link
-                                                                key={sub.title}
-                                                                href={sub.href}
-                                                                onClick={onClose}
-                                                                className={`
-                                                                    flex items-center space-x-3 px-4 py-2 rounded-md
-                                                                    transition-colors duration-200
-                                                                    ${subIsActive
-                                                                        ? "bg-[#06b6d4] text-white shadow-lg"
-                                                                        : "text-white/60 hover:bg-white/10 hover:text-white"}
-                                                                `}
-                                                            >
-                                                                {sub.icon}
-                                                                <span className="text-sm">{sub.title}</span>
-                                                            </Link>
-                                                        );
-                                                    })}
-                                                </div>
-                                            </div>
+                        return (
+                            <div key={item.title}>
+                                <button
+                                    onClick={() => toggleSection(item.title)}
+                                    className={`
+                                        w-full flex items-center justify-between px-4 py-3 rounded-md
+                                        transition-all duration-200
+                                        ${sectionActive
+                                            ? "bg-[#06b6d4] text-white shadow-lg"
+                                            : "text-white/70 hover:bg-white/10 hover:text-white"}
+                                    `}
+                                >
+                                    <div className="flex items-center space-x-3">
+                                        {item.icon}
+                                        <span className="font-medium">{item.title}</span>
+                                    </div>
+                                    <svg
+                                        className={`w-4 h-4 shrink-0 transition-transform duration-300 ease-in-out motion-reduce:transition-none ${sectionOpen ? "rotate-180" : ""}`}
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+
+                                <div
+                                    className={`grid transition-[grid-template-rows] duration-300 ease-in-out motion-reduce:transition-none ${
+                                        sectionOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+                                    }`}
+                                >
+                                    <div className="min-h-0 overflow-hidden">
+                                        <div className="ml-4 mt-1 space-y-1 pb-0.5">
+                                            {item.subItems.map((sub) => {
+                                                const activeHref = pickActiveSubHref(pathname, item.subItems);
+                                                const subIsActive = activeHref === sub.href;
+                                                return (
+                                                    <Link
+                                                        key={sub.title}
+                                                        href={sub.href}
+                                                        onClick={onClose}
+                                                        className={`
+                                                            flex items-center space-x-3 px-4 py-2 rounded-md
+                                                            transition-colors duration-200
+                                                            ${subIsActive
+                                                                ? "bg-[#06b6d4] text-white shadow-lg"
+                                                                : "text-white/60 hover:bg-white/10 hover:text-white"}
+                                                        `}
+                                                    >
+                                                        {sub.icon}
+                                                        <span className="text-sm">{sub.title}</span>
+                                                    </Link>
+                                                );
+                                            })}
                                         </div>
                                     </div>
-                                );
-                            })}
+                                </div>
+                            </div>
+                        );
+                    })}
                 </nav>
             </aside>
         </>

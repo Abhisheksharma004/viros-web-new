@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Download, Eye, Loader2, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { downloadLetterPdf } from "@/lib/letterPdfExport";
 import { LETTER_STATUSES, type LetterStatus } from "@/lib/letterConstants";
+import { useModulePermission } from "@/context/ModulePermissionContext";
 import {
     LETTER_INPUT_CLASS,
     formatLetterDate,
@@ -23,6 +24,7 @@ function LetterStatusBadge({ status }: { status: LetterStatus }) {
 }
 
 export default function LetterPage() {
+    const { write: canWrite, delete: canDelete, admin: isAdmin } = useModulePermission();
     const [letters, setLetters] = useState<Letter[]>([]);
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState("");
@@ -134,13 +136,15 @@ export default function LetterPage() {
                         ))}
                     </select>
                 </div>
-                <Link
-                    href="/admin-dashboard/letter/new"
-                    className="inline-flex items-center justify-center gap-2 rounded-md bg-gradient-to-r from-[#06124f] to-[#0a2a5e] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90"
-                >
-                    <Plus className="h-4 w-4" aria-hidden />
-                    New letter
-                </Link>
+                {(canWrite || isAdmin) && (
+                    <Link
+                        href="/admin-dashboard/letter/new"
+                        className="inline-flex items-center justify-center gap-2 rounded-md bg-gradient-to-r from-[#06124f] to-[#0a2a5e] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90"
+                    >
+                        <Plus className="h-4 w-4" aria-hidden />
+                        New letter
+                    </Link>
+                )}
             </div>
 
             {loadError ? (
@@ -251,26 +255,30 @@ export default function LetterPage() {
                                                 >
                                                     <Eye className="h-4 w-4" />
                                                 </Link>
-                                                <Link
-                                                    href={`/admin-dashboard/letter/${l.id}/edit`}
-                                                    className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-gray-200 bg-white text-[#0a2a5e] hover:bg-slate-50"
-                                                    title="Edit"
-                                                >
-                                                    <Pencil className="h-4 w-4" />
-                                                </Link>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => void handleDelete(l)}
-                                                    disabled={deletingId === l.id}
-                                                    className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 disabled:opacity-60"
-                                                    title="Delete"
-                                                >
-                                                    {deletingId === l.id ? (
-                                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                                    ) : (
-                                                        <Trash2 className="h-4 w-4" />
-                                                    )}
-                                                </button>
+                                                {(canWrite || isAdmin) && (
+                                                    <Link
+                                                        href={`/admin-dashboard/letter/${l.id}/edit`}
+                                                        className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-gray-200 bg-white text-[#0a2a5e] hover:bg-slate-50"
+                                                        title="Edit"
+                                                    >
+                                                        <Pencil className="h-4 w-4" />
+                                                    </Link>
+                                                )}
+                                                {(canDelete || isAdmin) && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => void handleDelete(l)}
+                                                        disabled={deletingId === l.id}
+                                                        className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 disabled:opacity-60"
+                                                        title="Delete"
+                                                    >
+                                                        {deletingId === l.id ? (
+                                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                                        ) : (
+                                                            <Trash2 className="h-4 w-4" />
+                                                        )}
+                                                    </button>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>

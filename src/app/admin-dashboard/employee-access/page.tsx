@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Check, Eye, Loader2, Pencil, Trash2, X } from "lucide-react";
+import { useModulePermission } from "@/context/ModulePermissionContext";
 type EmployeeAccessStatus = "Active" | "On Leave" | "Probation" | "Inactive" | "Resigned";
 type PortalStatus = "Active" | "Disabled" | "Inactive";
 
@@ -104,6 +105,7 @@ function PortalStatusBadge({ status }: { status: EmployeeAccess["portalStatus"] 
 }
 
 export default function EmployeeAccessPage() {
+    const { write: canWrite, delete: canDelete, admin: isAdmin } = useModulePermission();
     const [accessRecords, setAccessRecords] = useState<EmployeeAccess[]>([]);
     const [accessModalMode, setAccessModalMode] = useState<AccessModalMode>(null);
     const [editingId, setEditingId] = useState<number | null>(null);
@@ -425,17 +427,19 @@ export default function EmployeeAccessPage() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 {loadError ? <p className="text-xs text-amber-600">{loadError}</p> : <span className="hidden sm:block" aria-hidden />}
 
-                <button
-                    type="button"
-                    onClick={openAddModal}
-                    disabled={isLoading}
-                    className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-semibold text-white bg-gradient-to-r from-[#06124f] to-[#0a2a5e] hover:opacity-90 transition-opacity shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                    Add Access
-                </button>
+                {(canWrite || isAdmin) && (
+                    <button
+                        type="button"
+                        onClick={openAddModal}
+                        disabled={isLoading}
+                        className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-semibold text-white bg-gradient-to-r from-[#06124f] to-[#0a2a5e] hover:opacity-90 transition-opacity shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        </svg>
+                        Add Access
+                    </button>
+                )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -530,35 +534,39 @@ export default function EmployeeAccessPage() {
                                                     )}
                                                 </button>
 
-                                                <button
-                                                    type="button"
-                                                    onClick={() => void openViewOrEdit(record, "edit")}
-                                                    disabled={actionBusy !== null || isSubmitting}
-                                                    className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-gray-200 bg-white text-[#0a2a5e] shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-                                                    title="Edit access"
-                                                    aria-label="Edit access"
-                                                >
-                                                    {actionBusy?.id === record.id && actionBusy.kind === "edit" ? (
-                                                        <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                                                    ) : (
-                                                        <Pencil className="h-4 w-4" aria-hidden />
-                                                    )}
-                                                </button>
+                                                {(canWrite || isAdmin) && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => void openViewOrEdit(record, "edit")}
+                                                        disabled={actionBusy !== null || isSubmitting}
+                                                        className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-gray-200 bg-white text-[#0a2a5e] shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                                        title="Edit access"
+                                                        aria-label="Edit access"
+                                                    >
+                                                        {actionBusy?.id === record.id && actionBusy.kind === "edit" ? (
+                                                            <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                                                        ) : (
+                                                            <Pencil className="h-4 w-4" aria-hidden />
+                                                        )}
+                                                    </button>
+                                                )}
 
-                                                <button
-                                                    type="button"
-                                                    onClick={() => void handleDelete(record)}
-                                                    disabled={actionBusy !== null || isSubmitting}
-                                                    className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-red-200 bg-red-50 text-red-700 shadow-sm transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
-                                                    title="Delete access"
-                                                    aria-label="Delete access"
-                                                >
-                                                    {actionBusy?.id === record.id && actionBusy.kind === "delete" ? (
-                                                        <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                                                    ) : (
-                                                        <Trash2 className="h-4 w-4" aria-hidden />
-                                                    )}
-                                                </button>
+                                                {(canDelete || isAdmin) && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => void handleDelete(record)}
+                                                        disabled={actionBusy !== null || isSubmitting}
+                                                        className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-red-200 bg-red-50 text-red-700 shadow-sm transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+                                                        title="Delete access"
+                                                        aria-label="Delete access"
+                                                    >
+                                                        {actionBusy?.id === record.id && actionBusy.kind === "delete" ? (
+                                                            <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                                                        ) : (
+                                                            <Trash2 className="h-4 w-4" aria-hidden />
+                                                        )}
+                                                    </button>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>

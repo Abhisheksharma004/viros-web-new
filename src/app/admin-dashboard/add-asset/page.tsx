@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, Download, Eye, Loader2, Pencil, Search, Trash2, Upload, X } from "lucide-react";
+import { useModulePermission } from "@/context/ModulePermissionContext";
 
 type AssetStatus = "Active" | "Inactive" | "Maintenance";
 
@@ -118,6 +119,7 @@ type CompanyApiRow = {
 };
 
 export default function AddAssetPage() {
+    const { write: canWrite, delete: canDelete, admin: isAdmin } = useModulePermission();
     const [assets, setAssets] = useState<Asset[]>([]);
     const [companyOptions, setCompanyOptions] = useState<CompanyOption[]>([]);
     const [modalMode, setModalMode] = useState<AssetModalMode>(null);
@@ -469,26 +471,30 @@ export default function AddAssetPage() {
                         aria-label="Select CSV file with assets"
                         onChange={handleCsvFileSelected}
                     />
-                    <button
-                        type="button"
-                        onClick={openCsvImportModal}
-                        disabled={isLoading || csvImportBusy}
-                        className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-semibold text-[#0a2a5e] border border-gray-200 bg-white hover:bg-gray-50 transition-colors shadow-sm disabled:opacity-60"
-                    >
-                        <Upload className="w-4 h-4 shrink-0" aria-hidden />
-                        Import CSV
-                    </button>
-                    <button
-                        type="button"
-                        onClick={openAddModal}
-                        disabled={isLoading}
-                        className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-semibold text-white bg-gradient-to-r from-[#06124f] to-[#0a2a5e] hover:opacity-90 transition-opacity shadow-sm disabled:opacity-60"
-                    >
-                        <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                        </svg>
-                        Add Asset
-                    </button>
+                    {(canWrite || isAdmin) && (
+                        <button
+                            type="button"
+                            onClick={openCsvImportModal}
+                            disabled={isLoading || csvImportBusy}
+                            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-semibold text-[#0a2a5e] border border-gray-200 bg-white hover:bg-gray-50 transition-colors shadow-sm disabled:opacity-60"
+                        >
+                            <Upload className="w-4 h-4 shrink-0" aria-hidden />
+                            Import CSV
+                        </button>
+                    )}
+                    {(canWrite || isAdmin) && (
+                        <button
+                            type="button"
+                            onClick={openAddModal}
+                            disabled={isLoading}
+                            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-semibold text-white bg-gradient-to-r from-[#06124f] to-[#0a2a5e] hover:opacity-90 transition-opacity shadow-sm disabled:opacity-60"
+                        >
+                            <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                            </svg>
+                            Add Asset
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -705,26 +711,30 @@ export default function AddAssetPage() {
                                                 >
                                                     <Eye className="h-4 w-4" aria-hidden />
                                                 </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => openEditAsset(a)}
-                                                    disabled={isSubmitting}
-                                                    className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-gray-200 bg-white text-[#0a2a5e] shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-                                                    title="Edit asset"
-                                                    aria-label="Edit asset"
-                                                >
-                                                    <Pencil className="h-4 w-4" aria-hidden />
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => void handleDeleteAsset(a)}
-                                                    disabled={isSubmitting}
-                                                    className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-red-200 bg-red-50 text-red-700 shadow-sm transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
-                                                    title="Delete asset"
-                                                    aria-label="Delete asset"
-                                                >
-                                                    <Trash2 className="h-4 w-4" aria-hidden />
-                                                </button>
+                                                {(canWrite || isAdmin) && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => openEditAsset(a)}
+                                                        disabled={isSubmitting}
+                                                        className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-gray-200 bg-white text-[#0a2a5e] shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                                        title="Edit asset"
+                                                        aria-label="Edit asset"
+                                                    >
+                                                        <Pencil className="h-4 w-4" aria-hidden />
+                                                    </button>
+                                                )}
+                                                {(canDelete || isAdmin) && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => void handleDeleteAsset(a)}
+                                                        disabled={isSubmitting}
+                                                        className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-red-200 bg-red-50 text-red-700 shadow-sm transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+                                                        title="Delete asset"
+                                                        aria-label="Delete asset"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" aria-hidden />
+                                                    </button>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>

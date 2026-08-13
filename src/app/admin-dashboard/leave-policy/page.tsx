@@ -17,6 +17,7 @@ import {
     X,
 } from "lucide-react";
 import type { AccrualCycle } from "@/lib/adminLeavePolicies";
+import { useModulePermission } from "@/context/ModulePermissionContext";
 
 type LeavePolicyRow = {
     id: number;
@@ -373,6 +374,7 @@ function ActiveBadge({ active }: { active: boolean }) {
 }
 
 export default function Page() {
+    const { write: canWrite, delete: canDelete, admin: isAdmin } = useModulePermission();
     const [policies, setPolicies] = useState<LeavePolicyRow[]>([]);
     const [globalSettings, setGlobalSettings] = useState<GlobalSettings>(DEFAULT_GLOBAL);
     const [savedGlobalSettings, setSavedGlobalSettings] = useState<GlobalSettings>(DEFAULT_GLOBAL);
@@ -821,15 +823,17 @@ export default function Page() {
             )}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 {loadError ? <p className="text-xs text-amber-600">{loadError}</p> : <span className="hidden sm:block" aria-hidden />}
-                <button
-                    type="button"
-                    onClick={openAdd}
-                    disabled={isLoading}
-                    className="inline-flex items-center justify-center gap-2 rounded-md bg-[#0a2a5e] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60"
-                >
-                    <Plus className="h-4 w-4" aria-hidden />
-                    Add policy
-                </button>
+                {(canWrite || isAdmin) && (
+                    <button
+                        type="button"
+                        onClick={openAdd}
+                        disabled={isLoading}
+                        className="inline-flex items-center justify-center gap-2 rounded-md bg-[#0a2a5e] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60"
+                    >
+                        <Plus className="h-4 w-4" aria-hidden />
+                        Add policy
+                    </button>
+                )}
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -957,19 +961,21 @@ export default function Page() {
                     </label>
                 </div>
                 <div className="mt-4 flex flex-wrap items-center gap-3">
-                    <button
-                        type="button"
-                        onClick={() => void saveGlobalSettings()}
-                        disabled={isSavingSettings}
-                        className="inline-flex items-center gap-2 rounded-md bg-[#06b6d4] px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
-                    >
-                        {isSavingSettings ? (
-                            <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                        ) : (
-                            <Save className="h-4 w-4" aria-hidden />
-                        )}
-                        {isSavingSettings ? "Saving…" : "Save settings"}
-                    </button>
+                    {(canWrite || isAdmin) && (
+                        <button
+                            type="button"
+                            onClick={() => void saveGlobalSettings()}
+                            disabled={isSavingSettings}
+                            className="inline-flex items-center gap-2 rounded-md bg-[#06b6d4] px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
+                        >
+                            {isSavingSettings ? (
+                                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                            ) : (
+                                <Save className="h-4 w-4" aria-hidden />
+                            )}
+                            {isSavingSettings ? "Saving…" : "Save settings"}
+                        </button>
+                    )}
                     {settingsSaved && (
                         <span className="inline-flex items-center gap-1 text-sm font-semibold text-emerald-700">
                             <Check className="h-4 w-4" />
@@ -1104,30 +1110,36 @@ export default function Page() {
                                                 >
                                                     <Eye className="h-4 w-4" />
                                                 </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => openEdit(row)}
-                                                    className="rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-[#0a2a5e]"
-                                                    title="Edit"
-                                                >
-                                                    <Pencil className="h-4 w-4" />
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => toggleActive(row)}
-                                                    className="rounded-md px-2 py-2 text-xs font-semibold text-[#06b6d4] hover:bg-[#06b6d4]/10"
-                                                    title={row.active ? "Deactivate" : "Activate"}
-                                                >
-                                                    {row.active ? "Off" : "On"}
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => promptDeletePolicy(row)}
-                                                    className="rounded-md p-2 text-gray-500 hover:bg-red-50 hover:text-red-600"
-                                                    title="Delete"
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </button>
+                                                {(canWrite || isAdmin) && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => openEdit(row)}
+                                                        className="rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-[#0a2a5e]"
+                                                        title="Edit"
+                                                    >
+                                                        <Pencil className="h-4 w-4" />
+                                                    </button>
+                                                )}
+                                                {(canWrite || isAdmin) && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => toggleActive(row)}
+                                                        className="rounded-md px-2 py-2 text-xs font-semibold text-[#06b6d4] hover:bg-[#06b6d4]/10"
+                                                        title={row.active ? "Deactivate" : "Activate"}
+                                                    >
+                                                        {row.active ? "Off" : "On"}
+                                                    </button>
+                                                )}
+                                                {(canDelete || isAdmin) && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => promptDeletePolicy(row)}
+                                                        className="rounded-md p-2 text-gray-500 hover:bg-red-50 hover:text-red-600"
+                                                        title="Delete"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </button>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>

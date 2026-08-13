@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, Eye, Loader2, RotateCcw, Search, Trash2, X } from "lucide-react";
 import Toast from "@/components/Toast";
+import { useModulePermission } from "@/context/ModulePermissionContext";
 
 type DeletedEmployeeApiRow = {
     id: number;
@@ -43,6 +44,7 @@ function mapDeletedEmployeeApiRow(row: DeletedEmployeeApiRow): DeletedEmployeeRo
 }
 
 export default function DeleteEmployeePage() {
+    const { write: canWrite, delete: canDelete, admin: isAdmin } = useModulePermission();
     const [employees, setEmployees] = useState<DeletedEmployeeRow[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState("");
@@ -287,26 +289,30 @@ export default function DeleteEmployeePage() {
                                                     )}
                                                 </button>
 
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setRestoreTarget(employee)}
-                                                    disabled={actionBusy !== null}
-                                                    className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-green-200 bg-green-50 text-green-700 shadow-sm transition hover:bg-green-100 disabled:opacity-50"
-                                                    title="Recover employee"
-                                                    aria-label="Recover employee"
-                                                >
-                                                    <RotateCcw className="h-4 w-4" />
-                                                </button>
+                                                {(canWrite || isAdmin) && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setRestoreTarget(employee)}
+                                                        disabled={actionBusy !== null}
+                                                        className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-green-200 bg-green-50 text-green-700 shadow-sm transition hover:bg-green-100 disabled:opacity-50"
+                                                        title="Recover employee"
+                                                        aria-label="Recover employee"
+                                                    >
+                                                        <RotateCcw className="h-4 w-4" />
+                                                    </button>
+                                                )}
 
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setPermanentDeleteTarget(employee)}
-                                                    disabled={actionBusy !== null}
-                                                    className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-red-200 bg-red-50 text-red-700 shadow-sm transition hover:bg-red-100 disabled:opacity-50"
-                                                    title="Permanent Delete"
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </button>
+                                                {(canDelete || isAdmin) && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setPermanentDeleteTarget(employee)}
+                                                        disabled={actionBusy !== null}
+                                                        className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-red-200 bg-red-50 text-red-700 shadow-sm transition hover:bg-red-100 disabled:opacity-50"
+                                                        title="Permanent Delete"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </button>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>

@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Download, Eye, Loader2, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { downloadProposalPdf } from "@/lib/proposalPdfExport";
 import { PROPOSAL_STATUSES, type ProposalStatus } from "@/lib/proposalConstants";
+import { useModulePermission } from "@/context/ModulePermissionContext";
 import {
     PROPOSAL_INPUT_CLASS,
     formatInr,
@@ -24,6 +25,7 @@ function ProposalStatusBadge({ status }: { status: ProposalStatus }) {
 }
 
 export default function ProposalPage() {
+    const { write: canWrite, delete: canDelete, admin: isAdmin } = useModulePermission();
     const [proposals, setProposals] = useState<Proposal[]>([]);
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState("");
@@ -139,13 +141,15 @@ export default function ProposalPage() {
                         ))}
                     </select>
                 </div>
-                <Link
-                    href="/admin-dashboard/proposal/new"
-                    className="inline-flex items-center justify-center gap-2 rounded-md bg-gradient-to-r from-[#06124f] to-[#0a2a5e] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90"
-                >
-                    <Plus className="h-4 w-4" aria-hidden />
-                    New proposal
-                </Link>
+                {(canWrite || isAdmin) && (
+                    <Link
+                        href="/admin-dashboard/proposal/new"
+                        className="inline-flex items-center justify-center gap-2 rounded-md bg-gradient-to-r from-[#06124f] to-[#0a2a5e] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90"
+                    >
+                        <Plus className="h-4 w-4" aria-hidden />
+                        New proposal
+                    </Link>
+                )}
             </div>
 
             {loadError ? (
@@ -264,26 +268,30 @@ export default function ProposalPage() {
                                                 >
                                                     <Eye className="h-4 w-4" />
                                                 </Link>
-                                                <Link
-                                                    href={`/admin-dashboard/proposal/${p.id}/edit`}
-                                                    className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-gray-200 bg-white text-[#0a2a5e] hover:bg-slate-50"
-                                                    title="Edit"
-                                                >
-                                                    <Pencil className="h-4 w-4" />
-                                                </Link>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => void handleDelete(p)}
-                                                    disabled={deletingId === p.id}
-                                                    className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 disabled:opacity-60"
-                                                    title="Delete"
-                                                >
-                                                    {deletingId === p.id ? (
-                                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                                    ) : (
-                                                        <Trash2 className="h-4 w-4" />
-                                                    )}
-                                                </button>
+                                                {(canWrite || isAdmin) && (
+                                                    <Link
+                                                        href={`/admin-dashboard/proposal/${p.id}/edit`}
+                                                        className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-gray-200 bg-white text-[#0a2a5e] hover:bg-slate-50"
+                                                        title="Edit"
+                                                    >
+                                                        <Pencil className="h-4 w-4" />
+                                                    </Link>
+                                                )}
+                                                {(canDelete || isAdmin) && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => void handleDelete(p)}
+                                                        disabled={deletingId === p.id}
+                                                        className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 disabled:opacity-60"
+                                                        title="Delete"
+                                                    >
+                                                        {deletingId === p.id ? (
+                                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                                        ) : (
+                                                            <Trash2 className="h-4 w-4" />
+                                                        )}
+                                                    </button>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>

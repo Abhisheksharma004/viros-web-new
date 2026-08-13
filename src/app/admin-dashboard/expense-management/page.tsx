@@ -22,6 +22,7 @@ import {
     XCircle,
 } from "lucide-react";
 import Toast from "@/components/Toast";
+import { useModulePermission } from "@/context/ModulePermissionContext";
 import type {
     AdminExpenseBatchSummary,
     AdminExpenseEmployeeSummary,
@@ -75,6 +76,7 @@ function formatMonthLabel(month: string) {
 }
 
 export default function ExpenseManagementPage() {
+    const { write: canWrite, delete: canDelete, admin: isAdmin } = useModulePermission();
     const [tab, setTab] = useState<TabId>("batches");
     const [status, setStatus] = useState<StatusFilter>("all");
     const [month, setMonth] = useState(() => currentMonth());
@@ -982,7 +984,7 @@ export default function ExpenseManagementPage() {
                                                             <Download className="h-4 w-4" aria-hidden />
                                                         )}
                                                     </button>
-                                                    {row.status === "approved" ? (
+                                                    {(canWrite || isAdmin) && row.status === "approved" ? (
                                                         <button
                                                             type="button"
                                                             disabled={updatingId === row.id}
@@ -1004,7 +1006,7 @@ export default function ExpenseManagementPage() {
                                                             )}
                                                         </button>
                                                     ) : null}
-                                                    {row.status === "pending" ? (
+                                                    {(canWrite || isAdmin) && row.status === "pending" ? (
                                                         <>
                                                             <button
                                                                 type="button"
@@ -1032,30 +1034,34 @@ export default function ExpenseManagementPage() {
                                                             </button>
                                                         </>
                                                     ) : null}
-                                                    <button
-                                                        type="button"
-                                                        disabled={updatingId === row.id || deletingId === row.id}
-                                                        onClick={() => openReworkModal(row)}
-                                                        className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-amber-300 bg-amber-50 text-amber-800 shadow-sm transition hover:bg-amber-100 disabled:opacity-60"
-                                                        title="Send back to employee for rework"
-                                                        aria-label="Rework"
-                                                    >
-                                                        <RotateCcw className="h-4 w-4" aria-hidden />
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        disabled={updatingId === row.id || deletingId === row.id}
-                                                        onClick={() => setDeleteConfirmTarget(row)}
-                                                        className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-red-200 bg-red-50 text-red-700 shadow-sm hover:bg-red-100 disabled:opacity-60"
-                                                        title="Delete expense"
-                                                        aria-label="Delete expense"
-                                                    >
-                                                        {deletingId === row.id ? (
-                                                            <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                                                        ) : (
-                                                            <Trash2 className="h-4 w-4" aria-hidden />
-                                                        )}
-                                                    </button>
+                                                    {(canWrite || isAdmin) && (
+                                                        <button
+                                                            type="button"
+                                                            disabled={updatingId === row.id || deletingId === row.id}
+                                                            onClick={() => openReworkModal(row)}
+                                                            className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-amber-300 bg-amber-50 text-amber-800 shadow-sm transition hover:bg-amber-100 disabled:opacity-60"
+                                                            title="Send back to employee for rework"
+                                                            aria-label="Rework"
+                                                        >
+                                                            <RotateCcw className="h-4 w-4" aria-hidden />
+                                                        </button>
+                                                    )}
+                                                    {(canDelete || isAdmin) && (
+                                                        <button
+                                                            type="button"
+                                                            disabled={updatingId === row.id || deletingId === row.id}
+                                                            onClick={() => setDeleteConfirmTarget(row)}
+                                                            className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-red-200 bg-red-50 text-red-700 shadow-sm hover:bg-red-100 disabled:opacity-60"
+                                                            title="Delete expense"
+                                                            aria-label="Delete expense"
+                                                        >
+                                                            {deletingId === row.id ? (
+                                                                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                                                            ) : (
+                                                                <Trash2 className="h-4 w-4" aria-hidden />
+                                                            )}
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </td>
                                         </tr>
