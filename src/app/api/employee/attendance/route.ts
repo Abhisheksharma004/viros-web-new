@@ -15,6 +15,7 @@ import {
 } from "@/lib/attendanceLeaveSync";
 import {
     fetchCorporateEventsForMonth,
+    getCorporateHolidayForDate,
     mergeCorporateEventsIntoAttendanceRecords,
 } from "@/lib/attendanceCorporateCalendarSync";
 import { mergeMonthRecordsWithShift } from "@/lib/attendanceSchedule";
@@ -79,6 +80,7 @@ export async function GET(request: Request) {
             workEntryCount: workEntryCounts[record.date] ?? 0,
         }));
         const todayLeave = await getTodayLeaveInfo(employeeId, todayIso);
+        const todayHoliday = await getCorporateHolidayForDate(todayIso);
         const todayRow = await getAttendanceByDate(employeeId, todayIso);
 
         let today = {
@@ -111,6 +113,7 @@ export async function GET(request: Request) {
                 today,
                 shift,
                 todayLeave,
+                todayHoliday,
                 portalAccess: {
                     status: portalEval.portalStatus,
                     blocked: false,

@@ -576,6 +576,7 @@ export default function EmployeeAttendancePage() {
     const [todayLate, setTodayLate] = useState<LateCheckResult | null>(null);
     const [photoLightbox, setPhotoLightbox] = useState<{ src: string; alt: string } | null>(null);
     const [todayLeave, setTodayLeave] = useState<TodayLeaveInfo | null>(null);
+    const [todayHoliday, setTodayHoliday] = useState<{ title: string; description?: string; color_tag?: string } | null>(null);
     const [portalWarning, setPortalWarning] = useState<string | null>(null);
     const [portalBlockedMessage, setPortalBlockedMessage] = useState<string | null>(null);
     const [selectedCalendarIso, setSelectedCalendarIso] = useState<string | null>(null);
@@ -648,6 +649,11 @@ export default function EmployeeAttendancePage() {
             setTodayLeave(
                 data.todayLeave && typeof data.todayLeave === "object"
                     ? (data.todayLeave as TodayLeaveInfo)
+                    : null,
+            );
+            setTodayHoliday(
+                data.todayHoliday && typeof data.todayHoliday === "object"
+                    ? (data.todayHoliday as { title: string; description?: string; color_tag?: string })
                     : null,
             );
 
@@ -869,6 +875,45 @@ export default function EmployeeAttendancePage() {
                 <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
                     <p className="font-semibold">Attendance notice</p>
                     <p className="mt-1">{portalWarning}</p>
+                    <div className="mt-2.5 flex flex-wrap items-center gap-3 text-xs">
+                        <Link
+                            href="/employee-dashboard/granted/corporate-calendar"
+                            className="inline-flex items-center gap-1 font-bold text-[#0a2a5e] hover:text-[#06b6d4] underline"
+                        >
+                            <Calendar className="h-3.5 w-3.5" aria-hidden />
+                            Check Corporate Calendar
+                        </Link>
+                        <span className="text-amber-300">•</span>
+                        <Link
+                            href="/employee-dashboard/leave"
+                            className="inline-flex items-center gap-1 font-bold text-[#0a2a5e] hover:text-[#06b6d4] underline"
+                        >
+                            <FileText className="h-3.5 w-3.5" aria-hidden />
+                            Apply for leave
+                        </Link>
+                    </div>
+                </div>
+            )}
+            {todayHoliday && !todayLeave && (
+                <div className="rounded-md border border-purple-200 bg-purple-50 px-4 py-3 text-sm text-purple-900 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                    <div className="flex items-start sm:items-center gap-2.5">
+                        <span className="text-xl shrink-0">🎉</span>
+                        <div>
+                            <p className="font-semibold text-purple-950">
+                                Corporate Holiday: {todayHoliday.title}
+                            </p>
+                            <p className="text-xs text-purple-700 mt-0.5">
+                                {todayHoliday.description || "Official paid corporate holiday. Attendance check-in is not mandatory today."}
+                            </p>
+                        </div>
+                    </div>
+                    <Link
+                        href="/employee-dashboard/granted/corporate-calendar"
+                        className="inline-flex items-center gap-1 text-xs font-bold text-purple-900 hover:text-purple-700 underline shrink-0"
+                    >
+                        <Calendar className="h-3.5 w-3.5" aria-hidden />
+                        View Corporate Calendar
+                    </Link>
                 </div>
             )}
             {todayLeave && (
@@ -1094,6 +1139,14 @@ export default function EmployeeAttendancePage() {
                         </div>
                     </div>
                     <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-start">
+                        <Link
+                            href="/employee-dashboard/granted/corporate-calendar"
+                            className="hidden sm:inline-flex items-center gap-1.5 rounded-md border border-purple-200 bg-purple-50 px-2.5 py-1.5 text-xs font-semibold text-purple-800 hover:bg-purple-100 transition"
+                            title="View Corporate Calendar & Holidays"
+                        >
+                            <Calendar className="h-3.5 w-3.5 text-purple-600" aria-hidden />
+                            Corporate Calendar
+                        </Link>
                         <button
                             type="button"
                             onClick={() => shiftMonth(-1)}

@@ -13,6 +13,8 @@ import {
 } from "@/lib/adminEmployeeAccess";
 import { formatDateOnlyInTimeZone, IST_TIMEZONE, todayDateOnly } from "@/lib/dateOnly";
 
+import { getCorporateHolidayForDate } from "@/lib/attendanceCorporateCalendarSync";
+
 const ACCESS_TABLE = "admin_employee_access";
 const ATTENDANCE_TABLE = "employee_attendance";
 
@@ -90,8 +92,9 @@ export async function resetPortalAttendanceDisableTracking(employeeId: string): 
 async function hasCheckInOnDate(employeeId: string, dateIso: string): Promise<boolean> {
     await ensureEmployeeAttendanceTable();
     const [rows] = await pool.query<RowDataPacket[]>(
-        `SELECT check_in_at FROM ${ATTENDANCE_TABLE}
-         WHERE employee_id = ? AND attendance_date = ? AND check_in_at IS NOT NULL
+        `SELECT id FROM ${ATTENDANCE_TABLE}
+         WHERE employee_id = ? AND attendance_date = ? 
+           AND (check_in_at IS NOT NULL OR status IN ('present', 'late', 'grace'))
          LIMIT 1`,
         [employeeId.trim(), dateIso],
     );
@@ -100,7 +103,7 @@ async function hasCheckInOnDate(employeeId: string, dateIso: string): Promise<bo
 
 /**
  * Count consecutive working days (from yesterday backward) with no check-in.
- * Skips week-offs and approved full-day leave without breaking the streak.
+ * Skips week-offs, corporate holidays, and approved full-day leave without breaking the streak.
  */
 export async function countConsecutiveMissedWorkingDays(
     employeeId: string,
@@ -135,6 +138,12 @@ export async function countConsecutiveMissedWorkingDays(
         }
 
         if (!isDateWorkingDay(cursor, workingDays)) {
+            cursor = addDaysIso(cursor, -1);
+            continue;
+        }
+
+        const corporateHoliday = await getCorporateHolidayForDate(cursor);
+        if (corporateHoliday) {
             cursor = addDaysIso(cursor, -1);
             continue;
         }
@@ -175,7 +184,7 @@ export async function disableEmployeePortalForMissedPunches(
 }
 
 /**
- * If employee missed check-in on 2+ consecutive working days (excluding week-offs & approved full leave),
+ * If employee missed check-in on 2+ consecutive working days (excluding week-offs, corporate holidays & approved full leave),
  * set portal_status to Disabled.
  */
 export async function evaluateMissedPunchPortalAccess(
@@ -226,7 +235,7 @@ export async function evaluateMissedPunchPortalAccess(
 
 export function missedPunchPortalBlockMessage(thresholdDays: number = MISSED_PUNCH_DISABLE_THRESHOLD): string {
     const days = Math.max(1, thresholdDays);
-    return `Your portal login has been disabled because you did not check in for ${days} working day${days === 1 ? "" : "s"} in a row (week-offs and approved leave are excluded). Please contact your administrator.`;
+    return `Your portal login has been disabled because you did not check in for ${days} working day${days === 1 ? "" : "s"} in a row (week-offs, holidays and approved leave are excluded). Please contact your administrator.`;
 }
 
 export function missedPunchPortalWarningMessage(
@@ -239,5 +248,5 @@ export function missedPunchPortalWarningMessage(
         return missedPunchPortalBlockMessage(thresholdDays);
     }
     const remaining = thresholdDays - missed;
-    return `You missed check-in on ${missed} working day(s) (week-offs and approved leave excluded). If you miss ${remaining} more working day${remaining === 1 ? "" : "s"} without check-in, your portal login will be disabled.`;
+    return `You missed check-in on ${missed} working day(s) (week-offs, holidays and approved leave excluded). If you miss ${remaining} more working day${remaining === 1 ? "" : "s"} without check-in, your portal login will be disabled.`;
 }

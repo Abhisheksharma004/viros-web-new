@@ -8,6 +8,7 @@ import {
     type AdminEmployeeShiftRow,
 } from "@/lib/adminEmployeeShifts";
 import { isDateWorkingDay, DEFAULT_SHIFT_WORKING_DAYS } from "@/lib/attendanceSchedule";
+import { getCorporateHolidayForDate } from "@/lib/attendanceCorporateCalendarSync";
 import { IST_TIMEZONE, todayDateOnly } from "@/lib/dateOnly";
 import type { TaskRow, TaskStatus } from "@/lib/adminTaskUiShared";
 import { getStatusLabel } from "@/lib/adminTaskUiShared";
@@ -278,6 +279,11 @@ async function resolveCheckInReminderContext(
 
     if (!isDateWorkingDay(dateIso, workingDays)) {
         return { ok: false, result: { sent: false, skipped: true, reason: "not_working_day" } };
+    }
+
+    const corporateHoliday = await getCorporateHolidayForDate(dateIso);
+    if (corporateHoliday) {
+        return { ok: false, result: { sent: false, skipped: true, reason: "corporate_holiday" } };
     }
 
     if (!isSmtpConfigured()) {

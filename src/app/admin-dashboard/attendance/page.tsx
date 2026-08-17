@@ -964,25 +964,35 @@ function AdminEmployeeAttendancePageContent() {
 
     return (
         <div className="mx-auto max-w-7xl space-y-6">
-            <div className="flex flex-wrap gap-2 border-b border-gray-200 pb-1">
-                {tabs.map((t) => {
-                    const Icon = t.icon;
-                    const active = tab === t.id;
-                    return (
-                        <button
-                            key={t.id}
-                            type="button"
-                            onClick={() => setTab(t.id)}
-                            className={`inline-flex items-center gap-2 rounded-t-lg px-4 py-2.5 text-sm font-semibold transition ${active
-                                ? "bg-[#0a2a5e] text-white shadow-sm"
-                                : "text-gray-800 hover:bg-gray-100"
-                                }`}
-                        >
-                            <Icon className="h-4 w-4" aria-hidden />
-                            {t.label}
-                        </button>
-                    );
-                })}
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 pb-1">
+                <div className="flex flex-wrap gap-2">
+                    {tabs.map((t) => {
+                        const Icon = t.icon;
+                        const active = tab === t.id;
+                        return (
+                            <button
+                                key={t.id}
+                                type="button"
+                                onClick={() => setTab(t.id)}
+                                className={`inline-flex items-center gap-2 rounded-t-lg px-4 py-2.5 text-sm font-semibold transition ${active
+                                    ? "bg-[#0a2a5e] text-white shadow-sm"
+                                    : "text-gray-800 hover:bg-gray-100"
+                                    }`}
+                            >
+                                <Icon className="h-4 w-4" aria-hidden />
+                                {t.label}
+                            </button>
+                        );
+                    })}
+                </div>
+                <Link
+                    href="/admin-dashboard/corporate-calendar"
+                    className="inline-flex items-center gap-1.5 rounded-md border border-purple-200 bg-purple-50 px-3 py-2 text-xs font-bold text-purple-800 hover:bg-purple-100 transition shadow-xs mb-1"
+                    title="Manage Corporate Calendar & Holidays"
+                >
+                    <Calendar className="h-4 w-4 text-purple-600" aria-hidden />
+                    Corporate Calendar
+                </Link>
             </div>
 
             {/* Daily tab */}

@@ -14,6 +14,12 @@ import {
     getTodayLeaveInfo,
     mergeLeaveRequestsIntoAttendanceRecords,
 } from "@/lib/attendanceLeaveSync";
+import {
+    fetchCorporateEventsForMonth,
+    getCorporateHolidayForDate,
+    mergeCorporateEventsIntoAttendanceRecords,
+    type CorporateEventForAttendance,
+} from "@/lib/attendanceCorporateCalendarSync";
 import { mergeMonthRecordsWithShift } from "@/lib/attendanceSchedule";
 import { todayDateOnly } from "@/lib/dateOnly";
 import {
@@ -206,12 +212,17 @@ function todayStatusBadge(
     todayRecord: AttendanceDayRecord | undefined,
     checkedIn: boolean,
     onLeave: boolean,
+    todayHoliday?: CorporateEventForAttendance | null,
 ): { text: string; variant: "emerald" | "amber" | "cyan" } {
     if (onLeave) return { text: "On leave", variant: "cyan" };
+    if (!checkedIn && todayHoliday) {
+        return { text: todayHoliday.title || "Holiday", variant: "cyan" };
+    }
     const status = todayRecord?.status;
     if (status === "present" || (checkedIn && status !== "late" && status !== "absent")) {
         return { text: "Present", variant: "emerald" };
     }
+    if (status === "holiday") return { text: todayRecord?.note || "Holiday", variant: "cyan" };
     if (status === "late") return { text: "Late", variant: "amber" };
     if (status === "absent") return { text: "Absent", variant: "amber" };
     if (status === "leave" || status === "half-day") return { text: "On leave", variant: "cyan" };
@@ -427,6 +438,8 @@ export async function buildEmployeeDashboard(
         expenseApproved,
         expenseRejected,
         birthdayAlerts,
+        corpEvents,
+        todayHoliday,
     ] = await Promise.all([
         getAttendanceForMonth(employeeId, year, month),
         fetchLeaveRequestsOverlappingMonth(employeeId, year, month),
@@ -441,6 +454,8 @@ export async function buildEmployeeDashboard(
         getEmployeeExpenseSummaryByStatus(employeeId, monthKey, "approved"),
         getEmployeeExpenseSummaryByStatus(employeeId, monthKey, "rejected"),
         fetchEmployeeBirthdayAlerts(employeeId),
+        fetchCorporateEventsForMonth(year, month),
+        getCorporateHolidayForDate(todayIso),
     ]);
 
     const withLeave = mergeLeaveRequestsIntoAttendanceRecords(dbRecords, leaveRequestsMonth);
@@ -448,8 +463,9 @@ export async function buildEmployeeDashboard(
         todayIso,
         markPastAbsent: true,
     });
-    const todayRecord = records.find((r) => r.date === todayIso);
-    const att = countAttendanceStats(records);
+    const recordsWithCorp = mergeCorporateEventsIntoAttendanceRecords(records, corpEvents);
+    const todayRecord = recordsWithCorp.find((r) => r.date === todayIso);
+    const att = countAttendanceStats(recordsWithCorp);
 
     let checkedIn = false;
     let checkInTime: string | null = null;
@@ -463,7 +479,7 @@ export async function buildEmployeeDashboard(
     }
 
     const onLeaveToday = Boolean(todayLeave?.blocking || todayLeave);
-    const todayBadge = todayStatusBadge(todayRecord, checkedIn, onLeaveToday);
+    const todayBadge = todayStatusBadge(todayRecord, checkedIn, onLeaveToday, todayHoliday);
 
     const usedByPolicy = await fetchUsedDaysByPolicy(
         employeeId,
