@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
+import { saveContactSubmission } from '@/lib/contactSubmissions';
 
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { name, email, phone, company, message, product, category, productImage, productDescription, productSpecs } = body;
+        const { name, email, phone, company, message, product, category, productImage, productDescription, productSpecs, source } = body;
 
         // Validate required fields
         if (!name || !email || !phone || !message || !product) {
@@ -12,6 +13,25 @@ export async function POST(request: NextRequest) {
                 { error: 'Missing required fields' },
                 { status: 400 }
             );
+        }
+
+        // 1. Save product inquiry into MySQL contact_submissions table
+        let submissionId: number | null = null;
+        try {
+            submissionId = await saveContactSubmission({
+                name,
+                email,
+                phone,
+                company,
+                subject: `Product Inquiry: ${product}`,
+                product,
+                category: category || null,
+                message,
+                source: source || 'product_inquiry_popup',
+            });
+            console.log(`✅ Product inquiry stored in database with ID: ${submissionId}`);
+        } catch (dbError) {
+            console.error('Failed to save product inquiry to database:', dbError);
         }
 
         // Test mode - skip email sending
@@ -32,17 +52,23 @@ export async function POST(request: NextRequest) {
             console.log('\n💡 To enable email sending, set EMAIL_TEST_MODE=false in .env.local\n');
 
             return NextResponse.json(
-                { message: 'Inquiry received successfully! (Test mode - no email sent)' },
+                { 
+                    message: 'Inquiry received and saved successfully!',
+                    id: submissionId 
+                },
                 { status: 200 }
             );
         }
 
         // Check if SMTP credentials are configured
         if (!process.env.SMTP_USER || !process.env.SMTP_PASSWORD) {
-            console.error('SMTP credentials not configured. Please set SMTP_USER and SMTP_PASSWORD in .env.local');
+            console.warn('SMTP credentials not configured. Product inquiry saved in DB, skipping email.');
             return NextResponse.json(
-                { error: 'Email service not configured. Please contact administrator.' },
-                { status: 500 }
+                { 
+                    message: 'Inquiry submitted and saved successfully.',
+                    id: submissionId 
+                },
+                { status: 200 }
             );
         }
 

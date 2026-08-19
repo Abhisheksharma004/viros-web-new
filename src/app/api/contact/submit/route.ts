@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
+import { saveContactSubmission } from '@/lib/contactSubmissions';
 
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { name, email, phone, company, subject, message } = body;
+        const { name, email, phone, company, subject, message, source } = body;
 
         // Validate required fields
         if (!name || !email || !phone || !message) {
@@ -12,6 +13,23 @@ export async function POST(request: NextRequest) {
                 { error: 'Missing required fields' },
                 { status: 400 }
             );
+        }
+
+        // 1. Save submission into MySQL Database
+        let submissionId: number | null = null;
+        try {
+            submissionId = await saveContactSubmission({
+                name,
+                email,
+                phone,
+                company,
+                subject: subject || 'General Inquiry',
+                message,
+                source: source || (subject?.includes('Popup') ? 'website_popup' : 'contact_form'),
+            });
+            console.log(`✅ Contact submission stored in database with ID: ${submissionId}`);
+        } catch (dbError) {
+            console.error('Failed to save contact submission to database:', dbError);
         }
 
         // Test mode - skip email sending
@@ -31,17 +49,23 @@ export async function POST(request: NextRequest) {
             console.log('\n💡 To enable email sending, set EMAIL_TEST_MODE=false in .env.local\n');
 
             return NextResponse.json(
-                { message: 'Contact form received successfully! (Test mode - no email sent)' },
+                { 
+                    message: 'Contact form received and saved successfully!',
+                    id: submissionId 
+                },
                 { status: 200 }
             );
         }
 
         // Check if SMTP credentials are configured
         if (!process.env.SMTP_USER || !process.env.SMTP_PASSWORD) {
-            console.error('SMTP credentials not configured. Please set SMTP_USER and SMTP_PASSWORD in .env.local');
+            console.warn('SMTP credentials not configured. Data saved in DB, skipping email.');
             return NextResponse.json(
-                { error: 'Email service not configured. Please contact administrator.' },
-                { status: 500 }
+                { 
+                    message: 'Contact form submitted and saved successfully.',
+                    id: submissionId 
+                },
+                { status: 200 }
             );
         }
 

@@ -8,6 +8,7 @@ import { CookieProvider } from "@/context/CookieContext";
 import CookieConsentBanner from "@/components/CookieConsentBanner";
 import CookiePreferencesModal from "@/components/CookiePreferencesModal";
 import CookieScriptManager from "@/components/CookieScriptManager";
+import GetInTouchPopup from "@/components/GetInTouchPopup";
 
 export default function LayoutWrapper({
   children,
@@ -43,6 +44,7 @@ export default function LayoutWrapper({
           <Footer />
         </div>
       )}
+      {!hideNavAndFooter && <GetInTouchPopup />}
       <CookieConsentBanner />
       <CookiePreferencesModal />
     </CookieProvider>
