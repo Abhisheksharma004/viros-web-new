@@ -192,11 +192,9 @@ export default function Navbar() {
             icon: ScanBarcode,
             solutions: [
                 { name: "Track & Trace Solution", href: "/services" },
-                { name: "Digital Tax Stamp Authentication", href: "/services" },
                 { name: "High-Speed Line Monitoring", href: "/services" },
                 { name: "QR Code & Hologram Verification", href: "/services" },
-                { name: "Dispatch & Supply Chain Control", href: "/services" },
-                { name: "Government Regulatory Portal", href: "/services" }
+                { name: "Dispatch & Supply Chain Control", href: "/services" }
             ]
         }
     ];
