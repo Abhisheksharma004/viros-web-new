@@ -1,5 +1,5 @@
 import pool from "@/lib/db";
-import { JOB_OPENINGS, JobOpening } from "@/data/careersData";
+import { JobOpening } from "@/data/careersData";
 
 let tablesInitialized = false;
 
@@ -58,32 +58,22 @@ export async function ensureCareersTables() {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         `);
 
-        // 3. Seed initial jobs if table is empty
-        const [rows]: any = await pool.query(`SELECT COUNT(*) as count FROM job_openings`);
-        if (rows && rows[0] && Number(rows[0].count) === 0) {
-            console.log("🌱 Seeding initial job openings into MySQL database...");
-            for (const job of JOB_OPENINGS) {
-                await pool.query(
-                    `INSERT INTO job_openings 
-                    (id, title, department, location, type, experience, salary, summary, tags, responsibilities, requirements, nice_to_have, is_active)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
-                    [
-                        job.id,
-                        job.title,
-                        job.department,
-                        job.location,
-                        job.type,
-                        job.experience,
-                        job.salary,
-                        job.summary,
-                        JSON.stringify(job.tags || []),
-                        JSON.stringify(job.responsibilities || []),
-                        JSON.stringify(job.requirements || []),
-                        JSON.stringify(job.niceToHave || [])
-                    ]
-                );
+        // Ensure interview columns exist
+        const interviewCols = [
+            "ALTER TABLE job_applications ADD COLUMN interview_level VARCHAR(50) NULL;",
+            "ALTER TABLE job_applications ADD COLUMN interview_date VARCHAR(50) NULL;",
+            "ALTER TABLE job_applications ADD COLUMN interview_time VARCHAR(50) NULL;",
+            "ALTER TABLE job_applications ADD COLUMN interview_mode VARCHAR(100) NULL;",
+            "ALTER TABLE job_applications ADD COLUMN interview_link TEXT NULL;",
+            "ALTER TABLE job_applications ADD COLUMN interview_notes TEXT NULL;"
+        ];
+
+        for (const sql of interviewCols) {
+            try {
+                await pool.query(sql);
+            } catch {
+                // Column already exists or table freshly created
             }
-            console.log("✅ Initial jobs seeded successfully!");
         }
 
         tablesInitialized = true;
@@ -115,7 +105,7 @@ export async function getDbJobOpenings(activeOnly: boolean = false): Promise<Job
         
         const [rows]: any = await pool.query(query);
         if (!rows || rows.length === 0) {
-            return JOB_OPENINGS;
+            return [];
         }
 
         return rows.map((r: any) => ({
@@ -135,8 +125,8 @@ export async function getDbJobOpenings(activeOnly: boolean = false): Promise<Job
             createdAt: r.created_at
         }));
     } catch (error) {
-        console.error("Error fetching jobs from DB, falling back to static data:", error);
-        return JOB_OPENINGS;
+        console.error("Error fetching jobs from DB:", error);
+        return [];
     }
 }
 
@@ -145,7 +135,7 @@ export async function getDbJobById(id: string): Promise<JobOpening | null> {
     try {
         const [rows]: any = await pool.query(`SELECT * FROM job_openings WHERE id = ? LIMIT 1`, [id]);
         if (!rows || rows.length === 0) {
-            return JOB_OPENINGS.find(j => j.id === id) || null;
+            return null;
         }
         const r = rows[0];
         return {
@@ -166,6 +156,6 @@ export async function getDbJobById(id: string): Promise<JobOpening | null> {
         };
     } catch (error) {
         console.error("Error fetching job by ID:", error);
-        return JOB_OPENINGS.find(j => j.id === id) || null;
+        return null;
     }
 }

@@ -25,14 +25,14 @@ import {
     Loader2
 } from "lucide-react";
 import Toast from "@/components/Toast";
-import { JOB_OPENINGS, JobOpening } from "@/data/careersData";
+import { JobOpening } from "@/data/careersData";
 
 export default function AdminJobPostPage() {
-    const [jobs, setJobs] = useState<JobOpening[]>(JOB_OPENINGS);
+    const [jobs, setJobs] = useState<JobOpening[]>([]);
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedDepartment, setSelectedDepartment] = useState("All");
     const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
 
     // Fetch jobs from database
@@ -44,10 +44,13 @@ export default function AdminJobPostPage() {
                 const data = await res.json();
                 if (data.success && Array.isArray(data.jobs)) {
                     setJobs(data.jobs);
+                } else {
+                    setJobs([]);
                 }
             }
         } catch (err) {
             console.error("Error loading jobs from DB:", err);
+            setJobs([]);
         } finally {
             setIsLoading(false);
         }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import pool from "@/lib/db";
 import { ensureCareersTables } from "@/lib/careersDb";
+import { sendApplicationEmails } from "@/lib/careersEmail";
 
 export async function GET(request: NextRequest) {
     try {
@@ -48,6 +49,12 @@ export async function GET(request: NextRequest) {
             linkedinUrl: r.linkedin_url,
             portfolioUrl: r.portfolio_url,
             coverNote: r.cover_note,
+            interviewLevel: r.interview_level || "",
+            interviewDate: r.interview_date || "",
+            interviewTime: r.interview_time || "",
+            interviewMode: r.interview_mode || "",
+            interviewLink: r.interview_link || "",
+            interviewNotes: r.interview_notes || "",
             status: r.status,
             appliedDate: r.created_at ? new Date(r.created_at).toISOString().split("T")[0] : ""
         }));
@@ -93,14 +100,17 @@ export async function POST(request: NextRequest) {
             }, { status: 400 });
         }
 
+        const effectiveJobTitle = jobTitle || "General Talent Pool";
+        const effectiveDepartment = department || "General";
+
         const [result]: any = await pool.query(
             `INSERT INTO job_applications 
             (job_id, job_title, department, full_name, email, phone, current_city, ready_to_relocate, highest_qualification, total_experience, current_company, current_designation, key_skills, current_ctc, expected_ctc, notice_period, resume_link, linkedin_url, portfolio_url, cover_note, status)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new')`,
             [
                 jobId || null,
-                jobTitle || "General Talent Pool",
-                department || "General",
+                effectiveJobTitle,
+                effectiveDepartment,
                 fullName,
                 email,
                 phone,
@@ -121,10 +131,40 @@ export async function POST(request: NextRequest) {
             ]
         );
 
+        const applicationId = result?.insertId || Date.now();
+
+        // Send confirmation email to candidate & notification to recruitment team
+        try {
+            await sendApplicationEmails({
+                applicationId,
+                jobTitle: effectiveJobTitle,
+                department: effectiveDepartment,
+                fullName,
+                email,
+                phone,
+                currentCity,
+                readyToRelocate,
+                highestQualification,
+                totalExperience,
+                currentCompany,
+                currentDesignation,
+                keySkills,
+                currentCtc,
+                expectedCtc,
+                noticePeriod,
+                resumeLink,
+                linkedinUrl,
+                portfolioUrl,
+                coverNote
+            });
+        } catch (emailErr) {
+            console.error("Non-fatal email dispatch error in /api/careers/applications:", emailErr);
+        }
+
         return NextResponse.json({
             success: true,
             message: "Application submitted successfully",
-            applicationId: result?.insertId
+            applicationId
         });
     } catch (error: any) {
         console.error("POST /api/careers/applications error:", error);

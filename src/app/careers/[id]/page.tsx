@@ -18,40 +18,61 @@ import {
     Laptop,
     Check,
     Building2,
-    Clock
+    Clock,
+    Loader2
 } from "lucide-react";
 import Toast from "@/components/Toast";
-import { JOB_OPENINGS } from "@/data/careersData";
+import { JobOpening } from "@/data/careersData";
 
 export default function JobDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const resolvedParams = use(params);
-    const [job, setJob] = useState(JOB_OPENINGS.find((j) => j.id === resolvedParams.id) || null);
+    const [job, setJob] = useState<JobOpening | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
     const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
     const [copied, setCopied] = useState(false);
 
     useEffect(() => {
         const fetchJob = async () => {
+            setIsLoading(true);
             try {
                 const res = await fetch(`/api/careers/jobs/${resolvedParams.id}`);
                 if (res.ok) {
                     const data = await res.json();
                     if (data.success && data.job) {
                         setJob(data.job);
+                    } else {
+                        setJob(null);
                     }
+                } else {
+                    setJob(null);
                 }
             } catch (err) {
                 console.error("Error fetching live job:", err);
+                setJob(null);
+            } finally {
+                setIsLoading(false);
             }
         };
         fetchJob();
     }, [resolvedParams.id]);
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 text-center">
+                <div className="flex flex-col items-center gap-3">
+                    <Loader2 className="w-8 h-8 text-[#06124f] animate-spin" />
+                    <p className="text-sm font-medium text-slate-600">Loading job details...</p>
+                </div>
+            </div>
+        );
+    }
 
     if (!job) {
         return (
             <div className="min-h-screen bg-white flex items-center justify-center p-6 text-center">
                 <div>
                     <h2 className="text-xl font-bold text-[#06124f]">Job Not Found</h2>
-                    <p className="text-sm text-slate-500 mt-1 mb-4">This position may have been filled or closed.</p>
+                    <p className="text-sm text-slate-500 mt-1 mb-4">This position may have been closed or removed.</p>
                     <Link href="/careers" className="px-4 py-2 bg-[#06124f] text-white rounded-lg text-xs font-semibold">
                         Back to all jobs
                     </Link>

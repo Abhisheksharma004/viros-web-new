@@ -21,7 +21,9 @@ import {
     Calendar,
     Award,
     Globe,
-    CheckCircle2
+    Loader2,
+    Video,
+    Send
 } from "lucide-react";
 import Toast from "@/components/Toast";
 
@@ -49,6 +51,12 @@ interface CandidateApplication {
     linkedinUrl?: string;
     portfolioUrl?: string;
     coverNote?: string;
+    interviewLevel?: string;
+    interviewDate?: string;
+    interviewTime?: string;
+    interviewMode?: string;
+    interviewLink?: string;
+    interviewNotes?: string;
     status: "new" | "reviewed" | "interview" | "shortlisted" | "rejected";
     appliedDate: string;
 }
@@ -59,8 +67,103 @@ export default function AdminApplicationsPage() {
     const [selectedStatus, setSelectedStatus] = useState("all");
     const [selectedDepartment, setSelectedDepartment] = useState("All");
     const [selectedApp, setSelectedApp] = useState<CandidateApplication | null>(null);
+    const [interviewModalApp, setInterviewModalApp] = useState<CandidateApplication | null>(null);
     const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [isSubmittingInterview, setIsSubmittingInterview] = useState(false);
+
+    // Interview form state
+    const [interviewForm, setInterviewForm] = useState({
+        level: "Level 1" as "Level 1" | "Level 2" | "Level 3",
+        date: "",
+        time: "11:00",
+        mode: "Online",
+        link: "",
+        notes: ""
+    });
+
+    const openInterviewModal = (app: CandidateApplication) => {
+        // Tomorrow as default date in YYYY-MM-DD
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const defaultDate = tomorrow.toISOString().split("T")[0];
+
+        setInterviewForm({
+            level: (app.interviewLevel as any) || "Level 1",
+            date: app.interviewDate || defaultDate,
+            time: app.interviewTime || "11:00",
+            mode: app.interviewMode || "Online",
+            link: app.interviewLink || "",
+            notes: app.interviewNotes || ""
+        });
+        setInterviewModalApp(app);
+    };
+
+    const handleScheduleInterviewSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!interviewModalApp) return;
+
+        if (!interviewForm.date || !interviewForm.time) {
+            setToast({ message: "Please select interview date and time.", type: "error" });
+            return;
+        }
+
+        setIsSubmittingInterview(true);
+        try {
+            const res = await fetch(`/api/careers/applications/${interviewModalApp.id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    status: "interview",
+                    interviewLevel: interviewForm.level,
+                    interviewDate: interviewForm.date,
+                    interviewTime: interviewForm.time,
+                    interviewMode: interviewForm.mode,
+                    interviewLink: interviewForm.link,
+                    interviewNotes: interviewForm.notes
+                })
+            });
+
+            if (res.ok) {
+                setApplications(prev => prev.map(a => a.id === interviewModalApp.id ? {
+                    ...a,
+                    status: "interview",
+                    interviewLevel: interviewForm.level,
+                    interviewDate: interviewForm.date,
+                    interviewTime: interviewForm.time,
+                    interviewMode: interviewForm.mode,
+                    interviewLink: interviewForm.link,
+                    interviewNotes: interviewForm.notes
+                } : a));
+
+                if (selectedApp && selectedApp.id === interviewModalApp.id) {
+                    setSelectedApp(prev => prev ? {
+                        ...prev,
+                        status: "interview",
+                        interviewLevel: interviewForm.level,
+                        interviewDate: interviewForm.date,
+                        interviewTime: interviewForm.time,
+                        interviewMode: interviewForm.mode,
+                        interviewLink: interviewForm.link,
+                        interviewNotes: interviewForm.notes
+                    } : null);
+                }
+
+                setToast({
+                    message: `${interviewForm.level} interview scheduled for ${interviewModalApp.fullName} & invitation email sent!`,
+                    type: "success"
+                });
+                setInterviewModalApp(null);
+            } else {
+                setToast({ message: "Failed to schedule interview in database.", type: "error" });
+            }
+        } catch (err) {
+            console.error("Error scheduling interview:", err);
+            setToast({ message: "Network error scheduling interview.", type: "error" });
+        } finally {
+            setIsSubmittingInterview(false);
+        }
+    };
 
     const loadApplications = async () => {
         setIsLoading(true);
@@ -127,7 +230,11 @@ export default function AdminApplicationsPage() {
                 if (selectedApp && selectedApp.id === id) {
                     setSelectedApp(prev => prev ? { ...prev, status: newStatus } : null);
                 }
-                setToast({ message: `Status updated to ${newStatus.toUpperCase()}`, type: "success" });
+                const emailNotified = ["shortlisted", "rejected", "interview"].includes(newStatus);
+                setToast({
+                    message: `Status updated to ${newStatus.toUpperCase()}${emailNotified ? " & candidate notified via email" : ""}!`,
+                    type: "success"
+                });
             } else {
                 setToast({ message: "Failed to update status in database.", type: "error" });
             }
@@ -276,29 +383,74 @@ export default function AdminApplicationsPage() {
                                             <div className="text-gray-400">{app.currentCity}</div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            {getStatusBadge(app.status)}
+                                            {app.status === "interview" ? (
+                                                <div className="space-y-1">
+                                                    <div>
+                                                        <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold bg-amber-50 text-amber-800 ring-1 ring-amber-600/20">
+                                                            <Calendar className="w-3 h-3 text-amber-600" />
+                                                            Interview ({app.interviewLevel || "Level 1"})
+                                                        </span>
+                                                    </div>
+                                                    {app.interviewDate ? (
+                                                        <div className="text-xs">
+                                                            <div className="font-semibold text-gray-800 flex items-center gap-1">
+                                                                <Clock className="w-3 h-3 text-amber-600" />
+                                                                {app.interviewDate} {app.interviewTime ? `• ${app.interviewTime}` : ""}
+                                                            </div>
+                                                            {app.interviewMode && (
+                                                                <span className="inline-block text-[10px] font-semibold text-amber-800 bg-amber-100/70 border border-amber-200 px-1.5 py-0.5 rounded mt-0.5">
+                                                                    {app.interviewMode}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    ) : (
+                                                        <div className="text-[11px] text-gray-400">Date pending</div>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                getStatusBadge(app.status)
+                                            )}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
                                             {app.appliedDate}
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-right space-x-2">
-                                            <button
-                                                type="button"
-                                                onClick={() => setSelectedApp(app)}
-                                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md border border-gray-200 bg-white text-xs font-semibold text-blue-700 hover:bg-blue-50 shadow-xs cursor-pointer"
-                                                title="View Full Profile"
-                                            >
-                                                <Eye className="w-3.5 h-3.5" /> View
-                                            </button>
-                                            <a
-                                                href={app.resumeLink}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md border border-green-200 bg-green-50 text-xs font-semibold text-green-700 hover:bg-green-100 shadow-xs"
-                                                title="Open Resume Link"
-                                            >
-                                                <FileText className="w-3.5 h-3.5" /> Resume
-                                            </a>
+                                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                                            <div className="inline-flex items-center justify-end gap-1.5">
+                                                {/* Schedule Interview */}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => openInterviewModal(app)}
+                                                    className={`inline-flex items-center justify-center w-8 h-8 rounded-md border shadow-xs cursor-pointer transition-all duration-150 ${
+                                                        app.status === "interview"
+                                                            ? "border-amber-400 bg-amber-100 text-amber-900 ring-2 ring-amber-400/30"
+                                                            : "border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:text-amber-900 hover:scale-105"
+                                                    }`}
+                                                    title="Schedule Interview"
+                                                >
+                                                    <Calendar className="w-4 h-4" />
+                                                </button>
+
+                                                {/* View Candidate Details */}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setSelectedApp(app)}
+                                                    className="inline-flex items-center justify-center w-8 h-8 rounded-md border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-900 hover:scale-105 shadow-xs cursor-pointer transition-all duration-150"
+                                                    title="View Full Profile"
+                                                >
+                                                    <Eye className="w-4 h-4" />
+                                                </button>
+
+                                                {/* Open Candidate Resume */}
+                                                <a
+                                                    href={app.resumeLink}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="inline-flex items-center justify-center w-8 h-8 rounded-md border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-900 hover:scale-105 shadow-xs transition-all duration-150"
+                                                    title="Open Resume Link"
+                                                >
+                                                    <FileText className="w-4 h-4" />
+                                                </a>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))
@@ -351,9 +503,30 @@ export default function AdminApplicationsPage() {
                                         <span className="text-gray-400 uppercase font-semibold text-[10px] block">Current Stage</span>
                                         <div className="mt-0.5">{getStatusBadge(selectedApp.status)}</div>
                                     </div>
+                                    {selectedApp.interviewLevel && (
+                                        <>
+                                            <div className="h-6 w-px bg-gray-200" />
+                                            <div>
+                                                <span className="text-gray-400 uppercase font-semibold text-[10px] block">Scheduled Round</span>
+                                                <span className="font-bold text-amber-800">{selectedApp.interviewLevel} ({selectedApp.interviewDate || "TBD"})</span>
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
 
                                 <div className="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => openInterviewModal(selectedApp)}
+                                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md font-semibold text-xs shadow-xs transition cursor-pointer ${
+                                            selectedApp.status === "interview"
+                                                ? "bg-amber-600 text-white"
+                                                : "bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100"
+                                        }`}
+                                    >
+                                        <Calendar className="w-3.5 h-3.5" />
+                                        {selectedApp.status === "interview" ? "Reschedule / Change Round" : "Schedule Interview"}
+                                    </button>
                                     <a
                                         href={selectedApp.resumeLink}
                                         target="_blank"
@@ -522,7 +695,7 @@ export default function AdminApplicationsPage() {
                                     Update Recruitment Stage:
                                 </span>
                                 <div className="flex flex-wrap gap-2">
-                                    {(["new", "reviewed", "interview", "shortlisted", "rejected"] as const).map((st) => (
+                                    {(["new", "reviewed", "shortlisted", "rejected"] as const).map((st) => (
                                         <button
                                             key={st}
                                             type="button"
@@ -550,6 +723,202 @@ export default function AdminApplicationsPage() {
                                 Close Details
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* INTERVIEW SCHEDULE POPUP MODAL (LEVEL 1 TO 3, DATE, TIME, NOTE) */}
+            {interviewModalApp && (
+                <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto">
+                    <div className="bg-white rounded-md shadow-2xl max-w-xl w-full border border-gray-200 overflow-hidden my-6 animate-in fade-in zoom-in-95 duration-150">
+                        {/* Modal Header */}
+                        <div
+                            className="px-6 py-4 flex items-center justify-between text-white"
+                            style={{ background: "linear-gradient(135deg, #06124f 0%, #081a63 100%)" }}
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 rounded-md bg-amber-500/20 border border-amber-400/30 text-amber-300">
+                                    <Calendar className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <h3 className="text-base font-bold text-white">Schedule Candidate Interview</h3>
+                                    <p className="text-xs text-slate-300">
+                                        {interviewModalApp.fullName} • <span className="text-teal-300 font-medium">{interviewModalApp.role}</span>
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setInterviewModalApp(null)}
+                                className="p-1.5 rounded-md text-white/70 hover:text-white hover:bg-white/10 transition cursor-pointer"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        {/* Modal Form Body */}
+                        <form onSubmit={handleScheduleInterviewSubmit} className="p-6 space-y-5 text-sm text-gray-800 max-h-[80vh] overflow-y-auto">
+                            {/* Candidate Summary Header */}
+                            <div className="p-3 bg-slate-50 border border-slate-200 rounded-md flex flex-wrap items-center justify-between gap-2 text-xs">
+                                <div>
+                                    <span className="text-gray-400 uppercase text-[10px] block font-semibold">Candidate Email</span>
+                                    <span className="font-semibold text-gray-900">{interviewModalApp.email}</span>
+                                </div>
+                                <div>
+                                    <span className="text-gray-400 uppercase text-[10px] block font-semibold">Phone</span>
+                                    <span className="font-semibold text-gray-900 font-mono">{interviewModalApp.phone}</span>
+                                </div>
+                                <div>
+                                    <span className="text-gray-400 uppercase text-[10px] block font-semibold">Experience</span>
+                                    <span className="font-semibold text-gray-900">{interviewModalApp.experience}</span>
+                                </div>
+                            </div>
+
+                            {/* 1. Interview Level Selection (Label 1 se 3) */}
+                            <div>
+                                <label className="block text-xs font-bold text-gray-800 uppercase tracking-wide mb-2">
+                                    1. Select Interview Level / Round (1 to 3) <span className="text-rose-500">*</span>
+                                </label>
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                                    {[
+                                        { id: "Level 1", title: "Level 1", subtitle: "Initial Tech Screening / HR" },
+                                        { id: "Level 2", title: "Level 2", subtitle: "Domain & Deep Tech Assessment" },
+                                        { id: "Level 3", title: "Level 3", subtitle: "Final Leadership / Management" },
+                                    ].map((lvl) => (
+                                        <button
+                                            key={lvl.id}
+                                            type="button"
+                                            onClick={() => setInterviewForm(prev => ({ ...prev, level: lvl.id as any }))}
+                                            className={`p-3 rounded-md border text-left transition-all cursor-pointer ${
+                                                interviewForm.level === lvl.id
+                                                    ? "border-[#06124f] bg-blue-50/70 ring-2 ring-[#06124f]/20 shadow-xs"
+                                                    : "border-gray-200 bg-white hover:bg-gray-50 text-gray-700"
+                                            }`}
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <span className={`text-xs font-bold ${interviewForm.level === lvl.id ? "text-[#06124f]" : "text-gray-900"}`}>
+                                                    {lvl.title}
+                                                </span>
+                                                {interviewForm.level === lvl.id && (
+                                                    <span className="w-2 h-2 rounded-full bg-[#06124f]"></span>
+                                                )}
+                                            </div>
+                                            <p className="text-[11px] text-gray-500 mt-1 leading-tight">{lvl.subtitle}</p>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* 2. Date and Time Selection */}
+                            <div>
+                                <label className="block text-xs font-bold text-gray-800 uppercase tracking-wide mb-2">
+                                    2. Date & Time <span className="text-rose-500">*</span>
+                                </label>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <span className="text-[11px] text-gray-500 block mb-1 font-medium">Interview Date</span>
+                                        <div className="relative">
+                                            <input
+                                                type="date"
+                                                required
+                                                value={interviewForm.date}
+                                                onChange={(e) => setInterviewForm(prev => ({ ...prev, date: e.target.value }))}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-xs sm:text-sm text-gray-900 font-medium focus:ring-1 focus:ring-[#06124f] outline-none"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <span className="text-[11px] text-gray-500 block mb-1 font-medium">Interview Time (IST)</span>
+                                        <div className="relative">
+                                            <input
+                                                type="time"
+                                                required
+                                                value={interviewForm.time}
+                                                onChange={(e) => setInterviewForm(prev => ({ ...prev, time: e.target.value }))}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-xs sm:text-sm text-gray-900 font-medium focus:ring-1 focus:ring-[#06124f] outline-none"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* 3. Interview Format & Meeting Link */}
+                            <div>
+                                <label className="block text-xs font-bold text-gray-800 uppercase tracking-wide mb-2">
+                                    3. Mode & Meeting URL / Location
+                                </label>
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    <div className="sm:col-span-1">
+                                        <span className="text-[11px] text-gray-500 block mb-1 font-medium">Format</span>
+                                        <select
+                                            value={interviewForm.mode}
+                                            onChange={(e) => setInterviewForm(prev => ({ ...prev, mode: e.target.value }))}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-xs font-medium text-gray-900 bg-white focus:ring-1 focus:ring-[#06124f] outline-none"
+                                        >
+                                            <option value="Online">Online</option>
+                                            <option value="Offline">Offline</option>
+                                        </select>
+                                    </div>
+                                    <div className="sm:col-span-2">
+                                        <span className="text-[11px] text-gray-500 block mb-1 font-medium">
+                                            {interviewForm.mode === "Online" ? "Meeting Link (e.g. Google Meet / Zoom URL)" : "Office Address / Room Location"}
+                                        </span>
+                                        <input
+                                            type="text"
+                                            placeholder={interviewForm.mode === "Online" ? "e.g. https://meet.google.com/abc-defg-hij" : "e.g. Viros HQ Office, Sector 62, Noida (Lab 2)"}
+                                            value={interviewForm.link}
+                                            onChange={(e) => setInterviewForm(prev => ({ ...prev, link: e.target.value }))}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-xs sm:text-sm text-gray-900 focus:ring-1 focus:ring-[#06124f] outline-none"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* 4. Notes & Guidelines for Candidate */}
+                            <div>
+                                <label className="block text-xs font-bold text-gray-800 uppercase tracking-wide mb-1.5">
+                                    4. Instructions / Notes for Candidate
+                                </label>
+                                <textarea
+                                    rows={3}
+                                    placeholder="Enter topics to prepare, technical prerequisites, interviewer name, or custom instructions for the candidate..."
+                                    value={interviewForm.notes}
+                                    onChange={(e) => setInterviewForm(prev => ({ ...prev, notes: e.target.value }))}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-xs text-gray-900 focus:ring-1 focus:ring-[#06124f] outline-none resize-none"
+                                />
+                                <p className="text-[11px] text-gray-400 mt-1">
+                                    💡 This note will be formatted and included in the candidate's interview invitation email.
+                                </p>
+                            </div>
+
+                            {/* Modal Footer Buttons */}
+                            <div className="pt-3 border-t border-gray-200 flex items-center justify-end gap-2.5">
+                                <button
+                                    type="button"
+                                    onClick={() => setInterviewModalApp(null)}
+                                    className="px-4 py-2 text-xs font-semibold text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-md cursor-pointer transition"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={isSubmittingInterview}
+                                    className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-gradient-to-r from-[#06124f] to-[#0a2a5e] hover:opacity-95 rounded-md shadow-xs cursor-pointer transition disabled:opacity-50"
+                                >
+                                    {isSubmittingInterview ? (
+                                        <>
+                                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                            Scheduling & Sending Invite...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Send className="w-3.5 h-3.5" />
+                                            Schedule & Send Email Invite
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}

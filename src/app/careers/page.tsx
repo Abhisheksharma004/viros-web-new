@@ -16,7 +16,7 @@ import {
     Building2,
     Laptop
 } from "lucide-react";
-import { JOB_OPENINGS } from "@/data/careersData";
+import { JobOpening } from "@/data/careersData";
 
 const PERKS = [
     {
@@ -85,7 +85,8 @@ const FAQS = [
 ];
 
 export default function CareersPage() {
-    const [jobs, setJobs] = useState(JOB_OPENINGS);
+    const [jobs, setJobs] = useState<JobOpening[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [selectedDepartment, setSelectedDepartment] = useState("All");
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedGalleryImage, setSelectedGalleryImage] = useState<{ src: string } | null>(null);
@@ -93,16 +94,22 @@ export default function CareersPage() {
 
     useEffect(() => {
         const fetchLiveJobs = async () => {
+            setIsLoading(true);
             try {
                 const res = await fetch('/api/careers/jobs?active=true');
                 if (res.ok) {
                     const data = await res.json();
-                    if (data.success && Array.isArray(data.jobs) && data.jobs.length > 0) {
+                    if (data.success && Array.isArray(data.jobs)) {
                         setJobs(data.jobs);
+                    } else {
+                        setJobs([]);
                     }
                 }
             } catch (err) {
-                console.error("Could not fetch live jobs, using default:", err);
+                console.error("Could not fetch live jobs:", err);
+                setJobs([]);
+            } finally {
+                setIsLoading(false);
             }
         };
         fetchLiveJobs();
@@ -320,14 +327,20 @@ export default function CareersPage() {
                     ) : (
                         <div className="text-center py-12 bg-white rounded-xl border border-slate-200 p-6">
                             <Building2 className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-                            <h3 className="text-base font-bold text-[#06124f]">No positions found</h3>
-                            <p className="text-xs text-slate-500 mt-1">Try resetting your filter or search query.</p>
-                            <button
-                                onClick={() => { setSelectedDepartment("All"); setSearchQuery(""); }}
-                                className="mt-3 px-3 py-1.5 rounded-lg bg-slate-100 text-xs font-semibold text-[#06124f] hover:bg-slate-200 cursor-pointer"
-                            >
-                                Reset Filters
-                            </button>
+                            <h3 className="text-base font-bold text-[#06124f]">
+                                {isLoading ? "Loading openings..." : "No open positions found"}
+                            </h3>
+                            <p className="text-xs text-slate-500 mt-1">
+                                {isLoading ? "Fetching latest job opportunities..." : "There are currently no active job postings matching your criteria."}
+                            </p>
+                            {!isLoading && (searchQuery || selectedDepartment !== "All") && (
+                                <button
+                                    onClick={() => { setSelectedDepartment("All"); setSearchQuery(""); }}
+                                    className="mt-3 px-3 py-1.5 rounded-lg bg-slate-100 text-xs font-semibold text-[#06124f] hover:bg-slate-200 cursor-pointer"
+                                >
+                                    Reset Filters
+                                </button>
+                            )}
                         </div>
                     )}
 
