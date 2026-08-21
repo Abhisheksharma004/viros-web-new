@@ -112,9 +112,10 @@ export default function Navbar() {
     const showSeparateText = false;
 
     const companySubItems = [
-        { title: "ABOUT US", href: "/about" },
-        { title: "CERTIFICATE", href: "/certificates" },
-        { title: "CONTACT US", href: "/contact" }
+        { title: "About Us", href: "/about" },
+        { title: "Certificates", href: "/certificates" },
+        { title: "Careers", href: "/careers" },
+        { title: "Contact Us", href: "/contact" }
     ];
 
     const industriesData = [
@@ -276,8 +277,8 @@ export default function Navbar() {
                                                     key={item.href}
                                                     href={item.href}
                                                     onClick={() => setIsCompanyOpen(false)}
-                                                    className={`block px-4 py-3 text-xs sm:text-sm font-semibold tracking-wide uppercase transition-colors ${isActive
-                                                        ? "text-[#06b6d4] bg-[#06b6d4]/10 font-bold"
+                                                    className={`block px-4 py-2.5 text-sm font-medium transition-colors ${isActive
+                                                        ? "text-[#06b6d4] bg-[#06b6d4]/10 font-semibold"
                                                         : "text-[#06124f] hover:text-[#06b6d4] hover:bg-[#06b6d4]/5"
                                                         }`}
                                                 >
@@ -484,7 +485,7 @@ export default function Navbar() {
                             <button
                                 type="button"
                                 onClick={() => setIsMobileCompanyOpen(prev => !prev)}
-                                className={`w-full flex items-center justify-between px-4 py-3 text-sm font-semibold uppercase tracking-wide transition-colors ${isCompanyActive ? "text-[#06b6d4] bg-[#06b6d4]/10 font-bold" : "text-[#06124f]"
+                                className={`w-full flex items-center justify-between px-4 py-2.5 text-base font-medium transition-colors ${isCompanyActive ? "text-[#06b6d4] bg-[#06b6d4]/10 font-semibold" : "text-[#06124f]"
                                     }`}
                             >
                                 <span>Company</span>
@@ -506,8 +507,8 @@ export default function Navbar() {
                                                     setIsOpen(false);
                                                     setIsMobileCompanyOpen(false);
                                                 }}
-                                                className={`block pl-7 pr-4 py-2.5 text-xs font-semibold uppercase tracking-wide transition-colors ${isActive
-                                                    ? "text-[#06b6d4] bg-[#06b6d4]/15 font-bold"
+                                                className={`block pl-7 pr-4 py-2 text-sm font-medium transition-colors ${isActive
+                                                    ? "text-[#06b6d4] bg-[#06b6d4]/15 font-semibold"
                                                     : "text-[#06124f] hover:text-[#06b6d4] hover:bg-[#06b6d4]/10"
                                                     }`}
                                             >
@@ -524,7 +525,7 @@ export default function Navbar() {
                             <button
                                 type="button"
                                 onClick={() => setIsMobileIndustryOpen(prev => !prev)}
-                                className={`w-full flex items-center justify-between px-4 py-3 text-sm font-semibold uppercase tracking-wide transition-colors ${isMobileIndustryOpen ? "text-[#06b6d4] bg-[#06b6d4]/10 font-bold" : "text-[#06124f]"
+                                className={`w-full flex items-center justify-between px-4 py-2.5 text-base font-medium transition-colors ${isMobileIndustryOpen ? "text-[#06b6d4] bg-[#06b6d4]/10 font-semibold" : "text-[#06124f]"
                                     }`}
                             >
                                 <span>Industry</span>

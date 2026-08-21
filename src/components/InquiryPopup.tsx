@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import Toast from "./Toast";
+import { useState } from 'react';
+import { X, Send, Loader2, Package } from 'lucide-react';
+import Toast from './Toast';
 
 interface InquiryPopupProps {
     isOpen: boolean;
@@ -13,31 +14,38 @@ interface InquiryPopupProps {
     productSpecs?: string[];
 }
 
-export default function InquiryPopup({ isOpen, onClose, productName, productCategory, productImage, productDescription, productSpecs }: InquiryPopupProps) {
+export default function InquiryPopup({
+    isOpen,
+    onClose,
+    productName,
+    productCategory,
+    productImage,
+    productDescription,
+    productSpecs
+}: InquiryPopupProps) {
     const [formData, setFormData] = useState({
-        name: "",
-        email: "",
-        phone: "",
-        company: "",
-        message: ""
+        name: '',
+        email: '',
+        phone: '',
+        company: '',
+        message: '',
     });
+
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle");
-    const [showToast, setShowToast] = useState(false);
-    const [toastMessage, setToastMessage] = useState("");
-    const [toastType, setToastType] = useState<"success" | "error">("success");
+    const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+    if (!isOpen) return null;
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        setFormData(prev => ({
-            ...prev,
+        setFormData({
+            ...formData,
             [e.target.name]: e.target.value
-        }));
+        });
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
-        setSubmitStatus("idle");
 
         try {
             const response = await fetch('/api/inquiry', {
@@ -49,37 +57,45 @@ export default function InquiryPopup({ isOpen, onClose, productName, productCate
                     ...formData,
                     product: productName,
                     category: productCategory,
-                    productImage: productImage,
-                    productDescription: productDescription,
-                    productSpecs: productSpecs
+                    productImage: productImage || null,
+                    productDescription: productDescription || null,
+                    productSpecs: productSpecs || null,
+                    source: 'product_inquiry_popup',
+                    subject: `Product Inquiry: ${productName}`
                 }),
             });
 
             const data = await response.json();
 
-            if (!response.ok) {
-                throw new Error(data.error || 'Failed to submit inquiry');
-            }
+            if (response.ok && data.success) {
+                setToast({
+                    message: `Inquiry for "${productName}" submitted successfully!`,
+                    type: 'success'
+                });
 
-            // Show success toast first
-            setToastMessage("Inquiry submitted successfully! We've sent a confirmation email and our team will contact you soon.");
-            setToastType("success");
-            setShowToast(true);
-            
-            // Close popup after a short delay to allow toast to render
-            setTimeout(() => {
-                onClose();
-                setFormData({ name: "", email: "", phone: "", company: "", message: "" });
-                setSubmitStatus("idle");
-            }, 100);
+                setFormData({
+                    name: '',
+                    email: '',
+                    phone: '',
+                    company: '',
+                    message: '',
+                });
+
+                setTimeout(() => {
+                    onClose();
+                }, 1500);
+            } else {
+                setToast({
+                    message: data.message || 'Failed to submit inquiry. Please try again.',
+                    type: 'error'
+                });
+            }
         } catch (error) {
-            console.error("Submission error:", error);
-            setSubmitStatus("error");
-            
-            // Show error toast
-            setToastMessage("Failed to submit inquiry. Please try again or contact us directly.");
-            setToastType("error");
-            setShowToast(true);
+            console.error('Error submitting inquiry:', error);
+            setToast({
+                message: 'Network error. Please try again later.',
+                type: 'error'
+            });
         } finally {
             setIsSubmitting(false);
         }
@@ -87,198 +103,164 @@ export default function InquiryPopup({ isOpen, onClose, productName, productCate
 
     return (
         <>
-            {showToast && (
+            {toast && (
                 <Toast
-                    message={toastMessage}
-                    type={toastType}
-                    onClose={() => setShowToast(false)}
+                    message={toast.message}
+                    type={toast.type}
+                    onClose={() => setToast(null)}
                 />
             )}
-        
-        {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn">
-            {/* Overlay */}
-            <div className="absolute inset-0" onClick={onClose}></div>
 
-            {/* Modal */}
-            <div className="relative bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-slideUp">
-                {/* Header */}
-                <div className="sticky top-0 bg-linear-to-r from-[#06124f] to-[#06b6d4] text-white p-6 rounded-t-3xl z-10">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h2 className="text-2xl font-bold mb-1">Product Inquiry</h2>
-                            <p className="text-white/80 text-sm">Get a quote for {productName}</p>
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60 backdrop-blur-xs p-4 sm:p-6 overflow-hidden">
+                <div className="absolute inset-0" onClick={onClose} />
+
+                {/* Exact Dashboard Modal Container */}
+                <div
+                    role="dialog"
+                    aria-modal="true"
+                    className="relative z-10 w-full max-w-xl bg-white rounded-md shadow-2xl border border-gray-100 overflow-hidden flex flex-col my-auto"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    {/* Header - Dashboard Gradient */}
+                    <div
+                        className="flex items-center justify-between px-6 py-4 text-white shrink-0"
+                        style={{ background: "linear-gradient(135deg, #06124f, #0a2a5e)" }}
+                    >
+                        <div className="flex items-center gap-2 font-bold text-base text-white">
+                            <Package className="h-5 w-5 text-teal-300" />
+                            Product Inquiry: {productName}
                         </div>
-                        <button
-                            onClick={onClose}
-                            className="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors duration-200"
-                        >
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-
-                {/* Form */}
-                <form onSubmit={handleSubmit} className="p-8 space-y-6">
-                    {/* Product Info Badge */}
-                    <div className="flex items-center gap-3 p-4 bg-linear-to-r from-[#06b6d4]/10 to-[#06124f]/10 rounded-xl border border-[#06b6d4]/20">
-                        <div className="w-12 h-12 rounded-full bg-linear-to-br from-[#06124f] to-[#06b6d4] flex items-center justify-center">
-                            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                            </svg>
-                        </div>
-                        <div>
-                            <p className="text-sm text-gray-500 font-medium">Category: {productCategory}</p>
-                            <p className="font-bold text-[#06124f] text-lg">{productName}</p>
-                        </div>
-                    </div>
-
-                    {/* Name Field */}
-                    <div>
-                        <label htmlFor="name" className="block text-sm font-bold text-[#06124f] mb-2">
-                            Full Name <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                            type="text"
-                            id="name"
-                            name="name"
-                            value={formData.name}
-                            onChange={handleChange}
-                            required
-                            className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#06b6d4] focus:outline-none transition-colors duration-200 font-medium text-gray-900 placeholder:text-gray-400"
-                            placeholder="Enter your full name"
-                        />
-                    </div>
-
-                    {/* Email Field */}
-                    <div>
-                        <label htmlFor="email" className="block text-sm font-bold text-[#06124f] mb-2">
-                            Email Address <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                            type="email"
-                            id="email"
-                            name="email"
-                            value={formData.email}
-                            onChange={handleChange}
-                            required
-                            className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#06b6d4] focus:outline-none transition-colors duration-200 font-medium text-gray-900 placeholder:text-gray-400"
-                            placeholder="your.email@example.com"
-                        />
-                    </div>
-
-                    {/* Phone Field */}
-                    <div>
-                        <label htmlFor="phone" className="block text-sm font-bold text-[#06124f] mb-2">
-                            Phone Number <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                            type="tel"
-                            id="phone"
-                            name="phone"
-                            value={formData.phone}
-                            onChange={handleChange}
-                            required
-                            className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#06b6d4] focus:outline-none transition-colors duration-200 font-medium text-gray-900 placeholder:text-gray-400"
-                            placeholder="+1 (555) 000-0000"
-                        />
-                    </div>
-
-                    {/* Company Field */}
-                    <div>
-                        <label htmlFor="company" className="block text-sm font-bold text-[#06124f] mb-2">
-                            Company Name
-                        </label>
-                        <input
-                            type="text"
-                            id="company"
-                            name="company"
-                            value={formData.company}
-                            onChange={handleChange}
-                            className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#06b6d4] focus:outline-none transition-colors duration-200 font-medium text-gray-900 placeholder:text-gray-400"
-                            placeholder="Your company name (optional)"
-                        />
-                    </div>
-
-                    {/* Message Field */}
-                    <div>
-                        <label htmlFor="message" className="block text-sm font-bold text-[#06124f] mb-2">
-                            Message <span className="text-red-500">*</span>
-                        </label>
-                        <textarea
-                            id="message"
-                            name="message"
-                            value={formData.message}
-                            onChange={handleChange}
-                            required
-                            rows={4}
-                            className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#06b6d4] focus:outline-none transition-colors duration-200 resize-none font-medium text-gray-900 placeholder:text-gray-400"
-                            placeholder="Tell us about your requirements..."
-                        />
-                    </div>
-
-                    {/* Status Messages */}
-                    {/* Submit Button */}
-                    <div className="flex gap-4 pt-4">
                         <button
                             type="button"
                             onClick={onClose}
-                            className="flex-1 py-4 rounded-xl border-2 border-gray-300 text-gray-700 font-bold hover:bg-gray-50 transition-colors duration-200"
+                            className="rounded-md p-1 text-white/70 hover:bg-white/10 hover:text-white transition cursor-pointer"
                         >
-                            Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            disabled={isSubmitting}
-                            className="flex-1 py-4 rounded-xl bg-linear-to-r from-[#06124f] to-[#06b6d4] text-white font-bold shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
-                        >
-                            {isSubmitting ? (
-                                <>
-                                    <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                    Submitting...
-                                </>
-                            ) : (
-                                <>
-                                    Submit Inquiry
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                                    </svg>
-                                </>
-                            )}
+                            <X className="h-5 w-5" />
                         </button>
                     </div>
-                </form>
-            </div>
 
-            <style jsx>{`
-                @keyframes fadeIn {
-                    from { opacity: 0; }
-                    to { opacity: 1; }
-                }
-                @keyframes slideUp {
-                    from {
-                        opacity: 0;
-                        transform: translateY(20px);
-                    }
-                    to {
-                        opacity: 1;
-                        transform: translateY(0);
-                    }
-                }
-                .animate-fadeIn {
-                    animation: fadeIn 0.2s ease-out;
-                }
-                .animate-slideUp {
-                    animation: slideUp 0.3s ease-out;
-                }
-            `}</style>
-        </div>
-        )}
+                    {/* Form Body */}
+                    <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-4 text-sm text-gray-700">
+                        {/* Product Tag */}
+                        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-md border border-gray-200">
+                            <div>
+                                <span className="text-xs text-gray-400 block font-semibold uppercase">Category</span>
+                                <span className="text-xs font-bold text-blue-700">{productCategory}</span>
+                            </div>
+                            <div className="text-right">
+                                <span className="text-xs text-gray-400 block font-semibold uppercase">Selected Product</span>
+                                <span className="text-xs font-bold text-gray-900">{productName}</span>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                    Full Name <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    name="name"
+                                    value={formData.name}
+                                    onChange={handleChange}
+                                    required
+                                    placeholder="Your full name"
+                                    className="w-full px-3.5 py-2 rounded-md border border-gray-200 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e]"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                    Company Name
+                                </label>
+                                <input
+                                    type="text"
+                                    name="company"
+                                    value={formData.company}
+                                    onChange={handleChange}
+                                    placeholder="Company / Organization"
+                                    className="w-full px-3.5 py-2 rounded-md border border-gray-200 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e]"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                    Email Address <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="email"
+                                    name="email"
+                                    value={formData.email}
+                                    onChange={handleChange}
+                                    required
+                                    placeholder="name@company.com"
+                                    className="w-full px-3.5 py-2 rounded-md border border-gray-200 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e]"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                    Phone Number <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="tel"
+                                    name="phone"
+                                    value={formData.phone}
+                                    onChange={handleChange}
+                                    required
+                                    placeholder="+91 98765 43210"
+                                    className="w-full px-3.5 py-2 rounded-md border border-gray-200 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e]"
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                Requirements / Quantity <span className="text-red-500">*</span>
+                            </label>
+                            <textarea
+                                name="message"
+                                value={formData.message}
+                                onChange={handleChange}
+                                required
+                                rows={3}
+                                placeholder="Describe required units, deployment site, or specifications..."
+                                className="w-full px-3.5 py-2 rounded-md border border-gray-200 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#0a2a5e]/20 focus:border-[#0a2a5e]"
+                            />
+                        </div>
+
+                        {/* Modal Action Footer */}
+                        <div className="px-6 py-4 bg-gray-50 -mx-6 -mb-6 mt-6 border-t border-gray-100 flex justify-end gap-3 rounded-b-md">
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                className="px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200 rounded-md cursor-pointer transition"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={isSubmitting}
+                                className="inline-flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white bg-gradient-to-r from-[#06124f] to-[#0a2a5e] hover:opacity-90 rounded-md transition-opacity cursor-pointer shadow-sm disabled:opacity-50"
+                            >
+                                {isSubmitting ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                        <span>Sending...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Send className="w-4 h-4" />
+                                        <span>Request Quote</span>
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </>
     );
 }
