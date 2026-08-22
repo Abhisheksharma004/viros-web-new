@@ -151,7 +151,7 @@ export default function GetInTouchPopup() {
             if (response.ok && data.success) {
                 try {
                     localStorage.setItem("viros_get_in_touch_submitted", "true");
-                } catch {}
+                } catch { }
 
                 if (timerRef.current) {
                     clearTimeout(timerRef.current);
@@ -288,30 +288,32 @@ export default function GetInTouchPopup() {
                                     <label className="mb-1.5 block text-xs font-semibold text-gray-700">
                                         Phone Number <span className="text-red-500">*</span>
                                     </label>
-                                    <div className="relative flex rounded-md border border-gray-200 overflow-hidden focus-within:border-[#0a2a5e] focus-within:ring-2 focus-within:ring-[#0a2a5e]/20" ref={dropdownRef}>
-                                        <button
-                                            type="button"
-                                            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                                            className="flex items-center gap-1 px-2.5 py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 font-semibold text-xs border-r border-gray-200 cursor-pointer shrink-0"
-                                        >
-                                            <span>{selectedCountry.flag}</span>
-                                            <span>{selectedCountry.code}</span>
-                                            <ChevronDown className={`w-3 h-3 text-gray-400 transition-transform ${isDropdownOpen ? "rotate-180" : ""}`} />
-                                        </button>
+                                    <div className="relative" ref={dropdownRef}>
+                                        <div className="flex rounded-md border border-gray-200 focus-within:border-[#0a2a5e] focus-within:ring-2 focus-within:ring-[#0a2a5e]/20 bg-white">
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsDropdownOpen((prev) => !prev)}
+                                                className="flex items-center gap-1 px-2.5 py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 font-semibold text-xs border-r border-gray-200 cursor-pointer rounded-l-md shrink-0 select-none"
+                                            >
+                                                <span>{selectedCountry.flag}</span>
+                                                <span>{selectedCountry.code}</span>
+                                                <ChevronDown className={`w-3 h-3 text-gray-400 transition-transform ${isDropdownOpen ? "rotate-180" : ""}`} />
+                                            </button>
 
-                                        <input
-                                            type="tel"
-                                            name="phone"
-                                            value={formData.phone}
-                                            onChange={handleChange}
-                                            placeholder="98765 43210"
-                                            required
-                                            className="w-full px-3 py-2 text-sm text-gray-800 outline-none bg-white"
-                                        />
+                                            <input
+                                                type="tel"
+                                                name="phone"
+                                                value={formData.phone}
+                                                onChange={handleChange}
+                                                placeholder="837792 9141"
+                                                required
+                                                className="w-full px-3 py-2 text-sm text-gray-800 outline-none bg-transparent rounded-r-md"
+                                            />
+                                        </div>
 
                                         {/* Country Selector Dropdown */}
                                         {isDropdownOpen && (
-                                            <div className="absolute top-full left-0 mt-1 w-64 max-h-48 overflow-hidden bg-white rounded-md shadow-xl border border-gray-200 z-[10005] py-1">
+                                            <div className="absolute top-full left-0 mt-1 w-64 bg-white rounded-md shadow-xl border border-gray-200 z-[10005] py-1">
                                                 <div className="px-2 pb-1.5 mb-1 border-b border-gray-100">
                                                     <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-gray-50 text-xs">
                                                         <Search className="w-3 h-3 text-gray-400 shrink-0" />
@@ -322,27 +324,38 @@ export default function GetInTouchPopup() {
                                                             placeholder="Search country..."
                                                             className="w-full bg-transparent outline-none text-gray-700 text-xs"
                                                             onClick={(e) => e.stopPropagation()}
+                                                            autoFocus
                                                         />
                                                     </div>
                                                 </div>
 
-                                                <div className="max-h-36 overflow-y-auto">
-                                                    {filteredCountries.map((item) => (
-                                                        <button
-                                                            key={item.code + item.country}
-                                                            type="button"
-                                                            onClick={() => {
-                                                                setSelectedCountry(item);
-                                                                setIsDropdownOpen(false);
-                                                                setSearchCountry("");
-                                                            }}
-                                                            className="w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs hover:bg-gray-50 cursor-pointer"
-                                                        >
-                                                            <span>{item.flag}</span>
-                                                            <span className="flex-1 truncate">{item.country}</span>
-                                                            <span className="text-gray-400 font-mono">{item.code}</span>
-                                                        </button>
-                                                    ))}
+                                                <div className="max-h-44 overflow-y-auto">
+                                                    {filteredCountries.length > 0 ? (
+                                                        filteredCountries.map((item) => (
+                                                            <button
+                                                                key={item.code + item.country}
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setSelectedCountry(item);
+                                                                    setIsDropdownOpen(false);
+                                                                    setSearchCountry("");
+                                                                }}
+                                                                className={`w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs hover:bg-gray-50 cursor-pointer ${
+                                                                    selectedCountry.code === item.code && selectedCountry.country === item.country
+                                                                        ? "bg-blue-50 text-[#0a2a5e] font-semibold"
+                                                                        : "text-gray-700"
+                                                                }`}
+                                                            >
+                                                                <span>{item.flag}</span>
+                                                                <span className="flex-1 truncate">{item.country}</span>
+                                                                <span className="text-gray-400 font-mono">{item.code}</span>
+                                                            </button>
+                                                        ))
+                                                    ) : (
+                                                        <div className="px-3 py-2 text-xs text-gray-400 text-center">
+                                                            No country found
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         )}
