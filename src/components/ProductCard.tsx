@@ -29,6 +29,7 @@ interface ProductCardProps {
         price_display?: string;
         specs?: string[];
         stock_status?: string;
+        pdf_url?: string;
     };
     index: number;
     isVisible: boolean;
@@ -41,8 +42,31 @@ interface ProductCardProps {
     ) => void;
 }
 
+const isValidImageUrl = (url?: string): boolean => {
+    if (!url) return false;
+    return url.startsWith("http://") || url.startsWith("https://") || url.startsWith("/");
+};
+
+const parsePrimaryImage = (imageUrl?: string): string => {
+    if (!imageUrl) return "/logo.png";
+    let extracted = imageUrl.trim();
+    if (extracted.startsWith("[") && extracted.endsWith("]")) {
+        try {
+            const parsed = JSON.parse(extracted);
+            if (Array.isArray(parsed) && parsed.length > 0 && typeof parsed[0] === "string") {
+                extracted = parsed[0].trim();
+            }
+        } catch {}
+    }
+    if (extracted.includes(",")) {
+        extracted = extracted.split(",")[0].trim();
+    }
+    return isValidImageUrl(extracted) ? extracted : "/logo.png";
+};
+
 export default function ProductCard({ product, index, isVisible, onInquiry }: ProductCardProps) {
     const hasSpecs = product.specs && product.specs.length > 0;
+    const primaryImg = parsePrimaryImage(product.image_url);
 
     return (
         <div
@@ -64,7 +88,7 @@ export default function ProductCard({ product, index, isVisible, onInquiry }: Pr
                             />
                         ) : (
                             <Image
-                                src={product.image_url || "/placeholder-product.png"}
+                                src={primaryImg}
                                 alt={product.name}
                                 fill
                                 className="object-contain p-6 transition-transform duration-500 group-hover:scale-105"
@@ -73,7 +97,7 @@ export default function ProductCard({ product, index, isVisible, onInquiry }: Pr
                     })()
                 ) : (
                     <Image
-                        src={product.image_url || "/placeholder-product.png"}
+                        src={primaryImg}
                         alt={product.name}
                         fill
                         className="object-contain p-6 transition-transform duration-500 group-hover:scale-105"
@@ -140,24 +164,40 @@ export default function ProductCard({ product, index, isVisible, onInquiry }: Pr
                     </div>
                 )}
 
-                {/* CTA Button */}
-                <button
-                    onClick={() =>
-                        onInquiry(
-                            product.name,
-                            product.category,
-                            product.image_url,
-                            product.description,
-                            product.specs || []
-                        )
-                    }
-                    className="mt-auto w-full py-3 bg-linear-to-r from-[#06124f] to-[#06b6d4] text-white font-bold rounded-xl text-sm tracking-wide shadow-md hover:shadow-lg hover:shadow-[#06b6d4]/30 hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center gap-2"
-                >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                    Get Quote
-                </button>
+                {/* CTA Buttons */}
+                <div className="mt-auto flex flex-col gap-2 pt-2">
+                    {product.pdf_url && (
+                        <a
+                            href={product.pdf_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            download
+                            className="w-full py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl text-xs tracking-wide transition-all duration-300 flex items-center justify-center gap-1.5 border border-gray-300"
+                        >
+                            <svg className="w-3.5 h-3.5 text-[#06b6d4]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            Download Datasheet (PDF)
+                        </a>
+                    )}
+                    <button
+                        onClick={() =>
+                            onInquiry(
+                                product.name,
+                                product.category,
+                                product.image_url,
+                                product.description,
+                                product.specs || []
+                            )
+                        }
+                        className="w-full py-2.5 bg-linear-to-r from-[#06124f] to-[#06b6d4] text-white font-bold rounded-xl text-xs tracking-wide shadow-md hover:shadow-lg hover:shadow-[#06b6d4]/30 hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center gap-2"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                        Get Quote
+                    </button>
+                </div>
             </div>
         </div>
     );

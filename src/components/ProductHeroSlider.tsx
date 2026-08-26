@@ -25,6 +25,28 @@ const getYouTubeVideoId = (url: string): string | null => {
     return null;
 };
 
+const isValidImageUrl = (url?: string): boolean => {
+    if (!url) return false;
+    return url.startsWith("http://") || url.startsWith("https://") || url.startsWith("/");
+};
+
+const parsePrimaryImage = (imageUrl?: string): string => {
+    if (!imageUrl) return "/logo.png";
+    let extracted = imageUrl.trim();
+    if (extracted.startsWith("[") && extracted.endsWith("]")) {
+        try {
+            const parsed = JSON.parse(extracted);
+            if (Array.isArray(parsed) && parsed.length > 0 && typeof parsed[0] === "string") {
+                extracted = parsed[0].trim();
+            }
+        } catch {}
+    }
+    if (extracted.includes(",")) {
+        extracted = extracted.split(",")[0].trim();
+    }
+    return isValidImageUrl(extracted) ? extracted : "/logo.png";
+};
+
 export default function ProductHeroSlider({ products: initialProducts }: ProductHeroSliderProps) {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [direction, setDirection] = useState(0); // -1 for left, 1 for right
@@ -34,10 +56,11 @@ export default function ProductHeroSlider({ products: initialProducts }: Product
     const featuredProducts = (initialProducts && initialProducts.length > 0) ? initialProducts : [];
 
     const handleInquiry = (product: any) => {
+        const productImg = parsePrimaryImage(product.image_url || product.image);
         setSelectedProduct({
             name: product.name,
             category: product.category,
-            image: product.image_url || product.image,
+            image: productImg,
             description: product.description,
             specs: product.specs || []
         });
@@ -106,7 +129,7 @@ export default function ProductHeroSlider({ products: initialProducts }: Product
                             </div>
                         ) : (
                             <Image
-                                src={activeProduct.image_url || activeProduct.image}
+                                src={parsePrimaryImage(activeProduct.image_url || activeProduct.image)}
                                 alt={activeProduct.name}
                                 fill
                                 className="object-cover opacity-60 blur-[2px] scale-110"
@@ -116,7 +139,7 @@ export default function ProductHeroSlider({ products: initialProducts }: Product
                     })()
                 ) : (
                     <Image
-                        src={activeProduct.image_url || activeProduct.image}
+                        src={parsePrimaryImage(activeProduct.image_url || activeProduct.image)}
                         alt={activeProduct.name}
                         fill
                         className="object-cover opacity-60 blur-[2px] scale-110"
@@ -186,7 +209,7 @@ export default function ProductHeroSlider({ products: initialProducts }: Product
                                     </div>
                                 ) : (
                                     <Image
-                                        src={activeProduct.image_url || activeProduct.image}
+                                        src={parsePrimaryImage(activeProduct.image_url || activeProduct.image)}
                                         alt={activeProduct.name}
                                         fill
                                         className="object-contain drop-shadow-2xl z-20 relative p-8"
@@ -196,7 +219,7 @@ export default function ProductHeroSlider({ products: initialProducts }: Product
                             })()
                         ) : (
                             <Image
-                                src={activeProduct.image_url || activeProduct.image}
+                                src={parsePrimaryImage(activeProduct.image_url || activeProduct.image)}
                                 alt={activeProduct.name}
                                 fill
                                 className="object-contain drop-shadow-2xl z-20 relative p-8"

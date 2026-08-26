@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
+import { Package } from "lucide-react";
 
 interface Product {
     id: number;
@@ -10,12 +11,36 @@ interface Product {
     category?: string;
 }
 
+// Helper to safely extract primary image URL
+const parsePrimaryImage = (imageUrl?: string): string => {
+    if (!imageUrl) return "";
+    try {
+        if (imageUrl.startsWith("[") && imageUrl.endsWith("]")) {
+            const parsed = JSON.parse(imageUrl);
+            if (Array.isArray(parsed) && parsed.length > 0 && typeof parsed[0] === "string") {
+                return parsed[0].trim();
+            }
+        }
+    } catch { }
+    if (imageUrl.includes(",")) {
+        const parts = imageUrl.split(",");
+        if (parts[0]) return parts[0].trim();
+    }
+    return imageUrl.trim();
+};
+
+// Check if string is a valid URL or valid local path
+const isValidImageUrl = (url?: string): boolean => {
+    if (!url) return false;
+    return url.startsWith("http://") || url.startsWith("https://") || url.startsWith("/");
+};
+
 export default function ProductArcDome({ products }: { products: Product[] }) {
     const [time, setTime] = useState(0);
     const requestRef = useRef<number | null>(null);
     const startTimeRef = useRef<number | null>(null);
 
-    const N = products.length;
+    const N = products?.length || 0;
     const travelTime = 24; // Seconds to cross full arc
     const staggerTime = 3;  // Seconds delay between sequential products
     const totalCycleTime = Math.max(N * staggerTime, travelTime);
@@ -33,6 +58,8 @@ export default function ProductArcDome({ products }: { products: Product[] }) {
             if (requestRef.current) cancelAnimationFrame(requestRef.current);
         };
     }, []);
+
+    if (!products || products.length === 0) return null;
 
     return (
         <div className="relative w-full max-w-5xl mx-auto h-[260px] xs:h-[310px] sm:h-[390px] md:h-[460px] lg:h-[540px] mt-2">
@@ -96,6 +123,9 @@ export default function ProductArcDome({ products }: { products: Product[] }) {
                 const leftPct = 50 + 38 * Math.cos(angleRad);
                 const topPct = 90 + 74 * Math.sin(angleRad);
 
+                const primaryImg = parsePrimaryImage(product.image_url);
+                const isImageValid = isValidImageUrl(primaryImg);
+
                 return (
                     <div
                         key={`prod-${product.id || index}`}
@@ -108,13 +138,18 @@ export default function ProductArcDome({ products }: { products: Product[] }) {
                         className="absolute z-30 group/logo cursor-pointer"
                     >
                         <div className="relative w-11 h-11 xs:w-14 xs:h-14 sm:w-20 sm:h-20 md:w-24 md:h-24 lg:w-32 lg:h-32 rounded-full bg-white shadow-md group-hover/logo:shadow-2xl border-2 border-emerald-100 flex items-center justify-center p-1.5 xs:p-2 sm:p-2.5 md:p-3 lg:p-3.5 transition-all duration-300 group-hover/logo:scale-115">
-                            <div className="relative w-full h-full">
-                                <Image
-                                    src={product.image_url}
-                                    alt={product.name}
-                                    fill
-                                    className="object-contain p-0.5 sm:p-1"
-                                />
+                            <div className="relative w-full h-full flex items-center justify-center">
+                                {isImageValid ? (
+                                    <Image
+                                        src={primaryImg}
+                                        alt={product.name || "Product"}
+                                        fill
+                                        sizes="(max-width: 640px) 56px, (max-width: 1024px) 96px, 128px"
+                                        className="object-contain p-0.5 sm:p-1"
+                                    />
+                                ) : (
+                                    <Package className="w-1/2 h-1/2 text-gray-300" />
+                                )}
                             </div>
                         </div>
 
