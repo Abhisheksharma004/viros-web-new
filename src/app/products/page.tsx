@@ -7,7 +7,7 @@ import InquiryPopup from "@/components/InquiryPopup";
 import { useState, useEffect, useMemo } from "react";
 import {
     Search, X, SlidersHorizontal, ShieldCheck,
-    Truck, Tag, Package, Star, Eye,
+    Truck, Tag, Package, Eye,
     LayoutGrid, List as ListIcon, Zap,
     FileText, Download, CheckCircle2,
     ChevronRight, ArrowUpDown, RefreshCw,
@@ -528,20 +528,14 @@ export default function FlipkartProductsStorefront() {
                                                     {product.name}
                                                 </h3>
 
-                                                {/* Ratings & Flipkart Assured Badge */}
-                                                <div className="flex items-center gap-2.5">
-                                                    <span className="inline-flex items-center gap-1 bg-[#388e3c] text-white text-xs font-bold px-1.5 py-0.5 rounded">
-                                                        4.4 <Star className="w-3 h-3 fill-white" />
-                                                    </span>
-                                                    <span className="text-xs text-gray-500 font-medium">
-                                                        (1,420 Ratings & 180 Reviews)
-                                                    </span>
-                                                    {product.is_featured && (
+                                                {/* Flipkart Assured Badge */}
+                                                {product.is_featured && (
+                                                    <div className="flex items-center">
                                                         <span className="inline-flex items-center gap-1 bg-[#2874f0] text-white text-[10px] font-black italic px-2 py-0.5 rounded shadow-2xs">
                                                             <Zap className="w-3 h-3 fill-white" /> Viros Assured
                                                         </span>
-                                                    )}
-                                                </div>
+                                                    </div>
+                                                )}
 
                                                 {/* Tagline */}
                                                 {product.tagline && (
@@ -720,13 +714,6 @@ export default function FlipkartProductsStorefront() {
                                                     <p className="text-[11px] text-gray-500 line-clamp-1">
                                                         {product.tagline || product.description || "High quality product"}
                                                     </p>
-
-                                                    <div className="flex items-center gap-2 pt-0.5">
-                                                        <span className="inline-flex items-center gap-0.5 bg-[#388e3c] text-white text-[10px] font-bold px-1.5 py-0.2 rounded">
-                                                            4.3 <Star className="w-2.5 h-2.5 fill-white" />
-                                                        </span>
-                                                        <span className="text-[10px] text-gray-400 font-medium">(854)</span>
-                                                    </div>
                                                 </div>
                                             </div>
 
@@ -823,18 +810,13 @@ export default function FlipkartProductsStorefront() {
                                                 {quickViewProduct.name}
                                             </h2>
 
-                                            {/* Ratings */}
-                                            <div className="flex items-center gap-2">
-                                                <span className="inline-flex items-center gap-0.5 bg-[#388e3c] text-white text-xs font-bold px-1.5 py-0.5 rounded">
-                                                    4.4 <Star className="w-3 h-3 fill-white" />
-                                                </span>
-                                                <span className="text-xs text-gray-500 font-medium">(2,140 Ratings)</span>
-                                                {quickViewProduct.is_featured && (
+                                            {quickViewProduct.is_featured && (
+                                                <div className="flex items-center">
                                                     <span className="bg-[#2874f0] text-white text-[10px] font-black italic px-2 py-0.5 rounded">
                                                         Assured
                                                     </span>
-                                                )}
-                                            </div>
+                                                </div>
+                                            )}
 
                                             {/* Price */}
                                             <div className="pt-1">
