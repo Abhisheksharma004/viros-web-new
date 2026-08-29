@@ -173,7 +173,7 @@ export default function GetInTouchPopup() {
                     setIsOpen(false);
                 }, 1500);
             } else {
-                setToastMessage(data.message || "Failed to submit inquiry. Please try again.");
+                setToastMessage(data.error || data.message || "Failed to submit inquiry. Please try again.");
                 setToastType("error");
                 setShowToast(true);
             }

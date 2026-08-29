@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import ProductHeroSlider from "@/components/ProductHeroSlider";
 import InquiryPopup from "@/components/InquiryPopup";
 import { useState, useEffect, useMemo } from "react";
@@ -11,7 +12,9 @@ import {
     LayoutGrid, List as ListIcon, Zap,
     FileText, Download, CheckCircle2,
     ChevronRight, ArrowUpDown, RefreshCw,
-    MessageSquareQuote, PhoneCall
+    MessageSquareQuote, PhoneCall, ShoppingBag,
+    CreditCard, MapPin, Building, User, Phone,
+    Mail, CheckCircle, ArrowRight, KeyRound, Clock
 } from "lucide-react";
 
 interface Product {
@@ -58,6 +61,7 @@ const isValidImageUrl = (url?: string): boolean => {
 };
 
 export default function FlipkartProductsStorefront() {
+    const router = useRouter();
     const [products, setProducts] = useState<Product[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -73,7 +77,7 @@ export default function FlipkartProductsStorefront() {
     // Active Card Image hover index: { [productId]: number }
     const [cardActiveImg, setCardActiveImg] = useState<{ [key: number]: number }>({});
 
-    // Inquiry & Quick View Modals
+    // 1. Inquiry Popup Modal State (Untouched & intact)
     const [isPopupOpen, setIsPopupOpen] = useState(false);
     const [inquiryProduct, setInquiryProduct] = useState<{
         name: string;
@@ -83,30 +87,32 @@ export default function FlipkartProductsStorefront() {
         specs: string[];
     } | null>(null);
 
+    // 2. Quick View Modal State
     const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
     const [quickViewActiveImgIdx, setQuickViewActiveImgIdx] = useState(0);
 
+    // Fetch Products from MySQL Database
     const fetchProducts = async () => {
         setIsLoading(true);
         try {
             const res = await fetch("/api/products");
-            if (res.ok) {
-                const data = await res.json();
-                const parsedData: Product[] = data.map((p: any) => {
-                    const imgs = parseProductImages(p.image_url);
-                    return {
-                        ...p,
-                        images: imgs,
-                        primary_image: imgs[0] || "/logo.png",
-                        specs: typeof p.specs === "string" ? JSON.parse(p.specs || "[]") : (p.specs || []),
-                        is_featured: Boolean(p.is_featured),
-                        stock_status: p.stock_status || "In Stock"
-                    };
-                });
-                setProducts(parsedData);
-            }
+            if (!res.ok) throw new Error("Failed to fetch");
+            const data = await res.json();
+            const productsList = data.products || data || [];
+            const parsedData: Product[] = productsList.map((p: any) => {
+                const imgs = parseProductImages(p.image_url);
+                return {
+                    ...p,
+                    images: imgs,
+                    primary_image: imgs[0] || "/logo.png",
+                    specs: typeof p.specs === "string" ? JSON.parse(p.specs || "[]") : (p.specs || []),
+                    is_featured: Boolean(p.is_featured),
+                    stock_status: p.stock_status || "In Stock"
+                };
+            });
+            setProducts(parsedData);
         } catch (err) {
-            console.error("Failed to fetch products", err);
+            console.error("Failed to load products:", err);
         } finally {
             setIsLoading(false);
         }
@@ -179,6 +185,7 @@ export default function FlipkartProductsStorefront() {
         setSortBy("relevance");
     };
 
+    // Open Inquiry Popup (Existing functionality untouched)
     const handleOpenInquiry = (product: Product) => {
         const imgs = product.images && product.images.length > 0 ? product.images : parseProductImages(product.image_url);
         setInquiryProduct({
@@ -189,6 +196,17 @@ export default function FlipkartProductsStorefront() {
             specs: product.specs || []
         });
         setIsPopupOpen(true);
+    };
+
+    // Open Dedicated Buy Now Page
+    const handleOpenBuyNow = (product: Product) => {
+        const params = new URLSearchParams();
+        if (product.id) params.set("id", String(product.id));
+        if (product.name) params.set("name", product.name);
+        if (product.price_display) params.set("price", product.price_display);
+        if (product.category) params.set("category", product.category);
+        if (product.image_url) params.set("img", product.image_url);
+        router.push(`/buy-now?${params.toString()}`);
     };
 
     return (
@@ -207,15 +225,18 @@ export default function FlipkartProductsStorefront() {
                         </span>
                     </div>
 
-                    {/* Trust assurances */}
-                    <div className="hidden md:flex items-center gap-5 font-medium">
-                        <span className="flex items-center gap-1">
+                    {/* Trust assurances & Track Order */}
+                    <div className="flex items-center gap-4 font-medium">
+                        <Link
+                            href="/track-order"
+                            className="bg-white/10 hover:bg-white/20 px-2.5 py-1 rounded text-white font-bold text-[11px] flex items-center gap-1.5 transition-colors border border-white/20"
+                        >
+                            <Truck className="w-3.5 h-3.5 text-amber-300" /> Track Order
+                        </Link>
+                        <span className="hidden md:flex items-center gap-1">
                             <ShieldCheck className="w-4 h-4 text-amber-300" /> 100% Genuine OEM Hardware
                         </span>
-                        <span className="flex items-center gap-1">
-                            <Truck className="w-4 h-4 text-emerald-300" /> Pan-India Express Dispatch
-                        </span>
-                        <span className="flex items-center gap-1">
+                        <span className="hidden lg:flex items-center gap-1">
                             <Zap className="w-4 h-4 text-amber-300" /> Viros Assured Quality
                         </span>
                     </div>
@@ -516,7 +537,7 @@ export default function FlipkartProductsStorefront() {
                                                 )}
                                             </div>
 
-                                            {/* Column 2: Product Title, Ratings, Specs */}
+                                            {/* Column 2: Product Title & Specs */}
                                             <div className="flex-1 space-y-2">
                                                 <h3
                                                     onClick={() => {
@@ -561,7 +582,7 @@ export default function FlipkartProductsStorefront() {
                                                 </ul>
                                             </div>
 
-                                            {/* Column 3: Price, Stock, Datasheet & Instant Quote CTA */}
+                                            {/* Column 3: Price, Stock, Buy Now & Quote CTAs */}
                                             <div className="w-full md:w-60 shrink-0 md:text-right flex flex-col justify-between h-full pt-2 md:pt-0 border-t md:border-t-0 border-gray-100 space-y-3">
                                                 <div>
                                                     <div className="flex md:flex-col items-baseline md:items-end gap-2 md:gap-0">
@@ -597,18 +618,26 @@ export default function FlipkartProductsStorefront() {
                                                     </div>
                                                 </div>
 
-                                                {/* Action Buttons */}
+                                                {/* Action Buttons: Buy Now + Quote + PDF */}
                                                 <div className="space-y-1.5 pt-1">
-                                                    {/* Instant Quote / Buy Now (Orange Flipkart CTA) */}
+                                                    {/* 1. BUY NOW BUTTON (FLIPKART ORANGE) */}
                                                     <button
-                                                        onClick={() => handleOpenInquiry(product)}
+                                                        onClick={() => handleOpenBuyNow(product)}
                                                         className="w-full py-2 bg-[#fb641b] hover:bg-[#e85b17] text-white font-bold text-xs uppercase tracking-wider rounded-sm shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                                                     >
-                                                        <MessageSquareQuote className="w-4 h-4" /> Get Instant Quote
+                                                        <Zap className="w-4 h-4 fill-white" /> Buy Now
+                                                    </button>
+
+                                                    {/* 2. GET QUOTE BUTTON */}
+                                                    <button
+                                                        onClick={() => handleOpenInquiry(product)}
+                                                        className="w-full py-1.5 bg-[#2874f0] hover:bg-[#1a5bc7] text-white font-bold text-xs uppercase tracking-wider rounded-sm shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                                                    >
+                                                        <MessageSquareQuote className="w-3.5 h-3.5" /> Get Quote / Inquiry
                                                     </button>
 
                                                     <div className="flex items-center gap-1.5">
-                                                        {/* Datasheet Download PDF if available */}
+                                                        {/* Datasheet Download PDF */}
                                                         {product.pdf_url && (
                                                             <a
                                                                 href={product.pdf_url}
@@ -617,7 +646,7 @@ export default function FlipkartProductsStorefront() {
                                                                 download
                                                                 className="flex-1 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-[11px] font-bold rounded border border-gray-300 flex items-center justify-center gap-1 transition-colors"
                                                             >
-                                                                <FileText className="w-3.5 h-3.5 text-[#2874f0]" /> PDF Datasheet
+                                                                <FileText className="w-3.5 h-3.5 text-[#2874f0]" /> PDF
                                                             </a>
                                                         )}
 
@@ -727,12 +756,21 @@ export default function FlipkartProductsStorefront() {
                                                     </span>
                                                 </div>
 
-                                                <button
-                                                    onClick={() => handleOpenInquiry(product)}
-                                                    className="w-full py-1.5 bg-[#fb641b] hover:bg-[#e85b17] text-white font-bold text-xs uppercase tracking-wider rounded-sm shadow-xs transition-colors flex items-center justify-center gap-1 cursor-pointer"
-                                                >
-                                                    <MessageSquareQuote className="w-3.5 h-3.5" /> Get Quote
-                                                </button>
+                                                {/* Buy Now & Quote in Grid View */}
+                                                <div className="grid grid-cols-2 gap-1.5">
+                                                    <button
+                                                        onClick={() => handleOpenBuyNow(product)}
+                                                        className="py-1.5 bg-[#fb641b] hover:bg-[#e85b17] text-white font-bold text-xs uppercase tracking-wider rounded-sm shadow-xs transition-colors flex items-center justify-center gap-1 cursor-pointer"
+                                                    >
+                                                        <Zap className="w-3 h-3 fill-white" /> Buy Now
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleOpenInquiry(product)}
+                                                        className="py-1.5 bg-[#2874f0] hover:bg-[#1a5bc7] text-white font-bold text-xs uppercase tracking-wider rounded-sm shadow-xs transition-colors flex items-center justify-center gap-1 cursor-pointer"
+                                                    >
+                                                        <MessageSquareQuote className="w-3 h-3" /> Quote
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     );
@@ -743,7 +781,11 @@ export default function FlipkartProductsStorefront() {
                 </div>
             </div>
 
-            {/* FLIPKART STYLE QUICK VIEW MODAL */}
+
+
+            {/* ========================================================================= */}
+            {/* FLIPKART STYLE QUICK VIEW MODAL                                          */}
+            {/* ========================================================================= */}
             {quickViewProduct && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 overflow-y-auto font-sans">
                     <div className="bg-white rounded-md shadow-2xl max-w-3xl w-full overflow-hidden border border-gray-200 animate-in zoom-in-95 duration-150 max-h-[90vh] flex flex-col">
@@ -834,15 +876,28 @@ export default function FlipkartProductsStorefront() {
 
                                             {/* Action CTAs in Modal */}
                                             <div className="pt-3 border-t flex flex-wrap gap-2">
+                                                {/* Buy Now from Modal */}
+                                                <button
+                                                    onClick={() => {
+                                                        const p = quickViewProduct;
+                                                        setQuickViewProduct(null);
+                                                        handleOpenBuyNow(p);
+                                                    }}
+                                                    className="px-5 py-2.5 bg-[#fb641b] hover:bg-[#e85b17] text-white text-xs font-bold uppercase rounded shadow-xs flex items-center gap-1.5 cursor-pointer"
+                                                >
+                                                    <Zap className="w-4 h-4 fill-white" /> Buy Now
+                                                </button>
+
+                                                {/* Get Quote / Inquiry */}
                                                 <button
                                                     onClick={() => {
                                                         const p = quickViewProduct;
                                                         setQuickViewProduct(null);
                                                         handleOpenInquiry(p);
                                                     }}
-                                                    className="px-5 py-2.5 bg-[#fb641b] hover:bg-[#e85b17] text-white text-xs font-bold uppercase rounded shadow-xs flex items-center gap-1.5 cursor-pointer"
+                                                    className="px-5 py-2.5 bg-[#2874f0] hover:bg-[#1a5bc7] text-white text-xs font-bold uppercase rounded shadow-xs flex items-center gap-1.5 cursor-pointer"
                                                 >
-                                                    <MessageSquareQuote className="w-4 h-4" /> Get Quote / Inquiry
+                                                    <MessageSquareQuote className="w-4 h-4" /> Get Quote
                                                 </button>
 
                                                 {quickViewProduct.pdf_url && (
@@ -900,7 +955,9 @@ export default function FlipkartProductsStorefront() {
                 </div>
             )}
 
-            {/* INQUIRY POPUP */}
+            {/* ========================================================================= */}
+            {/* EXISTING INQUIRY POPUP (KEPT 100% INTACT AS REQUESTED)                   */}
+            {/* ========================================================================= */}
             {inquiryProduct && (
                 <InquiryPopup
                     isOpen={isPopupOpen}
