@@ -72,7 +72,7 @@ const FAQS = [
     },
     {
         q: "Where is the office located?",
-        a: "Our corporate headquarters and solution testing lab are located in Noida, Delhi NCR."
+        a: "Our corporate headquarters and solution testing lab are located in Badarpur, Delhi NCR."
     },
     {
         q: "Does Viros hire freshers and interns?",
@@ -267,11 +267,10 @@ export default function CareersPage() {
                             <button
                                 key={dept}
                                 onClick={() => setSelectedDepartment(dept)}
-                                className={`px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors cursor-pointer ${
-                                    selectedDepartment === dept
+                                className={`px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors cursor-pointer ${selectedDepartment === dept
                                         ? "bg-[#06124f] text-white"
                                         : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
-                                }`}
+                                    }`}
                             >
                                 {dept}
                             </button>
