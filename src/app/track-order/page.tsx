@@ -25,6 +25,7 @@ interface OrderTrackingDetails {
     unitPrice?: string;
     totalAmount: number;
     paymentMethod: string;
+    utrNumber?: string;
     deliveryAddress: string;
     city: string;
     pincode: string;
@@ -478,6 +479,36 @@ function TrackOrderContent() {
                                         <span className="text-gray-500">Delivery Charge:</span>
                                         <span className="text-emerald-600 font-bold">FREE Express</span>
                                     </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-gray-500">Payment Mode:</span>
+                                        <span className="font-bold text-gray-800">{order.paymentMethod || "UPI / Bank Transfer"}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-gray-500">Payment Status:</span>
+                                        {order.paymentStatus === "paid" ? (
+                                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                                ✓ Paid / Verified
+                                            </span>
+                                        ) : order.paymentStatus === "refunded" ? (
+                                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-200">
+                                                Refunded
+                                            </span>
+                                        ) : order.paymentStatus === "unpaid" ? (
+                                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200">
+                                                Unpaid
+                                            </span>
+                                        ) : (
+                                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                                                ● Pending Verification
+                                            </span>
+                                        )}
+                                    </div>
+                                    {order.utrNumber && (
+                                        <div className="flex justify-between">
+                                            <span className="text-gray-500">Payment UTR ID:</span>
+                                            <span className="font-mono font-bold text-[#2874f0]">{order.utrNumber}</span>
+                                        </div>
+                                    )}
                                     <div className="flex justify-between">
                                         <span className="text-gray-500">Security Verification:</span>
                                         <span className="text-blue-600 font-bold">✓ 7-Digit OTP Verified</span>

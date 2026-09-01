@@ -23,7 +23,8 @@ export interface ProductOrderData {
     courierName?: string | null;
     otpVerified?: boolean;
     orderStatus?: "pending" | "confirmed" | "processing" | "dispatched" | "out_for_delivery" | "delivered" | "cancelled" | string;
-    paymentStatus?: "unpaid" | "paid" | "cod_pending" | "refunded" | string;
+    paymentStatus?: "paid" | "pending_verification" | "unpaid" | "refunded" | string;
+    utrNumber?: string | null;
 }
 
 export async function ensureProductOrdersTable() {
@@ -41,7 +42,7 @@ export async function ensureProductOrdersTable() {
             quantity INT DEFAULT 1,
             unit_price VARCHAR(100) DEFAULT NULL,
             total_amount DECIMAL(12,2) DEFAULT 0.00,
-            payment_method VARCHAR(50) DEFAULT 'COD',
+            payment_method VARCHAR(50) DEFAULT 'UPI / Bank Transfer',
             delivery_address TEXT NOT NULL,
             city VARCHAR(100) NOT NULL,
             pincode VARCHAR(20) NOT NULL,
@@ -52,7 +53,8 @@ export async function ensureProductOrdersTable() {
             courier_name VARCHAR(100) DEFAULT NULL,
             otp_verified BOOLEAN DEFAULT TRUE,
             order_status VARCHAR(50) DEFAULT 'confirmed',
-            payment_status VARCHAR(50) DEFAULT 'cod_pending',
+            payment_status VARCHAR(50) DEFAULT 'pending_verification',
+            utr_number VARCHAR(100) DEFAULT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             INDEX idx_order_ref (order_ref),
@@ -74,6 +76,10 @@ export async function ensureProductOrdersTable() {
 
     try {
         await pool.query(`ALTER TABLE product_orders ADD COLUMN courier_name VARCHAR(100) DEFAULT NULL AFTER tracking_link;`);
+    } catch {}
+
+    try {
+        await pool.query(`ALTER TABLE product_orders ADD COLUMN utr_number VARCHAR(100) DEFAULT NULL AFTER payment_status;`);
     } catch {}
 }
 
@@ -104,8 +110,9 @@ export async function saveProductOrder(data: ProductOrderData) {
             courier_name,
             otp_verified,
             order_status,
-            payment_status
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            payment_status,
+            utr_number
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const values = [
@@ -118,9 +125,9 @@ export async function saveProductOrder(data: ProductOrderData) {
         data.productName,
         data.category || null,
         data.quantity || 1,
-        data.unitPrice || null,
-        data.totalAmount || 0,
-        data.paymentMethod || "COD",
+        data.unitPrice || "Contact for Quote",
+        data.totalAmount,
+        data.paymentMethod || "UPI / Bank Transfer",
         data.deliveryAddress,
         data.city,
         data.pincode,
@@ -131,7 +138,8 @@ export async function saveProductOrder(data: ProductOrderData) {
         data.courierName || null,
         data.otpVerified !== false,
         data.orderStatus || "confirmed",
-        data.paymentStatus || (data.paymentMethod === "online" ? "paid" : "cod_pending"),
+        data.paymentStatus || (data.paymentMethod === "online" ? "paid" : "pending_verification"),
+        data.utrNumber || null,
     ];
 
     const [result]: any = await pool.query(insertQuery, values);
@@ -155,9 +163,9 @@ export async function getAllProductOrders(options?: {
     }
 
     if (options?.search) {
-        query += ` AND (order_ref LIKE ? OR customer_name LIKE ? OR customer_email LIKE ? OR customer_phone LIKE ? OR product_name LIKE ? OR tracking_number LIKE ? OR courier_name LIKE ?)`;
+        query += ` AND (order_ref LIKE ? OR customer_name LIKE ? OR customer_email LIKE ? OR customer_phone LIKE ? OR product_name LIKE ? OR tracking_number LIKE ? OR courier_name LIKE ? OR utr_number LIKE ?)`;
         const s = `%${options.search}%`;
-        params.push(s, s, s, s, s, s, s);
+        params.push(s, s, s, s, s, s, s, s);
     }
 
     query += ` ORDER BY created_at DESC`;

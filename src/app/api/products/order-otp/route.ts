@@ -125,9 +125,9 @@ export async function POST(request: NextRequest) {
         }
 
         // -------------------------------------------------------------
-        // ACTION 2: VERIFY OTP, SAVE ORDER & SEND BOOKING CONFIRMATION EMAIL
+        // ACTION 2: VERIFY OTP STANDALONE (STEP 2)
         // -------------------------------------------------------------
-        if (action === "verify_and_order") {
+        if (action === "verify_otp") {
             const enteredOtp = (otp || "").toString().trim();
             const record = otpStore.get(normalizedEmail);
 
@@ -161,7 +161,17 @@ export async function POST(request: NextRequest) {
                 }, { status: 400 });
             }
 
-            // OTP is valid! Delete from store
+            return NextResponse.json({
+                success: true,
+                message: "7-Digit OTP verified successfully."
+            });
+        }
+
+        // -------------------------------------------------------------
+        // ACTION 3: SAVE ORDER & SEND BOOKING CONFIRMATION EMAIL (STEP 3)
+        // -------------------------------------------------------------
+        if (action === "create_order" || action === "verify_and_order") {
+            // Clean up any remaining OTP from store for this email
             otpStore.delete(normalizedEmail);
 
             // Generate Order Reference ID
@@ -170,7 +180,7 @@ export async function POST(request: NextRequest) {
             const orderedProduct = orderData.productName || productName || "Industrial Hardware";
             const orderQty = parseInt(orderData.qty || 1, 10);
             const totalAmountVal = parseFloat(orderData.totalAmount || 0);
-            const paymentMethodStr = (orderData.paymentMethod || "COD").toUpperCase();
+            const paymentMethodStr = (orderData.paymentMethod || "UPI / Bank Transfer").toUpperCase();
 
             // 1. Save order into dedicated `product_orders` MySQL table
             let orderDbId: number | null = null;
@@ -187,7 +197,7 @@ export async function POST(request: NextRequest) {
                     quantity: orderQty,
                     unitPrice: orderData.priceDisplay || "Contact for Quote",
                     totalAmount: totalAmountVal,
-                    paymentMethod: orderData.paymentMethod || "COD",
+                    paymentMethod: orderData.paymentMethod || "UPI / Bank Transfer",
                     deliveryAddress: orderData.address,
                     city: orderData.city,
                     pincode: orderData.pincode,
@@ -195,7 +205,8 @@ export async function POST(request: NextRequest) {
                     orderNotes: orderData.notes || null,
                     otpVerified: true,
                     orderStatus: "confirmed",
-                    paymentStatus: orderData.paymentMethod === "online" ? "paid" : "cod_pending"
+                    paymentStatus: orderData.paymentStatus || "pending_verification",
+                    utrNumber: orderData.utrNumber || null
                 });
                 console.log(`✅ Buy Now Order #${orderRef} successfully stored in table 'product_orders' (ID: ${orderDbId})`);
             } catch (dbErr) {
@@ -261,6 +272,12 @@ export async function POST(request: NextRequest) {
                                             <td class="title">Payment Method</td>
                                             <td class="value">${paymentMethodStr}</td>
                                         </tr>
+                                        ${orderData.utrNumber ? `
+                                        <tr>
+                                            <td class="title">UPI / UTR Ref No</td>
+                                            <td class="value" style="color: #2874f0; font-family: monospace;">${orderData.utrNumber}</td>
+                                        </tr>
+                                        ` : ''}
                                         <tr>
                                             <td class="title">Order Status</td>
                                             <td class="value" style="color: #10b981;">● Confirmed / Processing</td>

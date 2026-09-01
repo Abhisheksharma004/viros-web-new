@@ -59,6 +59,7 @@ export async function PUT(
             tracking_number,
             tracking_link,
             courier_name,
+            utr_number,
             notify_customer
         } = body;
 
@@ -81,7 +82,8 @@ export async function PUT(
                  order_notes = COALESCE(?, order_notes),
                  tracking_number = COALESCE(?, tracking_number),
                  tracking_link = COALESCE(?, tracking_link),
-                 courier_name = COALESCE(?, courier_name)
+                 courier_name = COALESCE(?, courier_name),
+                 utr_number = COALESCE(?, utr_number)
              WHERE id = ?`,
             [
                 order_status,
@@ -90,6 +92,7 @@ export async function PUT(
                 tracking_number,
                 tracking_link,
                 courier_name,
+                utr_number,
                 id
             ]
         );

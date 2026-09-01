@@ -68,6 +68,7 @@ export async function GET(request: NextRequest) {
                 unitPrice: order.unit_price,
                 totalAmount: Number(order.total_amount) || 0,
                 paymentMethod: order.payment_method,
+                utrNumber: order.utr_number,
                 deliveryAddress: order.delivery_address,
                 city: order.city,
                 pincode: order.pincode,
@@ -78,7 +79,7 @@ export async function GET(request: NextRequest) {
                 courierName: order.courier_name,
                 otpVerified: Boolean(order.otp_verified),
                 orderStatus: order.order_status || "confirmed",
-                paymentStatus: order.payment_status || "cod_pending",
+                paymentStatus: order.payment_status || "pending_verification",
                 createdAt: order.created_at,
                 updatedAt: order.updated_at
             }

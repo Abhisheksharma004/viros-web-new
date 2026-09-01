@@ -37,7 +37,8 @@ interface ProductOrder {
     courier_name?: string;
     otp_verified: boolean;
     order_status: "confirmed" | "processing" | "dispatched" | "out_for_delivery" | "delivered" | "cancelled" | string;
-    payment_status: "paid" | "cod_pending" | "unpaid" | "refunded" | string;
+    payment_status: "paid" | "pending_verification" | "unpaid" | "refunded" | string;
+    utr_number?: string;
     created_at: string;
     updated_at: string;
 }
@@ -54,8 +55,8 @@ const STATUS_OPTIONS = [
 
 const PAYMENT_STATUS_OPTIONS = [
     { value: "all", label: "All Payments" },
-    { value: "paid", label: "Paid" },
-    { value: "cod_pending", label: "COD Pending" },
+    { value: "paid", label: "Paid / Verified" },
+    { value: "pending_verification", label: "Pending Verification" },
     { value: "unpaid", label: "Unpaid" },
     { value: "refunded", label: "Refunded" },
 ];
@@ -381,9 +382,9 @@ export default function AdminOrdersManagementPage() {
     const getPaymentStatusBadge = (status: string) => {
         switch (status) {
             case "paid":
-                return <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">Paid</span>;
-            case "cod_pending":
-                return <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-200">COD Pending</span>;
+                return <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">Paid / Verified</span>;
+            case "pending_verification":
+                return <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-200">Pending Verification</span>;
             case "unpaid":
                 return <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-100 text-rose-800 border border-rose-200">Unpaid</span>;
             case "refunded":
@@ -598,13 +599,18 @@ export default function AdminOrdersManagementPage() {
                                         </td>
 
                                         {/* Amount & Method */}
-                                        <td className="py-3.5 px-4 align-top space-y-0.5">
+                                        <td className="py-3.5 px-4 align-top space-y-1">
                                             <span className="text-sm font-black text-gray-900 block">
                                                 ₹{Number(order.total_amount || 0).toLocaleString("en-IN")}
                                             </span>
                                             <span className="inline-block px-1.5 py-0.5 bg-gray-100 text-gray-700 rounded text-[10px] font-bold uppercase">
                                                 {order.payment_method}
                                             </span>
+                                            {order.utr_number && (
+                                                <div className="text-[10px] text-blue-600 font-mono font-bold pt-0.5">
+                                                    UTR: {order.utr_number}
+                                                </div>
+                                            )}
                                         </td>
 
                                         {/* DEDICATED PAYMENT STATUS COLUMN */}
@@ -615,8 +621,8 @@ export default function AdminOrdersManagementPage() {
                                                 onChange={(e) => handleUpdateOrder(order.id, undefined, e.target.value)}
                                                 className="mt-1 text-[11px] bg-white border border-gray-300 rounded px-1.5 py-0.5 text-gray-700 outline-none cursor-pointer"
                                             >
-                                                <option value="paid">Paid</option>
-                                                <option value="cod_pending">COD Pending</option>
+                                                <option value="paid">Paid / Verified</option>
+                                                <option value="pending_verification">Pending Verification</option>
                                                 <option value="unpaid">Unpaid</option>
                                                 <option value="refunded">Refunded</option>
                                             </select>
@@ -941,8 +947,8 @@ export default function AdminOrdersManagementPage() {
                                             disabled={isUpdatingStatus}
                                             className="px-2 py-1 bg-white border border-gray-300 rounded font-semibold text-gray-800 outline-none text-[11px] cursor-pointer"
                                         >
-                                            <option value="paid">Paid</option>
-                                            <option value="cod_pending">COD Pending</option>
+                                            <option value="paid">Paid / Verified</option>
+                                            <option value="pending_verification">Pending Verification</option>
                                             <option value="unpaid">Unpaid</option>
                                             <option value="refunded">Refunded</option>
                                         </select>
@@ -1019,6 +1025,14 @@ export default function AdminOrdersManagementPage() {
                                                 {getPaymentStatusBadge(selectedOrder.payment_status)}
                                             </td>
                                         </tr>
+                                        {selectedOrder.utr_number && (
+                                            <tr>
+                                                <td className="p-3 font-semibold text-gray-600 bg-gray-50/50">UPI / UTR Ref No:</td>
+                                                <td className="p-3 font-mono font-bold text-sm text-[#2874f0]">
+                                                    {selectedOrder.utr_number}
+                                                </td>
+                                            </tr>
+                                        )}
                                     </tbody>
                                 </table>
                             </div>
