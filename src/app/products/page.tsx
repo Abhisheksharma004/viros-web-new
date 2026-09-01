@@ -133,7 +133,7 @@ export default function FlipkartProductsStorefront() {
     const formatPriceDisplay = (priceStr?: string): string => {
         if (!priceStr) return "Contact for Quote";
         const num = extractPriceNumber(priceStr);
-        if (num <= 0) return priceStr;
+        if (num <= 0) return "Contact for Quote";
         return `₹${num.toLocaleString("en-IN")}`;
     };
 
@@ -596,7 +596,7 @@ export default function FlipkartProductsStorefront() {
                                                 <div>
                                                     <div className="flex md:flex-col items-baseline md:items-end gap-2 md:gap-0">
                                                         <div className="flex items-baseline gap-1.5">
-                                                            <span className="text-2xl font-black text-gray-900 tracking-tight">
+                                                            <span className={`font-black tracking-tight ${extractPriceNumber(product.price_display) > 0 ? "text-2xl text-gray-900" : "text-lg text-[#2874f0]"}`}>
                                                                 {formatPriceDisplay(product.price_display)}
                                                             </span>
                                                             {extractPriceNumber(product.price_display) > 0 && (
@@ -605,12 +605,14 @@ export default function FlipkartProductsStorefront() {
                                                                 </span>
                                                             )}
                                                         </div>
-                                                        <div className="flex items-center gap-2 text-xs">
-                                                            <span className="text-gray-400 line-through">
-                                                                ₹{Number(((extractPriceNumber(product.price_display) || 14000) * 1.3).toFixed(0)).toLocaleString("en-IN")}
-                                                            </span>
-                                                            <span className="text-[#388e3c] font-bold">25% off</span>
-                                                        </div>
+                                                        {extractPriceNumber(product.price_display) > 0 && (
+                                                            <div className="flex items-center gap-2 text-xs">
+                                                                <span className="text-gray-400 line-through">
+                                                                    ₹{Number(((extractPriceNumber(product.price_display) || 14000) * 1.3).toFixed(0)).toLocaleString("en-IN")}
+                                                                </span>
+                                                                <span className="text-[#388e3c] font-bold">25% off</span>
+                                                            </div>
+                                                        )}
                                                     </div>
 
                                                     <p className="text-[11px] text-gray-500 mt-1 flex items-center md:justify-end gap-1">
@@ -636,18 +638,20 @@ export default function FlipkartProductsStorefront() {
 
                                                 {/* Action Buttons: Buy Now + Quote + PDF */}
                                                 <div className="space-y-1.5 pt-1">
-                                                    {/* 1. BUY NOW BUTTON (FLIPKART ORANGE) */}
-                                                    <button
-                                                        onClick={() => handleOpenBuyNow(product)}
-                                                        className="w-full py-2 bg-[#fb641b] hover:bg-[#e85b17] text-white font-bold text-xs uppercase tracking-wider rounded-sm shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
-                                                    >
-                                                        <Zap className="w-4 h-4 fill-white" /> Buy Now
-                                                    </button>
+                                                    {/* 1. BUY NOW BUTTON (FLIPKART ORANGE) - ONLY WHEN PRICE > 0 */}
+                                                    {extractPriceNumber(product.price_display) > 0 && (
+                                                        <button
+                                                            onClick={() => handleOpenBuyNow(product)}
+                                                            className="w-full py-2 bg-[#fb641b] hover:bg-[#e85b17] text-white font-bold text-xs uppercase tracking-wider rounded-sm shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                                                        >
+                                                            <Zap className="w-4 h-4 fill-white" /> Buy Now
+                                                        </button>
+                                                    )}
 
                                                     {/* 2. GET QUOTE BUTTON */}
                                                     <button
                                                         onClick={() => handleOpenInquiry(product)}
-                                                        className="w-full py-1.5 bg-[#2874f0] hover:bg-[#1a5bc7] text-white font-bold text-xs uppercase tracking-wider rounded-sm shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                                                        className="w-full py-2 bg-[#2874f0] hover:bg-[#1a5bc7] text-white font-bold text-xs uppercase tracking-wider rounded-sm shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                                                     >
                                                         <MessageSquareQuote className="w-3.5 h-3.5" /> Get Quote / Inquiry
                                                     </button>
@@ -765,7 +769,7 @@ export default function FlipkartProductsStorefront() {
                                             <div className="mt-3 pt-2.5 border-t border-gray-100 space-y-2">
                                                 <div className="flex items-center justify-between">
                                                     <div className="flex items-baseline gap-1">
-                                                        <span className="text-base font-black text-gray-900">
+                                                        <span className={`font-black ${extractPriceNumber(product.price_display) > 0 ? "text-base text-gray-900" : "text-sm text-[#2874f0]"}`}>
                                                             {formatPriceDisplay(product.price_display)}
                                                         </span>
                                                         {extractPriceNumber(product.price_display) > 0 && (
@@ -780,20 +784,29 @@ export default function FlipkartProductsStorefront() {
                                                 </div>
 
                                                 {/* Buy Now & Quote in Grid View */}
-                                                <div className="grid grid-cols-2 gap-1.5">
-                                                    <button
-                                                        onClick={() => handleOpenBuyNow(product)}
-                                                        className="py-1.5 bg-[#fb641b] hover:bg-[#e85b17] text-white font-bold text-xs uppercase tracking-wider rounded-sm shadow-xs transition-colors flex items-center justify-center gap-1 cursor-pointer"
-                                                    >
-                                                        <Zap className="w-3 h-3 fill-white" /> Buy Now
-                                                    </button>
+                                                {extractPriceNumber(product.price_display) > 0 ? (
+                                                    <div className="grid grid-cols-2 gap-1.5">
+                                                        <button
+                                                            onClick={() => handleOpenBuyNow(product)}
+                                                            className="py-1.5 bg-[#fb641b] hover:bg-[#e85b17] text-white font-bold text-xs uppercase tracking-wider rounded-sm shadow-xs transition-colors flex items-center justify-center gap-1 cursor-pointer"
+                                                        >
+                                                            <Zap className="w-3 h-3 fill-white" /> Buy Now
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleOpenInquiry(product)}
+                                                            className="py-1.5 bg-[#2874f0] hover:bg-[#1a5bc7] text-white font-bold text-xs uppercase tracking-wider rounded-sm shadow-xs transition-colors flex items-center justify-center gap-1 cursor-pointer"
+                                                        >
+                                                            <MessageSquareQuote className="w-3 h-3" /> Quote
+                                                        </button>
+                                                    </div>
+                                                ) : (
                                                     <button
                                                         onClick={() => handleOpenInquiry(product)}
-                                                        className="py-1.5 bg-[#2874f0] hover:bg-[#1a5bc7] text-white font-bold text-xs uppercase tracking-wider rounded-sm shadow-xs transition-colors flex items-center justify-center gap-1 cursor-pointer"
+                                                        className="w-full py-1.5 bg-[#2874f0] hover:bg-[#1a5bc7] text-white font-bold text-xs uppercase tracking-wider rounded-sm shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                                                     >
-                                                        <MessageSquareQuote className="w-3 h-3" /> Quote
+                                                        <MessageSquareQuote className="w-3.5 h-3.5" /> Get Quote / Inquiry
                                                     </button>
-                                                </div>
+                                                )}
                                             </div>
                                         </div>
                                     );
@@ -886,7 +899,7 @@ export default function FlipkartProductsStorefront() {
                                             {/* Price */}
                                             <div className="pt-1">
                                                 <div className="flex items-baseline gap-1.5">
-                                                    <span className="text-2xl font-black text-gray-900">
+                                                    <span className={`font-black ${extractPriceNumber(quickViewProduct.price_display) > 0 ? "text-2xl text-gray-900" : "text-xl text-[#2874f0]"}`}>
                                                         {formatPriceDisplay(quickViewProduct.price_display)}
                                                     </span>
                                                     {extractPriceNumber(quickViewProduct.price_display) > 0 && (
@@ -906,17 +919,19 @@ export default function FlipkartProductsStorefront() {
 
                                             {/* Action CTAs in Modal */}
                                             <div className="pt-3 border-t flex flex-wrap gap-2">
-                                                {/* Buy Now from Modal */}
-                                                <button
-                                                    onClick={() => {
-                                                        const p = quickViewProduct;
-                                                        setQuickViewProduct(null);
-                                                        handleOpenBuyNow(p);
-                                                    }}
-                                                    className="px-5 py-2.5 bg-[#fb641b] hover:bg-[#e85b17] text-white text-xs font-bold uppercase rounded shadow-xs flex items-center gap-1.5 cursor-pointer"
-                                                >
-                                                    <Zap className="w-4 h-4 fill-white" /> Buy Now
-                                                </button>
+                                                {/* Buy Now from Modal - ONLY WHEN PRICE > 0 */}
+                                                {extractPriceNumber(quickViewProduct.price_display) > 0 && (
+                                                    <button
+                                                        onClick={() => {
+                                                             const p = quickViewProduct;
+                                                             setQuickViewProduct(null);
+                                                             handleOpenBuyNow(p);
+                                                        }}
+                                                        className="px-5 py-2.5 bg-[#fb641b] hover:bg-[#e85b17] text-white text-xs font-bold uppercase rounded shadow-xs flex items-center gap-1.5 cursor-pointer"
+                                                    >
+                                                        <Zap className="w-4 h-4 fill-white" /> Buy Now
+                                                    </button>
+                                                )}
 
                                                 {/* Get Quote / Inquiry */}
                                                 <button
@@ -927,7 +942,7 @@ export default function FlipkartProductsStorefront() {
                                                     }}
                                                     className="px-5 py-2.5 bg-[#2874f0] hover:bg-[#1a5bc7] text-white text-xs font-bold uppercase rounded shadow-xs flex items-center gap-1.5 cursor-pointer"
                                                 >
-                                                    <MessageSquareQuote className="w-4 h-4" /> Get Quote
+                                                    <MessageSquareQuote className="w-4 h-4" /> Get Quote / Inquiry
                                                 </button>
 
                                                 {quickViewProduct.pdf_url && (

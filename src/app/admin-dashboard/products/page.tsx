@@ -185,9 +185,9 @@ export default function FlipkartAdminProductsPage() {
 
     // Format price with INR currency symbol
     const formatPriceDisplay = (priceStr?: string): string => {
-        if (!priceStr) return "₹ Quote";
+        if (!priceStr) return "Contact for Quote";
         const num = extractPriceNumber(priceStr);
-        if (num <= 0) return priceStr;
+        if (num <= 0) return "Contact for Quote";
         return `₹${num.toLocaleString("en-IN")}`;
     };
 
@@ -772,10 +772,12 @@ export default function FlipkartAdminProductsPage() {
                                                             </span>
                                                         )}
                                                     </div>
-                                                    <div className="flex items-center gap-2 text-xs">
-                                                        <span className="text-gray-400 line-through">₹{Number(((extractPriceNumber(product.price_display) || 1200) * 1.3).toFixed(0)).toLocaleString("en-IN")}</span>
-                                                        <span className="text-[#388e3c] font-bold">25% off</span>
-                                                    </div>
+                                                    {extractPriceNumber(product.price_display) > 0 && (
+                                                        <div className="flex items-center gap-2 text-xs">
+                                                            <span className="text-gray-400 line-through">₹{Number(((extractPriceNumber(product.price_display) || 1200) * 1.3).toFixed(0)).toLocaleString("en-IN")}</span>
+                                                            <span className="text-[#388e3c] font-bold">25% off</span>
+                                                        </div>
+                                                    )}
                                                 </div>
 
                                                 <p className="text-[11px] text-gray-500 mt-1 flex items-center md:justify-end gap-1">
