@@ -183,6 +183,15 @@ export default function FlipkartAdminProductsPage() {
         return parseFloat(match) || 0;
     };
 
+    // Format price with INR currency symbol
+    const formatPriceDisplay = (priceStr?: string): string => {
+        if (!priceStr) return "₹ Quote";
+        const num = extractPriceNumber(priceStr);
+        if (num <= 0) return priceStr;
+        return `₹${num.toLocaleString("en-IN")}`;
+    };
+
+
     // Filter & Sort Logic
     const filteredProducts = useMemo(() => {
         return products
@@ -753,11 +762,18 @@ export default function FlipkartAdminProductsPage() {
                                             <div>
                                                 {/* Price Section */}
                                                 <div className="flex md:flex-col items-baseline md:items-end gap-2 md:gap-0">
-                                                    <span className="text-2xl font-black text-gray-900 tracking-tight">
-                                                        {product.price_display || "₹ Quote"}
-                                                    </span>
+                                                    <div className="flex items-baseline gap-1.5">
+                                                        <span className="text-2xl font-black text-gray-900 tracking-tight">
+                                                            {formatPriceDisplay(product.price_display)}
+                                                        </span>
+                                                        {extractPriceNumber(product.price_display) > 0 && (
+                                                            <span className="text-[11px] text-gray-500 font-medium whitespace-nowrap">
+                                                                (Incl. GST)
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                     <div className="flex items-center gap-2 text-xs">
-                                                        <span className="text-gray-400 line-through">₹{((extractPriceNumber(product.price_display) || 1200) * 1.3).toFixed(0)}</span>
+                                                        <span className="text-gray-400 line-through">₹{Number(((extractPriceNumber(product.price_display) || 1200) * 1.3).toFixed(0)).toLocaleString("en-IN")}</span>
                                                         <span className="text-[#388e3c] font-bold">25% off</span>
                                                     </div>
                                                 </div>
@@ -913,9 +929,16 @@ export default function FlipkartAdminProductsPage() {
                                         {/* Bottom Price & Controls */}
                                         <div className="mt-3 pt-2.5 border-t border-gray-100 flex items-center justify-between">
                                             <div>
-                                                <span className="text-base font-black text-gray-900">
-                                                    {product.price_display || "₹ Quote"}
-                                                </span>
+                                                <div className="flex items-baseline gap-1">
+                                                    <span className="text-base font-black text-gray-900">
+                                                        {formatPriceDisplay(product.price_display)}
+                                                    </span>
+                                                    {extractPriceNumber(product.price_display) > 0 && (
+                                                        <span className="text-[10px] text-gray-500 font-medium whitespace-nowrap">
+                                                            (Incl. GST)
+                                                        </span>
+                                                    )}
+                                                </div>
                                                 <span className="text-[10px] text-[#388e3c] font-bold block">
                                                     {product.stock_status}
                                                 </span>
@@ -1393,9 +1416,16 @@ export default function FlipkartAdminProductsPage() {
 
                                             {/* Price */}
                                             <div className="pt-1">
-                                                <span className="text-2xl font-black text-gray-900">
-                                                    {previewProduct.price_display || "Contact for Quote"}
-                                                </span>
+                                                <div className="flex items-baseline gap-1.5">
+                                                    <span className="text-2xl font-black text-gray-900">
+                                                        {formatPriceDisplay(previewProduct.price_display)}
+                                                    </span>
+                                                    {extractPriceNumber(previewProduct.price_display) > 0 && (
+                                                        <span className="text-xs text-gray-500 font-medium">
+                                                            (Incl. GST)
+                                                        </span>
+                                                    )}
+                                                </div>
                                                 <span className="text-xs font-bold text-[#388e3c] block">
                                                     {previewProduct.stock_status}
                                                 </span>

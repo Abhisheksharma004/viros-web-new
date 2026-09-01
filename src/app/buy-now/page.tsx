@@ -459,9 +459,12 @@ function BuyNowPageContent() {
                                         <h2 className="text-sm sm:text-base font-bold text-gray-900 mt-1 line-clamp-1">
                                             {product.name}
                                         </h2>
-                                        <div className="flex items-center gap-2 mt-0.5">
+                                        <div className="flex items-center flex-wrap gap-2 mt-0.5">
                                             <span className="text-base font-black text-gray-900">
                                                 ₹{unitPrice.toLocaleString("en-IN")}
+                                            </span>
+                                            <span className="text-[11px] text-gray-500 font-medium">
+                                                (Incl. GST)
                                             </span>
                                             <span className="text-[11px] text-emerald-600 font-bold">
                                                 ✓ In Stock (Express Dispatch)

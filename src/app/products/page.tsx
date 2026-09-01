@@ -129,6 +129,15 @@ export default function FlipkartProductsStorefront() {
         return parseFloat(match) || 0;
     };
 
+    // Format price with INR currency symbol
+    const formatPriceDisplay = (priceStr?: string): string => {
+        if (!priceStr) return "Contact for Quote";
+        const num = extractPriceNumber(priceStr);
+        if (num <= 0) return priceStr;
+        return `₹${num.toLocaleString("en-IN")}`;
+    };
+
+
     // Category list with accurate counts
     const categoryList = useMemo(() => {
         const set = new Set(["All", ...CATEGORY_OPTIONS, ...products.map((p) => p.category)]);
@@ -586,12 +595,19 @@ export default function FlipkartProductsStorefront() {
                                             <div className="w-full md:w-60 shrink-0 md:text-right flex flex-col justify-between h-full pt-2 md:pt-0 border-t md:border-t-0 border-gray-100 space-y-3">
                                                 <div>
                                                     <div className="flex md:flex-col items-baseline md:items-end gap-2 md:gap-0">
-                                                        <span className="text-2xl font-black text-gray-900 tracking-tight">
-                                                            {product.price_display || "Contact for Quote"}
-                                                        </span>
+                                                        <div className="flex items-baseline gap-1.5">
+                                                            <span className="text-2xl font-black text-gray-900 tracking-tight">
+                                                                {formatPriceDisplay(product.price_display)}
+                                                            </span>
+                                                            {extractPriceNumber(product.price_display) > 0 && (
+                                                                <span className="text-[11px] text-gray-500 font-medium whitespace-nowrap">
+                                                                    (Incl. GST)
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                         <div className="flex items-center gap-2 text-xs">
                                                             <span className="text-gray-400 line-through">
-                                                                ₹{((extractPriceNumber(product.price_display) || 14000) * 1.3).toFixed(0)}
+                                                                ₹{Number(((extractPriceNumber(product.price_display) || 14000) * 1.3).toFixed(0)).toLocaleString("en-IN")}
                                                             </span>
                                                             <span className="text-[#388e3c] font-bold">25% off</span>
                                                         </div>
@@ -748,9 +764,16 @@ export default function FlipkartProductsStorefront() {
 
                                             <div className="mt-3 pt-2.5 border-t border-gray-100 space-y-2">
                                                 <div className="flex items-center justify-between">
-                                                    <span className="text-base font-black text-gray-900">
-                                                        {product.price_display || "Contact for Quote"}
-                                                    </span>
+                                                    <div className="flex items-baseline gap-1">
+                                                        <span className="text-base font-black text-gray-900">
+                                                            {formatPriceDisplay(product.price_display)}
+                                                        </span>
+                                                        {extractPriceNumber(product.price_display) > 0 && (
+                                                            <span className="text-[10px] text-gray-500 font-medium whitespace-nowrap">
+                                                                (Incl. GST)
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                     <span className="text-[10px] text-[#388e3c] font-bold">
                                                         {product.stock_status}
                                                     </span>
@@ -862,9 +885,16 @@ export default function FlipkartProductsStorefront() {
 
                                             {/* Price */}
                                             <div className="pt-1">
-                                                <span className="text-2xl font-black text-gray-900">
-                                                    {quickViewProduct.price_display || "Contact for Quote"}
-                                                </span>
+                                                <div className="flex items-baseline gap-1.5">
+                                                    <span className="text-2xl font-black text-gray-900">
+                                                        {formatPriceDisplay(quickViewProduct.price_display)}
+                                                    </span>
+                                                    {extractPriceNumber(quickViewProduct.price_display) > 0 && (
+                                                        <span className="text-xs text-gray-500 font-medium">
+                                                            (Incl. GST)
+                                                        </span>
+                                                    )}
+                                                </div>
                                                 <span className="text-xs font-bold text-[#388e3c] block">
                                                     {quickViewProduct.stock_status}
                                                 </span>
