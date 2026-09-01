@@ -141,6 +141,11 @@ export type AdminMonthlySummaryRow = {
     weekOff: number;
     /** Off days from month start through today (current month only). */
     weekOffToDate: number;
+    /** Full-month declared corporate holidays. */
+    holiday: number;
+    /** Declared corporate holidays from month start through cutoff date. */
+    holidayToDate: number;
+    totalDaysInMonth?: number;
 };
 
 export type AdminEmployeeShiftContext = {
@@ -493,9 +498,12 @@ export async function getAdminMonthlySummary(
         }
 
         let weekOffBetween = 0;
+        let holidayBetween = 0;
         let totalWorkingDaysToDate = 0;
         let weekOffToDate = 0;
         let weekOffMonth = 0;
+        let holidayToDate = 0;
+        let holidayMonth = 0;
         let totalWorkingDaysInMonth = 0;
 
         const getPrevIsoDate = (iso: string) => {
@@ -544,6 +552,34 @@ export async function getAdminMonthlySummary(
                 continue;
             }
             if (rec.status === "holiday") {
+                holidayMonth += 1;
+                if (isToDate) {
+                    holidayToDate += 1;
+                    const isFirstDayOfMonth = rec.date === start;
+                    const isLastDayOfMonth = rec.date === end;
+                    const isBetween =
+                        firstActiveDate !== null &&
+                        lastActiveDate !== null &&
+                        rec.date >= firstActiveDate &&
+                        rec.date <= lastActiveDate;
+
+                    const prevDate = getPrevIsoDate(rec.date);
+                    const nextDate = getNextIsoDate(rec.date);
+                    const isAdjoiningActive =
+                        activeDateSet.has(prevDate) ||
+                        includedWeekOffSet.has(prevDate) ||
+                        activeDateSet.has(nextDate);
+
+                    if (
+                        isBetween ||
+                        isAdjoiningActive ||
+                        (isFirstDayOfMonth && firstActiveDate !== null) ||
+                        (isLastDayOfMonth && lastActiveDate !== null)
+                    ) {
+                        holidayBetween += 1;
+                        includedWeekOffSet.add(rec.date);
+                    }
+                }
                 continue;
             }
 
@@ -560,7 +596,7 @@ export async function getAdminMonthlySummary(
         }
 
         const workedDays = present + late + leave + halfDay;
-        const totalPresent = workedDays + weekOffBetween;
+        const totalPresent = workedDays + weekOffBetween + holidayBetween;
 
         return {
             employeeId: emp.employee_id,
@@ -576,6 +612,8 @@ export async function getAdminMonthlySummary(
             totalWorkingDaysToDate,
             weekOff: weekOffMonth,
             weekOffToDate,
+            holiday: holidayMonth,
+            holidayToDate,
             totalDaysInMonth: lastDay,
         };
     });

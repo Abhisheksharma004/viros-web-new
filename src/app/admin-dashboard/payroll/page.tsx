@@ -74,6 +74,8 @@ type AttendanceMonthlyRow = {
     totalPresent: number;
     totalWorkingDaysInMonth: number;
     totalWorkingDaysToDate: number;
+    weekOff?: number;
+    holiday?: number;
 };
 
 type PayrollPaymentApi = PayslipPaymentRecord & {

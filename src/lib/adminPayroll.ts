@@ -92,6 +92,7 @@ export type PayrollPaymentSnapshot = {
         totalPresent?: number;
         halfDay: number;
         weekOff: number;
+        holiday?: number;
     };
 };
 
@@ -321,6 +322,7 @@ export async function getPaymentForPayslip(paymentId: number) {
                 totalPresent: att.totalPresent,
                 halfDay: att.halfDay,
                 weekOff: att.weekOff,
+                holiday: att.holiday,
             };
         }
     }
@@ -536,6 +538,7 @@ export async function recordPayrollPayment(params: {
                 totalPresent: att?.totalPresent ?? breakdown.totalPresent,
                 halfDay: att?.halfDay ?? 0,
                 weekOff: att?.weekOff ?? 0,
+                holiday: att?.holiday ?? 0,
             },
         };
 

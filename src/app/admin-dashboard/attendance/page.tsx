@@ -74,6 +74,7 @@ type MonthlyRow = {
     totalWorkingDaysInMonth: number;
     totalWorkingDaysToDate: number;
     weekOff: number;
+    holiday?: number;
 };
 
 type MonthlyRowCompat = Omit<MonthlyRow, "totalWorkingDaysInMonth" | "totalWorkingDaysToDate"> & {
@@ -588,6 +589,7 @@ function AdminEmployeeAttendancePageContent() {
                             : typeof r.totalWorkingDays === "number"
                                 ? r.totalWorkingDays
                                 : 0,
+                    holiday: typeof r.holiday === "number" ? r.holiday : 0,
                 })),
             );
         } catch (error) {
@@ -841,6 +843,7 @@ function AdminEmployeeAttendancePageContent() {
                 totalPresent: r.totalPresent,
                 totalWorkingDays: r.totalWorkingDaysInMonth,
                 weekOff: r.weekOff,
+                holiday: r.holiday ?? 0,
             })),
         [filteredMonthly],
     );
@@ -1289,19 +1292,20 @@ function AdminEmployeeAttendancePageContent() {
                                         <th className={`${TH_CENTER} text-violet-800`}>Half day</th>
                                         <th className={`${TH_CENTER} text-[#0a2a5e]`}>Total working days</th>
                                         <th className={`${TH_CENTER} text-gray-700`}>Week off</th>
+                                        <th className={`${TH_CENTER} text-purple-800`}>Holiday</th>
                                         <th className={`${TH_CENTER} text-teal-800`}>Total present</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-200">
                                     {monthlyLoading ? (
                                         <tr>
-                                            <td colSpan={10} className={`${TD} py-14 text-center ${TD_MUTED}`}>
+                                            <td colSpan={11} className={`${TD} py-14 text-center ${TD_MUTED}`}>
                                                 <Loader2 className="mx-auto h-6 w-6 animate-spin" />
                                             </td>
                                         </tr>
                                     ) : filteredMonthly.length === 0 ? (
                                         <tr>
-                                            <td colSpan={10} className={`${TD} py-14 text-center ${TD_MUTED}`}>
+                                            <td colSpan={11} className={`${TD} py-14 text-center ${TD_MUTED}`}>
                                                 No data for this month.
                                             </td>
                                         </tr>
@@ -1342,6 +1346,9 @@ function AdminEmployeeAttendancePageContent() {
                                                 </td>
                                                 <td className={`${TD} text-center text-lg font-black text-gray-700`}>
                                                     {row.weekOff}
+                                                </td>
+                                                <td className={`${TD} text-center text-lg font-black text-purple-800`}>
+                                                    {row.holiday ?? 0}
                                                 </td>
                                                 <td className={`${TD} text-center text-lg font-black text-teal-800`}>
                                                     {row.totalPresent}

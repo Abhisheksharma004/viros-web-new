@@ -23,6 +23,7 @@ export type AttendanceMonthlyExportRow = {
     totalPresent: number;
     totalWorkingDays: number;
     weekOff: number;
+    holiday: number;
 };
 
 export type AttendanceEmployeeExportRow = {
@@ -61,6 +62,7 @@ const MONTHLY_COLUMNS: ExportColumn<keyof AttendanceMonthlyExportRow>[] = [
     { header: "Half day", key: "halfDay", width: 10 },
     { header: "Total working days", key: "totalWorkingDays", width: 18 },
     { header: "Week off", key: "weekOff", width: 12 },
+    { header: "Holiday", key: "holiday", width: 12 },
     { header: "Total present", key: "totalPresent", width: 14 },
 ];
 

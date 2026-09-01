@@ -248,6 +248,7 @@ const MODULE_ROUTE_MAP: Record<string, string> = {
     "Leave Request": "/employee-dashboard/granted/leave-request",
     "Salary Setup": "/employee-dashboard/granted/salary",
     "Advance Payment": "/employee-dashboard/granted/advance-payment",
+    "Advance Paymet": "/employee-dashboard/granted/advance-payment",
     "Payroll": "/employee-dashboard/granted/payroll",
     "Expense Management": "/employee-dashboard/granted/expense-management",
     "Emp. Shift": "/employee-dashboard/granted/shift",
@@ -263,6 +264,8 @@ const MODULE_ROUTE_MAP: Record<string, string> = {
     "Products": "/employee-dashboard/granted/products",
     "Warranty": "/employee-dashboard/granted/warranty",
     "Website Dashboard": "/employee-dashboard/granted/website-dashboard",
+    "Job Post": "/employee-dashboard/granted/job-post",
+    "Applications": "/employee-dashboard/granted/applications",
 };
 
 export default function EmployeeSidebar({
@@ -306,11 +309,15 @@ export default function EmployeeSidebar({
             if (item.subItems && item.subItems.length > 0) {
                 const validSubs = item.subItems
                     .filter((sub) => grantedSet.has(sub.title.toLowerCase()))
-                    .map((sub) => ({
-                        title: sub.title,
-                        icon: sub.icon,
-                        href: MODULE_ROUTE_MAP[sub.title] || "/employee-dashboard",
-                    }));
+                    .map((sub) => {
+                        const slug = sub.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+                        const targetHref = MODULE_ROUTE_MAP[sub.title] || (slug ? `/employee-dashboard/granted/${slug}` : "/employee-dashboard/granted");
+                        return {
+                            title: sub.title,
+                            icon: sub.icon,
+                            href: targetHref,
+                        };
+                    });
 
                 if (validSubs.length > 0) {
                     items.push({
@@ -322,11 +329,13 @@ export default function EmployeeSidebar({
                 }
             } else {
                 if (grantedSet.has(item.title.toLowerCase())) {
+                    const slug = item.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+                    const targetHref = MODULE_ROUTE_MAP[item.title] || (slug ? `/employee-dashboard/granted/${slug}` : "/employee-dashboard/granted");
                     items.push({
                         type: "single",
                         title: item.title,
                         icon: item.icon,
-                        href: MODULE_ROUTE_MAP[item.title] || item.href || "/employee-dashboard",
+                        href: targetHref,
                     });
                 }
             }
@@ -360,11 +369,14 @@ export default function EmployeeSidebar({
                     if (Array.isArray(data.permissions)) {
                         const activeMods = data.permissions
                             .filter((p: { read?: boolean; write?: boolean; admin?: boolean }) => p.read || p.write || p.admin)
-                            .map((p: { module: string; category: string }) => ({
-                                name: p.module,
-                                category: p.category,
-                                href: MODULE_ROUTE_MAP[p.module] || "/employee-dashboard",
-                            }));
+                            .map((p: { module: string; category: string }) => {
+                                const slug = p.module.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+                                return {
+                                    name: p.module,
+                                    category: p.category,
+                                    href: MODULE_ROUTE_MAP[p.module] || (slug ? `/employee-dashboard/granted/${slug}` : "/employee-dashboard/granted"),
+                                };
+                            });
                         setGrantedModules(activeMods);
                     }
                 }
@@ -379,7 +391,14 @@ export default function EmployeeSidebar({
         setOpenSections((prev) => (prev.includes(title) ? [] : [title]));
     };
 
-    const isActive = (href: string) => pathname === href;
+    const isActive = (href: string) => {
+        if (!pathname) return false;
+        if (href === "/employee-dashboard") {
+            return pathname === "/employee-dashboard";
+        }
+        return pathname === href || pathname.startsWith(`${href}/`);
+    };
+
     const isSectionActive = (subItems: { href: string }[]) => pickActiveSubHref(pathname, subItems) !== null;
 
     return (

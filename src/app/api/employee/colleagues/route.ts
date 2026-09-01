@@ -50,27 +50,8 @@ export async function GET() {
                 COALESCE(NULLIF(TRIM(e.work_location), ''), '') AS work_location
              FROM admin_employees e
              LEFT JOIN admin_employee_access ea ON ea.employee_id = e.employee_id
-             WHERE (e.employee_status IS NULL OR TRIM(e.employee_status) = '' OR LOWER(TRIM(e.employee_status)) NOT LIKE '%resign%')
-               AND (ea.portal_status IS NULL OR ea.portal_status = 'Active')
-             
-             UNION ALL
-             
-             SELECT 
-                ea.id + 100000 AS id,
-                ea.employee_id,
-                'Employee' AS full_name,
-                ea.official_email,
-                '' AS official_mobile,
-                'General' AS department,
-                'Team Member' AS designation,
-                'Active' AS employee_status,
-                '' AS work_location
-             FROM admin_employee_access ea
-             LEFT JOIN admin_employees e ON e.employee_id = ea.employee_id
-             WHERE e.id IS NULL
-               AND ea.portal_status = 'Active'
-             
-             ORDER BY full_name ASC`
+             WHERE (e.employee_status IS NULL OR TRIM(e.employee_status) = '' OR LOWER(TRIM(e.employee_status)) = 'active')
+             ORDER BY e.full_name ASC`
         );
 
         const colleagues = rows

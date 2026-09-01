@@ -1255,9 +1255,9 @@ export default function EmployeeAttendancePage() {
                                                     {/* Mobile Compact Badge */}
                                                     <div
                                                         title={noteText}
-                                                        className="block sm:hidden truncate rounded bg-purple-100 px-1 py-0.5 text-[9px] font-bold text-purple-900 leading-tight"
+                                                        className="block sm:hidden text-center truncate rounded bg-purple-100 px-1 py-0.5 text-[10px] font-black text-purple-900 leading-tight"
                                                     >
-                                                        🎉 {noteText.split(" | ")[0]}
+                                                        H
                                                     </div>
                                                 </>
                                             ) : record.status === "present" ? (
@@ -1267,8 +1267,8 @@ export default function EmployeeAttendancePage() {
                                                         ✓ Present {record.checkIn ? record.checkIn.slice(0, 5) : ""}
                                                     </div>
                                                     {/* Mobile Badge */}
-                                                    <div className="block sm:hidden truncate rounded bg-emerald-100 px-1 py-0.5 text-[9px] font-bold text-emerald-900 leading-tight">
-                                                        ✓ In
+                                                    <div className="block sm:hidden text-center truncate rounded bg-emerald-100 px-1 py-0.5 text-[10px] font-black text-emerald-900 leading-tight">
+                                                        P
                                                     </div>
                                                 </>
                                             ) : record.status === "late" ? (
@@ -1276,8 +1276,8 @@ export default function EmployeeAttendancePage() {
                                                     <div className="hidden sm:block truncate rounded-md bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 border border-amber-200">
                                                         ⏰ Late
                                                     </div>
-                                                    <div className="block sm:hidden truncate rounded bg-amber-100 px-1 py-0.5 text-[9px] font-bold text-amber-900 leading-tight">
-                                                        ⏰ Late
+                                                    <div className="block sm:hidden text-center truncate rounded bg-amber-100 px-1 py-0.5 text-[10px] font-black text-amber-900 leading-tight">
+                                                        L
                                                     </div>
                                                 </>
                                             ) : record.status === "leave" ? (
@@ -1285,8 +1285,17 @@ export default function EmployeeAttendancePage() {
                                                     <div className="hidden sm:block truncate rounded-md bg-blue-50 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700 border border-blue-200">
                                                         ✈ Leave
                                                     </div>
-                                                    <div className="block sm:hidden truncate rounded bg-blue-100 px-1 py-0.5 text-[9px] font-bold text-blue-900 leading-tight">
-                                                        ✈ Leave
+                                                    <div className="block sm:hidden text-center truncate rounded bg-blue-100 px-1 py-0.5 text-[10px] font-black text-blue-900 leading-tight">
+                                                        LV
+                                                    </div>
+                                                </>
+                                            ) : record.status === "half-day" ? (
+                                                <>
+                                                    <div className="hidden sm:block truncate rounded-md bg-teal-50 px-1.5 py-0.5 text-[10px] font-semibold text-teal-700 border border-teal-200">
+                                                        ½ Half day
+                                                    </div>
+                                                    <div className="block sm:hidden text-center truncate rounded bg-teal-100 px-1 py-0.5 text-[10px] font-black text-teal-900 leading-tight">
+                                                        HD
                                                     </div>
                                                 </>
                                             ) : record.status === "absent" ? (
@@ -1294,8 +1303,8 @@ export default function EmployeeAttendancePage() {
                                                     <div className="hidden sm:block truncate rounded-md bg-rose-50 px-1.5 py-0.5 text-[10px] font-semibold text-rose-700 border border-rose-200">
                                                         ✕ Absent
                                                     </div>
-                                                    <div className="block sm:hidden truncate rounded bg-rose-100 px-1 py-0.5 text-[9px] font-bold text-rose-900 leading-tight">
-                                                        ✕ Abs
+                                                    <div className="block sm:hidden text-center truncate rounded bg-rose-100 px-1 py-0.5 text-[10px] font-black text-rose-900 leading-tight">
+                                                        A
                                                     </div>
                                                 </>
                                             ) : (
@@ -1303,8 +1312,8 @@ export default function EmployeeAttendancePage() {
                                                     <div className="hidden sm:block truncate rounded-md bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold text-gray-500">
                                                         Off day
                                                     </div>
-                                                    <div className="block sm:hidden truncate rounded bg-gray-100 px-1 py-0.5 text-[9px] font-medium text-gray-500 leading-tight">
-                                                        Off
+                                                    <div className="block sm:hidden text-center truncate rounded bg-gray-100 px-1 py-0.5 text-[10px] font-bold text-gray-600 leading-tight">
+                                                        WO
                                                     </div>
                                                 </>
                                             )

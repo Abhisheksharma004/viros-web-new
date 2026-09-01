@@ -205,7 +205,7 @@ export const menuItems = [
                 href: "/admin-dashboard/salary",
             },
             {
-                title: "Advance Paymet",
+                title: "Advance Payment",
                 icon: (
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path
