@@ -44,7 +44,7 @@ export default function LayoutWrapper({
           <Footer />
         </div>
       )}
-      {!hideNavAndFooter && <GetInTouchPopup />}
+      {!hideNavAndFooter && pathname !== "/admin-login" && !pathname?.startsWith("/products") && <GetInTouchPopup />}
       <CookieConsentBanner />
       <CookiePreferencesModal />
     </CookieProvider>

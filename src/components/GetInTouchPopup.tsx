@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 import {
     X,
     ChevronDown,
@@ -38,6 +39,16 @@ const COUNTRY_CODES: CountryCode[] = [
 ];
 
 export default function GetInTouchPopup() {
+    const pathname = usePathname();
+    const isExcludedPage =
+        pathname === "/admin-login" ||
+        pathname === "/login" ||
+        pathname === "/products" ||
+        pathname?.startsWith("/products") ||
+        pathname?.startsWith("/dashboard") ||
+        pathname?.startsWith("/admin-dashboard") ||
+        pathname?.startsWith("/employee-dashboard");
+
     const [mounted, setMounted] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
     const [formData, setFormData] = useState({
@@ -85,7 +96,7 @@ export default function GetInTouchPopup() {
         }
 
         timerRef.current = setTimeout(() => {
-            if (!checkIfSubmitted()) {
+            if (!checkIfSubmitted() && !isExcludedPage) {
                 setIsOpen(true);
             }
         }, delayMs);
@@ -93,6 +104,12 @@ export default function GetInTouchPopup() {
 
     useEffect(() => {
         setMounted(true);
+
+        if (isExcludedPage) {
+            setIsOpen(false);
+            if (timerRef.current) clearTimeout(timerRef.current);
+            return;
+        }
 
         const handleForceOpen = () => {
             if (timerRef.current) clearTimeout(timerRef.current);
@@ -193,7 +210,7 @@ export default function GetInTouchPopup() {
             c.code.includes(searchCountry)
     );
 
-    if (!mounted) return null;
+    if (!mounted || isExcludedPage) return null;
 
     return (
         <>
